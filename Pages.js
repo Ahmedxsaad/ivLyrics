@@ -2305,19 +2305,25 @@ const getCurrentLyricsPlaybackPosition = (trackOffset = 0, globalOffset = getGlo
 // useLyricsPlaybackPosition for the frame-aligned live painter clock.
 const lyricsPlaybackOffsets = { trackOffset: 0, globalOffset: 0 };
 
-// Sample the playback clock for the display frame that starts at `frameTime`
+// Sample the player clock for the display frame that starts at `frameTime`
 // (a requestAnimationFrame timestamp). Every painted frame then advances by
 // exactly its own interval, independent of when the callback happened to run.
-const getFrameAlignedLyricsPlaybackPosition = (frameTime = NaN) => {
+const getFrameAlignedPlayerPosition = (frameTime = NaN) => {
 	const snapshot = window.Utils?.getPlayerPlaybackSnapshot?.();
-	let position = Number(snapshot?.position);
+	const position = Number(snapshot?.position);
 	if (!Number.isFinite(position)) {
-		position = Number(window.Utils?.getSafePlayerProgress?.() ?? Spicetify.Player?.getProgress?.()) || 0;
-	} else if (snapshot.isPlaying && Number.isFinite(frameTime) && Number.isFinite(snapshot.sampledAt)) {
-		position -= Math.max(0, snapshot.sampledAt - frameTime);
+		return Number(window.Utils?.getSafePlayerProgress?.() ?? Spicetify.Player?.getProgress?.()) || 0;
 	}
-	return position + CONFIG.visual.delay + lyricsPlaybackOffsets.trackOffset + lyricsPlaybackOffsets.globalOffset;
+	if (snapshot.isPlaying && Number.isFinite(frameTime) && Number.isFinite(snapshot.sampledAt)) {
+		return position - Math.max(0, snapshot.sampledAt - frameTime);
+	}
+	return position;
 };
+
+// The same frame-aligned clock in lyric time: the configured delay plus the
+// mounted page's track and global sync offsets.
+const getFrameAlignedLyricsPlaybackPosition = (frameTime = NaN) => getFrameAlignedPlayerPosition(frameTime)
+	+ CONFIG.visual.delay + lyricsPlaybackOffsets.trackOffset + lyricsPlaybackOffsets.globalOffset;
 
 const useLyricsPlaybackPosition = () => {
 	const trackOffset = useTrackOffsetState();
@@ -9635,6 +9641,8 @@ window.ivLyricsLyricRendererPrimitives = Object.freeze({
 	LyricsLineBlock,
 	IdlingIndicator,
 	useLyricsPlaybackPosition,
+	useKaraokeLiveClock,
+	getFrameAlignedLyricsPlaybackPosition,
 	getPseudoKaraokeRenderAdvance,
 	prepareGlobalCharTimeline,
 	queryGlobalCharTimeline,
