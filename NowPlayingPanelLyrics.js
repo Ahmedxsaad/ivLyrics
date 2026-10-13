@@ -1919,16 +1919,9 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
     const KARAOKE_RTL_STRONG_CHAR_REGEX = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFC]/u;
     const KARAOKE_LTR_STRONG_CHAR_REGEX = /[A-Za-z\u00C0-\u02AF\u0370-\u052F\u1E00-\u1EFF]/u;
     const KARAOKE_JOINING_SCRIPT_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFC]/u;
-    const KARAOKE_TEXT_RUN_FILL_STEPS = 25;
-    const KARAOKE_PERCENT_STRING_CACHE = {
-        __proto__: null,
-        0: "0%", 2: "2%", 4: "4%", 6: "6%", 8: "8%", 10: "10%", 12: "12%", 14: "14%", 16: "16%", 18: "18%",
-        20: "20%", 22: "22%", 24: "24%", 26: "26%", 28: "28%", 30: "30%", 32: "32%", 34: "34%", 36: "36%", 38: "38%",
-        40: "40%", 42: "42%", 44: "44%", 46: "46%", 48: "48%", 50: "50%", 52: "52%", 54: "54%", 56: "56%", 58: "58%",
-        60: "60%", 62: "62%", 64: "64%", 66: "66%", 68: "68%", 70: "70%", 72: "72%", 74: "74%", 76: "76%", 78: "78%",
-        80: "80%", 82: "82%", 84: "84%", 86: "86%", 88: "88%", 90: "90%", 92: "92%", 94: "94%", 96: "96%", 98: "98%",
-        100: "100%"
-    };
+    // Shaped-run fills are painted per display frame without rounding; a 4%
+    // grid held each step for several frames on a 120 Hz display.
+    const formatKaraokePercent = (value) => `${Number.isInteger(value) ? value : value.toFixed(2)}%`;
 
     const getKaraokeTextDirection = (text) => {
         const normalizedText = typeof text === "string" ? text : "";
@@ -1977,7 +1970,7 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
         if (currentTime >= endTime) return 100;
 
         const raw = Math.max(0, Math.min(1, (currentTime - startTime) / Math.max(1, endTime - startTime)));
-        return Math.round(raw * KARAOKE_TEXT_RUN_FILL_STEPS) * (100 / KARAOKE_TEXT_RUN_FILL_STEPS);
+        return raw * 100;
     };
 
     const buildKaraokeTextRunSegments = (syllables, preserveInlineStyles = true) => {
@@ -3290,22 +3283,12 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
 
                 if (isActive) {
                     const softEdge = 10;
-                    let percentText;
                     if (stateChanged) {
                         el.style.setProperty("--ivlyrics-panel-karaoke-gradient-direction", gradientDirection);
                     }
-                    el.style.setProperty("--ivlyrics-panel-karaoke-fill",
-                        typeof (percentText = String(fill)) === "string"
-                            ? (KARAOKE_PERCENT_STRING_CACHE[percentText] ?? percentText + "%")
-                            : percentText + "%");
-                    el.style.setProperty("--ivlyrics-panel-karaoke-fill-soft-start",
-                        typeof (percentText = String(Math.max(0, fill - softEdge))) === "string"
-                            ? (KARAOKE_PERCENT_STRING_CACHE[percentText] ?? percentText + "%")
-                            : percentText + "%");
-                    el.style.setProperty("--ivlyrics-panel-karaoke-fill-soft-end",
-                        typeof (percentText = String(Math.min(100, fill + softEdge))) === "string"
-                            ? (KARAOKE_PERCENT_STRING_CACHE[percentText] ?? percentText + "%")
-                            : percentText + "%");
+                    el.style.setProperty("--ivlyrics-panel-karaoke-fill", formatKaraokePercent(fill));
+                    el.style.setProperty("--ivlyrics-panel-karaoke-fill-soft-start", formatKaraokePercent(Math.max(0, fill - softEdge)));
+                    el.style.setProperty("--ivlyrics-panel-karaoke-fill-soft-end", formatKaraokePercent(Math.min(100, fill + softEdge)));
                 } else if (stateChanged) {
                     el.style.removeProperty("--ivlyrics-panel-karaoke-gradient-direction");
                     el.style.removeProperty("--ivlyrics-panel-karaoke-fill");
@@ -4847,28 +4830,56 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
         }, []);
 
         // 현재 재생 위치 추적 및 노래방 가사 타이밍 업데이트
-        // 최적화: setInterval 사용 (30ms), LocalStorage 캐싱, 이진 탐색
+        // 재생 중에는 디스플레이 프레임마다(requestAnimationFrame) 그 프레임의
+        // 시작 시각에 맞춘 위치를 쓴다. 30ms 타이머는 120Hz 화면에서 채움을
+        // 3~4프레임씩 멈춰 세웠다. 일시정지·창 숨김·동작 줄이기 상태에서는
+        // 예전처럼 30ms 폴링으로 탐색·오프셋·트랙 변경만 감지한다.
+        // LocalStorage 캐싱, 이진 탐색
         useEffect(() => {
             let lastIndex = currentIndex;
             let lastVisualIndex = visualIndex;
             let lastTrailingInterludeKey = null;
             let lastVisualTrailingInterludeKey = null;
-            let intervalId = null;
+            let frameId = null;
+            let pollId = null;
+            let disposed = false;
             let cachedDelay = null;
             let lastTrackUri = null;
             let lastNotifiedPosition = null;
             let lastNotifiedTrackUri = null;
-            const UPDATE_INTERVAL = 30; // 업데이트 간격 (ms) - RAF보다 CPU 효율적
+            const PAUSED_POLL_INTERVAL = 30; // 일시정지·숨김 중 폴링 간격 (ms)
             const resolveTrailingInterludeInfo = createTrailingKaraokeInterludeResolver(lyrics, panelPlaybackTimeline);
             let lastSingingKey = null;
 
-            const updatePosition = () => {
+            // Player position for the display frame that starts at frameTime
+            // (a requestAnimationFrame timestamp). Every painted frame then
+            // advances by exactly its own interval, wherever the callback ran.
+            const readPlayerPosition = (frameTime) => {
+                const snapshot = window.Utils?.getPlayerPlaybackSnapshot?.();
+                const position = Number(snapshot?.position);
+                if (!Number.isFinite(position)) {
+                    return {
+                        position: window.Utils?.getSafePlayerProgress?.()
+                            ?? (Spicetify.Player.getProgress?.() || 0),
+                        isPlaying: Spicetify.Player.isPlaying?.() === true
+                    };
+                }
+                const isPlaying = snapshot.isPlaying === true;
+                const sampledAt = Number(snapshot.sampledAt);
+                return {
+                    position: isPlaying && Number.isFinite(frameTime) && Number.isFinite(sampledAt)
+                        ? position - Math.max(0, sampledAt - frameTime)
+                        : position,
+                    isPlaying
+                };
+            };
+
+            const updatePosition = (frameTime) => {
                 if (!lyrics || lyrics.length === 0) {
-                    return;
+                    return false;
                 }
 
-                const position = window.Utils?.getSafePlayerProgress?.()
-                    ?? (Spicetify.Player.getProgress?.() || 0);
+                const { position, isPlaying } = readPlayerPosition(frameTime);
 
                 // 곡별 딜레이: 트랙 변경 시에만 캐시 갱신
                 const currentTrackUri = Spicetify.Player.data?.item?.uri;
@@ -4953,19 +4964,54 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
                     lastNotifiedTrackUri = currentTrackUri;
                     window.dispatchEvent(new Event('ivlyrics-panel-time-update'));
                 }
+                return isPlaying;
+            };
+
+            const cancelScheduledUpdate = () => {
+                if (frameId !== null) {
+                    cancelAnimationFrame(frameId);
+                    frameId = null;
+                }
+                if (pollId !== null) {
+                    clearTimeout(pollId);
+                    pollId = null;
+                }
+            };
+            const scheduleNextUpdate = (isPlaying) => {
+                if (disposed) return;
+                // rAF does not run while the window is hidden; keep polling
+                // there so the panel is current again the moment it shows.
+                if (isPlaying && !reducePanelMotion && !document.hidden
+                    && typeof requestAnimationFrame === 'function') {
+                    frameId = requestAnimationFrame(handleAnimationFrame);
+                } else {
+                    pollId = setTimeout(handlePoll, PAUSED_POLL_INTERVAL);
+                }
+            };
+            const handleAnimationFrame = (frameTime) => {
+                frameId = null;
+                scheduleNextUpdate(updatePosition(frameTime));
+            };
+            const handlePoll = () => {
+                pollId = null;
+                scheduleNextUpdate(updatePosition());
+            };
+            const handleVisibilityChange = () => {
+                if (disposed) return;
+                cancelScheduledUpdate();
+                scheduleNextUpdate(updatePosition());
             };
 
             if (isEnabled && lyrics.length > 0) {
-                // setInterval 사용 - RAF보다 CPU 사용량 낮음
-                intervalId = setInterval(updatePosition, UPDATE_INTERVAL);
-                // 초기 업데이트
-                updatePosition();
+                document.addEventListener('visibilitychange', handleVisibilityChange);
+                // 초기 업데이트 후 다음 갱신 예약
+                scheduleNextUpdate(updatePosition());
             }
 
             return () => {
-                if (intervalId) {
-                    clearInterval(intervalId);
-                }
+                disposed = true;
+                cancelScheduledUpdate();
+                document.removeEventListener('visibilitychange', handleVisibilityChange);
                 // 전역 변수 정리
                 window._ivLyricsPanelCurrentTime = 0;
             };
