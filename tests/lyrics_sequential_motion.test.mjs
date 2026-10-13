@@ -760,6 +760,7 @@ test('the compact page scopes one-clock presentation to scripted row motion', ()
       useRef: current => ({ current }), useState: initial => [initial, () => {}], useCallback: callback => callback,
       useMemo: factory => factory(), useEffect() {}, useLyricsTrackReveal() {},
       useLyricsPlaybackPosition: () => 3000, getPseudoKaraokeRenderAdvance: () => 0,
+      prefersReducedLyricsMotion: () => false, getFrameAlignedLyricsPlaybackPosition: () => 3000,
       useSyncedLyricsEngine: () => ({ isScrolling, handleContainerClick() {}, renderItems: [], compactOffset: 0, lineMotionScripted }),
       renderLyricsItems: () => [], CONFIG: { visual: { 'karaoke-line-transition': true } }, I18n: { t: key => key },
     });
