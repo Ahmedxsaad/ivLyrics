@@ -118,6 +118,31 @@
         return uri.startsWith("spotify:track:") ? uri.split(":")[2] : null;
     };
 
+    // 패널은 Spotify 시작 시 확장 스크립트로 먼저 로드된다. 이 시점의 전역 Utils는
+    // 커스텀 앱의 Utils.js가 아니라 LyricsService.js의 확장 전용 Utils라서
+    // createHTMLProps 같은 렌더링 헬퍼가 없다. 가사 줄 렌더링이 전역 Utils에
+    // 기대지 않도록 Utils.rubyTextToHTML과 같은 이스케이프 규칙을 패널 안에 둔다.
+    const panelRubyTextToHTML = (text) => {
+        if (!text || typeof text !== "string" || text.trim() === "") {
+            return "";
+        }
+        return text
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/&lt;ruby&gt;/g, "<ruby>")
+            .replace(/&lt;\/ruby&gt;/g, "</ruby>")
+            .replace(/&lt;rt&gt;/g, "<rt>")
+            .replace(/&lt;\/rt&gt;/g, "</rt>")
+            .replace(/&lt;rp&gt;/g, "<rp>")
+            .replace(/&lt;\/rp&gt;/g, "</rp>");
+    };
+
+    const createPanelLineHTMLProps = (text) => (
+        typeof text === "string" && text
+            ? { dangerouslySetInnerHTML: { __html: panelRubyTextToHTML(text) } }
+            : {}
+    );
+
     const getSavedPanelLocalLyrics = (uri) => {
         if (!uri) return null;
         try {
@@ -3610,7 +3635,7 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
         return react.createElement("div", { className: lineClass, style: lineStyle },
             react.createElement("p", {
                 className: "ivlyrics-panel-line-text",
-                ...Utils.createHTMLProps(displayText)
+                ...createPanelLineHTMLProps(displayText)
             }, displayText ? undefined : " "),
             phonetic && react.createElement("div", {
                 className: "ivlyrics-panel-line-phonetic"
@@ -5259,6 +5284,58 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
     };
 
     // ============================================
+    // 렌더 오류 격리
+    // ============================================
+    // 패널 렌더 중 예외가 나면 루트가 비고, verifyPanelContainerRendered와
+    // MutationObserver가 빈 컨테이너를 보고 곧바로 다시 삽입한다. 그래서 오류 하나가
+    // 곡 전환·일시정지 때마다 끝없이 반복되며 클라이언트를 멈추게 했다.
+    // 오류는 이 경계에서 멈추고(숨긴 섹션을 남겨 재삽입 루프를 끊음), 다음 곡에서만 다시 그린다.
+    class PanelLyricsErrorBoundary extends react.Component {
+        constructor(props) {
+            super(props);
+            this.state = { failed: false };
+            this.handleSongChange = () => {
+                if (this.state.failed) {
+                    this.setState({ failed: false });
+                }
+            };
+        }
+
+        static getDerivedStateFromError() {
+            return { failed: true };
+        }
+
+        componentDidCatch(error) {
+            console.error("[NowPlayingPanelLyrics] Panel render failed:", error);
+        }
+
+        componentDidMount() {
+            Spicetify.Player?.addEventListener?.("songchange", this.handleSongChange);
+        }
+
+        componentWillUnmount() {
+            Spicetify.Player?.removeEventListener?.("songchange", this.handleSongChange);
+        }
+
+        render() {
+            if (this.state.failed) {
+                return react.createElement("div", {
+                    className: `${PANEL_SECTION_CLASS} ivlyrics-panel-render-failed`,
+                    style: { display: "none" },
+                    "aria-hidden": "true"
+                });
+            }
+            return this.props.children;
+        }
+    }
+
+    const createPanelLyricsElement = () => react.createElement(
+        PanelLyricsErrorBoundary,
+        null,
+        react.createElement(PanelLyrics)
+    );
+
+    // ============================================
     // 패널 감지 및 삽입
     // ============================================
     const findNowPlayingPanel = () => {
@@ -5317,9 +5394,9 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
             const ReactDOM = Spicetify.ReactDOM;
             if (ReactDOM.createRoot) {
                 starryNightBarRoot = ReactDOM.createRoot(container);
-                starryNightBarRoot.render(react.createElement(PanelLyrics));
+                starryNightBarRoot.render(createPanelLyricsElement());
             } else {
-                ReactDOM.render(react.createElement(PanelLyrics), container);
+                ReactDOM.render(createPanelLyricsElement(), container);
                 starryNightBarRoot = container;
             }
             panelDebug("[NowPlayingPanelLyrics] Starry Night bar lyrics inserted successfully");
@@ -5366,9 +5443,9 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
             if (ReactDOM.createRoot) {
                 container.__ivLyricsPanelRoot = container.__ivLyricsPanelRoot || ReactDOM.createRoot(container);
                 lyricsRoot = container.__ivLyricsPanelRoot;
-                lyricsRoot.render(react.createElement(PanelLyrics));
+                lyricsRoot.render(createPanelLyricsElement());
             } else {
-                ReactDOM.render(react.createElement(PanelLyrics), container);
+                ReactDOM.render(createPanelLyricsElement(), container);
                 lyricsRoot = container;
             }
 
