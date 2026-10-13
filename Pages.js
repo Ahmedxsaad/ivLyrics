@@ -4027,8 +4027,6 @@ const LYRICS_LINE_MOTION_STIFFNESS = 7.5;
 const LYRICS_LINE_MOTION_MAX_SLOPE = LYRICS_LINE_MOTION_STIFFNESS
 	/ (1 - Math.exp(-LYRICS_LINE_MOTION_STIFFNESS));
 const LYRICS_LINE_MOTION_SEGMENTS = 40;
-// Presentation easing for engines without linear(): it still leaves rest softly.
-const LYRICS_LINE_MOTION_FALLBACK_EASE = "cubic-bezier(0.18, 0, 0.06, 1)";
 const LYRICS_CENTERING_STAGGER_MS = 50;
 const LYRICS_CENTERING_STAGGER_DECAY = 1 / 1.05;
 const LYRICS_CENTERING_MAX_STAGGER_MS = 260;
@@ -4148,8 +4146,6 @@ const getLyricsLineMotionPlan = ({
 const getLyricsLineMotionStyle = (animationIndex, plan) => ({
 	"--line-motion-delay": `${plan.cascade ? getLyricsLineStaggerDelay(animationIndex, plan) : 0}ms`,
 	"--line-motion-duration": `${plan.durationMs}ms`,
-	// Presentation changes start from rest, like a row that was not moving.
-	"--line-motion-ease": getLyricsLineMotionEasing(0) || LYRICS_LINE_MOTION_FALLBACK_EASE,
 });
 
 // A shorter vocal window compresses the rendered delay and duration together
@@ -6374,8 +6370,8 @@ const useSyncedLyricsEngine = ({
 	const compactLinePlaybackPositionRef = useRef(position);
 	compactLinePlaybackPositionRef.current = position;
 	// Rows receive their travel timing in the commit that changes their class
-	// and blur index. CSS transitions start at that commit's style pass; the
-	// scheduled WAAPI shift then reads the same timing back from each row.
+	// and blur index; the scheduled WAAPI shift reads it back from each row.
+	// Color, opacity and blur keep their own CSS transitions.
 	// Keyed by the transition, not the clock: the window is measured once, when
 	// the line changes, so row styles stay stable between boundaries.
 	const lineMotionPlan = useMemo(() => usesScriptedCompactLineShift ? getLyricsLineMotionPlan({
@@ -6710,8 +6706,8 @@ const useSyncedLyricsEngine = ({
 				if (skipNewMotion) continue;
 				const distance = Number.isFinite(deltaY) ? deltaY : sharedDelta;
 				if (Math.abs(distance) < 0.25) continue;
-				// The row's commit already started its color, opacity and blur on
-				// this delay and duration; the travel reads them back from its style.
+				// The row's commit fixed this delay and duration; the travel reads
+				// them back from its style.
 				const rendered = getLyricsLineRenderedMotionTiming(element, timing);
 				const wasMoving = previous.motion && previous.currentTime >= previous.motion.delay
 					&& previous.currentTime < previous.motion.delay + previous.motion.durationMs;
@@ -6956,8 +6952,6 @@ const useSyncedLyricsEngine = ({
 		handleContainerClick,
 		renderItems,
 		compactOffset,
-		// The page scopes its one-clock presentation rules to scripted motion.
-		lineMotionScripted: !!lineMotionPlan && !suppressLayoutShiftAnimation,
 		activeLineIndex,
 		activeLyricIndex: Math.max(0, activeLineIndex - leadingEmptyLines),
 		globalCharOffsets,
@@ -8919,7 +8913,6 @@ const SyncedLyricsPage = react.memo(({ lyrics = [], provider, contributors, copy
 		handleContainerClick,
 		renderItems,
 		compactOffset,
-		lineMotionScripted,
 	} = useSyncedLyricsEngine({
 		lyrics,
 		position: karaokePosition,
@@ -8955,7 +8948,7 @@ const SyncedLyricsPage = react.memo(({ lyrics = [], provider, contributors, copy
 	return react.createElement(
 		"div",
 		{
-			className: `lyrics-lyricsContainer-SyncedLyricsPage${isKara ? " is-karaoke" : ""}${karaokeLineTransitionClass}${isScrolling ? " scrolling-active" : ""}${lineMotionScripted ? " scripted-line-motion" : ""}`,
+			className: `lyrics-lyricsContainer-SyncedLyricsPage${isKara ? " is-karaoke" : ""}${karaokeLineTransitionClass}${isScrolling ? " scrolling-active" : ""}`,
 			ref: containerRefCallback,
 			onClick: handleContainerClick,
 			tabIndex: 0,

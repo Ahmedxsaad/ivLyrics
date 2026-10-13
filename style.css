@@ -2185,11 +2185,12 @@ body.ivlyrics-page-active .main-topBar-container {
   }
 }
 
-/* Scripted compact motion gives each row one clock. The commit that changes a
-   row's class and blur index also writes the delay, duration and spring easing
-   of its WAAPI travel, so color, opacity, blur and outline fades start and
-   settle with the movement. Registered without inheritance: a changing delay
-   restyles the rows and the fade targets that opt in below, never every glyph. */
+/* The scripted compact travel reads its delay and duration back from each row,
+   so the commit that changes a row's class also fixes when it moves. Color,
+   opacity, blur and the detail fades keep the timing above: running them on
+   the travel's longer, staggered clock kept the GPU saturated through every
+   line change and dropped frames. Registered without inheritance, so a
+   changing delay restyles the row only, never its glyphs. */
 @property --line-motion-delay {
   syntax: "*";
   inherits: false;
@@ -2198,72 +2199,6 @@ body.ivlyrics-page-active .main-topBar-container {
 @property --line-motion-duration {
   syntax: "*";
   inherits: false;
-}
-
-@property --line-motion-ease {
-  syntax: "*";
-  inherits: false;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  /* Each wrapper between a row and its supplemental fades inherits the clock
-     explicitly; the glyphs inside those wrappers never see it. */
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion
-    > .lyrics-lyricsContainer-SyncedLyrics > .lyrics-line-detail > p:first-child,
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion
-    > .lyrics-lyricsContainer-SyncedLyrics > .lyrics-line-detail .lyrics-karaoke-stack,
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion
-    > .lyrics-lyricsContainer-SyncedLyrics > .lyrics-line-detail .lyrics-karaoke-part,
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion
-    > .lyrics-lyricsContainer-SyncedLyrics > .lyrics-line-detail .lyrics-vocal-main,
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion
-    > .lyrics-lyricsContainer-SyncedLyrics > .lyrics-line-detail .lyrics-lyricsContainer-LyricsLine-phonetic,
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion
-    > .lyrics-lyricsContainer-SyncedLyrics > .lyrics-line-detail .lyrics-lyricsContainer-LyricsLine-translation {
-    --line-motion-delay: inherit;
-    --line-motion-duration: inherit;
-    --line-motion-ease: inherit;
-  }
-
-  /* Transform stays with WAAPI; a CSS transform transition would outrank that
-     travel. Manual browsing rewrites --manual-blur-index every frame, so filter
-     only joins the row's clock while the page auto-follows. */
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion:not(.scrolling-active)
-    > .lyrics-lyricsContainer-SyncedLyrics
-    > .lyrics-lyricsContainer-LyricsLine.lyrics-line-detail:not(.lyrics-lyricsContainer-LyricsLine-paddingLine):not(.lyrics-idling-indicator) {
-    transition-property: color, opacity, text-shadow, filter !important;
-    transition-duration: var(--line-motion-duration, 360ms) !important;
-    transition-timing-function: var(--line-motion-ease, cubic-bezier(0.22, 0.7, 0.3, 1)) !important;
-    transition-delay: var(--line-motion-delay, 0ms) !important;
-  }
-
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion:not(.scrolling-active)
-    > .lyrics-lyricsContainer-SyncedLyrics
-    > .lyrics-line-detail:not(.lyrics-interlude-departing) > p:first-child {
-    transition: transform var(--iv-lyrics-centering-duration, 300ms) var(--iv-lyrics-centering-ease, ease),
-      opacity var(--line-motion-duration, 420ms) var(--line-motion-ease, cubic-bezier(0.22, 0.7, 0.3, 1))
-        var(--line-motion-delay, 0ms),
-      letter-spacing var(--iv-motion-duration-medium) var(--iv-motion-ease-standard),
-      text-shadow var(--line-motion-duration, var(--iv-motion-duration-medium))
-        var(--line-motion-ease, var(--iv-motion-ease-standard)) var(--line-motion-delay, 0ms);
-  }
-
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion:not(.scrolling-active)
-    > .lyrics-lyricsContainer-SyncedLyrics > .lyrics-line-detail .lyrics-vocal-main {
-    transition: opacity var(--line-motion-duration, 420ms) var(--line-motion-ease, cubic-bezier(0.22, 0.7, 0.3, 1))
-      var(--line-motion-delay, 0ms);
-  }
-
-  .lyrics-lyricsContainer-SyncedLyricsPage.scripted-line-motion:not(.scrolling-active)
-    > .lyrics-lyricsContainer-SyncedLyrics
-    > .lyrics-line-detail :is(.lyrics-lyricsContainer-LyricsLine-phonetic, .lyrics-lyricsContainer-LyricsLine-translation) {
-    transition: transform var(--iv-lyrics-centering-duration, 300ms) var(--iv-lyrics-centering-ease, ease),
-      opacity var(--line-motion-duration, 420ms) var(--line-motion-ease, cubic-bezier(0.22, 0.7, 0.3, 1))
-        var(--line-motion-delay, 0ms),
-      letter-spacing var(--iv-motion-duration-medium) var(--iv-motion-ease-standard),
-      text-shadow var(--line-motion-duration, var(--iv-motion-duration-medium))
-        var(--line-motion-ease, var(--iv-motion-ease-standard)) var(--line-motion-delay, 0ms);
-  }
 }
 
 /* Phonetic text style for Synced lyrics */

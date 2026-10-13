@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import vm from 'node:vm';
 
@@ -10,7 +12,7 @@ const effectStart = source.indexOf('\t// Position-index and anchor-offset still 
 const effectEnd = source.indexOf('\n\tuseEffect(() => () => {\n\t\tcompactLineShiftAnimationsRef', effectStart);
 const helperNames = [
   'LYRICS_CENTERING_LEAD_MS', 'LYRICS_LINE_MOTION_DURATION_MS', 'LYRICS_LINE_MOTION_STIFFNESS',
-  'LYRICS_LINE_MOTION_MAX_SLOPE', 'LYRICS_LINE_MOTION_SEGMENTS', 'LYRICS_LINE_MOTION_FALLBACK_EASE',
+  'LYRICS_LINE_MOTION_MAX_SLOPE', 'LYRICS_LINE_MOTION_SEGMENTS',
   'getAdaptiveLyricsCenteringTiming', 'getLyricsLineStaggerDelay', 'getLyricsLineMotionPlan',
   'getLyricsLineMotionStyle', 'getLyricsLineRenderedMotionTiming', 'getLyricsLineMotionProgress',
   'getLyricsLineMotionCurve', 'getLyricsLineMotionEasing', 'createLyricsLineShiftMotion',
@@ -261,7 +263,7 @@ test('two transform frames and the stop-keyframe fallback follow the same positi
   t.diagnostic(`${samples} positions; maximum two/fallback difference ${maxPathError.toFixed(6)}px; maximum retarget offset error ${maxOffsetError.toFixed(6)}px`);
 });
 
-test('only a one-line advance from the previous scripted line cascades its presentation and travel', () => {
+test('only a one-line advance from the previous scripted line cascades its travel', () => {
   const base = { visualLineIndex: 6, settingsRevision: 3, nextLineStart: 9000, leadMs: 300, position: 4000, now: 1000 };
   const previousContext = { visualLineIndex: 5, settingsRevision: 3 };
   const advance = motion.getLyricsLineMotionPlan({ ...base, previousContext });
@@ -272,10 +274,9 @@ test('only a one-line advance from the previous scripted line cascades its prese
     const style = motion.getLyricsLineMotionStyle(index, advance);
     assert.equal(Number.parseFloat(style['--line-motion-delay']), motion.getLyricsLineStaggerDelay(index, advance));
     assert.equal(style['--line-motion-duration'], '560ms');
-    assert.equal(style['--line-motion-ease'], motion.LYRICS_LINE_MOTION_FALLBACK_EASE);
+    assert.deepEqual(Object.keys(style).sort(), ['--line-motion-delay', '--line-motion-duration'],
+      'rows carry only the travel timing; presentation keeps its own transitions');
   }
-  assert.equal(native.getLyricsLineMotionStyle(2, advance)['--line-motion-ease'], native.getLyricsLineMotionCurve(0).easing,
-    'presentation uses the resting spring');
   assert.equal(motion.getLyricsLineMotionPlan({ ...base, previousContext, manualReturn: { expiresAt: 900 } }).cascade, true,
     'an expired manual return no longer holds the rows together');
   for (const [label, overrides] of [
@@ -687,86 +688,29 @@ const specificity = (selector) => {
 };
 const lastCompound = selector => selector.split(/\s*(?:>|\+|~|\s)\s*(?![^(]*\))/).filter(Boolean).at(-1);
 
-test('stylesheet runs color, opacity, blur and outline fades on the row clock only while auto-following', () => {
+test('row presentation keeps its 6.6.27 transitions while only the travel follows the spring', () => {
   assert.deepEqual(specificity('.a > p:first-child'), [0, 2, 1]);
   assert.deepEqual(specificity(':is(.a, .b.c) > .d:not(.e, .f.g):has(.h.i)'), [0, 7, 0]);
   const rules = readStylesheet(stylesheet);
-  for (const name of ['--line-motion-delay', '--line-motion-duration', '--line-motion-ease']) {
+  for (const name of ['--line-motion-delay', '--line-motion-duration']) {
     const registration = rules.find(rule => rule.prelude === `@property ${name}`);
     assert.ok(registration, `${name} is registered`);
     assert.equal(registration.declarations.inherits, 'false', 'a changing row delay must not restyle every glyph');
   }
-  const scripted = rules.filter(rule => rule.prelude.includes('.scripted-line-motion'));
-  assert.ok(scripted.length >= 5);
-  assert.ok(scripted.every(rule => rule.atRules.includes('@media (prefers-reduced-motion: no-preference)')),
-    'reduced motion keeps its own transitions');
-  for (const rule of scripted) {
-    const transition = Object.entries(rule.declarations).filter(([property]) => property.startsWith('transition')).map(([, value]) => value).join(' ');
-    if (/filter/.test(transition)) {
-      assert.ok(rule.selectors.every(selector => selector.includes('.scripted-line-motion:not(.scrolling-active)')),
-        'manual browsing updates blur every frame and must not animate it');
-    }
-  }
-
-  const rowRule = scripted.find(rule => 'transition-property' in rule.declarations);
-  assert.equal(rowRule.selectors.length, 1);
-  const [rowSelector] = rowRule.selectors;
-  assert.match(lastCompound(rowSelector), /^\.lyrics-lyricsContainer-LyricsLine\.lyrics-line-detail:not\(\.lyrics-lyricsContainer-LyricsLine-paddingLine\)/);
-  assert.match(rowSelector, /:not\(\.lyrics-idling-indicator\)/, 'the prelude indicator keeps its own fade');
-  const properties = splitTopLevel(rowRule.declarations['transition-property'].replace(/\s*!important$/, ''));
-  assert.deepEqual([...properties].sort(), ['color', 'filter', 'opacity', 'text-shadow']);
-  assert.ok(!properties.includes('transform'), 'WAAPI owns the row transform; a CSS transition would outrank it');
-  for (const [property, variable] of [['transition-duration', '--line-motion-duration'], ['transition-timing-function', '--line-motion-ease'], ['transition-delay', '--line-motion-delay']]) {
-    assert.match(rowRule.declarations[property], new RegExp(`^var\\(${variable},.*\\) !important$`));
-  }
-  // Any rule that also times a visible synced row with !important must lose.
-  const rowCompetitors = rules.filter(rule => !rule.prelude.includes('.scripted-line-motion')
-    && !rule.atRules.some(at => at.includes('prefers-reduced-motion: reduce'))
-    && Object.entries(rule.declarations).some(([property, value]) => property.startsWith('transition') && value.endsWith('!important')))
-    .flatMap(rule => rule.selectors)
-    .filter(selector => /\.lyrics-lyricsContainer-LyricsLine|\.lyrics-line-detail/.test(lastCompound(selector))
-      && !/^\.lyrics-lyricsContainer-LyricsLine-paddingLine/.test(lastCompound(selector)));
-  assert.ok(rowCompetitors.length >= 2);
-  for (const selector of rowCompetitors) {
-    assert.ok(compareSpecificity(specificity(rowSelector), specificity(selector)) > 0, `scripted row timing must outrank ${selector}`);
-  }
-
-  const inheritRule = scripted.find(rule => rule.declarations['--line-motion-delay'] === 'inherit');
-  assert.ok(inheritRule && inheritRule.declarations['--line-motion-duration'] === 'inherit' && inheritRule.declarations['--line-motion-ease'] === 'inherit');
-  const chain = inheritRule.selectors.map(lastCompound);
-  for (const target of ['p:first-child', '.lyrics-karaoke-stack', '.lyrics-karaoke-part', '.lyrics-vocal-main',
-    '.lyrics-lyricsContainer-LyricsLine-phonetic', '.lyrics-lyricsContainer-LyricsLine-translation']) {
-    assert.ok(chain.includes(target), `${target} receives the row clock`);
-  }
-  for (const target of ['p:first-child', '.lyrics-vocal-main', ':is(.lyrics-lyricsContainer-LyricsLine-phonetic, .lyrics-lyricsContainer-LyricsLine-translation)']) {
-    const fade = scripted.find(rule => rule.declarations.transition && rule.selectors.some(selector => lastCompound(selector) === target));
-    assert.ok(fade, `${target} fades on the row clock`);
-    const opacity = splitTopLevel(fade.declarations.transition).find(entry => entry.startsWith('opacity '));
-    assert.match(opacity, /^opacity var\(--line-motion-duration, [^)]+\) var\(--line-motion-ease, .+\) var\(--line-motion-delay, 0ms\)$/);
-    const competitors = rules.filter(rule => !rule.prelude.includes('.scripted-line-motion') && rule.declarations.transition)
-      .flatMap(rule => rule.selectors).filter(selector => selector.includes('.lyrics-line-detail') && lastCompound(selector) === target);
-    assert.ok(competitors.length >= 1);
-    for (const selector of competitors) {
-      assert.ok(compareSpecificity(specificity(fade.selectors[0]), specificity(selector)) > 0, `${target} fade must outrank ${selector}`);
-    }
-  }
-});
-
-test('the compact page scopes one-clock presentation to scripted row motion', () => {
-  const pageSource = source.slice(source.indexOf('const SyncedLyricsPage = react.memo'), source.indexOf('// Global SearchBar manager'));
-  for (const [lineMotionScripted, isScrolling] of [[true, false], [false, false], [false, true]]) {
-    const context = vm.createContext({
-      react: { memo: component => component, createElement: (type, props, ...children) => ({ type, props: props || {}, children }) },
-      useRef: current => ({ current }), useState: initial => [initial, () => {}], useCallback: callback => callback,
-      useMemo: factory => factory(), useEffect() {}, useLyricsTrackReveal() {},
-      useLyricsPlaybackPosition: () => 3000, getPseudoKaraokeRenderAdvance: () => 0,
-      prefersReducedLyricsMotion: () => false, getFrameAlignedLyricsPlaybackPosition: () => 3000,
-      useSyncedLyricsEngine: () => ({ isScrolling, handleContainerClick() {}, renderItems: [], compactOffset: 0, lineMotionScripted }),
-      renderLyricsItems: () => [], CONFIG: { visual: { 'karaoke-line-transition': true } }, I18n: { t: key => key },
-    });
-    vm.runInContext(`${pageSource}\nglobalThis.page = SyncedLyricsPage;`, context);
-    const classes = context.page({ lyrics: [{ text: 'line', startTime: 0 }], isKara: true }).props.className.split(' ');
-    assert.equal(classes.includes('scripted-line-motion'), lineMotionScripted);
-    assert.equal(classes.includes('scrolling-active'), isScrolling);
-  }
+  // The row travel reads its timing back from each row. Color, opacity, blur
+  // and the detail fades stay on their own clocks: moving them onto the
+  // travel's longer, staggered clock kept the GPU saturated through every
+  // line change and dropped frames on a 120 Hz display.
+  assert.ok(!rules.some(rule => rule.prelude.includes('scripted-line-motion')));
+  assert.ok(!rules.some(rule => Object.values(rule.declarations).some(value => value.includes('var(--line-motion-'))),
+    'no transition follows the travel clock');
+  const baseline = readStylesheet(execFileSync('git', ['show', '47eb965:style.css'], {
+    cwd: fileURLToPath(new URL('..', import.meta.url)), encoding: 'utf8',
+  }));
+  const presentation = list => list.filter(rule => rule.selectors.some(selector => selector.includes('.lyrics-line-detail')));
+  assert.ok(presentation(rules).length >= 10);
+  assert.deepEqual(presentation(rules), presentation(baseline), 'row and detail fades are unchanged from 6.6.27');
+  const rowRule = presentation(rules).find(rule => rule.atRules.length === 0 && 'transition-property' in rule.declarations);
+  assert.deepEqual(splitTopLevel(rowRule.declarations['transition-property'].replace(/\s*!important$/, '')),
+    ['transform', 'color', 'opacity', 'text-shadow'], 'blur snaps instead of animating every visible row');
 });

@@ -709,7 +709,7 @@ test("virtual interlude caches invalidate on motion controls, settings and lyric
  assert.doesNotMatch(replacement.props.className, /lyrics-interlude-departing/);
 });
 
-test("scripted compact rows carry their presentation clock only while row travel is scripted", () => {
+test("scripted compact rows carry their travel timing only while row travel is scripted", () => {
  const lyrics = makeLyrics();
  const motionKeys = ["--line-motion-delay", "--line-motion-duration", "--line-motion-ease"];
  const rowStyles = (engine, position, options) => engine.render(lyrics, position, options, true).elements
@@ -721,10 +721,10 @@ test("scripted compact rows carry their presentation clock only while row travel
   assert.ok(styles.length > 3);
   const [first] = styles;
   assert.match(first["--line-motion-duration"], /^\d+(?:\.\d+)?ms$/);
-  assert.match(first["--line-motion-ease"], /^(?:linear|cubic-bezier)\(/);
+  // Presentation keeps its own transitions; rows carry no easing for it.
+  assert.equal(Object.hasOwn(first, "--line-motion-ease"), false);
   for (const style of styles) {
    assert.equal(style["--line-motion-duration"], first["--line-motion-duration"], "one travel budget per transition");
-   assert.equal(style["--line-motion-ease"], first["--line-motion-ease"]);
    // No layout effect has recorded a previous scripted line, so nothing cascades.
    assert.equal(style["--line-motion-delay"], "0ms");
   }
