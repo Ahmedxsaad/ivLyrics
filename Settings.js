@@ -2243,6 +2243,37 @@ const getSafeSettingsLocale = () => {
 };
 
 // 로컬 캐시 관리 컴포넌트 (IndexedDB)
+// 로컬 곡에 가져온 가사(local-lyrics 저장소)는 곡 캐시가 아니라 사용자가 저장한 데이터다.
+const LOCAL_LYRICS_STORAGE_KEY = "ivLyrics:local-lyrics";
+
+const readSavedLocalLyricsStore = () => {
+  try {
+    const store = JSON.parse(StorageManager.getItem(LOCAL_LYRICS_STORAGE_KEY) || "{}");
+    return store && typeof store === "object" ? store : {};
+  } catch (error) {
+    console.warn("[LocalCacheManager] Failed to read local lyrics:", error);
+    return {};
+  }
+};
+
+const hasSavedLocalLyrics = (trackUri) => !!trackUri && !!readSavedLocalLyricsStore()[trackUri];
+
+const deleteSavedLocalLyrics = (trackUri) => {
+  if (!hasSavedLocalLyrics(trackUri)) return false;
+  if (typeof window.lyricContainer?.deleteLocalLyrics === "function") {
+    window.lyricContainer.deleteLocalLyrics(trackUri);
+  } else {
+    const store = readSavedLocalLyricsStore();
+    delete store[trackUri];
+    StorageManager.setItem(LOCAL_LYRICS_STORAGE_KEY, JSON.stringify(store));
+  }
+  window.LyricsService?.clearLyricsSnapshot?.(trackUri);
+  window.dispatchEvent(new CustomEvent("ivLyrics:local-lyrics-updated", {
+    detail: { trackUri, deleted: true },
+  }));
+  return true;
+};
+
 const LocalCacheManager = () => {
   const [stats, setStats] = useState(null);
   const [openDbInfo, setOpenDbInfo] = useState(null);
@@ -2316,13 +2347,27 @@ const LocalCacheManager = () => {
   // 현재 곡 캐시 삭제
   const handleClearCurrent = async () => {
     const trackUri = Spicetify.Player.data?.item?.uri;
-    const trackId = trackUri?.split(':')[2];
+    // 로컬 곡 URI(spotify:local:아티스트:앨범:제목:길이)는 세 번째 칸이 아티스트명이라
+    // 엉뚱한 키를 지웠다. 캐시는 Spotify 트랙 ID 또는 local-uri: 키로 저장된다.
+    const spotifyTrackId = Utils.extractTrackId?.(trackUri) || null;
+    const trackId = spotifyTrackId || Utils.getTranslationCacheId?.(trackUri) || null;
     if (!trackId) {
       Toast.error(I18n.t("notifications.noTrackPlaying"));
       return;
     }
 
+    // 로컬 곡은 저장된 로컬 가사가 남아 있으면 다시 불러올 때 그대로 복원되므로,
+    // 확인을 받은 경우에만 함께 지운다.
+    const removeLocalLyrics = !spotifyTrackId
+      && hasSavedLocalLyrics(trackUri)
+      && window.confirm(getSettingsText(
+        "menu.localLyricsDeleteConfirm",
+        "Delete the local lyrics saved for this track? This can't be undone."
+      ));
+
     try {
+      const removedLocalLyrics = removeLocalLyrics && deleteSavedLocalLyrics(trackUri);
+
       // 번역 메모리 캐시도 함께 초기화
       window.Translator?.clearMemoryCache?.(trackId);
       window.Translator?.clearInflightRequests?.(trackId);
@@ -2362,7 +2407,9 @@ const LocalCacheManager = () => {
 
       // 캐시는 이미 지웠으므로 clearCache=false로 호출
       reloadLyrics?.(false);
-      Toast.success(I18n.t("notifications.localCacheTrackCleared"));
+      Toast.success(removedLocalLyrics
+        ? getSettingsText("notifications.localLyricsDeleted", "Local lyrics deleted")
+        : I18n.t("notifications.localCacheTrackCleared"));
     } catch (e) {
       console.error('[LocalCacheManager] Clear track failed:', e);
     }
