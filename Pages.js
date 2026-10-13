@@ -4020,8 +4020,18 @@ const getElementOffsetTopWithin = (element, container) => {
 
 const LYRICS_CENTERING_DURATION_MS = 420;
 const LYRICS_CENTERING_LEAD_MS = 300;
-const LYRICS_CENTERING_STAGGER_MS = 38;
-const LYRICS_CENTERING_MAX_STAGGER_MS = 180;
+// Compact rows travel on a critically damped spring; its stiffness is
+// omega * duration. Less than 1% of the travel remains after 470ms.
+const LYRICS_LINE_MOTION_DURATION_MS = 560;
+const LYRICS_LINE_MOTION_STIFFNESS = 7.5;
+const LYRICS_LINE_MOTION_MAX_SLOPE = LYRICS_LINE_MOTION_STIFFNESS
+	/ (1 - Math.exp(-LYRICS_LINE_MOTION_STIFFNESS));
+const LYRICS_LINE_MOTION_SEGMENTS = 40;
+// Presentation easing for engines without linear(): it still leaves rest softly.
+const LYRICS_LINE_MOTION_FALLBACK_EASE = "cubic-bezier(0.18, 0, 0.06, 1)";
+const LYRICS_CENTERING_STAGGER_MS = 50;
+const LYRICS_CENTERING_STAGGER_DECAY = 1 / 1.05;
+const LYRICS_CENTERING_MAX_STAGGER_MS = 260;
 const LYRICS_CENTERING_SETTLE_RESERVE_MS = 24;
 const LYRICS_CENTERING_MIN_TOTAL_MS = 80;
 const LYRICS_CENTERING_BEZIER = [0.22, 1, 0.36, 1];
@@ -4074,10 +4084,10 @@ const getMedian = (values) => {
 };
 
 const getAdaptiveLyricsCenteringTiming = (transitionWindowMs) => {
-	const defaultTotalMs = LYRICS_CENTERING_DURATION_MS + LYRICS_CENTERING_MAX_STAGGER_MS;
+	const defaultTotalMs = LYRICS_LINE_MOTION_DURATION_MS + LYRICS_CENTERING_MAX_STAGGER_MS;
 	if (!Number.isFinite(transitionWindowMs) || transitionWindowMs <= 0) {
 		return {
-			durationMs: LYRICS_CENTERING_DURATION_MS,
+			durationMs: LYRICS_LINE_MOTION_DURATION_MS,
 			staggerMs: LYRICS_CENTERING_STAGGER_MS,
 			maxStaggerMs: LYRICS_CENTERING_MAX_STAGGER_MS,
 		};
@@ -4091,89 +4101,171 @@ const getAdaptiveLyricsCenteringTiming = (transitionWindowMs) => {
 		transitionWindowMs - LYRICS_CENTERING_SETTLE_RESERVE_MS
 	);
 	const timingScale = Math.min(1, availableMs / defaultTotalMs);
+	const durationMs = Math.max(1, Math.round(LYRICS_LINE_MOTION_DURATION_MS * timingScale));
 	return {
-		durationMs: Math.max(1, Math.round(LYRICS_CENTERING_DURATION_MS * timingScale)),
-		staggerMs: Math.max(0, Math.round(LYRICS_CENTERING_STAGGER_MS * timingScale)),
-		maxStaggerMs: Math.max(0, Math.round(LYRICS_CENTERING_MAX_STAGGER_MS * timingScale)),
+		durationMs,
+		staggerMs: LYRICS_CENTERING_STAGGER_MS * timingScale,
+		// Rounding the travel must not push the last row past the window.
+		maxStaggerMs: Math.max(0, Math.min(
+			LYRICS_CENTERING_MAX_STAGGER_MS * timingScale,
+			Math.floor(availableMs) - durationMs
+		)),
 	};
 };
 
-// Distribute the delay across all visible rows. Clamping each row separately
-// makes the last rows start together when the configured window is large.
-const getLyricsLineStaggerDelay = (index, count, timing) => {
-	if (count <= 1) return 0;
-	const step = Math.min(timing.staggerMs, timing.maxStaggerMs / (count - 1));
-	return Math.max(0, index) * step;
+// Rows at or above the anchor start together. Each row below trails the one
+// above it by a slightly shorter step, capped so deep rows still settle
+// inside the window.
+const getLyricsLineStaggerDelay = (animationIndex, timing) => {
+	if (!(animationIndex > 0) || !(timing.staggerMs > 0)) return 0;
+	const decay = LYRICS_CENTERING_STAGGER_DECAY;
+	return Math.min(timing.maxStaggerMs,
+		timing.staggerMs * (1 - decay ** animationIndex) / (1 - decay));
 };
 
-const getLyricsLineMotionProgress = (progress, initialSlope = 2.2) => {
+// Planned once per line transition. Its timing reaches the CSS presentation in
+// the commit that changes each row's class and blur index; the WAAPI shift
+// reads the same values back from the row. Only a one-line advance from the
+// previous scripted line cascades. Seeks, jumps, settings changes and manual
+// scroll returns start every row together, as their travel does.
+const getLyricsLineMotionPlan = ({
+	previousContext = null,
+	visualLineIndex,
+	settingsRevision,
+	nextLineStart,
+	leadMs = 0,
+	position,
+	manualReturn = null,
+	now = Date.now(),
+}) => ({
+	...getAdaptiveLyricsCenteringTiming(Number.isFinite(nextLineStart) ? nextLineStart - leadMs - position : null),
+	cascade: !(manualReturn && now < manualReturn.expiresAt)
+		&& !!previousContext
+		&& previousContext.settingsRevision === settingsRevision
+		&& previousContext.visualLineIndex === visualLineIndex - 1,
+});
+
+const getLyricsLineMotionStyle = (animationIndex, plan) => ({
+	"--line-motion-delay": `${plan.cascade ? getLyricsLineStaggerDelay(animationIndex, plan) : 0}ms`,
+	"--line-motion-duration": `${plan.durationMs}ms`,
+	// Presentation changes start from rest, like a row that was not moving.
+	"--line-motion-ease": getLyricsLineMotionEasing(0) || LYRICS_LINE_MOTION_FALLBACK_EASE,
+});
+
+// A shorter vocal window compresses the rendered delay and duration together
+// so the travel still settles in time. It never lengthens either value.
+const getLyricsLineRenderedMotionTiming = (element, timing) => {
+	const style = element?.style;
+	const durationMs = Number.parseFloat(style?.getPropertyValue?.("--line-motion-duration"));
+	if (!(durationMs > 0)) return { durationMs: timing.durationMs, delayMs: 0 };
+	const delayMs = Number.parseFloat(style.getPropertyValue("--line-motion-delay"));
+	const scale = Math.min(1, timing.durationMs / durationMs);
+	return { durationMs: durationMs * scale, delayMs: delayMs > 0 ? delayMs * scale : 0 };
+};
+
+// Critically damped spring, normalized to land exactly at u = 1:
+// p(u) = (1 - (1 + (k - s)u)e^(-ku)) / (1 - (1 + k - s)e^(-k)).
+// s is solved from the requested dp/du at u = 0 so a retargeted row keeps its
+// velocity; clamping it to [0, k] keeps the curve monotonic without overshoot.
+const getLyricsLineMotionProgress = (progress, initialSlope = 0) => {
 	const t = Math.max(0, Math.min(1, progress));
-	const slope = Math.max(0, Math.min(2.5, initialSlope));
-	// Monotonic quintic: retain incoming velocity, settle with zero velocity
-	// and acceleration, and never overshoot the measured lyric anchor.
-	return (6 - 3 * slope) * t ** 5 + (8 * slope - 15) * t ** 4
-		+ (10 - 6 * slope) * t ** 3 + slope * t;
+	const k = LYRICS_LINE_MOTION_STIFFNESS;
+	const tail = Math.exp(-k);
+	const slope = Math.max(0, Number(initialSlope) || 0);
+	const s = Math.min(k, slope * (1 - (1 + k) * tail) / Math.max(Number.EPSILON, 1 - slope * tail));
+	const settle = k - s;
+	return (1 - (1 + settle * t) * Math.exp(-k * t)) / (1 - (1 + settle) * tail);
 };
 
-const lyricsLineMotionEasings = new Map();
+// Quadratic spacing keeps eight stops inside the first 24th of the travel, so
+// the sampled path leaves rest as softly as the spring instead of on a chord.
+const LYRICS_LINE_MOTION_STOP_PERCENTS = Array.from(
+	{ length: LYRICS_LINE_MOTION_SEGMENTS + 1 },
+	(_, index) => index * index * 100 / LYRICS_LINE_MOTION_SEGMENTS ** 2
+);
+const lyricsLineMotionCurves = new Map();
+const getLyricsLineMotionCurve = (initialSlope) => {
+	let curve = lyricsLineMotionCurves.get(initialSlope);
+	if (!curve) {
+		// Bound the cache because interrupted rows have varying slopes.
+		if (lyricsLineMotionCurves.size >= 32) lyricsLineMotionCurves.clear();
+		const stops = LYRICS_LINE_MOTION_STOP_PERCENTS.map((percent) => [
+			percent / 100,
+			Math.round(getLyricsLineMotionProgress(percent / 100, initialSlope) * 1e6) / 1e6,
+		]);
+		curve = {
+			stops,
+			easing: `linear(${stops.map(([, value], index) => `${value} ${LYRICS_LINE_MOTION_STOP_PERCENTS[index]}%`).join(", ")})`,
+		};
+		lyricsLineMotionCurves.set(initialSlope, curve);
+	}
+	return curve;
+};
+
 const getLyricsLineMotionEasing = (initialSlope) => {
 	if (typeof CSS === "undefined" || !CSS.supports?.("animation-timing-function", "linear(0, 1)")) {
 		return null;
 	}
-	if (!lyricsLineMotionEasings.has(initialSlope)) {
-		// Keep the same sampled curve while handing only two transforms to the
-		// compositor. Bound the cache because interrupted rows have varying slopes.
-		if (lyricsLineMotionEasings.size >= 32) lyricsLineMotionEasings.clear();
-		lyricsLineMotionEasings.set(initialSlope, `linear(${Array.from({ length: 25 }, (_, index) =>
-			getLyricsLineMotionProgress(index / 24, initialSlope)).join(",")})`);
-	}
-	return lyricsLineMotionEasings.get(initialSlope);
+	// Keep the same sampled curve while handing only two transforms to the compositor.
+	return getLyricsLineMotionCurve(initialSlope).easing;
 };
 
 const createLyricsLineShiftMotion = (targetTransform, deltaY, durationMs, velocityY = null) => {
 	if (Number.isFinite(velocityY) && velocityY * deltaY < 0) {
 		// A small anchor correction needs less time, not an abrupt loss of
 		// velocity caused by forcing another full-duration monotonic curve.
-		durationMs = Math.min(durationMs, Math.abs(deltaY / velocityY) * 2.5);
+		durationMs = Math.min(durationMs, Math.abs(deltaY / velocityY) * LYRICS_LINE_MOTION_STIFFNESS);
 	}
 	durationMs = Math.max(1, durationMs);
+	// Rows at rest leave with zero velocity; moving rows hand theirs over.
 	const initialSlope = Number.isFinite(velocityY) && Math.abs(deltaY) > 0.01
-		? Math.max(0, Math.min(2.5, -velocityY * durationMs / deltaY))
-		: 2.2;
+		? Math.max(0, Math.min(LYRICS_LINE_MOTION_MAX_SLOPE, -velocityY * durationMs / deltaY))
+		: 0;
+	const { stops } = getLyricsLineMotionCurve(initialSlope);
 	const easing = getLyricsLineMotionEasing(initialSlope);
 	const keyframes = easing ? [
 		{ offset: 0, transform: offsetTransformVertically(targetTransform, deltaY) },
 		{ offset: 1, transform: targetTransform },
-	] : Array.from({ length: 25 }, (_, index) => {
-		const progress = index / 24;
-		return {
-			offset: progress,
-			transform: offsetTransformVertically(targetTransform,
-				deltaY * (1 - getLyricsLineMotionProgress(progress, initialSlope))),
-		};
-	});
-	return { targetTransform, deltaY, durationMs, initialSlope, keyframes, easing: easing || "linear" };
+	] : stops.map(([offset, value]) => ({
+		offset,
+		transform: offsetTransformVertically(targetTransform, deltaY * (1 - value)),
+	}));
+	return { targetTransform, deltaY, durationMs, initialSlope, stops, keyframes, easing: easing || "linear" };
+};
+
+// WAAPI interpolates these same stops linearly, whether as linear() easing or
+// as fallback keyframes. Retargeting reads position and velocity from them.
+const getLyricsLineMotionSegment = (stops, progress) => {
+	let low = 0;
+	let high = stops.length - 2;
+	while (low < high) {
+		const middle = (low + high + 1) >>> 1;
+		if (stops[middle][0] <= progress) low = middle;
+		else high = middle - 1;
+	}
+	return low;
 };
 
 const getLyricsLineShiftOffset = (motion, currentTime) => {
-	const progress = Math.max(0, Math.min(1, (currentTime - motion.delay) / motion.durationMs));
-	const step = progress * 24;
-	const segment = Math.min(23, Math.floor(step));
-	const from = getLyricsLineMotionProgress(segment / 24, motion.initialSlope);
-	const to = getLyricsLineMotionProgress((segment + 1) / 24, motion.initialSlope);
-	const eased = from + (to - from) * (step - segment);
+	const progress = Math.max(0, Math.min(1, (currentTime - (motion.delay || 0)) / motion.durationMs));
+	const stops = motion.stops || getLyricsLineMotionCurve(motion.initialSlope).stops;
+	const segment = getLyricsLineMotionSegment(stops, progress);
+	const [fromTime, from] = stops[segment];
+	const [toTime, to] = stops[segment + 1];
+	const eased = from + (to - from) * (progress - fromTime) / (toTime - fromTime);
 	return motion.deltaY * (1 - eased);
 };
 
 const getLyricsLineShiftVelocity = (motion, currentTime, delay = 0) => {
 	const progress = (currentTime - delay) / motion.durationMs;
 	if (progress < 0 || progress >= 1) return 0;
-	// WAAPI interpolates these keyframes linearly. Read that same segment's
-	// velocity when retargeting, rather than restarting from a resting curve.
-	const segment = Math.min(23, Math.floor(progress * 24));
-	const from = getLyricsLineMotionProgress(segment / 24, motion.initialSlope);
-	const to = getLyricsLineMotionProgress((segment + 1) / 24, motion.initialSlope);
-	return -motion.deltaY * (to - from) * 24 / motion.durationMs;
+	// Read the segment the browser is interpolating when retargeting, rather
+	// than restarting from a resting curve.
+	const stops = motion.stops || getLyricsLineMotionCurve(motion.initialSlope).stops;
+	const segment = getLyricsLineMotionSegment(stops, progress);
+	const [fromTime, from] = stops[segment];
+	const [toTime, to] = stops[segment + 1];
+	return -motion.deltaY * (to - from) / ((toTime - fromTime) * motion.durationMs);
 };
 
 const cubicBezierCoordinate = (t, first, second) => {
@@ -6281,6 +6373,23 @@ const useSyncedLyricsEngine = ({
 	const compactLineMotionContextRef = useRef(null);
 	const compactLinePlaybackPositionRef = useRef(position);
 	compactLinePlaybackPositionRef.current = position;
+	// Rows receive their travel timing in the commit that changes their class
+	// and blur index. CSS transitions start at that commit's style pass; the
+	// scheduled WAAPI shift then reads the same timing back from each row.
+	// Keyed by the transition, not the clock: the window is measured once, when
+	// the line changes, so row styles stay stable between boundaries.
+	const lineMotionPlan = useMemo(() => usesScriptedCompactLineShift ? getLyricsLineMotionPlan({
+		previousContext: compactLineMotionContextRef.current,
+		visualLineIndex,
+		settingsRevision,
+		nextLineStart: paddedLyrics[visualLineIndex + 1]?.startTime,
+		leadMs: shouldPrecenterKaraokeTransitions ? LYRICS_CENTERING_LEAD_MS : 0,
+		position,
+		manualReturn: syncedManualScrollReturns.get(containerRef.current),
+	}) : null, [usesScriptedCompactLineShift, visualLineIndex, settingsRevision, lyricsId]);
+	const trailingInterludeLineStyle = useMemo(() => trailingInterludeStyle && lineMotionPlan
+		? { ...trailingInterludeStyle, ...getLyricsLineMotionStyle(trailingInterludeStyle["--position-index"], lineMotionPlan) }
+		: trailingInterludeStyle, [trailingInterludeStyle, lineMotionPlan]);
 	const previousPreparedLyricsRef = useRef(preparedLyrics);
 	const layoutShiftAnimationFramesRef = useRef({ first: null, second: null });
 	const layoutObserverRef = useRef(null);
@@ -6448,6 +6557,7 @@ const useSyncedLyricsEngine = ({
 					: "var(--iv-lyrics-centering-duration, 300ms)",
 				"--line-shift-delay": "0s",
 				"--blur-index": Math.min(Math.abs(animationIndex), 3),
+				...(lineMotionPlan ? getLyricsLineMotionStyle(animationIndex, lineMotionPlan) : null),
 			};
 		});
 	}, [
@@ -6464,6 +6574,7 @@ const useSyncedLyricsEngine = ({
 		settingsRevision,
 		getLinePresentation,
 		linesBefore,
+		lineMotionPlan,
 	]);
 
 	useEffect(() => {
@@ -6575,10 +6686,6 @@ const useSyncedLyricsEngine = ({
 			if (!returningFromScroll && (jump || !previousContext)) return;
 			const sharedDelta = getMedian(lineStates.flatMap(({ deltaY }) => Number.isFinite(deltaY) ? [deltaY] : []));
 			if (!Number.isFinite(sharedDelta)) return;
-			const orderedStates = [...lineStates].sort((a, b) => sharedDelta >= 0 ? a.targetY - b.targetY : b.targetY - a.targetY);
-			// Padding participates in the geometry but must not consume a delay
-			// slot ahead of the first visible lyric.
-			const orderedLyrics = orderedStates.filter(({ element }) => !boundaryPadding.has(element));
 			const activeVocalStack = activeLineRef.current?.querySelector?.(".lyrics-karaoke-stack[data-karaoke-vocal-anchor-window-ms]");
 			const vocalWindow = Number(activeVocalStack?.getAttribute("data-karaoke-vocal-anchor-window-ms"));
 			const nextLineStart = paddedLyrics[visualLineIndex + 1]?.startTime;
@@ -6589,9 +6696,6 @@ const useSyncedLyricsEngine = ({
 			const transitionWindow = windows.length ? Math.min(...windows) : null;
 			const skipNewMotion = !returningFromScroll && transitionWindow !== null && transitionWindow < LYRICS_CENTERING_MIN_TOTAL_MS;
 			const timing = getAdaptiveLyricsCenteringTiming(transitionWindow);
-			const delayByElement = new Map(orderedLyrics.map(({ element }, index) => [
-				element, getLyricsLineStaggerDelay(index, orderedLyrics.length, timing),
-			]));
 			const sharedStartTime = document.timeline?.currentTime;
 			for (const { element, previous, targetTransform, deltaY } of lineStates) {
 				// Anchor notifications can arrive during an existing stagger. Keep
@@ -6606,16 +6710,19 @@ const useSyncedLyricsEngine = ({
 				if (skipNewMotion) continue;
 				const distance = Number.isFinite(deltaY) ? deltaY : sharedDelta;
 				if (Math.abs(distance) < 0.25) continue;
+				// The row's commit already started its color, opacity and blur on
+				// this delay and duration; the travel reads them back from its style.
+				const rendered = getLyricsLineRenderedMotionTiming(element, timing);
 				const wasMoving = previous.motion && previous.currentTime >= previous.motion.delay
 					&& previous.currentTime < previous.motion.delay + previous.motion.durationMs;
 				const velocity = wasMoving ? getLyricsLineShiftVelocity(previous.motion, previous.currentTime, previous.motion.delay) : null;
 				// A row already in motion must not freeze for a second stagger.
 				const delay = wasMoving || returningFromScroll ? 0 : !sourceChanged && previous.motion
 					? Math.max(0, previous.motion.delay - previous.currentTime)
-					: delayByElement.get(element) || 0;
+					: rendered.delayMs;
 				const duration = wasMoving
-					? Math.min(timing.durationMs, Math.max(1, previous.motion.durationMs - previous.currentTime + previous.motion.delay))
-					: timing.durationMs;
+					? Math.min(rendered.durationMs, Math.max(1, previous.motion.durationMs - previous.currentTime + previous.motion.delay))
+					: rendered.durationMs;
 				const motion = createLyricsLineShiftMotion(targetTransform, distance, duration, velocity);
 				motion.delay = delay;
 				const animation = element.animate(motion.keyframes, {
@@ -6779,7 +6886,7 @@ const useSyncedLyricsEngine = ({
 					key: `trailing-interlude-${lineNumber}-${trailingInterludeLine.startTime}`,
 					className: `lyrics-lyricsContainer-LyricsLine${isTrailingInterludeActive ? " lyrics-lyricsContainer-LyricsLine-active" : ""}`
 						+ getLyricsLineDetailClass(lyricMotionDetailsEnabled, isTrailingInterludeActive, false, isInterludeHandoff),
-					style: trailingInterludeStyle,
+					style: trailingInterludeLineStyle,
 					line: trailingInterludeLine,
 					startTime: trailingInterludeLine.startTime,
 					originalText: "",
@@ -6822,7 +6929,7 @@ const useSyncedLyricsEngine = ({
 		visualAnchorLineNumber,
 		visualAnchorUsesTrailingInterlude,
 		trailingInterludeKey,
-		trailingInterludeStyle,
+		trailingInterludeLineStyle,
 		isTrailingInterludeActive,
 		globalCharOffsets,
 		stableLineStyles,
@@ -6849,6 +6956,8 @@ const useSyncedLyricsEngine = ({
 		handleContainerClick,
 		renderItems,
 		compactOffset,
+		// The page scopes its one-clock presentation rules to scripted motion.
+		lineMotionScripted: !!lineMotionPlan && !suppressLayoutShiftAnimation,
 		activeLineIndex,
 		activeLyricIndex: Math.max(0, activeLineIndex - leadingEmptyLines),
 		globalCharOffsets,
@@ -8810,6 +8919,7 @@ const SyncedLyricsPage = react.memo(({ lyrics = [], provider, contributors, copy
 		handleContainerClick,
 		renderItems,
 		compactOffset,
+		lineMotionScripted,
 	} = useSyncedLyricsEngine({
 		lyrics,
 		position: karaokePosition,
@@ -8845,7 +8955,7 @@ const SyncedLyricsPage = react.memo(({ lyrics = [], provider, contributors, copy
 	return react.createElement(
 		"div",
 		{
-			className: `lyrics-lyricsContainer-SyncedLyricsPage${isKara ? " is-karaoke" : ""}${karaokeLineTransitionClass}${isScrolling ? " scrolling-active" : ""}`,
+			className: `lyrics-lyricsContainer-SyncedLyricsPage${isKara ? " is-karaoke" : ""}${karaokeLineTransitionClass}${isScrolling ? " scrolling-active" : ""}${lineMotionScripted ? " scripted-line-motion" : ""}`,
 			ref: containerRefCallback,
 			onClick: handleContainerClick,
 			tabIndex: 0,
