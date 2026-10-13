@@ -1887,6 +1887,12 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
         }
     };
 
+    // 확장 컨텍스트에서는 앱의 I18n이 아직 없을 수 있어 Spotify 언어로 기본 문구를 고른다.
+    const getPanelFallbackText = (koreanText, englishText) => {
+        const locale = String(window.Spicetify?.Locale?.getLocale?.() || navigator.language || "").toLowerCase();
+        return locale.startsWith("ko") ? koreanText : englishText;
+    };
+
     const getPseudoKaraokeRenderAdvance = () => {
         const configuredAdvance = Number(getVisualSetting("pseudo-karaoke-render-advance", 0));
         return Number.isFinite(configuredAdvance) ? configuredAdvance : 0;
@@ -3853,6 +3859,8 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
             || (currentLyricsState.trackUri === initialTrackUri ? currentLyricsState.karaokeSource : null);
         const [lyrics, setLyrics] = useState(initialLyrics);
         const [karaokeSource, setKaraokeSource] = useState(initialKaraokeSource);
+        // 조회가 끝났는데 가사가 없으면 "불러오는 중" 대신 "가사를 찾을 수 없음"을 보여준다.
+        const [lyricsNotFound, setLyricsNotFound] = useState(false);
         const [currentIndex, setCurrentIndex] = useState(0);
         const [visualIndex, setVisualIndex] = useState(0);
         const [singingLineIndices, setSingingLineIndices] = useState([]);
@@ -3948,6 +3956,7 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
 
             loadingRef.current = true;
             lastTrackUri.current = trackUri;
+            setLyricsNotFound(false);
 
             // 로딩 시작 시점의 트랙 URI를 캡처 (비동기 작업 완료 후 검증용)
             const loadingForTrackUri = trackUri;
@@ -4048,6 +4057,7 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
                             getPanelSupplementVisibility(null, null, false)
                         );
                         setLyrics(lyricsData);
+                        setLyricsNotFound(false);
                         setKaraokeSource(nextKaraokeSource);
                         currentLyricsState.lyrics = lyricsData;
                         currentLyricsState.trackUri = loadingForTrackUri;
@@ -4093,12 +4103,14 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
                     } else {
                         panelDebug("[PanelLyrics] No lyrics in result");
                         setLyrics([]);
+                        setLyricsNotFound(true);
                         setKaraokeSource(null);
                         currentLyricsState.lyrics = [];
                     }
                 } else {
                     panelDebug("[PanelLyrics] No lyrics found:", result?.error);
                     setLyrics([]);
+                    setLyricsNotFound(true);
                     setKaraokeSource(null);
                     currentLyricsState.lyrics = [];
                 }
@@ -4106,6 +4118,7 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
                 console.error("[PanelLyrics] Failed to load lyrics:", error);
                 if (isActiveLoad(loadSeq, loadingForTrackUri)) {
                     setLyrics([]);
+                    setLyricsNotFound(true);
                     setKaraokeSource(null);
                 }
             } finally {
@@ -4371,6 +4384,7 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
                 loadingRef.current = false;
                 lastTrackUri.current = null;
                 setLyrics([]);
+                setLyricsNotFound(false);
                 setKaraokeSource(null);
                 setCurrentIndex(0);
                 setVisualIndex(0);
@@ -4541,6 +4555,9 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
                 );
                 lastTrackUri.current = currentUri;
                 setLyrics(nextLyrics);
+                if (nextLyrics.length > 0) {
+                    setLyricsNotFound(false);
+                }
                 setKaraokeSource(detail.karaokeSource || null);
                 currentLyricsState.lyrics = nextLyrics;
                 currentLyricsState.trackUri = currentUri;
@@ -5240,7 +5257,9 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
                     react.createElement("h2", null, "ivLyrics")
                 ),
                 react.createElement("div", { className: "ivlyrics-panel-empty" },
-                    translatePanelText("syncCreator.loadingLyrics", "가사 불러오는 중")
+                    lyricsNotFound
+                        ? translatePanelText("syncCreator.noLyrics", getPanelFallbackText("가사를 찾을 수 없습니다", "Lyrics not found"))
+                        : translatePanelText("syncCreator.loadingLyrics", getPanelFallbackText("가사 불러오는 중", "Loading lyrics..."))
                 )
             );
 
@@ -5355,6 +5374,84 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
         }
 
         return document.querySelector('.iHa_q9pq4un3VNRQgwTx')?.parentElement || null;
+    };
+
+    // ============================================
+    // 패널 안에서 가사 카드 위치 찾기
+    // ============================================
+    // Spotify 업데이트 직후처럼 Spicetify CSS 맵이 Now Playing 클래스(.main-nowPlayingView-*)를
+    // 매핑하지 못하면 곡 정보 블록을 찾지 못해 가사 카드가 패널 맨 끝(아티스트 정보 아래)에
+    // 붙었고, 한 번 붙은 뒤에는 다시 옮기지 않았다.
+    // Spotify가 직접 다는 data-testid로 곡 정보 블록을 찾고, 어긋나 있으면 다시 옮긴다.
+    // 곡 정보 블록의 첫 자식은 상태와 관계없이 항상 이 data-testid를 가진다.
+    const PANEL_HEADER_VISUAL_SELECTOR = '[data-testid="minimized-track-visual-enhancement"]';
+    const PANEL_COVER_SELECTOR = '.main-nowPlayingView-coverArtContainer, [data-testid="track-visual-enhancement"], [data-testid="video-player-npv"]';
+    const PANEL_SLOT_MAX_RETRIES = 10;
+    const PANEL_SLOT_RETRY_DELAY = 150;
+    let panelSlotRetryCount = 0;
+
+    const findPanelContextItemInfo = (panel) => {
+        if (!panel) return null;
+        const mapped = panel.querySelector('.main-nowPlayingView-contextItemInfo');
+        if (mapped) return mapped;
+
+        const headerVisual = panel.querySelector(PANEL_HEADER_VISUAL_SELECTOR);
+        if (!headerVisual) return null;
+        // 곡 정보 블록은 커버(앨범아트/영상) 영역과 같은 그리드 안의 형제 요소다.
+        let node = headerVisual;
+        while (node.parentElement && node.parentElement !== panel) {
+            const parent = node.parentElement;
+            const cover = parent.querySelector(PANEL_COVER_SELECTOR);
+            if (cover && !node.contains(cover)) {
+                return node;
+            }
+            node = parent;
+        }
+        return headerVisual.parentElement !== panel ? headerVisual.parentElement : null;
+    };
+
+    // 가사 카드 자리: 곡 정보 블록 바로 다음, 없으면 첫 관련 섹션(뮤직비디오 등) 앞.
+    const getPanelLyricsSlot = (panel) => {
+        const contextItemInfo = findPanelContextItemInfo(panel);
+        if (contextItemInfo?.parentElement) {
+            return { parent: contextItemInfo.parentElement, after: contextItemInfo, before: null };
+        }
+        const relatedSection = panel?.querySelector('.main-nowPlayingView-section');
+        if (relatedSection?.parentElement) {
+            return { parent: relatedSection.parentElement, after: null, before: relatedSection };
+        }
+        return null;
+    };
+
+    const isPanelContainerPlaced = (container, slot) => {
+        if (!slot) return true;
+        if (container.parentElement !== slot.parent) return false;
+        return slot.after
+            ? container.previousElementSibling === slot.after
+            : container.nextElementSibling === slot.before;
+    };
+
+    // 자리를 찾으면 그 자리로 옮기고 true, 기준점이 아직 없으면 false.
+    const placePanelContainer = (panel, container) => {
+        const slot = getPanelLyricsSlot(panel);
+        if (!slot) return false;
+        if (!isPanelContainerPlaced(container, slot)) {
+            const reference = slot.after ? slot.after.nextSibling : slot.before;
+            if (reference !== container) {
+                slot.parent.insertBefore(container, reference);
+            }
+            panelDebug("[NowPlayingPanelLyrics] Placed panel lyrics under the track info");
+        }
+        return true;
+    };
+
+    // 곡 정보가 늦게 그려지거나 Spotify가 패널을 다시 그려 카드가 어긋났을 때 바로잡는다.
+    const ensurePanelContainerPlacement = (panel, container) => {
+        if (!panel || !container || !panel.contains(container)) return;
+        const slot = getPanelLyricsSlot(panel);
+        if (slot && !isPanelContainerPlaced(container, slot)) {
+            placePanelContainer(panel, container);
+        }
     };
 
     // ============================================
@@ -5495,10 +5592,26 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
             if (!panel.contains(existingContainer)) {
                 removePanelLyrics();
             } else {
+                ensurePanelContainerPlacement(panel, existingContainer);
                 renderPanelLyricsIntoContainer(existingContainer);
                 return;
             }
         }
+
+        // 곡 정보 (곡명, 아티스트) 바로 아래에 둔다. Now Playing 패널 구조:
+        // main-nowPlayingView-nowPlayingGrid
+        //   ├── main-nowPlayingView-coverArtContainer (동영상/앨범아트)
+        //   ├── 동영상 전환 버튼
+        //   ├── main-nowPlayingView-contextItemInfo (곡제목+아티스트+버튼들)  ← 이 다음
+        //   └── main-nowPlayingView-section (관련 뮤직비디오 등)
+        const slot = getPanelLyricsSlot(panel);
+        if (!slot && panelSlotRetryCount < PANEL_SLOT_MAX_RETRIES) {
+            // 곡 정보가 아직 그려지지 않았다. 패널 끝에 붙이지 말고 잠시 뒤 다시 찾는다.
+            panelSlotRetryCount += 1;
+            scheduleInsertPanelLyrics(PANEL_SLOT_RETRY_DELAY);
+            return;
+        }
+        panelSlotRetryCount = 0;
 
         // CSS 스타일 주입 (처음 한 번만)
         injectStyles();
@@ -5507,45 +5620,12 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
         const container = document.createElement('div');
         container.className = PANEL_CONTAINER_CLASS;
 
-        const placeLyricsContainer = () => {
-            const contextItemInfo = panel.querySelector('.main-nowPlayingView-contextItemInfo');
-
-            if (contextItemInfo && contextItemInfo.parentElement) {
-                // contextItemInfo 바로 다음에 삽입
-                const parent = contextItemInfo.parentElement;
-                const nextSibling = contextItemInfo.nextElementSibling;
-                if (nextSibling) {
-                    parent.insertBefore(container, nextSibling);
-                } else {
-                    parent.appendChild(container);
-                }
-                panelDebug("[NowPlayingPanelLyrics] Inserted after contextItemInfo");
-            } else {
-                // 폴백: 관련 뮤직비디오 섹션 앞에 삽입
-                const relatedSection = panel.querySelector('.main-nowPlayingView-section');
-                if (relatedSection && relatedSection.parentElement) {
-                    relatedSection.parentElement.insertBefore(container, relatedSection);
-                    panelDebug("[NowPlayingPanelLyrics] Inserted before related section");
-                } else {
-                    // 최종 폴백: 패널 끝에 삽입
-                    panel.appendChild(container);
-                    panelDebug("[NowPlayingPanelLyrics] Used fallback - appended to panel");
-                }
-            }
-        };
-
-        // 곡 정보 (곡명, 아티스트) 바로 **아래**에 삽입
-        // Now Playing 패널 구조:
-        // main-nowPlayingView-nowPlayingGrid
-        //   ├── main-nowPlayingView-coverArtContainer (동영상/앨범아트)
-        //   ├── 동영상 전환 버튼
-        //   ├── main-nowPlayingView-contextItemInfo (곡제목+아티스트+버튼들)
-        //   └── main-nowPlayingView-section (관련 뮤직비디오 등)
-        //
-        // 가사는 main-nowPlayingView-contextItemInfo 바로 **다음**에 삽입해야 함
-
-        // contextItemInfo 찾기 (곡제목, 아티스트, 버튼들을 포함하는 컨테이너)
-        placeLyricsContainer();
+        if (!placePanelContainer(panel, container)) {
+            // 끝까지 기준점을 찾지 못한 구조에서만 패널 끝에 붙인다.
+            // 이후 곡 정보가 나타나면 MutationObserver가 제자리로 옮긴다.
+            panel.appendChild(container);
+            panelDebug("[NowPlayingPanelLyrics] Used fallback - appended to panel");
+        }
 
         if (renderPanelLyricsIntoContainer(container)) {
             panelDebug("[NowPlayingPanelLyrics] Panel lyrics inserted successfully");
@@ -5603,6 +5683,9 @@ body.ivlyrics-starrynight-theme .Root__now-playing-bar {
             } else if (!panel && container) {
                 // 패널이 없지만 컨테이너가 있으면 제거
                 removePanelLyrics();
+            } else if (panel && container) {
+                // 곡 정보가 늦게 그려지거나 패널이 다시 그려져 카드가 어긋나면 제자리로 옮긴다.
+                ensurePanelContainerPlacement(panel, container);
             }
         });
 
