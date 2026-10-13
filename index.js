@@ -11100,6 +11100,14 @@ class LyricsContainer extends react.Component {
         className: `lyrics-lyricsContainer-LyricsContainer${CONFIG.visual["fade-blur"] ? " blur-enabled" : ""
           }${CONFIG.visual["highlight-mode"] ? " highlight-mode-enabled" : ""}${fadLyricsContainer ? " fad-enabled" : ""}${fullscreenClasses}${shouldReduceMotion ? " motion-reduced" : ""}${this.state.isPlaybackPaused ? " playback-paused" : ""}${isSyncCreatorActive ? " sync-creator-minimal" : ""}`,
         style: this.styleVariables,
+        // Spotify's OverlayScrollbars wrapper skips mutations inside elements
+        // marked scroll-size contained. Without it, every lyric DOM change
+        // (glyph states, live karaoke paint, line motion) made the main view
+        // re-measure its scroll size in a microtask, forcing a synchronous
+        // style and layout pass. This page is absolutely positioned with
+        // hidden overflow and layout containment, so its content can never
+        // change the main view's scroll size.
+        "data-scroll-size-contained": "",
         ref: (el) => {
           if (!el) return;
           this.containerRef.current = el;
