@@ -1003,8 +1003,22 @@ const normalizeLoadedSyncCreatorBodyForLyrics = (syncBody, lyricsText) => {
 	const sourceLineCounts = Array.isArray(syncBody?.source?.lineCharCounts)
 		? syncBody.source.lineCharCounts
 		: null;
-	if (!sourceLineCounts) return syncBody;
 	const currentLineCounts = getSyncCreatorLineCharCountsFromText(lyricsText);
+	if (!sourceLineCounts) {
+		// Older submissions have no source ID/fingerprint. Do not attach their
+		// absolute indexes to a different LRCLIB text when loading the editor.
+		const lineEndsByStart = new Map();
+		let start = 0;
+		for (const count of currentLineCounts) {
+			lineEndsByStart.set(start, start + count - 1);
+			start += count;
+		}
+		const compatible = currentLineCounts.length > 0 && syncBody.lines.every(line => (
+			Number.isSafeInteger(line?.start) && Number.isSafeInteger(line?.end)
+			&& lineEndsByStart.get(line.start) === line.end
+		));
+		return compatible ? syncBody : null;
+	}
 	const prefix = findSyncCreatorSourceLinePrefix(sourceLineCounts, currentLineCounts);
 	if (prefix < 0) return null;
 	if (prefix === 0 && syncBody?.source?.lyricsFingerprint) {
@@ -3554,7 +3568,9 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		}
 		if (loadedSyncBody) {
 			const normalizedLoadedSyncBody = normalizeLoadedSyncCreatorBodyForLyrics(loadedSyncBody, text);
-			if (normalizedLoadedSyncBody !== loadedSyncBody) {
+			if (!normalizedLoadedSyncBody) {
+				window.__ivLyricsDebugLog?.('[SyncDataCreator] Existing sync source does not match the selected lyrics; starting without its timings');
+			} else if (normalizedLoadedSyncBody !== loadedSyncBody) {
 				window.__ivLyricsDebugLog?.('[SyncDataCreator] Trimmed leading sync-data source lines for current lyrics');
 			}
 			loadedSyncBody = sanitizeSyncCreatorSyncData(
@@ -3573,6 +3589,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			serverBaselineSyncDataRef.current = null;
 			setHasPublishedSync(false);
 		}
+		if (!loadedSyncBody && !restoredUnsubmittedDraft) setSyncData(null);
 		if (text.trim().length > 0) {
 			const effectiveSyncBody = restoredUnsubmittedDraft?.draft?.syncData || loadedSyncBody;
 			const existingHasParallel = Array.isArray(effectiveSyncBody?.lines)
