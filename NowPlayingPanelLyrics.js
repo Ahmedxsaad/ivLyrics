@@ -85,7 +85,25 @@
     const DEFAULT_FONT_FAMILY = "Pretendard Variable";
     const DEFAULT_PANEL_WIDTH = 280;
     const PANEL_LINE_TRANSITION_DURATION_MS = 280;
-    const PANEL_LINE_TRANSITION_EASING = "cubic-bezier(0.20, 0.70, 0.42, 0.96)";
+    // The stack leaves rest with zero velocity on the same critically damped
+    // spring as the lyrics page rows (stiffness 7.5), sampled as CSS linear().
+    // Quadratic spacing keeps the soft start on the sampled path.
+    const PANEL_LINE_SPRING_STIFFNESS = 7.5;
+    const PANEL_LINE_SPRING_SEGMENTS = 40;
+    const createPanelLineSpringEasing = () => {
+        const k = PANEL_LINE_SPRING_STIFFNESS;
+        const tail = Math.exp(-k);
+        const progress = (t) => (1 - (1 + k * t) * Math.exp(-k * t)) / (1 - (1 + k) * tail);
+        const stops = Array.from({ length: PANEL_LINE_SPRING_SEGMENTS + 1 }, (_, index) => {
+            const percent = index * index * 100 / PANEL_LINE_SPRING_SEGMENTS ** 2;
+            return `${Math.round(progress(percent / 100) * 1e6) / 1e6} ${percent}%`;
+        });
+        return `linear(${stops.join(", ")})`;
+    };
+    const PANEL_LINE_TRANSITION_EASING = typeof CSS !== "undefined"
+        && CSS.supports?.("animation-timing-function", "linear(0, 1)")
+        ? createPanelLineSpringEasing()
+        : "cubic-bezier(0.20, 0.70, 0.42, 0.96)";
 
     const createPanelOutsideTextOutlineShadow = (widthValue, colorValue = "#000000") => {
         const width = Math.max(0, Math.min(10, Number(widthValue) || 0));
