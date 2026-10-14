@@ -462,6 +462,7 @@ window.LANG_RU = {
       "moveDown": "Вниз",
       "supports": {
         "translate": "Перевод",
+        "pronunciation": "Произношение",
         "metadata": "Метаданные",
         "tmi": "TMI",
         "researchWebSearch": "Веб-поиск для исследования",
@@ -471,6 +472,7 @@ window.LANG_RU = {
         "wordSupplements": "Детали слов"
       },
       "noEnabledProviders": "AI-провайдеры не включены. Пожалуйста, включите хотя бы одного провайдера в настройках.",
+      "noPronunciationProviders": "Ни один включённый провайдер ИИ не может создать произношение. Включите «Произношение» у провайдера в настройках «Провайдеры ИИ».",
       "allProvidersFailed": "Все AI-провайдеры не смогли обработать запрос.",
       "enabledCapabilities": "Включенные возможности",
       "capabilitiesDesc": "Выберите, какие функции обрабатывает этот провайдер",

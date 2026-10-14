@@ -462,6 +462,7 @@ window.LANG_TH = {
       "moveDown": "ย้ายลง",
       "supports": {
         "translate": "การแปล",
+        "pronunciation": "คำอ่าน",
         "metadata": "เมทาดาตา",
         "tmi": "TMI",
         "researchWebSearch": "ค้นหาเว็บสำหรับการวิจัย",
@@ -471,6 +472,7 @@ window.LANG_TH = {
         "wordSupplements": "รายละเอียดคำ"
       },
       "noEnabledProviders": "ไม่ได้เปิดใช้งานผู้ให้บริการ AI โปรดเปิดใช้งานอย่างน้อยหนึ่งรายในการตั้งค่า",
+      "noPronunciationProviders": "ไม่มีผู้ให้บริการ AI ที่เปิดใช้งานซึ่งสร้างคำอ่านได้ โปรดเปิด “คำอ่าน” ให้ผู้ให้บริการในการตั้งค่าผู้ให้บริการ AI",
       "allProvidersFailed": "ผู้ให้บริการ AI ทั้งหมดล้มเหลวในการร้องขอ",
       "enabledCapabilities": "ความสามารถที่เปิดใช้งาน",
       "capabilitiesDesc": "เลือกคุณสมบัติที่ผู้ให้บริการรายนี้จัดการ",

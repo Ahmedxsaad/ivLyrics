@@ -462,6 +462,7 @@ window.LANG_DE = {
       "moveDown": "Nach unten verschieben",
       "supports": {
         "translate": "Übersetzung",
+        "pronunciation": "Aussprache",
         "metadata": "Metadaten",
         "tmi": "TMI",
         "researchWebSearch": "Websuche für Recherche",
@@ -471,6 +472,7 @@ window.LANG_DE = {
         "wordSupplements": "Wortdetails"
       },
       "noEnabledProviders": "Keine KI-Anbieter aktiviert. Bitte aktiviere mindestens einen Anbieter in den Einstellungen.",
+      "noPronunciationProviders": "Kein aktivierter KI-Anbieter kann die Aussprache erzeugen. Aktivieren Sie „Aussprache“ für einen Anbieter in den Einstellungen unter KI-Anbieter.",
       "allProvidersFailed": "Alle KI-Anbieter konnten die Anfrage nicht verarbeiten.",
       "enabledCapabilities": "Aktivierte Funktionen",
       "capabilitiesDesc": "Wählen Sie aus, welche Funktionen dieser Anbieter übernimmt",

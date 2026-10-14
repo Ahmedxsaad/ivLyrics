@@ -462,6 +462,7 @@ window.LANG_VI = {
       "moveDown": "Di chuyển xuống",
       "supports": {
         "translate": "Dịch thuật",
+        "pronunciation": "Phát âm",
         "metadata": "Siêu dữ liệu",
         "tmi": "TMI",
         "researchWebSearch": "Tìm kiếm web để nghiên cứu",
@@ -471,6 +472,7 @@ window.LANG_VI = {
         "wordSupplements": "Chi tiết từ"
       },
       "noEnabledProviders": "Không có nhà cung cấp AI nào được bật. Vui lòng bật ít nhất một nhà cung cấp trong cài đặt.",
+      "noPronunciationProviders": "Không có nhà cung cấp AI nào đang bật có thể tạo phát âm. Hãy bật “Phát âm” cho một nhà cung cấp trong cài đặt Nhà cung cấp AI.",
       "allProvidersFailed": "Tất cả các nhà cung cấp AI đã thất bại khi xử lý yêu cầu.",
       "enabledCapabilities": "Khả năng đã kích hoạt",
       "capabilitiesDesc": "Chọn các tính năng mà nhà cung cấp này xử lý",

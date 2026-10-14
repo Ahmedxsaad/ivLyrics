@@ -462,6 +462,7 @@ window.LANG_CS = {
       "moveDown": "Přesunout dolů",
       "supports": {
         "translate": "Překlad",
+        "pronunciation": "Výslovnost",
         "metadata": "Metadata",
         "tmi": "TMI",
         "researchWebSearch": "Vyhledávání na webu pro rešerši",
@@ -471,6 +472,7 @@ window.LANG_CS = {
         "wordSupplements": "Podrobnosti slov"
       },
       "noEnabledProviders": "Nejsou povoleni žádní poskytovatelé AI. Povolte v nastavení alespoň jednoho poskytovatele.",
+      "noPronunciationProviders": "Žádný zapnutý poskytovatel AI neumí vytvořit výslovnost. V nastavení Poskytovatelé AI zapněte u některého poskytovatele „Výslovnost“.",
       "allProvidersFailed": "Všem poskytovatelům AI se nepodařilo požadavek zpracovat.",
       "enabledCapabilities": "Povolené schopnosti",
       "capabilitiesDesc": "Vyberte funkce, které tento poskytovatel zpracovává",

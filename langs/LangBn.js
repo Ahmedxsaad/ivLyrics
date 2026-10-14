@@ -462,6 +462,7 @@ window.LANG_BN = {
       "moveDown": "নিচে সরান",
       "supports": {
         "translate": "অনুবাদ",
+        "pronunciation": "উচ্চারণ",
         "metadata": "মেটাডেটা",
         "tmi": "TMI",
         "researchWebSearch": "গবেষণার জন্য ওয়েব অনুসন্ধান",
@@ -471,6 +472,7 @@ window.LANG_BN = {
         "wordSupplements": "শব্দের বিবরণ"
       },
       "noEnabledProviders": "কোনো AI প্রদানকারী সক্রিয় নেই। দয়া করে সেটিংসে অন্তত একটি প্রদানকারী সক্রিয় করুন।",
+      "noPronunciationProviders": "সক্রিয় কোনো এআই প্রদানকারী উচ্চারণ তৈরি করতে পারে না। এআই প্রদানকারী সেটিংসে কোনো প্রদানকারীর জন্য “উচ্চারণ” চালু করুন।",
       "allProvidersFailed": "সমস্ত AI প্রদানকারী অনুরোধ প্রক্রিয়া করতে ব্যর্থ হয়েছে।",
       "enabledCapabilities": "সক্রিয় সক্ষমতা",
       "capabilitiesDesc": "এই প্রদানকারী কোন বৈশিষ্ট্যগুলো পরিচালনা করবে তা নির্বাচন করুন",

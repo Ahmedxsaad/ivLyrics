@@ -462,6 +462,7 @@ window.LANG_ZH_CN = {
       "moveDown": "下移",
       "supports": {
         "translate": "翻译",
+        "pronunciation": "发音",
         "metadata": "元数据",
         "tmi": "TMI",
         "researchWebSearch": "研究网页搜索",
@@ -471,6 +472,7 @@ window.LANG_ZH_CN = {
         "wordSupplements": "单词详情"
       },
       "noEnabledProviders": "未启用 AI 提供商。请在设置中至少启用一个提供商。",
+      "noPronunciationProviders": "没有已启用的 AI 提供商可以生成发音。请在 AI 提供商设置中为某个提供商开启“发音”。",
       "allProvidersFailed": "所有 AI 提供商都无法处理该请求。",
       "enabledCapabilities": "启用的功能",
       "capabilitiesDesc": "选择该供应商处理的功能",

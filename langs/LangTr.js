@@ -462,6 +462,7 @@ window.LANG_TR = {
       "moveDown": "Aşağı Taşı",
       "supports": {
         "translate": "Çeviri",
+        "pronunciation": "Telaffuz",
         "metadata": "Meta Veri",
         "tmi": "Bilgi (TMI)",
         "researchWebSearch": "Araştırma için web araması",
@@ -471,6 +472,7 @@ window.LANG_TR = {
         "wordSupplements": "Kelime ayrıntıları"
       },
       "noEnabledProviders": "Etkin YZ sağlayıcısı yok. Lütfen ayarlardan en az bir sağlayıcıyı etkinleştirin.",
+      "noPronunciationProviders": "Etkin hiçbir YZ sağlayıcısı telaffuz oluşturamıyor. Yapay Zeka Sağlayıcıları ayarlarından bir sağlayıcı için “Telaffuz” seçeneğini açın.",
       "allProvidersFailed": "Tüm YZ sağlayıcıları isteği işlemekte başarısız oldu.",
       "enabledCapabilities": "Etkin Yetenekler",
       "capabilitiesDesc": "Bu sağlayıcının hangi özellikleri yöneteceğini seçin",

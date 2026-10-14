@@ -462,6 +462,7 @@ window.LANG_SV = {
       "moveDown": "Flytta ner",
       "supports": {
         "translate": "Översättning",
+        "pronunciation": "Uttal",
         "metadata": "Metadata",
         "tmi": "TMI",
         "researchWebSearch": "Webbsökning för research",
@@ -471,6 +472,7 @@ window.LANG_SV = {
         "wordSupplements": "Orddetaljer"
       },
       "noEnabledProviders": "Inga AI-leverantörer aktiverade. Aktivera minst en leverantör i inställningarna.",
+      "noPronunciationProviders": "Ingen aktiverad AI-leverantör kan skapa uttal. Slå på Uttal för en leverantör under inställningarna för AI-leverantörer.",
       "allProvidersFailed": "Alla AI-leverantörer kunde inte behandla begäran.",
       "enabledCapabilities": "Aktiverade funktioner",
       "capabilitiesDesc": "Välj vilka funktioner den här leverantören hanterar",

@@ -462,6 +462,7 @@ window.LANG_ID = {
       "moveDown": "Pindahkan ke Bawah",
       "supports": {
         "translate": "Terjemahan",
+        "pronunciation": "Pelafalan",
         "metadata": "Metadata",
         "tmi": "TMI",
         "researchWebSearch": "Pencarian web untuk riset",
@@ -471,6 +472,7 @@ window.LANG_ID = {
         "wordSupplements": "Detail kata"
       },
       "noEnabledProviders": "Tidak ada penyedia AI yang diaktifkan. Harap aktifkan setidaknya satu penyedia di pengaturan.",
+      "noPronunciationProviders": "Tidak ada penyedia AI aktif yang dapat membuat pelafalan. Aktifkan “Pelafalan” untuk salah satu penyedia di pengaturan Penyedia AI.",
       "allProvidersFailed": "Semua penyedia AI gagal memproses permintaan.",
       "enabledCapabilities": "Kemampuan yang Diaktifkan",
       "capabilitiesDesc": "Pilih fitur mana yang ditangani penyedia ini",

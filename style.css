@@ -14327,7 +14327,8 @@ html.is-lp-view-exit::view-transition-new(root) {
   opacity: 0.9;
 }
 
-/* Translate - Green */
+/* Pronunciation / Translate - Green */
+.ai-addon-cap-chip.active.cap-pronunciation,
 .ai-addon-cap-chip.active.cap-translate {
   background: rgba(34, 197, 94, 0.15);
   border-color: rgba(34, 197, 94, 0.5);

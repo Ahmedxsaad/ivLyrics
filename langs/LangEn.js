@@ -466,6 +466,7 @@ window.LANG_EN = {
       "moveDown": "Move Down",
       "supports": {
         "translate": "Translation",
+        "pronunciation": "Pronunciation",
         "metadata": "Metadata",
         "tmi": "TMI",
         "researchWebSearch": "Research web search",
@@ -475,6 +476,7 @@ window.LANG_EN = {
         "wordSupplements": "Word details"
       },
       "noEnabledProviders": "No AI providers enabled. Please enable at least one provider in settings.",
+      "noPronunciationProviders": "No enabled AI provider can generate pronunciation. Turn on Pronunciation for an AI provider in AI Providers settings.",
       "allProvidersFailed": "All AI providers failed to process the request.",
       "enabledCapabilities": "Enabled Capabilities",
       "capabilitiesDesc": "Select which features this provider handles",

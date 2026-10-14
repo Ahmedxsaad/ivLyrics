@@ -462,6 +462,7 @@ window.LANG_AR = {
       "moveDown": "تحريك للأسفل",
       "supports": {
         "translate": "الترجمة",
+        "pronunciation": "النطق",
         "metadata": "البيانات الوصفية",
         "tmi": "TMI",
         "researchWebSearch": "بحث الويب للأبحاث",
@@ -471,6 +472,7 @@ window.LANG_AR = {
         "wordSupplements": "تفاصيل الكلمات"
       },
       "noEnabledProviders": "لم يتم تفعيل أي موفر AI. يرجى تفعيل موفر واحد على الأقل في الإعدادات.",
+      "noPronunciationProviders": "لا يوجد موفر ذكاء اصطناعي مفعّل يمكنه إنشاء النطق. فعّل «النطق» لأحد الموفرين من إعدادات موفري الذكاء الاصطناعي.",
       "allProvidersFailed": "فشل جميع موفري AI في معالجة الطلب.",
       "enabledCapabilities": "القدرات المفعلة",
       "capabilitiesDesc": "حدد الميزات التي يتعامل معها هذا المزود",

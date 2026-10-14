@@ -462,6 +462,7 @@ window.LANG_PT = {
       "moveDown": "Mover para baixo",
       "supports": {
         "translate": "Tradução",
+        "pronunciation": "Pronúncia",
         "metadata": "Metadados",
         "tmi": "TMI",
         "researchWebSearch": "Busca na web para pesquisa",
@@ -471,6 +472,7 @@ window.LANG_PT = {
         "wordSupplements": "Detalhes das palavras"
       },
       "noEnabledProviders": "Nenhum provedor de IA habilitado. Por favor, habilite pelo menos um nas configurações.",
+      "noPronunciationProviders": "Nenhum provedor de IA habilitado pode gerar a pronúncia. Ative “Pronúncia” em um provedor nas configurações de Provedores de IA.",
       "allProvidersFailed": "Todos os provedores de IA falharam ao processar a solicitação.",
       "enabledCapabilities": "Recursos Ativados",
       "capabilitiesDesc": "Selecione quais recursos este provedor gerencia",

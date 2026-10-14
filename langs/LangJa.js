@@ -462,6 +462,7 @@ window.LANG_JA = {
       "moveDown": "下に移動",
       "supports": {
         "translate": "翻訳",
+        "pronunciation": "発音",
         "metadata": "メタデータ",
         "tmi": "TMI",
         "researchWebSearch": "リサーチのウェブ検索",
@@ -471,6 +472,7 @@ window.LANG_JA = {
         "wordSupplements": "単語詳細"
       },
       "noEnabledProviders": "有効なAIプロバイダーがありません。設定で少なくとも1つのプロバイダーを有効にしてください。",
+      "noPronunciationProviders": "発音を生成できるAIプロバイダーが有効になっていません。AIプロバイダー設定で、プロバイダーの「発音」をオンにしてください。",
       "allProvidersFailed": "すべてのAIプロバイダーの要求に失败しました。",
       "enabledCapabilities": "有効な機能",
       "capabilitiesDesc": "このプロバイダーが処理する機能を選択してください",

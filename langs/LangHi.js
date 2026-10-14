@@ -462,6 +462,7 @@ window.LANG_HI = {
       "moveDown": "नीचे ले जाएँ",
       "supports": {
         "translate": "अनुवाद",
+        "pronunciation": "उच्चारण",
         "metadata": "मेटाडेटा",
         "tmi": "TMI",
         "researchWebSearch": "रिसर्च के लिए वेब खोज",
@@ -471,6 +472,7 @@ window.LANG_HI = {
         "wordSupplements": "शब्द विवरण"
       },
       "noEnabledProviders": "कोई AI प्रदाता सक्षम नहीं है। कृपया सेटिंग्स में कम से कम एक प्रदाता सक्षम करें।",
+      "noPronunciationProviders": "कोई भी सक्षम AI प्रदाता उच्चारण नहीं बना सकता। AI प्रदाता सेटिंग्स में किसी प्रदाता के लिए “उच्चारण” चालू करें।",
       "allProvidersFailed": "सभी AI प्रदाता अनुरोध को संसाधित करने में विफल रहेा",
       "enabledCapabilities": "सक्षम क्षमताएँ",
       "capabilitiesDesc": "चुनें कि यह प्रदाता कौन सी सुविधाएँ संभालता है",

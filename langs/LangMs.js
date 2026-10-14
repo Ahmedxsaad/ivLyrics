@@ -462,6 +462,7 @@ window.LANG_MS = {
       "moveDown": "Alih ke bawah",
       "supports": {
         "translate": "Terjemahan",
+        "pronunciation": "Sebutan",
         "metadata": "Metadata",
         "tmi": "TMI",
         "researchWebSearch": "Carian web untuk penyelidikan",
@@ -471,6 +472,7 @@ window.LANG_MS = {
         "wordSupplements": "Perincian perkataan"
       },
       "noEnabledProviders": "Tiada penyedia AI yang aktif. Sila aktifkan sekurang-kurangnya satu penyedia dalam tetapan.",
+      "noPronunciationProviders": "Tiada penyedia AI aktif yang boleh menjana sebutan. Hidupkan “Sebutan” untuk salah satu penyedia dalam tetapan Penyedia AI.",
       "allProvidersFailed": "Semua penyedia AI gagal memproses permintaan.",
       "enabledCapabilities": "Fungsi Diaktifkan",
       "capabilitiesDesc": "Pilih fungsi yang akan dikendalikan oleh penyedia ini",

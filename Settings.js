@@ -107,6 +107,7 @@ const SETTINGS_OUTLINE_ICONS = Object.freeze({
   synced: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0-15v5l3 2",
   unsynced: "M5 6h14M5 12h14M5 18h9",
   ivsync: "M20 7h-5V2M4 17h5v5M5.5 8a8 8 0 0 1 13-2L20 7M4 17l1.5 1A8 8 0 0 0 18.5 16",
+  pronunciation: "M11 5 6 9H3v6h3l5 4V5ZM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13",
   translate: "M4 5h8M8 3v2M6 5c0 4 2 7 6 9M11 5c-.4 3.4-2.2 6.2-5.5 8M14 21l3.5-9L21 21M15.5 18h4",
   metadata: "M4 4h7l9 9-7 7-9-9V4Zm4 4h.01",
   tmi: "M21 12a9 9 0 0 1-9 9H5l1.8-3.2A9 9 0 1 1 21 12Zm-9-1v5M12 7h.01",
@@ -1253,6 +1254,22 @@ react.createElement(
 };
 
 // AI Addon 개별 카드 컴포넌트 (아코디언 스타일 - LyricsProviderCard와 동일 스타일)
+// Capability chips follow the lyrics menu (pronunciation, then translation),
+// then the remaining features; unknown capabilities keep their declared order.
+const AI_ADDON_CAPABILITY_ORDER = Object.freeze([
+  "pronunciation", "translate", "metadata", "tmi", "researchWebSearch",
+  "lyricsStudy", "characterPronunciation", "culturalAnnotations", "wordSupplements",
+]);
+
+const getOrderedAddonCapabilities = (supports) => {
+  if (!supports || typeof supports !== "object") return [];
+  const supported = Object.keys(supports).filter((capability) => supports[capability]);
+  return [
+    ...AI_ADDON_CAPABILITY_ORDER.filter((capability) => supported.includes(capability)),
+    ...supported.filter((capability) => !AI_ADDON_CAPABILITY_ORDER.includes(capability)),
+  ];
+};
+
 const AddonSettingsCard = ({ addon, isEnabled, onToggle, isExpanded, onExpandToggle }) => {
   const SettingsUI = useMemo(
     () => addon.getSettingsUI ? addon.getSettingsUI() : null,
@@ -1302,6 +1319,9 @@ const AddonSettingsCard = ({ addon, isEnabled, onToggle, isExpanded, onExpandTog
   // 지원 기능 뱃지 렌더링
   const renderSupportBadges = () => {
     const badges = [];
+    if (addon.supports?.pronunciation) {
+      badges.push(react.createElement(ProviderSupportIconChip, { key: "pronunciation", type: "pronunciation", label: I18n.t("settings.aiProviders.supports.pronunciation") || "Pronunciation" }));
+    }
     if (addon.supports?.translate) {
       badges.push(react.createElement(ProviderSupportIconChip, { key: "translate", type: "translate", label: I18n.t("settings.aiProviders.supports.translate") || "Translation" }));
     }
@@ -1391,8 +1411,8 @@ const AddonSettingsCard = ({ addon, isEnabled, onToggle, isExpanded, onExpandTog
           I18n.t("settings.aiProviders.enabledCapabilities") || "Enabled Capabilities"
         ),
         react.createElement("div", { className: "ai-addon-caps-container" },
-          Object.keys(addon.supports).map(cap =>
-            addon.supports[cap] && react.createElement("div", {
+          getOrderedAddonCapabilities(addon.supports).map(cap =>
+            react.createElement("div", {
               key: cap,
               className: `ai-addon-cap-chip ${capabilities[cap] ? 'active' : ''} cap-${cap}`,
               onClick: () => toggleCapability(cap)

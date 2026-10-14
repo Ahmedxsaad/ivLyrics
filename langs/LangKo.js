@@ -466,6 +466,7 @@ window.LANG_KO = {
       "moveDown": "아래로 이동",
       "supports": {
         "translate": "번역",
+        "pronunciation": "발음",
         "metadata": "메타데이터",
         "tmi": "TMI",
         "researchWebSearch": "리서치 웹 검색",
@@ -475,6 +476,7 @@ window.LANG_KO = {
         "wordSupplements": "단어 상세"
       },
       "noEnabledProviders": "활성화된 AI 제공자가 없습니다. 설정에서 최소 하나 이상의 제공자를 활성화해주세요.",
+      "noPronunciationProviders": "발음을 생성할 수 있는 AI 제공자가 켜져 있지 않습니다. AI 제공자 설정에서 제공자의 '발음' 기능을 켜 주세요.",
       "allProvidersFailed": "모든 AI 제공자가 요청에 실패했습니다.",
       "enabledCapabilities": "활성화된 기능",
       "capabilitiesDesc": "이 제공자가 처리할 기능을 선택하세요",
