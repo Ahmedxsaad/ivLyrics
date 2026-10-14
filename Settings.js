@@ -7719,7 +7719,11 @@ const ConfigModal = ({
           "vinyl.presentation.compactLabel",
           "vinyl.presentation.videoLabel",
           "vinyl.settings.backgroundBlurLabel",
-          "vinyl.settings.backgroundBlurDesc"
+          "vinyl.settings.backgroundBlurDesc",
+          "vinyl.settings.trackChangeAnimationLabel",
+          "vinyl.settings.trackChangeAnimationDesc",
+          "vinyl.settings.rotationSpeedLabel",
+          "vinyl.settings.rotationSpeedDesc"
         ]
       },
       {
@@ -12080,6 +12084,24 @@ react.createElement(OptionList, {
                 key: "fullscreen-vinyl-animations",
                 type: ConfigSlider,
                 defaultValue: CONFIG.visual["fullscreen-vinyl-animations"] !== false,
+              },
+              {
+                desc: I18n.t("vinyl.settings.trackChangeAnimationLabel"),
+                info: I18n.t("vinyl.settings.trackChangeAnimationDesc"),
+                key: "fullscreen-vinyl-track-change-animation",
+                type: ConfigSlider,
+                defaultValue: CONFIG.visual["fullscreen-vinyl-track-change-animation"] !== false,
+              },
+              {
+                desc: I18n.t("vinyl.settings.rotationSpeedLabel"),
+                info: I18n.t("vinyl.settings.rotationSpeedDesc"),
+                key: "fullscreen-vinyl-rotation-speed",
+                type: ConfigSliderRange,
+                min: 25,
+                max: 200,
+                step: 5,
+                unit: "%",
+                defaultValue: CONFIG.visual["fullscreen-vinyl-rotation-speed"] ?? 100,
               },
               {
                 desc: I18n.t("vinyl.settings.centerRotationLabel"),

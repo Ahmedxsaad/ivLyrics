@@ -10088,6 +10088,7 @@ html.is-lp-view-exit::view-transition-new(root) {
 }
 
 .ivlyrics-vinyl-label {
+  container-type: inline-size;
   position: absolute;
   z-index: 4;
   top: 50%;
@@ -10127,10 +10128,12 @@ html.is-lp-view-exit::view-transition-new(root) {
   position: absolute;
   left: 50%;
   display: block;
-  max-width: 78%;
+  width: 64%;
+  max-width: 64%;
   overflow: hidden;
   transform: translateX(-50%);
   text-overflow: ellipsis;
+  text-align: center;
   white-space: nowrap;
   font-family: 'Pretendard Variable', Pretendard, sans-serif;
   line-height: 1;
@@ -10157,14 +10160,16 @@ html.is-lp-view-exit::view-transition-new(root) {
 
 .ivlyrics-vinyl-label-title {
   top: 37%;
-  font-size: clamp(7px, 2.5cqi, 24px);
+  font-size: clamp(3px, 10.2cqi, 24px);
   font-weight: 800;
   letter-spacing: -0.025em;
 }
 
 .ivlyrics-vinyl-label-artist {
   top: 65%;
-  font-size: clamp(6px, 1.35cqi, 15px);
+  width: 48%;
+  max-width: 48%;
+  font-size: clamp(2px, 5.5cqi, 15px);
   font-weight: 500;
   opacity: 0.86;
 }
@@ -10825,8 +10830,7 @@ html.is-lp-view-exit::view-transition-new(root) {
 }
 
 .ivlyrics-compact-album-vinyl.is-motion-disabled .ivlyrics-compact-album-record {
-  --iv-vinyl-spin-angle: 0turn;
-  animation: none !important;
+  animation-play-state: paused !important;
 }
 
 .fullscreen-vinyl-overlay.is-presentation-video .fullscreen-vinyl-lyric-stage {
@@ -11118,8 +11122,7 @@ html.is-lp-view-exit::view-transition-new(root) {
 }
 
 .fullscreen-vinyl-overlay.is-motion-disabled .ivlyrics-vinyl-visual-group {
-  --iv-vinyl-spin-angle: 0turn;
-  animation: none !important;
+  animation-play-state: paused !important;
 }
 
 .fullscreen-vinyl-overlay.is-motion-disabled .ivlyrics-vinyl-motion {
@@ -11131,8 +11134,8 @@ html.is-lp-view-exit::view-transition-new(root) {
 }
 
 .fullscreen-vinyl-overlay.is-motion-disabled > .ivlyrics-compact-vinyl-stage {
-  --iv-vinyl-spin-angle: 0turn;
-  animation: none !important;
+  animation-duration: 1ms, 6s !important;
+  animation-play-state: running, paused !important;
 }
 
 @keyframes fullscreen-vinyl-cover-arrive-portrait {
@@ -11243,12 +11246,16 @@ html.is-lp-view-exit::view-transition-new(root) {
   }
 
   .ivlyrics-vinyl-visual-group {
-    animation-duration: 12s;
+    animation-play-state: paused !important;
   }
 
-  .ivlyrics-compact-vinyl-stage {
-    --iv-vinyl-spin-angle: 0turn;
-    animation: none !important;
+  .fullscreen-vinyl-overlay > .ivlyrics-compact-vinyl-stage {
+    animation-duration: 1ms, 6s !important;
+    animation-play-state: running, paused !important;
+  }
+
+  .ivlyrics-compact-album-record {
+    animation-play-state: paused !important;
   }
 }
 

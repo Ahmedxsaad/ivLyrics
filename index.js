@@ -2917,6 +2917,15 @@ const CONFIG = {
       "ivLyrics:visual:fullscreen-vinyl-animations",
       true
     ),
+    "fullscreen-vinyl-track-change-animation": StorageManager.get(
+      "ivLyrics:visual:fullscreen-vinyl-track-change-animation",
+      true
+    ),
+    "fullscreen-vinyl-rotation-speed": (() => {
+      const stored = StorageManager.getItem("ivLyrics:visual:fullscreen-vinyl-rotation-speed");
+      const speed = Number(stored ?? 100);
+      return Number.isFinite(speed) ? Math.min(200, Math.max(25, speed)) : 100;
+    })(),
     "fullscreen-vinyl-center-rotation": StorageManager.get(
       "ivLyrics:visual:fullscreen-vinyl-center-rotation",
       true
