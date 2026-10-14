@@ -200,6 +200,10 @@ window.LANG_ZH_TW = {
       "label": "純色背景顏色",
       "desc": "選擇用於純色背景的顏色"
     },
+    "videoFallback": {
+      "label": "影片無法使用時的背景",
+      "desc": "選擇找不到影片或無法播放時顯示的背景。"
+    },
     "videoBackground": {
       "label": "影片背景",
       "desc": "使用 YouTube 影片作為背景（Beta）"

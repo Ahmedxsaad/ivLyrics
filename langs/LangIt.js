@@ -200,6 +200,10 @@ window.LANG_IT = {
       "label": "Colore sfondo tinta unita",
       "desc": "Seleziona il colore da usare per lo sfondo a tinta unita"
     },
+    "videoFallback": {
+      "label": "Sfondo quando il video non è disponibile",
+      "desc": "Scegli lo sfondo da mostrare se il video manca o non può essere riprodotto."
+    },
     "videoBackground": {
       "label": "Sfondo video",
       "desc": "Usa un video YouTube come sfondo (Beta)"

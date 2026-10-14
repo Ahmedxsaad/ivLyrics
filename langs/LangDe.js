@@ -200,6 +200,10 @@ window.LANG_DE = {
       "label": "Farbe für Hintergrund",
       "desc": "Wählen Sie die Farbe für den einfarbigen Hintergrund"
     },
+    "videoFallback": {
+      "label": "Hintergrund ohne Video",
+      "desc": "Wähle den Hintergrund, wenn kein Video gefunden oder abgespielt werden kann."
+    },
     "videoBackground": {
       "label": "Video-Hintergrund",
       "desc": "Verwendet ein YouTube-Video als Hintergrund (Beta)"

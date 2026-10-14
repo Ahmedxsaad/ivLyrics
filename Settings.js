@@ -7415,6 +7415,14 @@ const ConfigModal = ({
       {
         section: I18n.t("tabs.appearance"),
         sectionKey: "appearance",
+        settingKey: "video-fallback-background",
+        name: I18n.t("settings.videoFallback.label"),
+        desc: I18n.t("settings.videoFallback.desc"),
+        i18nKeys: ["tabs.appearance", "settings.videoFallback.label", "settings.videoFallback.desc"]
+      },
+      {
+        section: I18n.t("tabs.appearance"),
+        sectionKey: "appearance",
         settingKey: "background-brightness",
         name: I18n.t("settings.backgroundBrightness.label"),
         desc: I18n.t("settings.backgroundBrightness.desc"),
@@ -9457,6 +9465,23 @@ const ConfigModal = ({
 
     if (selectedMode === "video-background") {
       modeSpecificItems.push(
+        {
+          desc: I18n.t("settings.videoFallback.label"),
+          info: I18n.t("settings.videoFallback.desc"),
+          key: "video-fallback-background",
+          type: ConfigSelection,
+          options: {
+            "album-cover": I18n.t("settings.gradientBackground.label"),
+            "blur-gradient": I18n.t("settings.blurGradientBackground.label"),
+            solid: I18n.t("settings.solidBackground.label"),
+          },
+        },
+        {
+          desc: I18n.t("settings.solidBackgroundColor.label"),
+          info: I18n.t("settings.solidBackgroundColor.desc"),
+          key: "solid-background-color",
+          type: ColorPresetSelector,
+        },
         {
           desc: I18n.t("settings.videoHelper.label"),
           info: I18n.t("settings.videoHelper.desc"),

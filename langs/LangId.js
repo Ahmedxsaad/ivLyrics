@@ -200,6 +200,10 @@ window.LANG_ID = {
       "label": "Warna Latar Belakang Solid",
       "desc": "Pilih warna untuk latar belakang solid"
     },
+    "videoFallback": {
+      "label": "Latar saat video tidak tersedia",
+      "desc": "Pilih latar yang ditampilkan saat video tidak ditemukan atau tidak dapat diputar."
+    },
     "videoBackground": {
       "label": "Latar Belakang Video",
       "desc": "Gunakan video YouTube sebagai latar belakang (Beta)"

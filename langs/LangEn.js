@@ -200,6 +200,10 @@ window.LANG_EN = {
       "label": "Solid Background Color",
       "desc": "Select the color for the solid background"
     },
+    "videoFallback": {
+      "label": "Background when video is unavailable",
+      "desc": "Choose the background shown when a video is missing or cannot play."
+    },
     "videoBackground": {
       "label": "Video Background",
       "desc": "Use a YouTube video as the background (Beta)"

@@ -4976,7 +4976,7 @@ body:has(#lyrics-fullscreen-container) [data-tippy-root] {
 }
 
 /* Color Gradient Background */
-#ivLyrics-gradient-background.color-gradient-bg {
+:is(#ivLyrics-gradient-background, .ivlyrics-video-background-fallback).color-gradient-bg {
   --c1: var(--ivLyrics-c1, 30, 30, 40);
   --c2: var(--ivLyrics-c2, 60, 40, 70);
   --c3: var(--ivLyrics-c3, 20, 50, 60);

@@ -200,6 +200,10 @@ window.LANG_SV = {
       "label": "Solid bakgrundsfärg",
       "desc": "Välj färg för den solida bakgrunden"
     },
+    "videoFallback": {
+      "label": "Bakgrund när video saknas",
+      "desc": "Välj bakgrunden som visas när en video saknas eller inte kan spelas upp."
+    },
     "videoBackground": {
       "label": "Video bakgrund",
       "desc": "Använd en YouTube-video som bakgrund (beta)"

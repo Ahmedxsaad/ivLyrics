@@ -2496,6 +2496,8 @@ const CONFIG = {
     ),
     "video-scale":
       StorageManager.getItem("ivLyrics:visual:video-scale") || "105",
+    "video-fallback-background":
+      StorageManager.getItem("ivLyrics:visual:video-fallback-background") || "album-cover",
     "solid-background-color":
       StorageManager.getItem("ivLyrics:visual:solid-background-color") ||
       "#1e3a8a",
@@ -7164,7 +7166,9 @@ class LyricsContainer extends react.Component {
       vibrant = 8747370;
     }
 
-    if (this.getEffectiveBackgroundMode() === "blur-gradient-background") {
+    if (this.getEffectiveBackgroundMode() === "blur-gradient-background"
+      || (this.getEffectiveBackgroundMode() === "video-background"
+        && CONFIG.visual["video-fallback-background"] === "blur-gradient")) {
       try {
         const coverUrl =
           Spicetify.Player.data?.item?.metadata?.image_xlarge_url ||
@@ -10798,6 +10802,15 @@ class LyricsContainer extends react.Component {
             : CONFIG.visual["video-blur"],
           coverMode: CONFIG.visual["video-cover"],
           videoScale: CONFIG.visual["video-scale"],
+          fallbackBackground: CONFIG.visual["video-fallback-background"],
+          fallbackSolidColor: CONFIG.visual["solid-background-color"],
+          fallbackGradientStyle: CONFIG.visual["video-fallback-background"] === "blur-gradient"
+            ? computeLyricsBackgroundStyle({
+              isSyncCreatorActive: false, isFADMode: false,
+              effectiveBackgroundMode: "blur-gradient-background",
+              dynamicColors: this.state.dynamicColors, colors: this.state.colors,
+            })
+            : null,
           externalVideoInfo: this.state.videoInfo,
           onLoadingChange: this.handleVideoBackgroundLoadingChange
         })

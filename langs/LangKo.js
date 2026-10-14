@@ -200,6 +200,10 @@ window.LANG_KO = {
       "label": "단색 배경 색상",
       "desc": "단색 배경에 사용할 색상을 선택하세요"
     },
+    "videoFallback": {
+      "label": "동영상이 없을 때 배경",
+      "desc": "동영상을 찾지 못하거나 재생할 수 없을 때 표시할 배경을 선택합니다."
+    },
     "videoBackground": {
       "label": "동영상 배경",
       "desc": "YouTube 동영상을 배경으로 사용합니다 (베타)"

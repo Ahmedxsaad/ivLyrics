@@ -200,6 +200,10 @@ window.LANG_JA = {
       "label": "単色背景の色",
       "desc": "単色背景に使用する色を選択してください"
     },
+    "videoFallback": {
+      "label": "動画がない場合の背景",
+      "desc": "動画が見つからない場合や再生できない場合に表示する背景を選びます。"
+    },
     "videoBackground": {
       "label": "動画背景",
       "desc": "YouTube動画を背景として使用します（ベータ版）"

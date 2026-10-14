@@ -200,6 +200,10 @@ window.LANG_FR = {
       "label": "Couleur du fond uni",
       "desc": "Choisissez la couleur pour l'arrière-plan uni"
     },
+    "videoFallback": {
+      "label": "Fond si la vidéo est indisponible",
+      "desc": "Choisissez le fond affiché si la vidéo est absente ou ne peut pas être lue."
+    },
     "videoBackground": {
       "label": "Arrière-plan vidéo",
       "desc": "Utilise une vidéo YouTube comme arrière-plan (Bêta)"

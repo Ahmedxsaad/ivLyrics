@@ -200,6 +200,10 @@ window.LANG_MS = {
       "label": "Warna Latar Belakang Pepejal",
       "desc": "Pilih warna untuk digunakan sebagai latar belakang warna pepejal"
     },
+    "videoFallback": {
+      "label": "Latar apabila video tiada",
+      "desc": "Pilih latar yang dipaparkan apabila video tidak dijumpai atau tidak dapat dimainkan."
+    },
     "videoBackground": {
       "label": "Latar Belakang Video",
       "desc": "Gunakan video YouTube sebagai latar belakang (Beta)"

@@ -200,6 +200,10 @@ window.LANG_ES = {
       "label": "Color de fondo sólido",
       "desc": "Selecciona el color para el fondo sólido"
     },
+    "videoFallback": {
+      "label": "Fondo si el vídeo no está disponible",
+      "desc": "Elige el fondo que se muestra si no hay vídeo o no se puede reproducir."
+    },
     "videoBackground": {
       "label": "Fondo de video",
       "desc": "Usa videos de YouTube como fondo (Beta)"

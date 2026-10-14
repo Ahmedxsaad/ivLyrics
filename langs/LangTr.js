@@ -200,6 +200,10 @@ window.LANG_TR = {
       "label": "Düz Arka Plan Rengi",
       "desc": "Düz arka plan için renk seçin"
     },
+    "videoFallback": {
+      "label": "Video yokken arka plan",
+      "desc": "Video bulunamadığında veya oynatılamadığında gösterilecek arka planı seçin."
+    },
     "videoBackground": {
       "label": "Video Arka Planı",
       "desc": "YouTube videosunu arka plan olarak kullan (Beta)"

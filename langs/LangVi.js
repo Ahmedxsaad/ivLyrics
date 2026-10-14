@@ -200,6 +200,10 @@ window.LANG_VI = {
       "label": "Màu nền đơn sắc",
       "desc": "Chọn màu để sử dụng cho nền đơn sắc"
     },
+    "videoFallback": {
+      "label": "Nền khi video không khả dụng",
+      "desc": "Chọn nền hiển thị khi không tìm thấy video hoặc không thể phát."
+    },
     "videoBackground": {
       "label": "Nền Video",
       "desc": "Sử dụng video YouTube làm nền (Beta)"

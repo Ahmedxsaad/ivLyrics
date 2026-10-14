@@ -200,6 +200,10 @@ window.LANG_CS = {
       "label": "Pevná barva pozadí",
       "desc": "Vyberte barvu plného pozadí"
     },
+    "videoFallback": {
+      "label": "Pozadí při nedostupném videu",
+      "desc": "Vyberte pozadí, které se zobrazí, pokud video chybí nebo jej nelze přehrát."
+    },
     "videoBackground": {
       "label": "Video pozadí",
       "desc": "Použití videa YouTube jako pozadí (Beta)"
