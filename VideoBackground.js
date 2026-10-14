@@ -179,6 +179,13 @@ const syncYouTubePlayerTimeline = ({
     holdState,
 }) => {
     if (!player || !holdState) return;
+    if (globalThis.VideoBackgroundDepend?.isAdPlayback?.(player)) {
+        // The public iframe timeline describes the music video during ads. Keep
+        // ads muted/hidden, let them finish, then sync against Spotify again.
+        if (shouldPlay) player.playVideo();
+        else player.pauseVideo();
+        return;
+    }
 
     const wasHoldingAtStart = holdState.isHolding === true;
     holdState.isHolding = shouldHoldAtStart === true;
@@ -237,6 +244,7 @@ const syncYouTubePlayerTimeline = ({
 const settleYouTubeHoldPrime = ({ player, playerState, holdState }) => {
     if (
         !player ||
+        globalThis.VideoBackgroundDepend?.isAdPlayback?.(player) ||
         playerState !== 1 ||
         holdState?.primePending !== true ||
         holdState?.isHolding !== true
