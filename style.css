@@ -9539,6 +9539,21 @@ html.is-lp-view-exit::view-transition-new(root) {
   opacity: var(--iv-vinyl-original-opacity, 0.95) !important;
 }
 
+/* The LP/presentation surface overrides paragraph opacity above. Its
+   instrumental exit must win that override, not vanish when the row remounts. */
+.fullscreen-vinyl-active-lyric .ivlyrics-active-lyric-renderer
+  > .lyrics-interlude-departing > p.lyrics-lyricsContainer-LyricsLine-interludeMain:first-child {
+  opacity: 0 !important;
+  transition: opacity var(--lyrics-interlude-fade-duration, 220ms) ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fullscreen-vinyl-active-lyric .ivlyrics-active-lyric-renderer
+    > .lyrics-interlude-departing > p.lyrics-lyricsContainer-LyricsLine-interludeMain:first-child {
+    transition: none;
+  }
+}
+
 .fullscreen-vinyl-active-lyric .ivlyrics-vinyl-lyric-scroll-viewport {
   --iv-vinyl-lyric-edge-fade: clamp(14px, 1.8vw, 22px);
   position: relative;
