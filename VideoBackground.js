@@ -171,6 +171,20 @@ const buildYouTubeVideoApiUrl = ({ trackIsrc, trackId, spotifyData, clientVersio
     return youtubeApiUrl.toString();
 };
 
+// The server answers requests without these client parameters and headers with
+// a placeholder video, so every caller (including the next-track prefetch) must
+// send both.
+const getYouTubeVideoApiClientVersion = () =>
+    (typeof Utils !== "undefined" && Utils.currentVersion) ||
+    window.CONFIG?.version ||
+    "unknown";
+
+const buildYouTubeVideoApiHeaders = (clientVersion) => ({
+    "X-ivLyrics-Client": "ivLyrics",
+    "X-ivLyrics-Request-Version": "2",
+    "X-ivLyrics-Client-Version": clientVersion
+});
+
 const syncYouTubePlayerTimeline = ({
     player,
     targetVideoTime,
@@ -745,10 +759,7 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
 
                 // 4. 캐시가 없으면 API 호출 (커뮤니티 우선)
                 // 백엔드 엔드포인트: /lyrics/youtube (트랙 메타데이터 포함)
-                const clientVersion =
-                    (typeof Utils !== "undefined" && Utils.currentVersion) ||
-                    window.CONFIG?.version ||
-                    "unknown";
+                const clientVersion = getYouTubeVideoApiClientVersion();
                 const youtubeUrl = buildYouTubeVideoApiUrl({ trackIsrc, trackId, spotifyData, clientVersion });
 
                 // API 요청 로깅
@@ -759,11 +770,7 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
 
                 const res = await fetch(youtubeUrl, {
                     cache: "no-store",
-                    headers: {
-                        "X-ivLyrics-Client": "ivLyrics",
-                        "X-ivLyrics-Request-Version": "2",
-                        "X-ivLyrics-Client-Version": clientVersion
-                    }
+                    headers: buildYouTubeVideoApiHeaders(clientVersion)
                 });
                 const data = await res.json();
 
@@ -776,11 +783,14 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
                             hasCaption: data.data?.captionStartTime != null
                         }, 'success');
                     }
-                    // 로컬 캐시에 저장
-                    const resolvedCacheIsrc = window.SyncDataService?.normalizeSyncDataIsrc?.(data.data?.isrc) || trackIsrc;
-                    if (resolvedCacheIsrc) {
-                        LyricsCache.setYouTube(resolvedCacheIsrc, data.data).catch(() => { });
+                    // 로컬 캐시에 저장. Key it by the ISRC this track resolved to,
+                    // never by one echoed from the response, so a mismatched
+                    // answer cannot be served for a different recording later.
+                    const responseIsrc = window.SyncDataService?.normalizeSyncDataIsrc?.(data.data?.isrc) || "";
+                    if (responseIsrc && responseIsrc !== trackIsrc) {
+                        console.warn(`[VideoBackground] Video response ISRC ${responseIsrc} differs from requested ${trackIsrc}`);
                     }
+                    LyricsCache.setYouTube(trackIsrc, data.data).catch(() => { });
                     setVideoInfo(data.data);
                 } else {
                     // 실패 로깅

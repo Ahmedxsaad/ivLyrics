@@ -3729,7 +3729,7 @@ const Prefetcher = {
           CONFIG.visual["prefetch-video-enabled"] !== false &&
           CONFIG.visual["community-video-random"] !== true
         ) {
-          prefetchPromises.push(this._prefetchVideoBackground(trackInfo.uri));
+          prefetchPromises.push(this._prefetchVideoBackground(trackInfo.uri, trackInfo));
         }
 
         // 1단계: 가사 먼저 프리페치
@@ -4019,18 +4019,29 @@ const Prefetcher = {
   /**
    * 영상 배경 정보 프리페치
    */
-  async _prefetchVideoBackground(uri) {
+  async _prefetchVideoBackground(uri, trackInfo = null) {
     if (CONFIG.visual["community-video-random"] === true) return null;
 
     const trackId = Utils.extractTrackId(uri);
     if (!trackId) return;
     const spotifyData = SpotifyDataHelper.extractSpotifyData(uri);
-    const currentItem = Spicetify.Player?.data?.item || null;
+    // This runs for the *next* track. The player item describes the track that
+    // is playing now, so it may only fill gaps when it is the same track;
+    // otherwise the server would match (and cache) the playing song's video
+    // and ISRC for the next one.
+    const playerItem = Spicetify.Player?.data?.item || null;
+    const currentItem = playerItem?.uri === uri ? playerItem : null;
+    const infoArtists = typeof trackInfo?.artist === "string" && trackInfo.artist
+      ? trackInfo.artist.split(", ").filter(Boolean)
+      : [];
     const fallbackArtists = Array.isArray(spotifyData?.artists) && spotifyData.artists.length
       ? spotifyData.artists
-      : (currentItem?.artists || []).map(artist => typeof artist === "string" ? artist : artist?.name).filter(Boolean);
-    const fallbackTrackName = spotifyData?.name || currentItem?.name || "";
-    const fallbackAlbum = spotifyData?.album || spotifyData?.albumName || currentItem?.album?.name || currentItem?.metadata?.album_title || "";
+      : infoArtists.length
+        ? infoArtists
+        : (currentItem?.artists || []).map(artist => typeof artist === "string" ? artist : artist?.name).filter(Boolean);
+    const fallbackTrackName = spotifyData?.name || trackInfo?.title || currentItem?.name || "";
+    const fallbackAlbum = spotifyData?.album || spotifyData?.albumName || trackInfo?.album
+      || currentItem?.album?.name || currentItem?.metadata?.album_title || "";
     const metadata = {
       trackId,
       trackName: fallbackTrackName,
@@ -4069,26 +4080,21 @@ const Prefetcher = {
       try {
         ivLyricsDebug(`[Prefetcher] Fetching video info for: ${identityKey} (fallback)`);
 
-        const userHash = Utils.getUserHash();
-        // 서버 캐시/추천 정확도를 위해 현재 가진 트랙 메타데이터를 함께 전달
-        const youtubeApiUrlObject = new URL('https://ivlis.kr/ivLyrics/openvideo/youtube');
-        youtubeApiUrlObject.searchParams.set('isrc', isrc);
-        youtubeApiUrlObject.searchParams.set('trackId', trackId);
-        youtubeApiUrlObject.searchParams.set('userHash', userHash);
-        if (metadata.trackName) {
-          youtubeApiUrlObject.searchParams.set('trackName', metadata.trackName);
-        }
-        if (metadata.artists?.length) {
-          youtubeApiUrlObject.searchParams.set('trackArtists', metadata.artists.join(', '));
-        }
-        if (metadata.album) {
-          youtubeApiUrlObject.searchParams.set('album', metadata.album);
-        }
-        if (isrc && window.SyncDataService?.shouldBypassServerCache?.(isrc)) {
-          youtubeApiUrlObject.searchParams.set('bypassCache', '1');
-        }
-        const youtubeApiUrl = youtubeApiUrlObject.toString();
-        const response = await fetch(youtubeApiUrl, { cache: "no-store" });
+        // 서버 캐시/추천 정확도를 위해 현재 가진 트랙 메타데이터를 함께 전달.
+        // Send exactly what VideoBackground sends: without the client parameters
+        // and headers the server answers with a placeholder (decoy) video, which
+        // left this prefetch with nothing to keep.
+        const clientVersion = getYouTubeVideoApiClientVersion();
+        const youtubeApiUrl = buildYouTubeVideoApiUrl({
+          trackIsrc: isrc,
+          trackId,
+          spotifyData: { name: metadata.trackName, artists: metadata.artists, album: metadata.album },
+          clientVersion,
+        });
+        const response = await fetch(youtubeApiUrl, {
+          cache: "no-store",
+          headers: buildYouTubeVideoApiHeaders(clientVersion),
+        });
         const data = await response.json();
         if (response.headers.get('X-ivLyrics-Decoy') === '1') {
           console.warn(`[Prefetcher] Video prefetch returned decoy for: ${identityKey}`);
@@ -4096,21 +4102,18 @@ const Prefetcher = {
         }
 
         if (data.success) {
-          const resolvedIsrc = window.SyncDataService?.normalizeSyncDataIsrc?.(data.data?.isrc) || isrc;
-          if (resolvedIsrc) {
-            window.SyncDataService?.rememberTrackIsrc?.(trackId, resolvedIsrc);
+          // The track's ISRC was resolved locally before the request. Never
+          // re-map the track (or cache) by an ISRC echoed from the response:
+          // a mismatched server answer would otherwise stick to this track.
+          const responseIsrc = window.SyncDataService?.normalizeSyncDataIsrc?.(data.data?.isrc) || "";
+          if (responseIsrc && responseIsrc !== isrc) {
+            console.warn(`[Prefetcher] Video response ISRC ${responseIsrc} differs from requested ${isrc}`);
           }
           this._prefetchCache.set(cacheKey, {
             data: data.data,
             timestamp: Date.now(),
           });
-          if (resolvedIsrc) {
-            this._prefetchCache.set(`prefetch:video:${resolvedIsrc}`, {
-              data: data.data,
-              timestamp: Date.now(),
-            });
-          }
-          ivLyricsDebug(`[Prefetcher] Video info cached for: ${resolvedIsrc || identityKey}`);
+          ivLyricsDebug(`[Prefetcher] Video info cached for: ${identityKey}`);
           // 헬퍼를 통한 영상 미리 다운로드
           if (data.data?.youtubeVideoId) {
             this._prefetchVideoWithHelper(data.data.youtubeVideoId);
