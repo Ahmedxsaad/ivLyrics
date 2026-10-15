@@ -2109,6 +2109,8 @@ window.LANG_IT = {
     "notFound": "Video non trovato.",
     "error": "Si è verificato un errore.",
     "localTrackNeedsVideo": "Per i brani locali, imposta manualmente l’URL YouTube dal pulsante video.",
+    "noMatch": "Nessun video corrisponde a questo brano. Scegline uno dal pulsante video.",
+    "timingGuess": "La sincronizzazione di questo video è stimata. Imposta dal pulsante video dove inizia il canto.",
     "loadingMessage": "Caricamento sfondo video... Richiede circa 30s.",
     "downloadingVideo": "Scaricamento video...",
     "downloading": "Scaricamento: {percent}%",

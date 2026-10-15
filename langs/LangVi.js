@@ -2109,6 +2109,8 @@ window.LANG_VI = {
     "notFound": "Không tìm thấy video.",
     "error": "Đã xảy ra lỗi.",
     "localTrackNeedsVideo": "Với bài hát cục bộ, hãy đặt URL YouTube thủ công từ nút video.",
+    "noMatch": "Không tìm thấy video khớp với bài hát này. Hãy chọn một video từ nút video.",
+    "timingGuess": "Thời gian của video này chỉ là ước tính. Hãy đặt điểm bắt đầu hát từ nút video.",
     "loadingMessage": "Đang tải nền video... Sẽ mất khoảng 30 giây.",
     "downloadingVideo": "Đang tải video...",
     "downloading": "Đang tải: {percent}%",

@@ -2109,6 +2109,8 @@ window.LANG_ID = {
     "notFound": "Video tidak ditemukan.",
     "error": "Terjadi kesalahan.",
     "localTrackNeedsVideo": "Untuk lagu lokal, atur URL YouTube secara manual dari tombol video.",
+    "noMatch": "Tidak ditemukan video yang cocok dengan lagu ini. Pilih satu dari tombol video.",
+    "timingGuess": "Waktu video ini hanya perkiraan. Atur dari tombol video di mana nyanyian dimulai.",
     "loadingMessage": "Memuat latar belakang video... Membutuhkan waktu sekitar 30 detik.",
     "downloadingVideo": "Mengunduh video...",
     "downloading": "Mengunduh: {percent}%",

@@ -2109,6 +2109,8 @@ window.LANG_TR = {
     "notFound": "Video bulunamadı.",
     "error": "Bir hata oluştu.",
     "localTrackNeedsVideo": "Yerel parçalar için video butonundan manuel olarak bir YouTube URL'si ayarlayın.",
+    "noMatch": "Bu şarkıyla eşleşen bir video bulunamadı. Video butonundan bir tane seçin.",
+    "timingGuess": "Bu videonun zamanlaması tahminidir. Şarkının başladığı yeri video butonundan ayarlayın.",
     "loadingMessage": "Video arka planı yükleniyor... Bu işlem yaklaşık 30 saniye sürer.",
     "downloadingVideo": "Video indiriliyor...",
     "downloading": "İndiriliyor: %{percent}",

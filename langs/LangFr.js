@@ -2109,6 +2109,8 @@ window.LANG_FR = {
     "notFound": "Vidéo introuvable.",
     "error": "Erreur survenue.",
     "localTrackNeedsVideo": "Pour les titres locaux, définissez manuellement l’URL YouTube avec le bouton vidéo.",
+    "noMatch": "Aucune vidéo correspondant à ce titre n’a été trouvée. Choisissez-en une avec le bouton vidéo.",
+    "timingGuess": "Le timing de cette vidéo est estimé. Indiquez où commence le chant avec le bouton vidéo.",
     "loadingMessage": "Chargement fond vidéo... env. 30s.",
     "downloadingVideo": "Téléchargement vidéo...",
     "downloading": "Téléchargement : {percent}%",

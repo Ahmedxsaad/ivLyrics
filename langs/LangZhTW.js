@@ -2109,6 +2109,8 @@ window.LANG_ZH_TW = {
     "notFound": "找不到影片。",
     "error": "發生錯誤。",
     "localTrackNeedsVideo": "對於本機曲目，請從影片按鈕手動設定 YouTube URL。",
+    "noMatch": "找不到與這首歌相符的影片。請從影片按鈕選擇一個。",
+    "timingGuess": "此影片的同步時間是估計值。請從影片按鈕設定演唱開始的位置。",
     "loadingMessage": "影片背景載入中... 約需 30 秒。",
     "downloadingVideo": "正在下載影片...",
     "downloading": "下載中: {percent}%",

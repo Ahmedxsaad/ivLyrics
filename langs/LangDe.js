@@ -2109,6 +2109,8 @@ window.LANG_DE = {
     "notFound": "Video nicht gefunden.",
     "error": "Ein Fehler ist aufgetreten.",
     "localTrackNeedsVideo": "Lege für lokale Titel die YouTube-URL manuell über die Video-Schaltfläche fest.",
+    "noMatch": "Kein passendes Video zu diesem Titel gefunden. Wähle eins über die Video-Schaltfläche.",
+    "timingGuess": "Das Timing dieses Videos ist geschätzt. Lege über die Video-Schaltfläche fest, wo der Gesang beginnt.",
     "loadingMessage": "Lade Video-Hintergrund... dauert ca. 30 Sekunden.",
     "downloadingVideo": "Lade Video herunter...",
     "downloading": "Herunterladen: {percent}%",

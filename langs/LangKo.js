@@ -2109,6 +2109,8 @@ window.LANG_KO = {
     "notFound": "동영상을 찾을 수 없습니다.",
     "error": "오류가 발생했습니다.",
     "localTrackNeedsVideo": "로컬 곡은 영상 버튼에서 YouTube URL을 직접 지정하세요.",
+    "noMatch": "이 곡과 맞는 영상을 찾지 못했습니다. 영상 버튼에서 직접 선택하세요.",
+    "timingGuess": "이 영상의 싱크는 추정값입니다. 영상 버튼에서 노래가 시작되는 지점을 지정하세요.",
     "loadingMessage": "영상 배경 로딩 중... 30초 정도 소요됩니다.",
     "downloadingVideo": "영상 다운로드 중...",
     "downloading": "다운로드 중: {percent}%",

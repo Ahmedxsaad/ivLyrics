@@ -2109,6 +2109,8 @@ window.LANG_MS = {
     "notFound": "Video tidak ditemui.",
     "error": "Ralat telah berlaku.",
     "localTrackNeedsVideo": "Untuk lagu setempat, tetapkan URL YouTube secara manual daripada butang video.",
+    "noMatch": "Tiada video yang sepadan dengan lagu ini ditemui. Pilih satu daripada butang video.",
+    "timingGuess": "Pemasaan video ini hanyalah anggaran. Tetapkan di mana nyanyian bermula daripada butang video.",
     "loadingMessage": "Memuatkan latar belakang video... Proses ini mengambil masa sekitar 30 saat.",
     "downloadingVideo": "Memuat turun video...",
     "downloading": "Memuat turun: {percent}%",

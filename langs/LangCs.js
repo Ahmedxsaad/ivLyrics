@@ -2109,6 +2109,8 @@ window.LANG_CS = {
     "notFound": "Video nenalezeno.",
     "error": "Došlo k chybě.",
     "localTrackNeedsVideo": "U místních stop nastavte adresu URL YouTube ručně pomocí tlačítka videa.",
+    "noMatch": "Nebylo nalezeno video odpovídající této skladbě. Vyberte ho pomocí tlačítka videa.",
+    "timingGuess": "Časování tohoto videa je odhad. Pomocí tlačítka videa nastavte, kde začíná zpěv.",
     "loadingMessage": "Načítání pozadí videa... Trvá to asi 30 sekund.",
     "downloadingVideo": "Stahování videa...",
     "downloading": "Stahování: {percent}%",

@@ -2109,6 +2109,8 @@ window.LANG_JA = {
     "notFound": "動画が見つかりません。",
     "error": "エラーが発生しました。",
     "localTrackNeedsVideo": "ローカルトラックでは、動画ボタンから YouTube URL を手動で指定してください。",
+    "noMatch": "この曲に合う動画が見つかりませんでした。動画ボタンから選んでください。",
+    "timingGuess": "この動画のタイミングは推定です。動画ボタンから歌い出しの位置を設定してください。",
     "loadingMessage": "動画背景を読み込み中... 30秒ほどかかります。",
     "downloadingVideo": "動画をダウンロード中...",
     "downloading": "ダウンロード中: {percent}%",

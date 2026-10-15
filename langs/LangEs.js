@@ -2109,6 +2109,8 @@ window.LANG_ES = {
     "notFound": "Video no encontrado.",
     "error": "Ocurrió un error.",
     "localTrackNeedsVideo": "Para pistas locales, define la URL de YouTube manualmente desde el botón de video.",
+    "noMatch": "No se encontró un video que coincida con esta canción. Elige uno desde el botón de video.",
+    "timingGuess": "La sincronización de este video es aproximada. Indica desde el botón de video dónde empieza el canto.",
     "loadingMessage": "Cargando fondo de video... Tardará unos 30 segundos.",
     "downloadingVideo": "Descargando video...",
     "downloading": "Descargando: {percent}%",

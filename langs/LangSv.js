@@ -2109,6 +2109,8 @@ window.LANG_SV = {
     "notFound": "Videon hittades inte.",
     "error": "Ett fel uppstod.",
     "localTrackNeedsVideo": "För lokala spår anger du YouTube-URL manuellt från videoknappen.",
+    "noMatch": "Ingen video som matchar den här låten hittades. Välj en från videoknappen.",
+    "timingGuess": "Den här videons timing är uppskattad. Ange var sången börjar från videoknappen.",
     "loadingMessage": "Laddar videobakgrund... Detta tar cirka 30 sekunder.",
     "downloadingVideo": "Laddar ned video...",
     "downloading": "Laddar ner: {percent}%",
