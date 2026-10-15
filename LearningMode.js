@@ -349,27 +349,30 @@
         guard.lastRewindUri = "";
     };
 
+    let learningReturnFocus = null;
+    const getLearningPanel = () => document.querySelector(".ivlyrics-study-panel");
     const open = () => {
+        if (!state.open) learningReturnFocus = document.activeElement;
         state.open = true;
         enablePlaybackGuard();
         notify();
+        requestAnimationFrame(() => {
+            if (state.open) getLearningPanel()?.focus({ preventScroll: true });
+        });
     };
 
     const close = () => {
+        const restoreFocus = getLearningPanel()?.contains(document.activeElement);
         state.open = false;
         disablePlaybackGuard();
         notify();
+        if (restoreFocus && learningReturnFocus?.isConnected) {
+            learningReturnFocus.focus?.({ preventScroll: true });
+        }
+        learningReturnFocus = null;
     };
 
-    const toggle = () => {
-        state.open = !state.open;
-        if (state.open) {
-            enablePlaybackGuard();
-        } else {
-            disablePlaybackGuard();
-        }
-        notify();
-    };
+    const toggle = () => state.open ? close() : open();
 
     let audioContext = null;
     const getAudioContext = () => {
@@ -1624,19 +1627,18 @@
         );
 
     const StudyButton = react.memo(({ disabled = false }) => {
-        const isOpen = useLearningOpenState();
         const label = t("button", "학습");
         const button = react.createElement("button", {
-            className: `lyrics-config-button ivlyrics-study-button${isOpen ? " active" : ""}`,
+            className: "lyrics-config-button ivlyrics-study-button",
             type: "button",
             disabled,
-            "aria-pressed": isOpen,
+            "aria-haspopup": "dialog",
             "aria-label": label,
             title: window.IvLyricsTooltip ? undefined : label,
             onClick: (event) => {
                 event.stopPropagation();
                 if (disabled) return;
-                toggle();
+                open();
             }
         }, BookIcon);
 
@@ -1774,6 +1776,7 @@
 
         useEffect(() => () => {
             state.open = false;
+            learningReturnFocus = null;
             disablePlaybackGuard();
             notify();
         }, []);
@@ -2960,7 +2963,15 @@
             className: `ivlyrics-study-panel theme-${studyTheme}`,
             role: "dialog",
             "aria-label": t("title", "AI 학습 모드"),
-            onKeyDown: handleQuizKeyDown,
+            onKeyDown: (event) => {
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    close();
+                    return;
+                }
+                handleQuizKeyDown(event);
+            },
             tabIndex: -1
         },
             renderStudyHeader(),
@@ -5515,8 +5526,7 @@
         StudyPanel,
         open,
         close,
-        // The lyrics-page toolbar shows the panel as an on/off item in its
-        // 더보기 menu, so it needs the state and the toggle without the button.
+        // Keep the legacy toggle/state API for add-ons; UI entry points use open().
         toggle,
         isOpen: () => !!state.open,
         subscribe

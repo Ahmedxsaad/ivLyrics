@@ -2398,7 +2398,7 @@ const ToolbarMenuList = ({ label, children }) => {
   );
 };
 
-const ToolbarMenuItem = ({ icon, label, desc, value, drill = false, checked, current = false, disabled = false, onClick }) =>
+const ToolbarMenuItem = ({ icon, label, desc, value, drill = false, popup, checked, current = false, disabled = false, onClick }) =>
   react.createElement(
     "button",
     {
@@ -2406,7 +2406,7 @@ const ToolbarMenuItem = ({ icon, label, desc, value, drill = false, checked, cur
       className: joinToolbarClasses("ivl-tb-mi", current && "is-current"),
       role: checked === undefined ? "menuitem" : "menuitemcheckbox",
       "aria-checked": checked === undefined ? undefined : !!checked,
-      "aria-haspopup": drill ? "true" : undefined,
+      "aria-haspopup": popup || (drill ? "true" : undefined),
       "aria-current": current ? "page" : undefined,
       disabled,
       onClick,
@@ -5718,20 +5718,6 @@ const getToolbarFlyoutBounds = (toolbar) => {
     : { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
 };
 
-const useToolbarStudyOpen = () => {
-  const learning = window.IvLyricsLearningMode;
-  const [isOpen, setIsOpen] = useState(() => !!learning?.isOpen?.());
-  useEffect(() => {
-    if (typeof learning?.subscribe !== "function") return undefined;
-    setIsOpen(!!learning.isOpen?.());
-    const unsubscribe = learning.subscribe((open) => setIsOpen(!!open));
-    return () => {
-      unsubscribe?.();
-    };
-  }, [learning]);
-  return isOpen;
-};
-
 // A panel next to the toolbar: header with title (and 뒤로 inside a drilled
 // view), a scrolling body and an optional footer. It is positioned from the
 // entry that opened it and kept inside the lyrics page.
@@ -5963,24 +5949,22 @@ const CurrentTrackMenu = ({ toolbar, actions, onOpenView, closePanel }) => {
   );
 };
 
-// 더보기 panel: the study panel toggle, image sharing and the marketplace.
+// 더보기 panel: open learning, share an image or visit the marketplace.
 const ToolbarMoreMenu = ({ toolbar, actions, closePanel }) => {
-  const isStudyOpen = useToolbarStudyOpen();
   const learning = window.IvLyricsLearningMode;
   return react.createElement(
     ToolbarMenuList,
     { label: getOptionsText("menu.more", "더보기") },
-    typeof learning?.toggle === "function"
+    typeof learning?.open === "function"
       ? react.createElement(ToolbarMenuItem, {
         icon: "study",
         label: I18n.t("learningMode.button"),
         desc: I18n.t("learningMode.title"),
-        checked: isStudyOpen,
+        popup: "dialog",
         disabled: !toolbar.hasLyrics || toolbar.isLyricsLoading,
         onClick: () => {
-          const opening = !isStudyOpen;
-          learning.toggle();
-          if (opening) closePanel();
+          closePanel();
+          learning.open();
         },
       })
       : null,

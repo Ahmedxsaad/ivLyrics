@@ -131,6 +131,10 @@ function createToolbar(initialProps = {}) {
     IvLyricsLearningMode: {
       isOpen: () => learning.open,
       subscribe: () => () => {},
+      open: () => {
+        learning.open = true;
+        calls.push(["learning.open"]);
+      },
       toggle: () => {
         learning.open = !learning.open;
         calls.push(["learning.toggle", learning.open]);
@@ -600,14 +604,23 @@ test("a local track gets the local lyrics tools; deletion is offered only with s
   assert.equal(inPanel(toolbar, rowLabel(t("menu.localLyricsDelete"))).length, 0);
 });
 
-test("more panel: study toggle, image sharing and the marketplace; settings and fullscreen entries", () => {
+test("more panel: learning is an open action, alongside sharing and marketplace navigation", () => {
   const toolbar = createToolbar();
   openPanel(toolbar, "more");
   const study = findOne(toolbar, menuItem(t("learningMode.button")), "study item");
-  assert.equal(study.props.role, "menuitemcheckbox");
+  assert.equal(study.props.role, "menuitem");
+  assert.equal(study.props["aria-checked"], undefined);
+  assert.equal(study.props["aria-haspopup"], "dialog");
+  assert.equal(nodesOf([study]).some((node) => hasClass(node, "ivl-tb-mi-state")), false);
   click(toolbar, study);
-  assert.deepEqual(toolbar.calls.find(([name]) => name === "learning.toggle"), ["learning.toggle", true]);
-  assert.equal(panel(toolbar), undefined, "turning study on closes the panel");
+  assert.deepEqual(toolbar.calls.find(([name]) => name === "learning.open"), ["learning.open"]);
+  assert.equal(panel(toolbar), undefined, "opening learning closes the menu");
+  assert.equal(toolbar.learning.open, true);
+  openPanel(toolbar, "more");
+  click(toolbar, findOne(toolbar, menuItem(t("learningMode.button")), "study item"));
+  assert.equal(toolbar.learning.open, true, "opening an already-open study panel never closes it");
+  assert.equal(toolbar.calls.some(([name]) => name === "learning.toggle"), false);
+  assert.equal(panel(toolbar), undefined);
   openPanel(toolbar, "more");
   click(toolbar, findOne(toolbar, menuItem(t("menu.shareImage")), "share item"));
   const share = toolbar.calls.find(([name]) => name === "openShareImageModal");

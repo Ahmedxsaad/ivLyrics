@@ -107,21 +107,23 @@ test('long tooltip labels remain inside the viewport at either corner', () => {
 test('study control shares the toolbar tooltip and keeps a native fallback', () => {
     const learningSource = readFileSync(new URL('../LearningMode.js', import.meta.url), 'utf8');
     const studyCode = learningSource.slice(learningSource.indexOf('const StudyButton ='), learningSource.indexOf('const TabButton ='));
-    let toggles = 0;
+    let opens = 0;
     const tooltip = () => {};
     const window = { IvLyricsTooltip: tooltip, Spicetify: { ReactComponent: {
         TooltipWrapper: () => assert.fail('Spotify private tooltip must not be used'),
     } } };
     const render = vm.runInNewContext(studyCode + '\nStudyButton;', {
-        react, window, useLearningOpenState: () => false, t: () => 'Study', BookIcon: {}, toggle: () => toggles++,
+        react, window, t: () => 'Study', BookIcon: {}, open: () => opens++,
     });
     let result = render({ disabled: false });
     assert.equal(result.type, tooltip);
     assert.equal(result.props.label, 'Study');
+    assert.equal(result.children[0].props['aria-pressed'], undefined);
+    assert.equal(result.children[0].props['aria-haspopup'], 'dialog');
     result.children[0].props.onClick({ stopPropagation() {} });
-    assert.equal(toggles, 1);
+    assert.equal(opens, 1);
     render({ disabled: true }).children[0].props.onClick({ stopPropagation() {} });
-    assert.equal(toggles, 1);
+    assert.equal(opens, 1);
     delete window.IvLyricsTooltip;
     result = render({ disabled: false });
     assert.equal(result.type, 'button');
