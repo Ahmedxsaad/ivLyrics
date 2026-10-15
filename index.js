@@ -9777,6 +9777,22 @@ class LyricsContainer extends react.Component {
       } else if (event.detail?.name === "pseudo-karaoke-render-advance") {
         this.forceUpdate?.();
       } else if (
+        event.detail?.name === "background-mode" ||
+        event.detail?.name === "video-fallback-background" ||
+        event.detail?.name === "blur-gradient-background" ||
+        event.detail?.name === "video-background"
+      ) {
+        // Album colours are only fetched on track change while a blur
+        // gradient is in use; fetch them now if it was switched on mid-track.
+        const effectiveMode = this.getEffectiveBackgroundMode();
+        const needsDynamicColors =
+          effectiveMode === "blur-gradient-background" ||
+          (effectiveMode === "video-background" &&
+            CONFIG.visual["video-fallback-background"] === "blur-gradient");
+        if (needsDynamicColors && !this.state.dynamicColors && this.currentTrackUri) {
+          this.fetchColors(this.currentTrackUri);
+        }
+      } else if (
         event.detail?.type === "fullscreen-presentation"
         && this.state.isFullscreen
       ) {

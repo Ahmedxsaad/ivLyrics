@@ -9485,6 +9485,7 @@ const ConfigModal = ({
           info: I18n.t("settings.solidBackgroundColor.desc"),
           key: "solid-background-color",
           type: ColorPresetSelector,
+          when: () => CONFIG.visual["video-fallback-background"] === "solid",
         },
         {
           desc: I18n.t("settings.videoHelper.label"),
