@@ -27,8 +27,28 @@
         author: 'default',
         version: '1.0.0',
         description: {
+            ko: 'Spotify 내장 가사 서비스에서 가사를 가져옵니다',
             en: 'Get lyrics from Spotify\'s built-in lyrics service',
-            ko: 'Spotify 내장 가사 서비스에서 가사를 가져옵니다'
+            ja: 'Spotify内蔵の歌詞サービスから歌詞を取得します',
+            'zh-CN': '从 Spotify 内置歌词服务获取歌词',
+            'zh-TW': '從 Spotify 內建歌詞服務取得歌詞',
+            hi: 'Spotify की बिल्ट-इन लिरिक्स सेवा से गीत के बोल प्राप्त करें',
+            es: 'Obtén las letras del servicio de letras integrado de Spotify',
+            fr: 'Récupérer les paroles depuis le service de paroles intégré de Spotify',
+            ar: 'جلب كلمات الأغاني من خدمة الكلمات المدمجة في Spotify',
+            fa: 'دریافت متن آهنگ از سرویس متن ترانه داخلی Spotify',
+            de: 'Songtexte aus dem integrierten Songtext-Dienst von Spotify abrufen',
+            ru: 'Получать тексты песен из встроенного сервиса текстов Spotify',
+            sv: 'Hämta låttexter från Spotifys inbyggda låttexttjänst',
+            pt: 'Obtenha letras do serviço de letras integrado do Spotify',
+            bn: 'Spotify-এর বিল্ট-ইন লিরিক্স পরিষেবা থেকে লিরিক্স আনুন',
+            cs: 'Načítá texty písní z vestavěné textové služby Spotify',
+            it: 'Ottieni i testi dal servizio di testi integrato di Spotify',
+            th: 'ดึงเนื้อเพลงจากบริการเนื้อเพลงในตัวของ Spotify',
+            vi: 'Lấy lời bài hát từ dịch vụ lời bài hát tích hợp của Spotify',
+            id: 'Ambil lirik dari layanan lirik bawaan Spotify',
+            ms: 'Dapatkan lirik daripada perkhidmatan lirik terbina dalam Spotify',
+            tr: 'Şarkı sözlerini Spotify’ın yerleşik şarkı sözü hizmetinden getirir'
         },
         // 지원하는 가사 유형
         supports: {

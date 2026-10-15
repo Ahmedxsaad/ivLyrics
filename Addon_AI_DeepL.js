@@ -61,7 +61,27 @@
         apiKeyUrl: 'https://www.deepl.com/your-account/keys',
         description: {
             ko: 'DeepL API Free/Pro를 사용하는 번역 전용 제공자입니다.',
-            en: 'Translation-only provider using DeepL API Free/Pro.'
+            en: 'Translation-only provider using DeepL API Free/Pro.',
+            ja: 'DeepL API Free/Proを使用する翻訳専用プロバイダーです。',
+            'zh-CN': '使用 DeepL API Free/Pro 的纯翻译提供商。',
+            'zh-TW': '使用 DeepL API Free/Pro 的純翻譯供應商。',
+            hi: 'DeepL API Free/Pro का उपयोग करने वाला केवल-अनुवाद प्रदाता।',
+            es: 'Proveedor solo para traducción que usa DeepL API Free/Pro.',
+            fr: 'Fournisseur dédié à la traduction utilisant DeepL API Free/Pro.',
+            ar: 'موفّر مخصّص للترجمة فقط يستخدم DeepL API Free/Pro.',
+            fa: 'ارائه‌دهنده مخصوص ترجمه با استفاده از DeepL API Free/Pro.',
+            de: 'Anbieter nur für Übersetzungen über DeepL API Free/Pro.',
+            ru: 'Провайдер только для перевода на базе DeepL API Free/Pro.',
+            sv: 'Leverantör endast för översättning via DeepL API Free/Pro.',
+            pt: 'Provedor exclusivo para tradução usando DeepL API Free/Pro.',
+            bn: 'DeepL API Free/Pro ব্যবহারকারী শুধু-অনুবাদ প্রদানকারী।',
+            cs: 'Poskytovatel pouze pro překlad využívající DeepL API Free/Pro.',
+            it: 'Provider dedicato alla traduzione che usa DeepL API Free/Pro.',
+            th: 'ผู้ให้บริการแปลอย่างเดียวที่ใช้ DeepL API Free/Pro',
+            vi: 'Nhà cung cấp chỉ dành cho dịch thuật, sử dụng DeepL API Free/Pro.',
+            id: 'Penyedia khusus terjemahan yang menggunakan DeepL API Free/Pro.',
+            ms: 'Penyedia khusus untuk terjemahan yang menggunakan DeepL API Free/Pro.',
+            tr: 'DeepL API Free/Pro kullanan, yalnızca çeviri yapan sağlayıcı.'
         },
         supports: {
             translate: true, pronunciation: false, metadata: true, tmi: false,

@@ -198,6 +198,42 @@
                 fallbackTitleOnlyLabel: '2. Fallback (nur Titel)',
                 fallbackTitleOnlyDesc: 'Verwende die Freitextsuche q=title, wenn auch der erste Fallback fehlschlägt.'
             }
+        },
+        sv: {
+            description: 'Hämta låttexter från LRCLIB, en låttextdatabas med öppen källkod',
+            settings: {
+                fallbackTitleArtistLabel: 'Första reservsökning (titel + artist)',
+                fallbackTitleArtistDesc: 'Använd fritextsökningen q=title+artist när den strukturerade sökningen misslyckas.',
+                fallbackTitleOnlyLabel: 'Andra reservsökning (endast titel)',
+                fallbackTitleOnlyDesc: 'Använd fritextsökningen q=title när även den första reservsökningen misslyckas.'
+            }
+        },
+        cs: {
+            description: 'Načítá texty písní z open-source databáze textů LRCLIB',
+            settings: {
+                fallbackTitleArtistLabel: '1. záložní vyhledávání (název + interpret)',
+                fallbackTitleArtistDesc: 'Pokud strukturované vyhledávání selže, použije se fulltextové vyhledávání q=title+artist.',
+                fallbackTitleOnlyLabel: '2. záložní vyhledávání (pouze název)',
+                fallbackTitleOnlyDesc: 'Pokud selže i první záložní vyhledávání, použije se fulltextové vyhledávání q=title.'
+            }
+        },
+        tr: {
+            description: 'Şarkı sözlerini açık kaynaklı LRCLIB şarkı sözü veritabanından getirir',
+            settings: {
+                fallbackTitleArtistLabel: '1. yedek arama (şarkı adı + sanatçı)',
+                fallbackTitleArtistDesc: 'Yapılandırılmış arama başarısız olursa q=title+artist serbest metin araması kullanılır.',
+                fallbackTitleOnlyLabel: '2. yedek arama (yalnızca şarkı adı)',
+                fallbackTitleOnlyDesc: 'İlk yedek arama da başarısız olursa q=title serbest metin araması kullanılır.'
+            }
+        },
+        ms: {
+            description: 'Dapatkan lirik daripada pangkalan data lirik sumber terbuka LRCLIB',
+            settings: {
+                fallbackTitleArtistLabel: 'Carian sandaran ke-1 (tajuk + artis)',
+                fallbackTitleArtistDesc: 'Gunakan carian teks bebas q=title+artist apabila carian berstruktur gagal.',
+                fallbackTitleOnlyLabel: 'Carian sandaran ke-2 (tajuk sahaja)',
+                fallbackTitleOnlyDesc: 'Gunakan carian teks bebas q=title apabila carian sandaran pertama juga gagal.'
+            }
         }
     };
 
@@ -210,7 +246,7 @@
         if (lower.startsWith('zh-tw') || lower.startsWith('zh-hant')) return 'zh-TW';
 
         const base = lower.split('-')[0];
-        const supportedBase = ['en', 'ko', 'ja', 'id', 'pt', 'vi', 'th', 'ru', 'fr', 'hi', 'ar', 'bn', 'es', 'it', 'fa', 'de'];
+        const supportedBase = ['en', 'ko', 'ja', 'id', 'pt', 'vi', 'th', 'ru', 'fr', 'hi', 'ar', 'bn', 'es', 'it', 'fa', 'de', 'sv', 'cs', 'tr', 'ms'];
         if (supportedBase.includes(base)) return base;
 
         return 'en';
