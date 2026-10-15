@@ -75,6 +75,10 @@ function ensureSetupWizardStyles() {
 .wizard-intro { padding: 20px 28px 0; }
 .wizard-intro h1 { margin: 0; font-size: 25px; font-weight: 650; line-height: 1.35; letter-spacing: -.025em; }
 .wizard-intro p { margin: 8px 0 0; font-size: 14px; color: var(--text-2); line-height: 1.65; max-width: 60ch; }
+.wizard-intro h1.wizard-welcome-copy { font-size: clamp(28px, 3.3vw, 38px); line-height: 1.3; }
+.wizard-welcome-copy { display: grid; }
+.wizard-welcome-copy > span { grid-area: 1 / 1; opacity: 0; pointer-events: none; transition: opacity 180ms ease-out; }
+.wizard-welcome-copy > span.is-current { opacity: 1; }
 .wizard-progress { display: flex; list-style: none; gap: 8px; padding: 0 28px; margin: 24px 0 0; }
 .wizard-progress li { flex: 1; min-width: 0; }
 .wizard-progress button { border: 0; border-top: 2px solid var(--line-2); background: transparent; padding: 12px 0; min-height: 44px; width: 100%; text-align: start; color: var(--text-3); font-size: 13px; display: flex; gap: 8px; align-items: center; }
@@ -179,6 +183,47 @@ const WizardToggleRow = ({ icon, title, description, enabled, onToggle }) =>
       react.createElement("strong", null, title),
       description && react.createElement("span", null, description)),
     react.createElement(WizardToggleVisual, { enabled }));
+
+// These two greetings are intentionally bilingual. Form labels and the saved
+// language never rotate; screen readers keep one stable, localized heading.
+const WIZARD_WELCOME_COPY = {
+  en: { greeting: "Hello", instruction: "Choose your language to get started." },
+  ko: { greeting: "안녕하세요", instruction: "사용할 언어를 선택해주세요." },
+};
+const getWizardWelcomeLanguage = (language) => /^ko(?:[-_]|$)/i.test(language || "") ? "ko" : "en";
+const useWizardWelcomeLanguage = (active, language, settled) => {
+  const initialLanguage = getWizardWelcomeLanguage(language);
+  const [welcomeLanguage, setWelcomeLanguage] = useState(initialLanguage);
+  react.useEffect(() => {
+    if (!active || settled) return;
+    const motion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    let timer = null;
+    const refresh = () => {
+      if (timer !== null) clearInterval(timer);
+      timer = null;
+      if (document.hidden || motion?.matches) {
+        setWelcomeLanguage(initialLanguage);
+        return;
+      }
+      timer = setInterval(() => setWelcomeLanguage((value) => value === "ko" ? "en" : "ko"), 3500);
+    };
+    refresh();
+    document.addEventListener("visibilitychange", refresh);
+    motion?.addEventListener?.("change", refresh);
+    return () => {
+      if (timer !== null) clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+      motion?.removeEventListener?.("change", refresh);
+    };
+  }, [active, initialLanguage, settled]);
+  return settled ? initialLanguage : welcomeLanguage;
+};
+const WizardWelcomeText = ({ tag, field, language, ...props }) =>
+  react.createElement(tag, { ...props, className: "wizard-welcome-copy" },
+    ["en", "ko"].map((code) => react.createElement("span", {
+      key: code, lang: code, "aria-hidden": true,
+      className: code === language ? "is-current" : "",
+    }, WIZARD_WELCOME_COPY[code][field])));
 
 // Video Test step - Check if YouTube embed requires login
 const VideoTestStep = ({ onNext, onBack, onNeedHelper, onSkip }) => {
@@ -775,6 +820,8 @@ const VideoHelperTestStep = ({ onNext, onBack, onSkip, helperEnabled, onHelperCh
 const SetupWizard = ({ onComplete, onDismiss, onThemeChange }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedLanguage, setSelectedLanguage] = useState(I18n.getCurrentLanguage());
+  const [languageInteracted, setLanguageInteracted] = useState(false);
+  const welcomeLanguage = useWizardWelcomeLanguage(currentStep === 0, selectedLanguage, languageInteracted);
   const [outputLanguage, setOutputLanguage] = useState(CONFIG.visual["translate:target-language"] || "auto");
   const [uiTheme, setUiTheme] = useState(getSettingsSurfaceTheme());
   const changedUiTheme = react.useRef(false);
@@ -795,6 +842,7 @@ const SetupWizard = ({ onComplete, onDismiss, onThemeChange }) => {
   const steps = ["language", "appearance", "playback"];
   const languages = I18n.getAvailableLanguages();
   react.useEffect(() => {
+    if (currentStep !== 0) setLanguageInteracted(true);
     pageRef.current?.scrollTo?.({ top: 0 });
     pageRef.current?.querySelector("h2")?.focus({ preventScroll: true });
   }, [currentStep]);
@@ -805,6 +853,7 @@ const SetupWizard = ({ onComplete, onDismiss, onThemeChange }) => {
     onThemeChange?.(theme);
   };
   const changeLanguage = (code) => {
+    setLanguageInteracted(true);
     setSelectedLanguage(code);
     I18n.setLanguage(code);
   };
@@ -841,7 +890,9 @@ const SetupWizard = ({ onComplete, onDismiss, onThemeChange }) => {
   const languageField = (key, value, onChange, includeAuto = false) =>
     react.createElement("label", { className: "wizard-field" },
       react.createElement("span", null, I18n.t(key)),
-      react.createElement("select", { value, onChange: (event) => onChange(event.target.value) },
+      react.createElement("select", { value,
+        onFocus: () => setLanguageInteracted(true), onPointerDown: () => setLanguageInteracted(true),
+        onChange: (event) => onChange(event.target.value) },
         includeAuto && react.createElement("option", { value: "auto" }, I18n.t("settings.translationTargetLanguage.options.auto")),
         languages.map((language) => react.createElement("option", { key: language.code, value: language.code }, language.name))));
 
@@ -933,9 +984,15 @@ const SetupWizard = ({ onComplete, onDismiss, onThemeChange }) => {
           }, wizardSvg(theme === "light" ? "sun" : "moon", 18)))),
         react.createElement("button", { type: "button", className: "wizard-icon-button", onClick: onDismiss,
           title: I18n.t("buttons.close"), "aria-label": I18n.t("buttons.close") }, wizardSvg("close", 20)))),
-    react.createElement("div", { className: "wizard-intro" },
-      react.createElement("h1", { id: "ivlyrics-setup-title" }, I18n.t("setupWizard.quick.title")),
-      react.createElement("p", { id: "ivlyrics-setup-description" }, I18n.t("setupWizard.quick.subtitle"))),
+    react.createElement("div", { className: "wizard-intro", "data-welcome-language": currentStep === 0 ? welcomeLanguage : undefined },
+      currentStep === 0
+        ? react.createElement(WizardWelcomeText, { tag: "h1", field: "greeting", language: welcomeLanguage,
+            id: "ivlyrics-setup-title", "aria-label": I18n.t("setupWizard.language.title") })
+        : react.createElement("h1", { id: "ivlyrics-setup-title" }, I18n.t("setupWizard.quick.title")),
+      currentStep === 0 && !languageInteracted
+        ? react.createElement(WizardWelcomeText, { tag: "p", field: "instruction", language: welcomeLanguage,
+            id: "ivlyrics-setup-description", "aria-label": I18n.t("setupWizard.quick.subtitle") })
+        : react.createElement("p", { id: "ivlyrics-setup-description" }, I18n.t("setupWizard.quick.subtitle"))),
     react.createElement("ol", { className: "wizard-progress", "aria-label": I18n.t("setupWizard.quick.title") },
       steps.map((step, index) => react.createElement("li", { key: step, className: index < currentStep ? "is-done" : "" },
         react.createElement("button", { type: "button", onClick: () => setCurrentStep(index),

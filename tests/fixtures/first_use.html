@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ivLyrics first-use and learning UI fixture</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    html,body { margin:0; min-height:100%; background:#101012; color:#ededef; font-family:system-ui,sans-serif; }
+    #fixture { position:relative; width:100vw; height:100dvh; overflow:hidden; }
+    #fixture-note { position:absolute; left:24px; top:24px; font-size:12px; color:#a9a9b1; }
+  </style>
+  <script src="/react.js"></script>
+  <script src="/react-dom.js"></script>
+  <script>
+    const react = React, reactDOM = ReactDOM;
+    const { useState, useEffect, useRef, useMemo, useCallback } = React;
+    const APP_NAME = "ivLyrics";
+    const params = new URLSearchParams(location.search);
+    localStorage.setItem("ivLyrics:visual:language", params.get("language") || "ko");
+    localStorage.setItem("ivLyrics:settings-ui-theme", params.get("theme") || "dark");
+    const CONFIG = { visual: {
+      alignment: "center", "gradient-background": true, "panel-lyrics-enabled": true,
+      "translate:target-language": "auto", "karaoke-mode-enabled": true,
+    } };
+    const StorageManager = {
+      getItem: key => localStorage.getItem(key),
+      setItem: (key, value) => localStorage.setItem(key, value),
+      saveConfig: (key, value) => localStorage.setItem("ivLyrics:visual:" + key, value),
+    };
+    const Utils = {
+      extractTrackId: uri => String(uri).split(":").pop(),
+      getTrackSyncOffset: async () => 0,
+      getGlobalSyncOffset: () => 0,
+    };
+    const track = { uri:"spotify:track:fixture", name:"Offline song", duration:180000,
+      artists:[{ name:"Offline artist" }], metadata:{ title:"Offline song", artist_name:"Offline artist" } };
+    window.Spicetify = { React, ReactDOM, Player: {
+      data:{ item:track, isPaused:true }, getProgress:() => 0, getDuration:() => 180000,
+      getRepeat:() => 0, setRepeat:() => {}, addEventListener:() => {}, removeEventListener:() => {},
+    } };
+    window.LyricsAddonManager = { getEnabledProviders:() => [] };
+    window.AIAddonManager = { getEnabledProvidersFor:() => [] };
+    const SETTINGS_LYRICS_PREVIEW_TEXT = "ここに歌詞があります";
+    const handleSettingsRadioKeys = () => {};
+    const getSettingsMotionDurationMs = () => 180;
+    const ConfigSlider = () => null, ConfigButton = () => null;
+    const Toast = { show:console.log, error:console.warn, success:console.log };
+    const openConfig = () => {};
+  </script>
+  <!-- LANGUAGE_SCRIPTS -->
+  <script src="/I18n.js"></script>
+  <script src="/SettingsStyles.js"></script>
+  <script src="/OptionsMenu.js"></script>
+  <script src="/SetupWizard.js"></script>
+  <script src="/LearningMode.js"></script>
+</head>
+<body>
+  <div id="fixture" class="lyrics-lyricsContainer-LyricsContainer">
+    <span id="fixture-note">Offline production-source fixture · no account or network API</span>
+    <div id="toolbar"></div>
+  </div>
+  <script>
+    const lyrics = [{ text:"ここに歌詞があります", startTime:0, endTime:5000 }];
+    if (params.get("surface") === "toolbar") {
+      ReactDOM.render(React.createElement(React.Fragment, null,
+        React.createElement(IvLyricsFloatingToolbar, {
+          actions:{}, isFullscreen:false, isMenuOpen:true, isMenuClosing:false, modeKey:"synced",
+          hasLyrics:true, hasSynced:true, hasKaraoke:false, karaokeEnabled:true, isLyricsLoading:false,
+          canRegenerate:false, trackUri:track.uri, syncTrackUri:track.uri, trackTitle:track.name,
+          trackArtist:"Offline artist", currentProvider:"fixture", lyrics, canToggleFullscreen:false,
+        }),
+        React.createElement(window.IvLyricsLearningMode.StudyPanel, {
+          trackUri:track.uri, title:track.name, artist:"Offline artist", provider:"fixture", lyrics,
+        })
+      ), document.getElementById("toolbar"));
+    } else {
+      openSetupWizard();
+    }
+  </script>
+</body>
+</html>

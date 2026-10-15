@@ -6,3 +6,7 @@ addon-manager.ps1
 __pycache__/
 *.pyc
 .kiro/settings/lsp.json
+
+# Local browser QA snapshots and screenshots.
+/.playwright-cli/
+/output/playwright/
