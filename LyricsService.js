@@ -686,6 +686,345 @@
         return guard;
     };
 
+    // ============================================
+    // Language identification model
+    // ============================================
+    // tinyld (MIT, 62 languages, ~260 KB gzipped; ~2 ms per song inside
+    // Spotify, asked line by line) names the Latin- and Cyrillic-script
+    // languages the hand-written rules cannot tell apart (Romanian, Norwegian,
+    // Finnish, Ukrainian, Tagalog, …). It is loaded
+    // once, lazily, from a pinned file whose SHA-384 is checked before it runs;
+    // until then, or if it cannot load, detection uses the rules alone.
+    const LanguageModel = (() => {
+        const VERSION = "1.3.4";
+        const SOURCES = [
+            `https://cdn.jsdelivr.net/npm/tinyld@${VERSION}/dist/tinyld.normal.browser.js`,
+            `https://unpkg.com/tinyld@${VERSION}/dist/tinyld.normal.browser.js`,
+        ];
+        const INTEGRITY = "sha384-HZ4mCkPvCb4DthgWSbUqAcqiTTLDXHcrlUObinK25mtROSFSZKva3PSlrnmsKHiu";
+        let model = null;
+        let loading = null;
+
+        const importModule = (url) => (typeof window.__ivLyricsLanguageModelImport === "function"
+            ? window.__ivLyricsLanguageModelImport(url)
+            : import(url));
+
+        const digestOf = async (bytes) => {
+            const digest = new Uint8Array(await crypto.subtle.digest("SHA-384", bytes));
+            return `sha384-${btoa(String.fromCharCode(...digest))}`;
+        };
+
+        const importVerified = async (url) => {
+            const response = await fetch(url, { cache: "force-cache" });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const bytes = await response.arrayBuffer();
+            if (await digestOf(bytes) !== INTEGRITY) throw new Error("integrity check failed");
+            const blobUrl = URL.createObjectURL(new Blob([bytes], { type: "text/javascript" }));
+            try {
+                return await importModule(blobUrl);
+            } catch (blobError) {
+                // A content security policy may refuse blob: modules. The
+                // pinned, immutable file was verified just above.
+                return await importModule(url);
+            } finally {
+                URL.revokeObjectURL(blobUrl);
+            }
+        };
+
+        const load = () => {
+            if (model) return Promise.resolve(model);
+            if (loading) return loading;
+            if (typeof fetch !== "function" || typeof crypto === "undefined" || !crypto.subtle) {
+                return Promise.resolve(null);
+            }
+            loading = (async () => {
+                for (const url of SOURCES) {
+                    try {
+                        const loaded = await importVerified(url);
+                        if (typeof loaded?.detectAll === "function") {
+                            model = loaded;
+                            window.dispatchEvent(new CustomEvent("ivLyrics:language-model-ready"));
+                            return model;
+                        }
+                    } catch (error) {
+                        console.warn("[ivLyrics] Language model unavailable from", url, error?.message || error);
+                    }
+                }
+                return null;
+            })();
+            return loading;
+        };
+
+        return {
+            get: () => model,
+            load,
+            // Resolves with the model, or null once the timeout passes.
+            whenReady(timeoutMs = 0) {
+                if (model) return Promise.resolve(model);
+                const pending = load();
+                if (!(timeoutMs > 0)) return pending;
+                return Promise.race([pending, new Promise((resolve) => setTimeout(() => resolve(null), timeoutMs))]);
+            },
+        };
+    })();
+
+    // ============================================
+    // Language detection rules
+    // ============================================
+    // Layered on top of the original detector (detectLanguageByRules): the
+    // script that owns the lyric decides first; scripts several languages share
+    // are split by the letters only one of them uses; Latin lyrics go through
+    // romanized-language word lists, the model and a few pair checks. Measured
+    // (2026-10) on 168 hand-checked lyrics in 37 languages: 97-100% of whole
+    // songs correct, against 65-87% for the original detector alone; on 4,900
+    // LRCLIB lyrics labeled through Wikidata, 92% (song labels) and 82% (artist
+    // labels) agree, against 80% and 70%. Most remaining disagreements are
+    // labels that do not fit the lyrics (an English song by a Spanish artist).
+    const LanguageRefiner = (() => {
+        // Same claim rule as the original detector: a non-Latin script owns the
+        // lyric once it holds enough of the lines, so a borrowed English hook
+        // does not relabel a Korean or Arabic song.
+        const LINE_SHARE = 0.15;
+        const MIN_LINES = 3;
+
+        // Credit lines some sources prepend ("作词 : …", "Composed by …").
+        const CREDIT_LINE = /^\s*(?:作词|作詞|作曲|编曲|編曲|制作人|製作人|词|詞|曲|lyrics by|lyricist|composed by|composer|written by|produced by|producer)\s*[:：]/iu;
+
+        // Scripts written by (practically) a single song language.
+        const SINGLE_LANGUAGE_SCRIPTS = [
+            ["el", 0x0370, 0x03FF], ["el", 0x1F00, 0x1FFF], ["he", 0x0590, 0x05FF], ["hy", 0x0530, 0x058F],
+            ["ka", 0x10A0, 0x10FF], ["ta", 0x0B80, 0x0BFF], ["te", 0x0C00, 0x0C7F], ["kn", 0x0C80, 0x0CFF],
+            ["ml", 0x0D00, 0x0D7F], ["gu", 0x0A80, 0x0AFF], ["pa", 0x0A00, 0x0A7F], ["or", 0x0B00, 0x0B7F],
+            ["si", 0x0D80, 0x0DFF], ["th", 0x0E00, 0x0E7F], ["lo", 0x0E80, 0x0EFF], ["km", 0x1780, 0x17FF],
+            ["my", 0x1000, 0x109F], ["am", 0x1200, 0x139F], ["bo", 0x0F00, 0x0FFF], ["bn", 0x0980, 0x09FF],
+        ];
+
+        const scriptOfCodePoint = (code) => {
+            if (code < 0x0250) {
+                return (code >= 0x41 && code <= 0x5A) || (code >= 0x61 && code <= 0x7A)
+                    || (code >= 0xC0 && code !== 0xD7 && code !== 0xF7) ? "latin" : null;
+            }
+            if (code >= 0x1E00 && code <= 0x1EFF) return "latin";
+            if (code >= 0x0400 && code <= 0x052F) return "cyrillic";
+            if ((code >= 0x0600 && code <= 0x06FF) || (code >= 0x0750 && code <= 0x077F)
+                || (code >= 0xFB50 && code <= 0xFEFF)) return "arabic";
+            if (code >= 0x0900 && code <= 0x097F) return "devanagari";
+            if ((code >= 0x1100 && code <= 0x11FF) || (code >= 0x3130 && code <= 0x318F)
+                || (code >= 0xAC00 && code <= 0xD7AF) || (code >= 0x3040 && code <= 0x30FF)
+                || (code >= 0xFF66 && code <= 0xFF9F) || (code >= 0x3400 && code <= 0x9FFF)
+                || (code >= 0xF900 && code <= 0xFAFF) || (code >= 0x20000 && code <= 0x2FA1F)) return "cjk";
+            for (const [language, from, to] of SINGLE_LANGUAGE_SCRIPTS) {
+                if (code >= from && code <= to) return language;
+            }
+            return null;
+        };
+
+        const scriptOfLine = (text) => {
+            const counts = new Map();
+            for (const character of text) {
+                const script = scriptOfCodePoint(character.codePointAt(0));
+                if (script) counts.set(script, (counts.get(script) || 0) + 1);
+            }
+            let best = null;
+            let bestCount = 0;
+            for (const [script, count] of counts) {
+                if (count > bestCount) {
+                    best = script;
+                    bestCount = count;
+                }
+            }
+            return best;
+        };
+
+        const countMatches = (text, regex) => (text.match(regex) || []).length;
+
+        // Urdu writes letters neither Arabic nor Persian uses (tteh, ddal,
+        // rreh, noon ghunna, yeh barree, do-chashmi heh); Persian adds peh,
+        // tcheh, jeh, gaf, keheh and farsi yeh to the Arabic alphabet, which
+        // Urdu shares, so Urdu is checked first.
+        const resolveArabicScript = (text) => {
+            const total = countMatches(text, /[؀-ۿ]/gu) || 1;
+            if (countMatches(text, /[ٹڈڑںےھ]/gu) / total >= 0.02) return "ur";
+            return countMatches(text, /[پچژگکی]/gu) / total >= 0.07 ? "fa" : "ar";
+        };
+
+        // The model asked once about a whole song can be pulled off by a few
+        // n-grams (clear Spanish read as Hungarian, Finnish as Tagalog), and a
+        // hook sung twenty times counts twenty times. Each distinct line votes
+        // instead, its ranking weighted by its word count.
+        const rankByLines = (text, model, only) => {
+            if (!model?.detectAll) return [];
+            const tally = new Map();
+            let total = 0;
+            for (const line of new Set(text.split("\n"))) {
+                const weight = wordsOf(line).length;
+                if (weight < 2) continue;
+                for (const entry of model.detectAll(line, { only }) || []) {
+                    tally.set(entry.lang, (tally.get(entry.lang) || 0) + weight * entry.accuracy);
+                }
+                total += weight;
+            }
+            return [...tally.entries()]
+                .sort((left, right) => right[1] - left[1])
+                .map(([lang, score]) => ({ lang, accuracy: score / total }));
+        };
+
+        // Cyrillic languages are mostly settled by their own letters.
+        const CYRILLIC_LANGUAGES = ["ru", "uk", "bg", "be", "mk", "sr", "kk", "mn", "tt"];
+        const resolveCyrillic = (text, model) => {
+            const lower = text.toLowerCase();
+            if (/[ѓќѕ]/u.test(lower)) return "mk";
+            if (/[ђћ]/u.test(lower)) return "sr";
+            // Kazakh writes these letters every few words (5-10% of letters); a
+            // Russian rap track with one Kazakh guest verse stays near 1%.
+            if (countMatches(lower, /[әғқңұһ]/gu) / (countMatches(lower, /\p{Script=Cyrillic}/gu) || 1) >= 0.02) return "kk";
+            if (/ў/u.test(lower)) return "be";
+            if (/[їєґ]/u.test(lower) || (/і/u.test(lower) && !/[ыэ]/u.test(lower))) return "uk";
+            if (/[јџљњ]/u.test(lower)) return "sr";
+            return rankByLines(text, model, CYRILLIC_LANGUAGES)[0]?.lang || "ru";
+        };
+
+        const MARATHI_WORDS = new Set(["आहे", "आणि", "नाही", "मला", "तुला", "माझा", "माझी", "तुझा", "तुझी", "होते", "काय"]);
+        const NEPALI_WORDS = new Set(["छ", "छन्", "हुन्छ", "मेरो", "तिम्रो", "गर्न", "भयो", "थियो", "छैन"]);
+        const HINDI_WORDS = new Set(["है", "हैं", "और", "मैं", "तुम", "मेरा", "मेरी", "तेरा", "तेरी", "नहीं", "क्या", "का", "की", "के"]);
+        const resolveDevanagari = (text) => {
+            const words = text.split(/\s+/u);
+            const countIn = (set) => words.filter((word) => set.has(word)).length;
+            const hindi = countIn(HINDI_WORDS);
+            const marathi = countMatches(text, /ळ/gu) + countIn(MARATHI_WORDS) * 2;
+            const nepali = countIn(NEPALI_WORDS) * 2;
+            if (marathi > hindi && marathi >= 4) return "mr";
+            if (nepali > hindi && nepali >= 4) return "ne";
+            return "hi";
+        };
+
+        // ============================================
+        // Latin script
+        // ============================================
+        const wordsOf = (text) => text.toLowerCase().normalize("NFC").match(/[\p{L}\p{M}0-9']+/gu) || [];
+
+        // Lyrics written in Latin letters for a language with its own script.
+        // Romanized Hindi and Urdu are one written language (Hindustani) and
+        // report as "hi". Arabizi writes the letters Latin lacks with digits
+        // (3 = ع, 7 = ح, 9 = ق).
+        const ROMANIZED_WORDS = {
+            hi: new Set(["hai", "hain", "main", "mein", "tum", "tumhe", "tumhara", "tera", "teri", "tere", "mera", "meri", "mere", "dil", "pyaar", "pyar", "nahi", "nahin", "kya", "kyun", "aur", "bhi", "hum", "humko", "yeh", "woh", "tu", "tujhe", "mujhe", "mujhko", "zindagi", "raha", "rahi", "rahe", "sakte", "sakta", "bin", "bina", "jaan", "saath", "ishq", "khuda", "sanam", "yaara", "yaar", "kuch", "abhi", "phir", "hota", "hoti", "jab", "kabhi", "dard", "aankhon", "aankhein", "raat", "duniya", "aaja", "jaana", "apna", "apni", "tujhko", "chahiye", "lagta", "lagti", "hoon", "hu", "mujhse", "tujhse", "kaise", "kahin", "jaise", "wajah", "mohabbat", "afreen", "jahan", "sapne", "baat", "baatein", "husn", "nazar", "chehra", "zulf", "noor", "maula", "sajna", "sajda", "aankhen", "nigahen", "tasveer", "mehfil", "khwab", "khwaab", "intezaar", "jaanam", "humsafar", "dua", "tanha", "pyaasa", "dekha", "dekho", "suno", "kaho", "chalo", "laga", "lagi", "gaya", "gayi", "aaya", "aayi", "tujhme", "mujhme", "hoke", "rehna", "reh", "sakoon", "sukoon", "kehna", "kaha", "agar", "toh", "khud", "juda", "tujh", "mujh", "jaayenge", "jayenge", "wajood", "hoga", "hogi", "karna", "karta", "karti", "kiya", "diya", "liya", "sirf", "yahan", "wahan", "jaisa", "pehle", "jaate", "jaati", "aate"]),
+            ja: new Set(["watashi", "boku", "ore", "kimi", "anata", "desu", "deshou", "kokoro", "sora", "yume", "itsumo", "zutto", "mada", "nani", "doko", "kono", "sono", "koto", "mono", "hito", "sekai", "hikari", "namida", "kaze", "hoshi", "sayonara", "arigatou", "daisuki", "suki", "aishiteru", "toki", "yoru", "shinjite", "kitto", "futari", "hitori", "kimochi", "omoi", "basho", "michi", "owari", "dakara", "demo", "shiranai", "wakaranai", "nakute", "shite", "kara", "made", "dake", "naku", "mitai", "konna", "sonna", "donna"]),
+            ko: new Set(["saranghae", "neoui", "naui", "geudae", "uri", "neon", "naneun", "neoneun", "haru", "sarang", "jigeum", "oneul", "maeil", "dasi", "hamkke", "gati", "modeun", "eolmana", "hajiman", "eotteoke", "bogo", "sipeo", "nunmul", "maeum", "oppa", "jeongmal", "neomu", "naega", "nega", "geurae", "eopseo", "itjana", "andwae", "gamsa"]),
+            ar: new Set(["habibi", "habibti", "enti", "inta", "inti", "nheb", "nhebek", "nhebbek", "omri", "galbi", "rani", "kifech", "chnowa", "barcha", "yesser", "inchallah", "mabrouk", "khouya", "lyoum", "nta", "nti", "kifeh", "kidayr", "wakha", "bezaf", "mazal", "ghir", "hadi", "hada", "ndir", "nkoun", "tbghi", "bghit", "mchit", "jit", "lazem", "kima", "chkoun", "galbek"]),
+        };
+        const ARABIZI_WORD = /^[a-z']*[379][a-z']+$/u;
+
+        // Share of the words that belong to each romanized language, and how
+        // many different ones: one hook word repeated is not a romanized lyric.
+        const scoreRomanized = (words) => {
+            const total = words.length || 1;
+            return Object.entries(ROMANIZED_WORDS).map(([language, set]) => {
+                const hits = words.filter((word) => word.length > 1
+                    && (set.has(word) || (language === "ar" && ARABIZI_WORD.test(word))));
+                return { language, share: hits.length / total, distinct: new Set(hits).size };
+            }).sort((left, right) => right.share - left.share);
+        };
+
+        // Song languages the model may answer for Latin text; artificial and
+        // archaic ones (Esperanto, Latin, Klingon, …) are left out.
+        const LATIN_LANGUAGES = ["en", "es", "pt", "fr", "it", "de", "nl", "sv", "da", "no", "fi", "is", "pl", "cs", "sk", "hu", "ro", "tr", "id", "tl", "vi", "sr", "lt", "lv", "et", "af", "ga"];
+
+        // Words Malay uses where Indonesian does not (the model has no Malay).
+        // Literary words both share (engkau, tiada, harapan, …) are left out.
+        const MALAY_WORDS = new Set(["awak", "kerana", "boleh", "mahu", "sahaja", "betul", "cakap", "nak", "dah", "kat", "hendak", "jua", "beta", "nian", "ibarat", "beradu", "takde", "kenapakah"]);
+        const INDONESIAN_WORDS = new Set(["kamu", "bisa", "karena", "mau", "nggak", "gak", "banget", "udah", "aja", "kenapa", "gimana", "emang", "sih", "kok", "deh", "dong", "cuma", "kamulah", "denganmu", "bilang", "pernah", "merasa", "ingin"]);
+        // Catalan, which the model lacks, reads to it line by line as Spanish,
+        // Portuguese, Italian, French or even Vietnamese.
+        const CATALAN_WORDS = new Set(["els", "amb", "però", "perquè", "molt", "jo", "meu", "meva", "teu", "teva", "aquest", "aquesta", "aquests", "més", "nit", "vull", "puc", "estic", "sóc", "ets", "són", "sense", "fins", "també", "mateix", "dels", "pel", "pels", "nosaltres", "vosaltres", "vaig", "allà", "doncs", "gaire", "encara", "avui", "demà", "dir", "fer", "veure", "anar", "cap", "res", "tothom", "ningú", "potser", "mentre", "llavors", "bé", "molts", "moltes", "seva", "nostra", "vostra", "dóna", "fa", "puguis", "sigui"]);
+        const SPANISH_WORDS = new Set(["los", "pero", "porque", "muy", "yo", "mío", "tuyo", "este", "esta", "más", "noche", "quiero", "puedo", "estoy", "soy", "eres", "somos", "son", "su", "sin", "hasta", "ahora", "también", "nada", "nunca", "todo", "mismo", "y", "el", "es", "me", "te", "nos", "se", "voy", "vas", "va", "aquí"]);
+        const SERBIAN_EKAVIAN = /^(lep|vreme|dete|uvek|mleko|reč|deca|beo|hteo|cvet|svet|srećan)/u;
+        // Inside a stem "ije" is ijekavian (lijepo, vrijeme); at the end of a
+        // word it is a case ending both write (nije, kategorije).
+        const IJEKAVIAN = /ije\p{L}/u;
+        const CROATIAN_WORDS = new Set(["što", "tko", "gdje", "ovdje", "negdje", "nigdje", "htio", "sretan", "sretna", "tisuću", "kruh", "zrak"]);
+        const SERBIAN_WORDS = new Set(["šta", "sta", "hteo", "htela", "srećan", "srećna", "hiljadu", "hleb", "vazduh", "beše"]);
+        // Albanian function words; ë and ç alone also occur in Dutch, French
+        // and Luxembourgish.
+        const ALBANIAN_WORDS = new Set(["të", "në", "një", "që", "është", "për", "dhe", "më", "unë", "kjo", "nuk", "s'ka"]);
+
+        const resolveLatin = (text, model) => {
+            const words = wordsOf(text);
+            if (words.length < 3) return null;
+            const [roman, nextRoman] = scoreRomanized(words);
+            const ranked = rankByLines(text, model, LATIN_LANGUAGES);
+            const confidence = ranked[0]?.accuracy ?? 0;
+            // A romanized lyric is dense in many of that language's own words.
+            // Very dense evidence wins outright (the model reads romanized Hindi
+            // as Tagalog with confidence); moderate evidence only when the
+            // model is unsure.
+            if (roman.distinct >= 4 && roman.share >= nextRoman.share * 1.8
+                && (roman.share >= 0.2 || (roman.share >= 0.1 && confidence < 0.9))) {
+                return roman.language;
+            }
+            // Letters that settle the question outright, and an answer the
+            // text's own orthography rules out (Icelandic always has ð or þ).
+            // Azerbaijani shares ğ and ı with Turkish but alone writes ə.
+            if (countMatches(text, /ə/gu) >= 3) return "az";
+            if (countMatches(text, /[ğı]/gu) >= 3) return "tr";
+            if (new Set(words.filter((word) => ALBANIAN_WORDS.has(word))).size >= 4) return "sq";
+            const candidate = ranked.find((entry) => entry.lang !== "is" || /[ðþ]/u.test(text));
+            if (!candidate) return null;
+            let language = candidate.lang;
+            const countIn = (set) => words.filter((word) => set.has(word)).length;
+            if (language === "id" || language === "ms") {
+                const malay = countIn(MALAY_WORDS);
+                language = malay >= 3 && malay > countIn(INDONESIAN_WORDS) * 1.5 ? "ms" : "id";
+            }
+            if (["es", "it", "fr", "vi", "pt"].includes(language)) {
+                // Portuguese writes meu and teu too, so those only count elsewhere.
+                const catalan = words.filter((word) => CATALAN_WORDS.has(word)
+                    && (language !== "pt" || (word !== "meu" && word !== "teu"))).length;
+                if (catalan >= 6 && catalan > countIn(SPANISH_WORDS) * 1.2) language = "ca";
+            }
+            if (language === "sr") {
+                // Croatian (and Bosnian) write the ijekavian "ije" where
+                // Serbian mostly writes "e": lijepo/lepo, vrijeme/vreme; a few
+                // everyday words differ too (što/šta, tko, kruh/hleb).
+                const ijekavian = words.filter((word) => (IJEKAVIAN.test(word) && !word.startsWith("nije"))
+                    || CROATIAN_WORDS.has(word)).length;
+                const ekavian = words.filter((word) => SERBIAN_EKAVIAN.test(word) || SERBIAN_WORDS.has(word)).length;
+                language = ijekavian > ekavian ? "hr" : "sr";
+            }
+            return language;
+        };
+
+        /**
+         * @param {string[]} lines lyric lines (credit lines already removed)
+         * @param {{model: object|null, scoreByRules: () => string|null}} options
+         *   scoreByRules runs the original detector on the same lines.
+         */
+        const detect = (lines, { model = null, scoreByRules }) => {
+            const votes = new Map();
+            for (const line of lines) {
+                const script = scriptOfLine(line);
+                if (script) votes.set(script, (votes.get(script) || 0) + 1);
+            }
+            const totalVotes = [...votes.values()].reduce((sum, count) => sum + count, 0) || 1;
+            const [dominant, dominantVotes] = [...votes.entries()]
+                .filter(([script]) => script !== "latin")
+                .sort((left, right) => right[1] - left[1])[0] || [null, 0];
+            const text = lines.join("\n");
+            if (dominant && (totalVotes < 4 || dominantVotes >= MIN_LINES) && dominantVotes / totalVotes >= LINE_SHARE) {
+                // Japanese, Korean and Chinese keep the original detector's
+                // kana/hangul/simplified-traditional analysis.
+                if (dominant === "cjk") return scoreByRules();
+                if (dominant === "arabic") return resolveArabicScript(text);
+                if (dominant === "cyrillic") return resolveCyrillic(text, model);
+                if (dominant === "devanagari") return resolveDevanagari(text);
+                return dominant;
+            }
+            return resolveLatin(text, model) || scoreByRules();
+        };
+
+        return { detect, isCreditLine: (line) => CREDIT_LINE.test(line) };
+    })();
+
     const Utils = {
         _langDetectCache: new Map(),
         _maxLangCacheSize: 500,
@@ -768,6 +1107,41 @@
         },
 
         detectLanguage(lyrics) {
+            if (!lyrics || !Array.isArray(lyrics) || lyrics.length === 0) {
+                return null;
+            }
+            const lines = lyrics
+                .map((line) => {
+                    if (!line) return "";
+                    if (typeof line === "string") return line;
+                    if (typeof line === "object" && !line.$$typeof) return String(line.originalText || line.text || "");
+                    return typeof line === "object" ? "" : String(line);
+                })
+                .filter((line) => line.trim() && !LanguageRefiner.isCreditLine(line));
+            if (lines.length === 0) {
+                return null;
+            }
+
+            // The model loads in the background on first use; answers given
+            // before it arrives are cached apart so they are revisited later.
+            const model = LanguageModel.get();
+            if (!model) LanguageModel.load();
+            const cacheKey = `lang:${getLyricsTextCacheHash(lines.join("\n"))}:${model ? "model" : "rules"}`;
+            if (this._langDetectCache.has(cacheKey)) {
+                return this._langDetectCache.get(cacheKey);
+            }
+            const result = LanguageRefiner.detect(lines, {
+                model,
+                scoreByRules: () => this.detectLanguageByRules(lines),
+            }) || null;
+            this._cacheLanguageResult(cacheKey, result);
+            return result;
+        },
+
+        // The original rule-based detector: script line votes, kana/hangul and
+        // simplified/traditional analysis for CJK, and stopword scoring for 14
+        // Latin-script languages. LanguageRefiner builds on it.
+        detectLanguageByRules(lyrics) {
             // Safe array check
             if (!lyrics || !Array.isArray(lyrics) || lyrics.length === 0) {
                 return null;
@@ -7792,6 +8166,12 @@
         // 언어 감지 (Extension 내 Utils에서 직접 참조)
         detectLanguage(lyrics) {
             return Utils.detectLanguage(lyrics);
+        },
+
+        // Waits (at most timeoutMs) for the language model before a first
+        // detection, so the opening song is not judged by the rules alone.
+        whenLanguageModelReady(timeoutMs = 0) {
+            return LanguageModel.whenReady(timeoutMs);
         },
 
         /**

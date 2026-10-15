@@ -3416,6 +3416,10 @@ const TranslationMenu = react.memo(({ friendlyLanguage, detectedLanguage = null,
     { key: "hi", value: getDisplayLanguageName("hi") },
     { key: "id", value: getDisplayLanguageName("id") },
     { key: "ms", value: getDisplayLanguageName("ms") },
+    // Also detected since the language model; names come from Intl.
+    ...["it", "nl", "uk", "bg", "sr", "hr", "ro", "hu", "fi", "da", "no", "sk", "el", "he", "fa", "ur", "bn", "pa", "ta", "tl", "ca",
+      "az", "sq", "kk", "mk", "be", "lt", "lv", "et", "af", "is", "mr", "te"]
+      .map((key) => ({ key, value: getDisplayLanguageName(key) })),
   ], []);
 
   const [isPronunciationOn, setPronunciationOn] = useState(
