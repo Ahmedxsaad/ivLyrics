@@ -7835,6 +7835,30 @@ const getSettingsLayerLegend = () => [
   ["furigana", getSettingsText("translationMenu.furigana", "Furigana")],
 ];
 
+// The preview labels are shortcuts to the same layer controls, not decorative
+// chips that look clickable but do nothing. Keep navigation in this window.
+const SettingsPreviewLayerLinks = ({ onNavigate }) => react.createElement(
+  "div",
+  { className: "settings-preview-legend" },
+  ...getSettingsLayerLegend().map(([role, label]) => {
+    const anchor = LYRICS_TYPOGRAPHY_SECTIONS.find((section) => section.role === role)?.section || "furigana-style";
+    return react.createElement(
+      "button",
+      {
+        key: role,
+        type: "button",
+        className: "settings-preview-layer-link",
+        "data-layer": role,
+        style: { "--layer-color": `var(--settings-layer-${role})` },
+        onClick: () => onNavigate("appearance", anchor),
+      },
+      react.createElement("i", { "aria-hidden": "true" }),
+      react.createElement("span", null, label),
+      react.createElement(SettingsUiIcon, { name: "right", size: 12 })
+    );
+  })
+);
+
 const renderSettingsPreviewLine = (active, extra = null, key = undefined) =>
   react.createElement(
     "div",
@@ -8477,7 +8501,7 @@ const SettingsLoadMeter = ({ costKeys, frameKey }) => {
 };
 
 
-const SettingsDock = ({ open, onToggle, menu, signal, fullscreenView }) => {
+const SettingsDock = ({ open, onToggle, menu, signal, fullscreenView, onNavigate }) => {
   const section = useSettingsSignal(signal);
   const kind = getSettingsPreviewKind(menu, section);
   const title = getSettingsText("settingsAdvanced.livePreview.title", "Live Preview");
@@ -8518,18 +8542,7 @@ const SettingsDock = ({ open, onToggle, menu, signal, fullscreenView }) => {
         { className: "settings-dock-body" },
         preview,
         kind === "lyrics" || kind === "annotation"
-          ? react.createElement(
-            "div",
-            { className: "settings-preview-legend" },
-            ...getSettingsLayerLegend().map(([role, legendLabel]) =>
-              react.createElement(
-                "span",
-                { key: role, style: { "--layer-color": `var(--settings-layer-${role})` } },
-                react.createElement("i", { "aria-hidden": "true" }),
-                legendLabel
-              )
-            )
-          )
+          ? react.createElement(SettingsPreviewLayerLinks, { onNavigate })
           : null,
         react.createElement(
           "p",
@@ -10448,13 +10461,17 @@ const ConfigModal = ({
           frameId = requestAnimationFrame(tryScroll);
           return;
         }
-        if (!target && attempt === 1) {
+        // A narrow matrix still renders every layer's tab/anchor. Finding the
+        // anchor does not mean its controls are selected, so reveal first.
+        if (attempt === 1) {
           window.dispatchEvent(new CustomEvent("ivLyrics:settings-reveal", {
             detail: { key: targetKey },
           }));
+          frameId = requestAnimationFrame(tryScroll);
+          return;
         }
         const ok = scrollToSetting(targetKey, {
-          behavior: attempt <= 1 ? "smooth" : "auto",
+          behavior: attempt <= 2 ? "smooth" : "auto",
         });
         if (ok) {
           pendingTabScrollRef.current = null;
@@ -11838,7 +11855,6 @@ const ConfigModal = ({
           "fade-blur",
           "highlight-mode",
           "text-shadow-enabled",
-          "blur-gradient-background",
           "video-background",
         ],
         frameKey: "performance-frame-rate",
@@ -11924,13 +11940,6 @@ const ConfigModal = ({
               desc: I18n.t("settingsAdvanced.textShadow.enabled.label"),
               info: I18n.t("settingsAdvanced.textShadow.enabled.desc"),
               key: "text-shadow-enabled",
-              type: ConfigSlider,
-              cost: true,
-            },
-            {
-              desc: I18n.t("settings.blurGradientBackground.label"),
-              key: "blur-gradient-background",
-              info: I18n.t("settings.blurGradientBackground.desc"),
               type: ConfigSlider,
               cost: true,
             },
@@ -15144,6 +15153,7 @@ react.createElement(OptionList, {
         menu: activeTab,
         signal: activeSectionSignal,
         fullscreenView,
+        onNavigate: navigateToDestination,
       })
     )
   );

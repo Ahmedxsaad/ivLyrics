@@ -20428,6 +20428,14 @@ a.research-media-item:hover {
   box-shadow: var(--ivl-tb-focus);
 }
 
+/* Entries touch the horizontal scroll clip. An outer shadow loses its sides
+   (and the last entry's bottom); keep the keyboard ring inside each button. */
+.ivl-tb-item:focus-visible {
+  outline: 2px solid var(--ivl-tb-accent-text);
+  outline-offset: -3px;
+  box-shadow: none;
+}
+
 .ivl-tb-ico {
   position: relative;
   display: grid;

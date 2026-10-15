@@ -1005,9 +1005,13 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .settings-dock-body { display: flex; flex: 1; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; padding: 0 14px 16px; }
 #${APP_NAME}-config-container .settings-dock-foot { margin: 0; font-size: 11.5px; line-height: 1.6; color: var(--text-3); }
 #${APP_NAME}-config-container .settings-dock-body > .option-list-wrapper { overflow: hidden; border-radius: var(--r-lg); border: 0; background: transparent; }
-#${APP_NAME}-config-container .settings-preview-legend { display: flex; flex-wrap: wrap; gap: 4px; }
-#${APP_NAME}-config-container .settings-preview-legend span { display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: var(--r-xs); border: 1px solid var(--line); background: var(--surface-2); font-size: 11px; font-weight: 500; color: var(--text-2); }
-#${APP_NAME}-config-container .settings-preview-legend i { width: 7px; height: 7px; border-radius: 2px; background: var(--layer-color); }
+#${APP_NAME}-config-container .settings-preview-legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+#${APP_NAME}-config-container .settings-preview-layer-link { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 32px; margin: 0; padding: 6px 8px; border-radius: var(--r-sm); border: 1px solid var(--line); background: var(--surface-2); color: var(--text-2); font: 500 11.5px/1.4 var(--font); text-align: left; cursor: pointer; }
+#${APP_NAME}-config-container .settings-preview-layer-link:hover { border-color: var(--line-2); background: var(--surface-3); color: var(--text); }
+#${APP_NAME}-config-container .settings-preview-layer-link:focus-visible { outline: 2px solid var(--accent-text); outline-offset: -2px; }
+#${APP_NAME}-config-container .settings-preview-layer-link > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+#${APP_NAME}-config-container .settings-preview-layer-link > i { flex: 0 0 7px; width: 7px; height: 7px; border-radius: 2px; background: var(--layer-color); }
+#${APP_NAME}-config-container .settings-preview-layer-link > svg { flex: 0 0 auto; color: var(--text-3); }
 
 #${APP_NAME}-config-container .settings-preview-stage { position: relative; isolation: isolate; overflow: hidden; border-radius: var(--r-lg); background: #111; color: #fff; }
 #${APP_NAME}-config-container .settings-preview-bg, #${APP_NAME}-config-container .settings-preview-dim, #${APP_NAME}-config-container .settings-preview-noise { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
