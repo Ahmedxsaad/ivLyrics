@@ -11183,7 +11183,18 @@ class LyricsContainer extends react.Component {
 
   switchTo(mode) {
     this.lastProcessedMode = null;
+    // A lock that is in effect always wins in getCurrentMode(). Choosing a
+    // different mode would otherwise do nothing, so the lock follows the
+    // user's choice instead.
+    const movesLock =
+      this.state.lockedMode !== -1 &&
+      this.state.lockedMode !== mode &&
+      this.isModeAvailable(this.state.lockedMode);
+    if (movesLock) {
+      rememberLyricsRenderModeLock(mode);
+    }
     this.setState((prevState) => ({
+      ...(movesLock ? { lockedMode: mode } : {}),
       explicitMode: mode,
       currentLyrics:
         this.resolveLyricsForMode(prevState, mode) ||

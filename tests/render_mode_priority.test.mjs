@@ -70,3 +70,44 @@ test("keeps explicit choices and persistent locks ahead of automatic selection",
   assert.equal(createSelector({ synced: lyrics, lockedMode: 3 }).getCurrentMode(), 1);
   assert.equal(createSelector({ ...state, explicitMode: 3 }, false).getCurrentMode(), 1);
 });
+
+test("choosing another mode while a lock is in effect moves the lock to that mode", () => {
+  const switchStart = source.indexOf("  switchTo(mode) {");
+  const switchEnd = source.indexOf("\n  toggleModeLock(", switchStart);
+  assert.ok(switchStart >= 0 && switchEnd > switchStart);
+  const remembered = [];
+  const context = vm.createContext({
+    CONFIG: { visual: { "karaoke-mode-enabled": true } },
+    StorageManager: { setItem: (_key, value) => remembered.push(Number(value)) },
+    ivLyricsDebug: () => {},
+  });
+  vm.runInContext(
+    `${source.slice(constantsStart, constantsEnd)}
+     class ModeSelector { ${source.slice(methodsStart, methodsEnd)} ${source.slice(switchStart, switchEnd)} }
+     globalThis.selector = new ModeSelector();`,
+    context
+  );
+  const selector = context.selector;
+  selector.resolveLyricsForMode = () => lyrics;
+  selector.setState = (update) => {
+    selector.state = { ...selector.state, ...(typeof update === "function" ? update(selector.state) : update) };
+  };
+
+  selector.state = { karaoke: lyrics, synced: lyrics, unsynced: lyrics, lockedMode: 0, explicitMode: 0 };
+  selector.switchTo(1);
+  assert.equal(selector.state.lockedMode, 1);
+  assert.equal(selector.getCurrentMode(), 1);
+  assert.deepEqual(remembered, [1]);
+
+  // Choosing the locked mode again keeps the lock as it is.
+  selector.switchTo(1);
+  assert.deepEqual(remembered, [1]);
+
+  // A lock on a mode this track cannot show is left alone; the choice applies to this track only.
+  remembered.length = 0;
+  selector.state = { synced: lyrics, unsynced: lyrics, lockedMode: 3, explicitMode: -1 };
+  selector.switchTo(2);
+  assert.equal(selector.state.lockedMode, 3);
+  assert.equal(selector.getCurrentMode(), 2);
+  assert.deepEqual(remembered, []);
+});
