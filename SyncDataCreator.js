@@ -74,13 +74,13 @@ const isCompleteSyncCreatorLrclibSource = (source) => {
 	if (!source || source.provider !== SYNC_CREATOR_SOURCE_ADDON_ID) return false;
 	if (!normalizeSyncCreatorLrclibId(source.lrclibId)) return false;
 	if (!['synced', 'plain', 'unknown'].includes(source.preferredLyricsSource)) return false;
-	if (!Number.isFinite(Number(source.duration)) || Number(source.duration) < 0) return false;
+	if (!Number.isFinite(source.duration) || source.duration < 0 || source.duration > 86400) return false;
 	if (!/^lrclib-[a-z0-9]+-[a-z0-9]+$/i.test(String(source.lyricsFingerprint || ''))) return false;
-	if (!Array.isArray(source.lineCharCounts) || source.lineCharCounts.length === 0) return false;
+	if (!Array.isArray(source.lineCharCounts) || source.lineCharCounts.length === 0 || source.lineCharCounts.length > 5000) return false;
 	if (source.lineCount !== source.lineCharCounts.length) return false;
 	let textCharCount = 0;
 	for (const count of source.lineCharCounts) {
-		if (!Number.isInteger(count) || count < 0) return false;
+		if (!Number.isInteger(count) || count < 0 || count > 2000) return false;
 		textCharCount += count;
 	}
 	return source.textCharCount === textCharCount;
@@ -3309,6 +3309,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	const ensureScoreTracker = useCallback(() => {
 		const context = scoreContextRef.current;
 		if (!context?.ready || !context.accountId || !context.isrc || !context.initialSyncData?.source || !window.SyncCreatorScoreTracker) return null;
+		if (!isCompleteSyncCreatorLrclibSource(context.initialSyncData.source)) return null;
 		const ownsEvent = event => event.trackUri === context.trackUri
 			&& (event.accountId === context.accountId || (!event.accountId && event.action === 'import'));
 		const scope = `${context.accountId}:${context.isrc}:lrclib`;
@@ -3336,9 +3337,10 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 							headers: Utils.getApiHeaders({ 'Content-Type': 'application/json' }),
 							body: JSON.stringify(payload)
 						});
-						const result = await response.json();
+						// Keep HTTP status even when a proxy returns a plain-text error.
+						const result = await response.json().catch(() => null);
 						if (!response.ok) {
-							const failure = new Error(result.error || 'Sync work could not be saved.');
+							const failure = new Error(result?.error || 'Sync work could not be saved.');
 							failure.status = response.status;
 							throw failure;
 						}

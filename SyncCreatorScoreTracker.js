@@ -35,6 +35,7 @@
     let pendingSeconds = 0;
     let lastError = null;
     let conflictError = null;
+    let rejectedWorkError = null;
     const attemptedSnapshotRepairs = new Set();
     const isAuthorized = () => options.isAuthorized?.() !== false;
     const persist = () => {
@@ -84,6 +85,7 @@
     async function flush() {
       await ready;
       if (conflictError) throw conflictError;
+      if (rejectedWorkError) throw rejectedWorkError;
       if (processing) {
         await processing;
         if (state.queue.length) return flush();
@@ -176,6 +178,13 @@
             result = await options.request(payload);
           } catch (error) {
             if (await repairInvalidSnapshot(next, error)) continue;
+            // A validation rejection cannot recover by replaying the identical
+            // event. Keep the FIFO evidence and local drafts, but stop automatic
+            // retries (including heartbeat, edits, submission and close).
+            if (error?.status === 400) {
+              rejectedWorkError = error;
+              throw error;
+            }
             await resolveScoreConflict(next, error);
             continue;
           }
@@ -196,7 +205,7 @@
       try { await processing; } finally { processing = null; }
     }
     const heartbeat = () => {
-      if (stopped || conflictError || !isAuthorized()) return;
+      if (stopped || conflictError || rejectedWorkError || !isAuthorized()) return;
       sample();
       if (pendingSeconds >= 1) enqueue('heartbeat');
       else if (state.queue.length) flush().catch(error => { lastError = error; });
@@ -209,6 +218,7 @@
       observe(syncData) { latest = clone(syncData); },
       async submission(syncData) {
         if (conflictError) throw conflictError;
+        if (rejectedWorkError) throw rejectedWorkError;
         if (!enqueue('checkpoint', syncData)) throw new Error('Sync scoring account changed.');
         await flush();
         if (state.queue.length || !state.sessionId) throw lastError || new Error('Sync work could not be saved.');

@@ -7,9 +7,15 @@ import vm from 'node:vm';
 const require = createRequire(import.meta.url);
 const { create } = require('../SyncCreatorScoreTracker.js');
 const copy = value => structuredClone(value);
+const creatorSource = readFileSync(new URL('../SyncDataCreator.js', import.meta.url), 'utf8');
+const sourceContext = vm.createContext({});
+vm.runInContext(creatorSource.slice(0, creatorSource.indexOf('const normalizeSyncCreatorPronunciationTargetMode ='))
+  + '\nglobalThis.completeSource = isCompleteSyncCreatorLrclibSource;', sourceContext);
+const isCompleteSyncCreatorLrclibSource = sourceContext.completeSource;
 const snapshot = (count, granularity = 'character') => ({
   version: 5,
-  source: { provider: 'lrclib', lrclibId: '1', lyricsFingerprint: 'lrclib-abc-123', lineCharCounts: Array(50).fill(2) },
+  source: { provider: 'lrclib', lrclibId: '1', preferredLyricsSource: 'plain', duration: 120,
+    lyricsFingerprint: 'lrclib-abc-123', lineCharCounts: Array(50).fill(2), lineCount: 50, textCharCount: 100 },
   lines: Array.from({ length: count }, (_, index) => ({ start: index * 2, end: index * 2 + 1, granularity, chars: [index + 1, index + 1.5] }))
 });
 function fixture({ initial = snapshot(0), saved = null, request, load, save, repairSnapshot } = {}) {
@@ -109,6 +115,100 @@ test('failed network response retries the same event ID and sequence after crash
   failure = false;
   first.tracker.stop();
   restored.tracker.stop();
+});
+
+test('a rejected work event is retained but never repeatedly posted by heartbeat, edits, flush or close', async () => {
+  const rejection = Object.assign(new Error('Bad Request'), { status: 400 });
+  const value = fixture({ request: () => { throw rejection; } });
+  await assert.rejects(value.tracker.flush(), error => error === rejection);
+  const rejected = copy(value.tracker.__test.getState().queue[0]);
+  assert.equal(value.sent.length, 1);
+  value.tracker.interact();
+  for (let tick = 1; tick <= 20; tick++) {
+    value.setClock(tick * 20000);
+    value.tracker.heartbeat();
+  }
+  value.tracker.enqueue('record', snapshot(1), { start: 0, end: 1, inputCount: 1 });
+  await assert.rejects(value.tracker.flush(), error => error === rejection);
+  await assert.rejects(value.tracker.submission(snapshot(1)), error => error === rejection);
+  value.tracker.stop();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(value.sent.length, 1);
+  assert.deepEqual(value.tracker.__test.getState().queue[0], rejected);
+  assert.equal(value.tracker.__test.getState().queue[1].action, 'record');
+  assert.equal(value.stored().queue.length, 2);
+  assert.equal(value.tracker.__test.getState().sequence, 0);
+});
+
+test('transient server errors remain retryable with the same durable event', async () => {
+  let fail = true;
+  const value = fixture({ request: event => {
+    if (fail) throw Object.assign(new Error('Unavailable'), { status: 503 });
+    return { success: true, sessionId: 'server-session', sequence: event.sequence };
+  } });
+  await assert.rejects(value.tracker.flush(), /Unavailable/);
+  const event = copy(value.sent[0]);
+  fail = false;
+  await value.tracker.flush();
+  assert.deepEqual(value.sent.at(-1), event);
+  assert.equal(value.tracker.__test.getState().queue.length, 0);
+  value.tracker.stop();
+});
+
+test('the actual work transport preserves HTTP 400 when its error body is not JSON', async () => {
+  const source = readFileSync(new URL('../SyncDataCreator.js', import.meta.url), 'utf8');
+  const start = source.indexOf('\tconst ensureScoreTracker =');
+  const end = source.indexOf('\tconst captureScoreWork =', start);
+  let request;
+  let cleared = 0;
+  const sent = [];
+  const context = vm.createContext({
+    useCallback: callback => callback,
+    isCompleteSyncCreatorLrclibSource,
+    scoreContextRef: { current: { ready: true, accountId: 'account', isrc: 'USAAA2600001',
+      trackUri: 'spotify:track:abc', initialSyncData: snapshot(0) } },
+    scoreTrackerRef: { current: null }, scorePendingEventsRef: { current: [] },
+    Utils: { getUserHash: () => 'account', getApiHeaders: value => value },
+    window: { SyncCreatorScoreTracker: { create(options) {
+      request = options.request;
+      return { scope: 'account:USAAA2600001:lrclib' };
+    } } },
+    AbortController, setTimeout: () => 1, clearTimeout: () => { cleared++; },
+    fetch: async (url, options) => {
+      sent.push({ url, payload: JSON.parse(options.body), signal: options.signal });
+      return { ok: false, status: 400, json: async () => { throw new SyntaxError('Bad Request'); } };
+    }
+  });
+  vm.runInContext(`${source.slice(start, end)}\nensureScoreTracker();`, context);
+  const payload = { action: 'start', eventId: 'transport-test', syncData: snapshot(0) };
+  await assert.rejects(request(payload), error => error.status === 400 && /could not be saved/.test(error.message));
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].url, 'https://lyrics.api.ivl.is/lyrics/sync-data/work');
+  assert.deepEqual(sent[0].payload, payload);
+  assert.equal(sent[0].signal.aborted, false);
+  assert.equal(cleared, 1);
+});
+
+test('source validation rejects metadata the backend cannot accept before creating work', () => {
+  const valid = snapshot(0).source;
+  assert.equal(isCompleteSyncCreatorLrclibSource(valid), true);
+  for (const duration of ['120', null, undefined, NaN, Infinity, -1, 86401]) {
+    assert.equal(isCompleteSyncCreatorLrclibSource({ ...valid, duration }), false);
+  }
+  assert.equal(isCompleteSyncCreatorLrclibSource({ ...valid, lineCharCounts: [2001], lineCount: 1, textCharCount: 2001 }), false);
+  assert.equal(isCompleteSyncCreatorLrclibSource({ ...valid, lineCharCounts: Array(5001).fill(0), lineCount: 5001, textCharCount: 0 }), false);
+  const start = creatorSource.indexOf('\tconst ensureScoreTracker =');
+  const end = creatorSource.indexOf('\tconst captureScoreWork =', start);
+  let creates = 0;
+  const context = vm.createContext({
+    useCallback: callback => callback, isCompleteSyncCreatorLrclibSource,
+    scoreContextRef: { current: { ready: true, accountId: 'account', isrc: 'USAAA2600001',
+      initialSyncData: { ...snapshot(0), source: { ...valid, duration: '120' } } } },
+    window: { SyncCreatorScoreTracker: { create() { creates++; } } }
+  });
+  vm.runInContext(`${creatorSource.slice(start, end)}\nglobalThis.result = ensureScoreTracker();`, context);
+  assert.equal(creates, 0);
+  assert.equal(context.result, null);
 });
 
 const backwardsSnapshot = () => {
@@ -495,6 +595,7 @@ test('login before submit claims only anonymous import provenance, never anonymo
   let initial;
   const context = vm.createContext({
     useCallback: callback => callback,
+    isCompleteSyncCreatorLrclibSource,
     scoreContextRef: { current: { ready: true, accountId: '', isrc: 'USAAA2600001', trackUri: 'spotify:track:abc', initialSyncData: snapshot(0), buildSnapshot: data => copy(data) } },
     scoreTrackerRef: { current: null }, scorePendingEventsRef: { current: [] },
     Utils: { getAuthToken: () => token, getUserHash: () => token ? 'account' : '' },
@@ -552,6 +653,7 @@ test('creator waits for draft hydration before starting a server work session', 
   let created = 0;
   const context = vm.createContext({
     useCallback: callback => callback,
+    isCompleteSyncCreatorLrclibSource,
     scoreContextRef: { current: { ready: false, accountId: 'account', isrc: 'USAAA2600001', initialSyncData: snapshot(0) } },
     scoreTrackerRef: { current: null }, scorePendingEventsRef: { current: [] },
     window: { SyncCreatorScoreTracker: { create(options) { created++; return { scope: `${options.accountId}:${options.isrc}:lrclib` }; } } }
