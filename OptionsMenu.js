@@ -136,6 +136,7 @@ function createFluentModalHost({
   let isClosed = false;
 
   const finalizeClose = () => {
+    const restoreFocus = modal || shell.contains(document.activeElement);
     document.removeEventListener("keydown", handleKeydown, true);
     onBeforeClose?.();
 
@@ -143,7 +144,7 @@ function createFluentModalHost({
       overlay.remove();
     }
 
-    if (previouslyFocused && document.contains(previouslyFocused)) {
+    if (restoreFocus && previouslyFocused && document.contains(previouslyFocused)) {
       previouslyFocused.focus();
     }
   };
@@ -459,221 +460,27 @@ function ensureFluentModalStyles() {
   pointer-events: none;
 }
 
-.ivlyrics-first-language-shell {
-  width: min(440px, calc(100vw - 32px));
-  max-height: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px !important;
-  background: rgba(24, 24, 27, 0.98);
-  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.44);
-  color: #f8fafc;
-  pointer-events: auto;
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] {
-  border-color: rgba(15, 23, 42, 0.08);
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.18);
-  color: #111827;
-}
-
-.ivlyrics-first-language-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 28px 30px 18px;
-  text-align: center;
-}
-
-.ivlyrics-first-language-icon {
-  width: 58px;
-  height: 58px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-  border-radius: 50%;
-  background: rgba(96, 165, 250, 0.22);
-  color: #93c5fd;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.12em;
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-icon {
-  background: #dbeafe;
-  color: #1d4f91;
-}
-
-.ivlyrics-first-language-title {
-  margin: 0;
-  color: inherit;
-  font-size: 20px;
-  font-weight: 750;
-  letter-spacing: -0.035em;
-  line-height: 1.35;
-}
-
-.ivlyrics-first-language-description {
-  margin: 5px 0 0;
-  color: rgba(248, 250, 252, 0.58);
-  font-size: 17px;
-  line-height: 1.45;
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-description {
-  color: rgba(17, 24, 39, 0.64);
-}
-
-.ivlyrics-first-language-body {
-  padding: 0 28px;
-}
-
-.ivlyrics-first-language-provider-hint {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  margin-top: 14px;
-  padding: 11px 12px;
-  border: 1px solid rgba(96, 165, 250, 0.22);
-  border-radius: 11px;
-  background: rgba(59, 130, 246, 0.10);
-  color: rgba(219, 234, 254, 0.88);
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-
-.ivlyrics-first-language-provider-hint[hidden] {
-  display: none;
-}
-
-.ivlyrics-first-language-provider-hint-icon {
-  flex: 0 0 auto;
-  color: #93c5fd;
-  font-weight: 800;
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-provider-hint {
-  border-color: rgba(37, 99, 235, 0.18);
-  background: rgba(59, 130, 246, 0.08);
-  color: #1e4f8f;
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-provider-hint-icon {
-  color: #2563a9;
-}
-
-.ivlyrics-first-language-toggle-row {
-  width: 100%;
-  min-height: 58px;
-  padding: 0 4px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border: 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-  text-align: left;
-}
-
-.ivlyrics-first-language-toggle-row:last-child {
-  border-bottom: 0;
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-toggle-row {
-  border-bottom-color: rgba(15, 23, 42, 0.1);
-}
-
-.ivlyrics-first-language-row-icon {
-  width: 24px;
-  color: rgba(248, 250, 252, 0.62);
-  font-size: 13px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-row-icon {
-  color: rgba(17, 24, 39, 0.68);
-}
-
-.ivlyrics-first-language-row-label {
-  flex: 1;
-  font-size: 16px;
-  font-weight: 650;
-}
-
-.ivlyrics-first-language-switch {
-  width: 50px;
-  height: 28px;
-  padding: 3px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  transition: background 0.16s ease, border-color 0.16s ease;
-}
-
-.ivlyrics-first-language-switch.is-on {
-  justify-content: flex-end;
-  border-color: #2f7ddd;
-  background: #2f7ddd;
-}
-
-.ivlyrics-first-language-switch-knob {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.22);
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-switch {
-  border-color: rgba(15, 23, 42, 0.14);
-  background: rgba(15, 23, 42, 0.04);
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-switch.is-on {
-  border-color: #2f7ddd;
-  background: #2f7ddd;
-}
-
-.ivlyrics-first-language-action {
-  width: calc(100% - 56px);
-  min-height: 48px;
-  margin: 16px 28px 22px;
-  border: 0;
-  border-radius: 12px;
-  background: transparent;
-  color: rgba(248, 250, 252, 0.62);
-  font-size: 15px;
-  font-weight: 650;
-  cursor: pointer;
-}
-
-.ivlyrics-first-language-action.has-selection {
-  background: #2f7ddd;
-  color: #ffffff;
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-action {
-  color: rgba(17, 24, 39, 0.55);
-}
-
-.ivlyrics-first-language-shell[data-ui-theme="light"] .ivlyrics-first-language-action.has-selection {
-  color: #ffffff;
-}
-
-.ivlyrics-first-language-toggle-row:focus-visible,
-.ivlyrics-first-language-action:focus-visible,
-.ivlyrics-fluent-btn:focus-visible,
-.ivlyrics-fluent-close:focus-visible {
-  outline: 2px solid var(--spice-accent, #1ed760);
-  outline-offset: 2px;
-}
+.ivlyrics-first-language-header { padding: 18px 18px 12px; text-align: start; position: relative; }
+.ivlyrics-first-language-title { margin: 0 38px 0 0; color: var(--text); font-size: 16px; font-weight: 600; letter-spacing: -.015em; line-height: 1.4; }
+.ivlyrics-first-language-description { margin: 6px 0 0; color: var(--text-2); font-size: 13px; line-height: 1.55; }
+.ivlyrics-first-language-close { position: absolute; top: 7px; right: 8px; width: 40px; height: 40px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 6px; color: var(--text-3); background: transparent; cursor: pointer; }
+.ivlyrics-first-language-close:hover { color: var(--text); background: var(--surface-3); }
+.ivlyrics-first-language-body { padding: 0 18px; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.ivlyrics-first-language-toggle-row { width: 100%; min-height: 48px; padding: 10px 0; display: flex; align-items: center; gap: 10px; background: transparent; border: 0; border-bottom: 1px solid var(--line); color: var(--text); cursor: pointer; text-align: start; }
+.ivlyrics-first-language-toggle-row:last-of-type { border-bottom: 0; }
+.ivlyrics-first-language-toggle-row:hover { color: var(--accent-text); }
+.ivlyrics-first-language-row-icon { display: flex; color: var(--text-3); flex-shrink: 0; }
+.ivlyrics-first-language-row-label { flex: 1; font-size: 14px; font-weight: 500; line-height: 1.5; }
+.ivlyrics-first-language-switch { display: flex; width: 40px; height: 24px; padding: 2px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--switch-off); flex-shrink: 0; }
+.ivlyrics-first-language-switch-knob { width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 160ms ease-out; }
+.ivlyrics-first-language-switch.is-on { background: var(--accent); border-color: var(--accent); }
+.ivlyrics-first-language-switch.is-on .ivlyrics-first-language-switch-knob { transform: translateX(14px); }
+.ivlyrics-first-language-provider-hint { margin: 8px 0 0; padding: 10px; border: 1px solid var(--line-2); border-radius: 6px; color: var(--text-2); background: var(--surface-2); font-size: 12px; line-height: 1.55; }
+.ivlyrics-first-language-provider-hint[hidden] { display: none; }
+.ivlyrics-first-language-action { width: calc(100% - 36px); min-height: 40px; margin: 12px 18px 18px; padding: 10px 14px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface-2); color: var(--text-2); font-size: 13px; font-weight: 600; line-height: 1.4; cursor: pointer; flex-shrink: 0; }
+.ivlyrics-first-language-action.has-selection { color: var(--ink-text); background: var(--ink); border-color: transparent; }
+.ivlyrics-first-language-action:hover { opacity: .85; }
+.ivlyrics-first-language-toggle-row:focus-visible, .ivlyrics-first-language-action:focus-visible, .ivlyrics-first-language-close:focus-visible { outline: 2px solid var(--accent-text); outline-offset: 2px; }
 
 .ivlyrics-adjust-btn {
   min-width: 52px;
@@ -1943,23 +1750,23 @@ function ensureFluentModalStyles() {
 }
 
 .ivlyrics-fluent-shell.ivlyrics-first-language-shell {
-  width: min(440px, 100%);
-  max-height: none;
-  background: rgba(24, 24, 27, 0.98) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  border-radius: 24px !important;
-  box-shadow: 0 20px 64px rgba(0, 0, 0, 0.44) !important;
-  backdrop-filter: blur(20px) saturate(130%);
-  -webkit-backdrop-filter: blur(20px) saturate(130%);
-  color: #f8fafc;
+  box-sizing: border-box;
+  width: min(340px, 100%);
+  max-height: min(560px, 100%);
+  background: var(--surface) !important;
+  border-color: var(--line-2) !important;
+  border-radius: 10px !important;
+  box-shadow: var(--shadow-2) !important;
+  color: var(--text);
+  font-family: var(--font);
   pointer-events: auto;
 }
 
 .ivlyrics-fluent-shell.ivlyrics-first-language-shell[data-ui-theme="light"] {
-  background: rgba(255, 255, 255, 0.98) !important;
-  border-color: rgba(15, 23, 42, 0.08) !important;
-  box-shadow: 0 20px 56px rgba(15, 23, 42, 0.18) !important;
-  color: #111827;
+  background: var(--surface) !important;
+  border-color: var(--line-2) !important;
+  box-shadow: var(--shadow-2) !important;
+  color: var(--text);
 }
 
 @media (max-width: 840px) {
@@ -1987,9 +1794,9 @@ function ensureFluentModalStyles() {
   }
 
   .ivlyrics-fluent-shell.ivlyrics-first-language-shell {
-    width: min(420px, 100%);
+    width: min(340px, 100%);
     max-height: calc(100% - 24px);
-    border-radius: 22px !important;
+    border-radius: 10px !important;
   }
 }
 
@@ -2000,6 +1807,7 @@ function ensureFluentModalStyles() {
   }
 }
 `;
+  style.textContent += getSettingsSurfaceTokenCss(".ivlyrics-first-language-shell");
   document.head.appendChild(style);
 }
 
@@ -3032,13 +2840,14 @@ function getFirstLanguageAIProviderHintState() {
       : enabledProviders.filter((provider) => provider?.supports?.[capability] === true));
     const translationProviders = getProvidersFor("translate");
     return {
+      missingTranslation: translationProviders.length === 0,
       keylessTranslationOnly: translationProviders.length > 0
         && translationProviders.every((provider) => FIRST_LANGUAGE_KEYLESS_PROVIDER_IDS.has(provider?.id)),
       missingPronunciation: getProvidersFor("pronunciation").length === 0,
       hasPronunciationCapableProvider: enabledProviders.some((provider) => provider?.supports?.pronunciation === true),
     };
   } catch {
-    return { keylessTranslationOnly: false, missingPronunciation: false, hasPronunciationCapableProvider: false };
+    return { missingTranslation: false, keylessTranslationOnly: false, missingPronunciation: false, hasPronunciationCapableProvider: false };
   }
 }
 
@@ -3050,6 +2859,25 @@ function getFirstLanguageAIProviderHintKey(state, wantsPronunciation) {
       : "firstLanguagePrompt.pronunciationAiProviderHint";
   }
   return state.keylessTranslationOnly ? "firstLanguagePrompt.aiProviderHint" : null;
+}
+
+function createFirstLanguageIcon(name) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("width", "18");
+  svg.setAttribute("height", "18");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "1.6");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.setAttribute("aria-hidden", "true");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute("d", name === "close" ? "m6 6 12 12M6 18 18 6"
+    : name === "pronunciation" ? "m4 9 4 0 5-4v14l-5-4H4V9Zm12-2c3 3 3 7 0 10m-1-7c1 1 1 3 0 4"
+    : "M3 5h12M9 3v2c0 5-2 8-6 11m1-7c2 3 5 5 8 6m2 5 4-12 4 12m-6-4h4");
+  svg.appendChild(path);
+  return svg;
 }
 
 function openFirstLanguagePrompt({ sourceLang, modeKey }) {
@@ -3083,7 +2911,7 @@ function openFirstLanguagePrompt({ sourceLang, modeKey }) {
       modal: false,
       closeOnBackdrop: false,
       trapFocus: false,
-      autoFocus: true,
+      autoFocus: false,
       onBeforeClose: () => finish(),
     });
 
@@ -3097,10 +2925,6 @@ function openFirstLanguagePrompt({ sourceLang, modeKey }) {
     const header = document.createElement("div");
     header.className = "ivlyrics-first-language-header";
     const buildFirstLanguageHeader = () => {
-      const icon = document.createElement("span");
-      icon.className = "ivlyrics-first-language-icon";
-      icon.setAttribute("aria-hidden", "true");
-      icon.textContent = "文A";
       const title = document.createElement("h2");
       title.id = titleId;
       title.className = "ivlyrics-first-language-title";
@@ -3109,7 +2933,13 @@ function openFirstLanguagePrompt({ sourceLang, modeKey }) {
       description.id = descriptionId;
       description.className = "ivlyrics-first-language-description";
       description.textContent = I18n.t("firstLanguagePrompt.description");
-      header.append(icon, title, description);
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "ivlyrics-first-language-close";
+      close.setAttribute("aria-label", I18n.t("buttons.close"));
+      close.appendChild(createFirstLanguageIcon("close"));
+      close.addEventListener("click", () => host.closeModal());
+      header.append(title, description, close);
     };
     buildFirstLanguageHeader();
 
@@ -3129,7 +2959,10 @@ function openFirstLanguagePrompt({ sourceLang, modeKey }) {
 
     const updateProviderHint = () => {
       if (!providerHint || !providerHintText) return;
-      const hintKey = getFirstLanguageAIProviderHintKey(providerHintState, draft.pronunciation);
+      // Only show a hint when the selected task needs a provider, keeping the default card quiet.
+      const hintKey = draft.pronunciation && providerHintState.missingPronunciation
+        ? getFirstLanguageAIProviderHintKey(providerHintState, true)
+        : draft.translation && providerHintState.missingTranslation ? "translator.noProviderConfigured" : null;
       providerHint.hidden = !hintKey;
       if (hintKey) providerHintText.textContent = I18n.t(hintKey);
       host.shell.setAttribute("aria-describedby", hintKey ? `${descriptionId} ${providerHintId}` : descriptionId);
@@ -3144,7 +2977,7 @@ function openFirstLanguagePrompt({ sourceLang, modeKey }) {
       updateProviderHint();
     };
 
-    const createToggleRow = ({ key, iconText, label }) => {
+    const createToggleRow = ({ key, label }) => {
       const row = document.createElement("button");
       row.type = "button";
       row.className = "ivlyrics-first-language-toggle-row";
@@ -3154,7 +2987,7 @@ function openFirstLanguagePrompt({ sourceLang, modeKey }) {
       const rowIcon = document.createElement("span");
       rowIcon.className = "ivlyrics-first-language-row-icon";
       rowIcon.setAttribute("aria-hidden", "true");
-      rowIcon.textContent = iconText;
+      rowIcon.appendChild(createFirstLanguageIcon(key));
       const rowLabel = document.createElement("span");
       rowLabel.className = "ivlyrics-first-language-row-label";
       rowLabel.textContent = label;
@@ -3177,29 +3010,22 @@ function openFirstLanguagePrompt({ sourceLang, modeKey }) {
 
     body.append(
       createToggleRow({
-        key: "pronunciation",
-        iconText: "Abc",
-        label: I18n.t("firstLanguagePrompt.pronunciation"),
+        key: "translation",
+        label: I18n.t("firstLanguagePrompt.translation"),
       }),
       createToggleRow({
-        key: "translation",
-        iconText: "文A",
-        label: I18n.t("firstLanguagePrompt.translation"),
+        key: "pronunciation",
+        label: I18n.t("firstLanguagePrompt.pronunciation"),
       })
     );
 
-    if (getFirstLanguageAIProviderHintKey(providerHintState, false)
-      || getFirstLanguageAIProviderHintKey(providerHintState, true)) {
+    if (providerHintState.missingTranslation || providerHintState.missingPronunciation) {
       providerHint = document.createElement("div");
       providerHint.id = providerHintId;
       providerHint.className = "ivlyrics-first-language-provider-hint";
       providerHint.setAttribute("role", "note");
-      const providerHintIcon = document.createElement("span");
-      providerHintIcon.className = "ivlyrics-first-language-provider-hint-icon";
-      providerHintIcon.setAttribute("aria-hidden", "true");
-      providerHintIcon.textContent = "✦";
       providerHintText = document.createElement("span");
-      providerHint.append(providerHintIcon, providerHintText);
+      providerHint.append(providerHintText);
       body.appendChild(providerHint);
       updateProviderHint();
     }

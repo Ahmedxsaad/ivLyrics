@@ -911,8 +911,8 @@ window.LANG_ZH_CN = {
     "pinyin": "拼音"
   },
   "firstLanguagePrompt": {
-    "title": "第一次播放{language}歌曲",
-    "description": "要如何翻译这首歌？",
+    "title": "{language}歌词",
+    "description": "选择此语言歌曲要显示的内容。",
     "original": "仅原文",
     "originalDescription": "仅显示原文歌词，不显示发音或翻译。",
     "pronunciation": "发音",
@@ -921,8 +921,8 @@ window.LANG_ZH_CN = {
     "translationDescription": "显示原文歌词和翻译。",
     "both": "发音 + 翻译",
     "bothDescription": "同时显示发音标注和翻译。",
-    "notNow": "不进行设置",
-    "apply": "应用这些设置",
+    "notNow": "仅原文",
+    "apply": "应用",
     "aiProviderHint": "目前仅启用了 Bing 和 Google 翻译。如需更自然、更丰富的翻译，请在 AI 提供商设置中添加一个 AI 提供商。",
     "pronunciationAiProviderHint": "只有在 AI 提供商设置中添加 AI 提供商后，才能实际生成发音。"
   },
@@ -2436,6 +2436,14 @@ window.LANG_ZH_CN = {
       "failed": "无法连接到助手程序。请确认程序是否正在运行。",
       "downloading": "视频下载中: {percent}%",
       "skip": "跳过"
+    },
+    "quick": {
+      "title": "让歌词更合你心意",
+      "subtitle": "选好语言和显示方式就准备好了，之后随时都能更改。",
+      "language": "语言",
+      "appearance": "显示",
+      "playback": "播放",
+      "languageHint": "第一次播放新语言的歌曲时，再选择发音和翻译。"
     }
   },
   "vinyl": {

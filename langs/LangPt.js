@@ -911,8 +911,8 @@ window.LANG_PT = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "Primeira vez que você reproduz uma música em {language}",
-    "description": "Como esta música deve ser traduzida?",
+    "title": "Letras em {language}",
+    "description": "Escolha o que mostrar nas músicas neste idioma.",
     "original": "Somente original",
     "originalDescription": "Mostra apenas a letra original, sem pronúncia nem tradução.",
     "pronunciation": "Pronúncia",
@@ -921,8 +921,8 @@ window.LANG_PT = {
     "translationDescription": "Mostra a letra original com uma tradução.",
     "both": "Pronúncia + tradução",
     "bothDescription": "Mostra o guia de pronúncia e a tradução.",
-    "notNow": "Não configurar",
-    "apply": "Aplicar estas configurações",
+    "notNow": "Somente original",
+    "apply": "Aplicar",
     "aiProviderHint": "Apenas o Bing e o Google Tradutor estão ativos. Adicione um provedor de IA nas configurações para obter traduções mais naturais e completas.",
     "pronunciationAiProviderHint": "A pronúncia só será gerada depois de adicionar um provedor de IA nas configurações."
   },
@@ -2436,6 +2436,14 @@ window.LANG_PT = {
       "failed": "Não foi possível conectar ao Helper. Verifique se o programa está em execução.",
       "downloading": "Baixando vídeo: {percent}%",
       "skip": "Pular"
+    },
+    "quick": {
+      "title": "Deixe as letras do seu jeito",
+      "subtitle": "Escolha o idioma e a exibição. Você pode mudar tudo depois.",
+      "language": "Idioma",
+      "appearance": "Exibição",
+      "playback": "Reprodução",
+      "languageHint": "Escolha a pronúncia e a tradução ao ouvir pela primeira vez uma música em um novo idioma."
     }
   },
   "vinyl": {

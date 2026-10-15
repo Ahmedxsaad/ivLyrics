@@ -911,8 +911,8 @@ window.LANG_VI = {
     "pinyin": "Pinyin (Bính âm)"
   },
   "firstLanguagePrompt": {
-    "title": "Đây là lần đầu bạn phát một bài hát bằng {language}",
-    "description": "Bạn muốn dịch bài hát này như thế nào?",
+    "title": "Lời bài hát bằng {language}",
+    "description": "Chọn nội dung hiển thị cho các bài hát bằng ngôn ngữ này.",
     "original": "Chỉ lời gốc",
     "originalDescription": "Chỉ hiển thị lời gốc, không có cách phát âm hoặc bản dịch.",
     "pronunciation": "Cách phát âm",
@@ -921,8 +921,8 @@ window.LANG_VI = {
     "translationDescription": "Hiển thị lời gốc kèm bản dịch.",
     "both": "Cách phát âm + bản dịch",
     "bothDescription": "Hiển thị cả hướng dẫn phát âm và bản dịch.",
-    "notNow": "Không thiết lập",
-    "apply": "Áp dụng các cài đặt này",
+    "notNow": "Chỉ lời gốc",
+    "apply": "Áp dụng",
     "aiProviderHint": "Hiện chỉ có Bing và Google Dịch được bật. Hãy thêm một nhà cung cấp AI trong phần cài đặt để có bản dịch tự nhiên và phong phú hơn.",
     "pronunciationAiProviderHint": "Phần phát âm chỉ được tạo sau khi bạn thêm nhà cung cấp AI trong phần cài đặt nhà cung cấp AI."
   },
@@ -2436,6 +2436,14 @@ window.LANG_VI = {
       "failed": "Không thể kết nối với Helper. Vui lòng đảm bảo chương trình đang chạy.",
       "downloading": "Đang tải video: {percent}%",
       "skip": "Bỏ qua"
+    },
+    "quick": {
+      "title": "Lời bài hát theo cách của bạn",
+      "subtitle": "Chọn ngôn ngữ và cách hiển thị. Bạn có thể thay đổi mọi thứ sau này.",
+      "language": "Ngôn ngữ",
+      "appearance": "Hiển thị",
+      "playback": "Phát lại",
+      "languageHint": "Chọn cách phát âm và bản dịch khi bạn lần đầu phát một bài hát bằng ngôn ngữ mới."
     }
   },
   "vinyl": {

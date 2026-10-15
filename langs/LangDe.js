@@ -911,8 +911,8 @@ window.LANG_DE = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "Du spielst zum ersten Mal einen Song auf {language} ab",
-    "description": "Wie soll dieser Song übersetzt werden?",
+    "title": "Songtexte auf {language}",
+    "description": "Wählen Sie, was bei Songs in dieser Sprache angezeigt werden soll.",
     "original": "Nur Original",
     "originalDescription": "Zeigt nur den Originaltext ohne Aussprachehilfe oder Übersetzung.",
     "pronunciation": "Aussprache",
@@ -921,8 +921,8 @@ window.LANG_DE = {
     "translationDescription": "Zeigt den Originaltext mit einer Übersetzung.",
     "both": "Aussprache + Übersetzung",
     "bothDescription": "Zeigt sowohl die Aussprachehilfe als auch die Übersetzung.",
-    "notNow": "Nicht einrichten",
-    "apply": "Diese Einstellungen anwenden",
+    "notNow": "Nur Original",
+    "apply": "Anwenden",
     "aiProviderHint": "Derzeit sind nur Bing und Google Übersetzer aktiv. Füge in den KI-Anbietereinstellungen einen KI-Anbieter hinzu, um natürlichere und umfassendere Übersetzungen zu erhalten.",
     "pronunciationAiProviderHint": "Die Aussprache wird erst erzeugt, wenn du in den KI-Anbietereinstellungen einen KI-Anbieter hinzufügst."
   },
@@ -2436,6 +2436,14 @@ window.LANG_DE = {
       "failed": "Keine Verbindung zum Helper. Bitte prüfen Sie, ob er läuft.",
       "downloading": "Lade Video: {percent}%",
       "skip": "Überspringen"
+    },
+    "quick": {
+      "title": "Songtexte ganz nach Ihrem Geschmack",
+      "subtitle": "Wählen Sie Sprache und Anzeige. Sie können später alles ändern.",
+      "language": "Sprache",
+      "appearance": "Anzeige",
+      "playback": "Wiedergabe",
+      "languageHint": "Aussprache und Übersetzung wählen Sie, wenn Sie zum ersten Mal einen Song in einer neuen Sprache abspielen."
     }
   },
   "vinyl": {

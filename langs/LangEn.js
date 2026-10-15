@@ -911,8 +911,8 @@ window.LANG_EN = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "First time playing a {language} song",
-    "description": "How should this song be translated?",
+    "title": "{language} lyrics",
+    "description": "Choose what to show for songs in this language.",
     "original": "Original only",
     "originalDescription": "Show the original lyrics without pronunciation or translation.",
     "pronunciation": "Pronunciation",
@@ -921,8 +921,8 @@ window.LANG_EN = {
     "translationDescription": "Show the original lyrics with a translation.",
     "both": "Pronunciation + translation",
     "bothDescription": "Show both a pronunciation guide and a translation.",
-    "notNow": "Don't set up",
-    "apply": "Apply these settings",
+    "notNow": "Original only",
+    "apply": "Apply",
     "aiProviderHint": "Only Bing and Google Translate are active. Add an AI provider in AI provider settings for more natural, richer translations.",
     "pronunciationAiProviderHint": "Pronunciation is generated only after you add an AI provider in AI provider settings."
   },
@@ -2436,6 +2436,14 @@ window.LANG_EN = {
       "failed": "Cannot connect to Helper Program. Please check if it is running.",
       "downloading": "Downloading video: {percent}%",
       "skip": "Skip"
+    },
+    "quick": {
+      "title": "Make lyrics your own",
+      "subtitle": "Choose your language and display. You can change everything later.",
+      "language": "Language",
+      "appearance": "Display",
+      "playback": "Playback",
+      "languageHint": "Choose pronunciation and translation when you first play a song in a new language."
     }
   },
   "vinyl": {

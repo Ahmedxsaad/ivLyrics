@@ -911,8 +911,8 @@ window.LANG_IT = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "È la prima volta che riproduci un brano in {language}",
-    "description": "Come vuoi tradurre questo brano?",
+    "title": "Testi in {language}",
+    "description": "Scegli cosa mostrare per i brani in questa lingua.",
     "original": "Solo originale",
     "originalDescription": "Mostra solo il testo originale, senza pronuncia né traduzione.",
     "pronunciation": "Pronuncia",
@@ -921,8 +921,8 @@ window.LANG_IT = {
     "translationDescription": "Mostra il testo originale con una traduzione.",
     "both": "Pronuncia + traduzione",
     "bothDescription": "Mostra sia la guida alla pronuncia sia la traduzione.",
-    "notNow": "Non configurare",
-    "apply": "Applica queste impostazioni",
+    "notNow": "Solo originale",
+    "apply": "Applica",
     "aiProviderHint": "Al momento sono attivi solo Bing e Google Traduttore. Aggiungi un provider IA nelle impostazioni per ottenere traduzioni più naturali e complete.",
     "pronunciationAiProviderHint": "La pronuncia verrà generata solo dopo aver aggiunto un provider IA nelle impostazioni."
   },
@@ -2436,6 +2436,14 @@ window.LANG_IT = {
       "failed": "Impossibile connettersi all'Helper. Verifica che sia in esecuzione.",
       "downloading": "Scaricamento video: {percent}%",
       "skip": "Salta"
+    },
+    "quick": {
+      "title": "Testi a modo tuo",
+      "subtitle": "Scegli la lingua e la visualizzazione. Potrai cambiare tutto in seguito.",
+      "language": "Lingua",
+      "appearance": "Visualizzazione",
+      "playback": "Riproduzione",
+      "languageHint": "Scegli pronuncia e traduzione quando ascolti per la prima volta un brano in una nuova lingua."
     }
   },
   "vinyl": {

@@ -911,8 +911,8 @@ window.LANG_FR = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "Première lecture d’une chanson en {language}",
-    "description": "Comment souhaitez-vous traduire cette chanson ?",
+    "title": "Paroles en {language}",
+    "description": "Choisissez ce qui s’affiche pour les chansons dans cette langue.",
     "original": "Original uniquement",
     "originalDescription": "Afficher uniquement les paroles originales, sans prononciation ni traduction.",
     "pronunciation": "Prononciation",
@@ -921,8 +921,8 @@ window.LANG_FR = {
     "translationDescription": "Afficher les paroles originales avec une traduction.",
     "both": "Prononciation + traduction",
     "bothDescription": "Afficher à la fois le guide de prononciation et la traduction.",
-    "notNow": "Ne pas configurer",
-    "apply": "Appliquer ces réglages",
+    "notNow": "Original uniquement",
+    "apply": "Appliquer",
     "aiProviderHint": "Seuls Bing et Google Traduction sont actifs. Ajoutez un fournisseur d’IA dans ses réglages pour obtenir des traductions plus naturelles et plus riches.",
     "pronunciationAiProviderHint": "La prononciation ne sera générée qu’après l’ajout d’un fournisseur d’IA dans les réglages correspondants."
   },
@@ -2436,6 +2436,14 @@ window.LANG_FR = {
       "failed": "Impossible de connecter l'assistant. Vérifiez qu'il est lancé.",
       "downloading": "Téléchargement : {percent}%",
       "skip": "Passer"
+    },
+    "quick": {
+      "title": "Des paroles à votre image",
+      "subtitle": "Choisissez votre langue et l’affichage. Vous pourrez tout modifier plus tard.",
+      "language": "Langue",
+      "appearance": "Affichage",
+      "playback": "Lecture",
+      "languageHint": "Choisissez la prononciation et la traduction lors de la première lecture d’une chanson dans une nouvelle langue."
     }
   },
   "vinyl": {

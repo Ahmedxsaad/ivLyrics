@@ -911,8 +911,8 @@ window.LANG_KO = {
     "pinyin": "병음"
   },
   "firstLanguagePrompt": {
-    "title": "{language} 곡을 처음 재생하시네요",
-    "description": "이 노래는 어떻게 번역할까요?",
+    "title": "{language} 가사",
+    "description": "이 언어의 곡에 표시할 내용을 선택하세요.",
     "original": "원문만",
     "originalDescription": "발음이나 번역 없이 원문 가사만 표시합니다.",
     "pronunciation": "발음",
@@ -921,8 +921,8 @@ window.LANG_KO = {
     "translationDescription": "원문 가사와 함께 번역을 표시합니다.",
     "both": "발음 + 번역",
     "bothDescription": "발음 표기와 번역을 모두 표시합니다.",
-    "notNow": "설정하지 않기",
-    "apply": "이 설정으로 적용",
+    "notNow": "원문만 보기",
+    "apply": "적용",
     "aiProviderHint": "현재 Bing과 Google 번역만 활성화되어 있어요. 더 자연스럽고 풍부한 번역을 원한다면 AI 제공자 설정에서 AI 제공자를 추가해 주세요.",
     "pronunciationAiProviderHint": "발음은 AI 제공자 설정에서 AI 제공자를 추가해야 실제로 생성됩니다."
   },
@@ -2436,6 +2436,14 @@ window.LANG_KO = {
       "failed": "헬퍼 프로그램에 연결할 수 없습니다. 프로그램이 실행 중인지 확인해주세요.",
       "downloading": "영상 다운로드 중: {percent}%",
       "skip": "건너뛰기"
+    },
+    "quick": {
+      "title": "가사와 함께 시작해요",
+      "subtitle": "언어와 화면을 고르면 준비가 끝나요. 나중에 언제든 바꿀 수 있어요.",
+      "language": "언어",
+      "appearance": "화면",
+      "playback": "재생",
+      "languageHint": "발음과 번역은 새로운 언어의 곡을 처음 들을 때 선택해요."
     }
   },
   "vinyl": {

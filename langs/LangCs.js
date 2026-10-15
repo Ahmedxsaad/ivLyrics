@@ -911,8 +911,8 @@ window.LANG_CS = {
     "pinyin": "Pchin-jin"
   },
   "firstLanguagePrompt": {
-    "title": "Poprvé přehráváte skladbu v jazyce {language}",
-    "description": "Jak se má tato skladba přeložit?",
+    "title": "Texty v jazyce {language}",
+    "description": "Vyberte, co se má zobrazovat u skladeb v tomto jazyce.",
     "original": "Pouze originál",
     "originalDescription": "Zobrazí pouze původní text bez výslovnosti a překladu.",
     "pronunciation": "Výslovnost",
@@ -921,8 +921,8 @@ window.LANG_CS = {
     "translationDescription": "Zobrazí původní text s překladem.",
     "both": "Výslovnost + překlad",
     "bothDescription": "Zobrazí průvodce výslovností i překlad.",
-    "notNow": "Nenastavovat",
-    "apply": "Použít tato nastavení",
+    "notNow": "Pouze originál",
+    "apply": "Použít",
     "aiProviderHint": "Aktivní jsou pouze překladače Bing a Google. Pro přirozenější a bohatší překlady přidejte v nastavení poskytovatele AI.",
     "pronunciationAiProviderHint": "Výslovnost se skutečně vygeneruje až po přidání poskytovatele AI v jeho nastavení."
   },
@@ -2436,6 +2436,14 @@ window.LANG_CS = {
       "failed": "Nelze se připojit k Pomocnému programu. Zkontrolujte, zda běží.",
       "downloading": "Stahování videa: {percent}%",
       "skip": "Přeskočit"
+    },
+    "quick": {
+      "title": "Upravte si texty podle sebe",
+      "subtitle": "Vyberte jazyk a zobrazení. Vše můžete později změnit.",
+      "language": "Jazyk",
+      "appearance": "Zobrazení",
+      "playback": "Přehrávání",
+      "languageHint": "Výslovnost a překlad si vyberete při prvním přehrání skladby v novém jazyce."
     }
   },
   "vinyl": {

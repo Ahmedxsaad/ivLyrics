@@ -911,8 +911,8 @@ window.LANG_ID = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "Pertama kali memutar lagu berbahasa {language}",
-    "description": "Bagaimana lagu ini akan diterjemahkan?",
+    "title": "Lirik berbahasa {language}",
+    "description": "Pilih yang ingin ditampilkan untuk lagu dalam bahasa ini.",
     "original": "Hanya lirik asli",
     "originalDescription": "Tampilkan hanya lirik asli tanpa pelafalan atau terjemahan.",
     "pronunciation": "Pelafalan",
@@ -921,8 +921,8 @@ window.LANG_ID = {
     "translationDescription": "Tampilkan lirik asli dengan terjemahan.",
     "both": "Pelafalan + terjemahan",
     "bothDescription": "Tampilkan panduan pelafalan dan terjemahan.",
-    "notNow": "Jangan siapkan",
-    "apply": "Terapkan pengaturan ini",
+    "notNow": "Hanya lirik asli",
+    "apply": "Terapkan",
     "aiProviderHint": "Saat ini hanya Bing dan Google Terjemahan yang aktif. Tambahkan penyedia AI di pengaturannya untuk terjemahan yang lebih alami dan kaya.",
     "pronunciationAiProviderHint": "Pelafalan baru akan dibuat setelah Anda menambahkan penyedia AI di pengaturan penyedia AI."
   },
@@ -2436,6 +2436,14 @@ window.LANG_ID = {
       "failed": "Tidak dapat terhubung ke program Helper. Pastikan program berjalan.",
       "downloading": "Mengunduh video: {percent}%",
       "skip": "Lewati"
+    },
+    "quick": {
+      "title": "Atur lirik sesuai selera",
+      "subtitle": "Pilih bahasa dan tampilan. Semuanya bisa diubah nanti.",
+      "language": "Bahasa",
+      "appearance": "Tampilan",
+      "playback": "Pemutaran",
+      "languageHint": "Pilih pelafalan dan terjemahan saat pertama kali memutar lagu dalam bahasa baru."
     }
   },
   "vinyl": {

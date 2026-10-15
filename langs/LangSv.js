@@ -911,8 +911,8 @@ window.LANG_SV = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "Första gången du spelar en låt på {language}",
-    "description": "Hur ska den här låten översättas?",
+    "title": "Låttexter på {language}",
+    "description": "Välj vad som ska visas för låtar på det här språket.",
     "original": "Endast original",
     "originalDescription": "Visa endast originaltexten utan uttal eller översättning.",
     "pronunciation": "Uttal",
@@ -921,8 +921,8 @@ window.LANG_SV = {
     "translationDescription": "Visa originaltexten med en översättning.",
     "both": "Uttal + översättning",
     "bothDescription": "Visa både uttalsguiden och översättningen.",
-    "notNow": "Konfigurera inte",
-    "apply": "Tillämpa dessa inställningar",
+    "notNow": "Endast original",
+    "apply": "Tillämpa",
     "aiProviderHint": "Just nu är endast Bing och Google Översätt aktiva. Lägg till en AI-leverantör i inställningarna för mer naturliga och innehållsrika översättningar.",
     "pronunciationAiProviderHint": "Uttal genereras först när du har lagt till en AI-leverantör i inställningarna."
   },
@@ -2436,6 +2436,14 @@ window.LANG_SV = {
       "failed": "Kan inte ansluta till hjälpprogrammet. Kontrollera om den är igång.",
       "downloading": "Laddar ned video: {percent}%",
       "skip": "Hoppa över"
+    },
+    "quick": {
+      "title": "Låttexter på ditt sätt",
+      "subtitle": "Välj språk och visning. Du kan ändra allt senare.",
+      "language": "Språk",
+      "appearance": "Visning",
+      "playback": "Uppspelning",
+      "languageHint": "Välj uttal och översättning när du spelar en låt på ett nytt språk för första gången."
     }
   },
   "vinyl": {

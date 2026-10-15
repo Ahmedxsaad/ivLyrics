@@ -911,8 +911,8 @@ window.LANG_ES = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "Es la primera vez que reproduces una canción en {language}",
-    "description": "¿Cómo quieres traducir esta canción?",
+    "title": "Letras en {language}",
+    "description": "Elige qué mostrar en las canciones en este idioma.",
     "original": "Solo original",
     "originalDescription": "Muestra únicamente la letra original, sin pronunciación ni traducción.",
     "pronunciation": "Pronunciación",
@@ -921,8 +921,8 @@ window.LANG_ES = {
     "translationDescription": "Muestra la letra original con una traducción.",
     "both": "Pronunciación + traducción",
     "bothDescription": "Muestra tanto la guía de pronunciación como la traducción.",
-    "notNow": "No configurar",
-    "apply": "Aplicar estos ajustes",
+    "notNow": "Solo original",
+    "apply": "Aplicar",
     "aiProviderHint": "Solo están activos Bing y Google Translate. Añade un proveedor de IA en sus ajustes para obtener traducciones más naturales y completas.",
     "pronunciationAiProviderHint": "La pronunciación solo se generará después de añadir un proveedor de IA en los ajustes de proveedores."
   },
@@ -2436,6 +2436,14 @@ window.LANG_ES = {
       "failed": "No se puede conectar al asistente. Verifica que esté ejecutándose.",
       "downloading": "Descargando video: {percent}%",
       "skip": "Omitir"
+    },
+    "quick": {
+      "title": "Haz tuyas las letras",
+      "subtitle": "Elige el idioma y la visualización. Puedes cambiarlo todo más adelante.",
+      "language": "Idioma",
+      "appearance": "Visualización",
+      "playback": "Reproducción",
+      "languageHint": "Elige la pronunciación y la traducción cuando reproduzcas por primera vez una canción en un nuevo idioma."
     }
   },
   "vinyl": {

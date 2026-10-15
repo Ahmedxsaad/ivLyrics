@@ -1,5 +1,10 @@
 // Settings window styles, kept separate from its controls and state.
 // Injected by ConfigModal inside #ivLyrics-config-container; scoped to it.
+// First-run setup and lightweight prompts use the same theme tokens without the settings layout rules.
+function getSettingsSurfaceTokenCss(selector) {
+  return SETTINGS_MODAL_CSS.slice(0, SETTINGS_MODAL_CSS.indexOf("/* Names used by inline styles"))
+    .replaceAll(`#${APP_NAME}-config-container`, selector);
+}
 const SETTINGS_MODAL_CSS = `
 /* ivLyrics settings window.
    Neutral surfaces, one blue used only for state (selection, focus, switches),

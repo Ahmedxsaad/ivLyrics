@@ -911,8 +911,8 @@ window.LANG_MS = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "Kali pertama memainkan lagu dalam bahasa {language}",
-    "description": "Bagaimanakah lagu ini harus diterjemahkan?",
+    "title": "Lirik bahasa {language}",
+    "description": "Pilih perkara yang ingin dipaparkan untuk lagu dalam bahasa ini.",
     "original": "Asal sahaja",
     "originalDescription": "Paparkan lirik asal sahaja tanpa sebutan atau terjemahan.",
     "pronunciation": "Sebutan",
@@ -921,8 +921,8 @@ window.LANG_MS = {
     "translationDescription": "Paparkan lirik asal dengan terjemahan.",
     "both": "Sebutan + terjemahan",
     "bothDescription": "Paparkan panduan sebutan dan terjemahan.",
-    "notNow": "Jangan sediakan",
-    "apply": "Gunakan tetapan ini",
+    "notNow": "Asal sahaja",
+    "apply": "Gunakan",
     "aiProviderHint": "Buat masa ini hanya Bing dan Google Terjemah diaktifkan. Tambahkan penyedia AI dalam tetapan untuk terjemahan yang lebih semula jadi dan lengkap.",
     "pronunciationAiProviderHint": "Sebutan hanya akan dijana selepas anda menambah penyedia AI dalam tetapan penyedia AI."
   },
@@ -2436,6 +2436,14 @@ window.LANG_MS = {
       "failed": "Tidak dapat menyambung ke program pembantu. Sila pastikan program sedang berjalan.",
       "downloading": "Muat turun video: {percent}%",
       "skip": "Langkau"
+    },
+    "quick": {
+      "title": "Lirik mengikut cita rasa anda",
+      "subtitle": "Pilih bahasa dan paparan. Semuanya boleh diubah kemudian.",
+      "language": "Bahasa",
+      "appearance": "Paparan",
+      "playback": "Main balik",
+      "languageHint": "Pilih sebutan dan terjemahan apabila anda memainkan lagu dalam bahasa baharu buat kali pertama."
     }
   },
   "vinyl": {

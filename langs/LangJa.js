@@ -911,8 +911,8 @@ window.LANG_JA = {
     "pinyin": "ピンイン"
   },
   "firstLanguagePrompt": {
-    "title": "{language}の曲を初めて再生しています",
-    "description": "この曲をどのように翻訳しますか？",
+    "title": "{language}の歌詞",
+    "description": "この言語の曲で表示する内容を選んでください。",
     "original": "原文のみ",
     "originalDescription": "発音ガイドや翻訳を表示せず、原文の歌詞のみを表示します。",
     "pronunciation": "発音",
@@ -921,8 +921,8 @@ window.LANG_JA = {
     "translationDescription": "原文の歌詞と翻訳を表示します。",
     "both": "発音 + 翻訳",
     "bothDescription": "発音ガイドと翻訳の両方を表示します。",
-    "notNow": "設定しない",
-    "apply": "この設定を適用",
+    "notNow": "原文のみ",
+    "apply": "適用",
     "aiProviderHint": "現在は Bing と Google 翻訳のみが有効です。より自然で豊かな翻訳を楽しむには、AIプロバイダー設定でAIプロバイダーを追加してください。",
     "pronunciationAiProviderHint": "発音を実際に生成するには、AIプロバイダー設定でAIプロバイダーを追加する必要があります。"
   },
@@ -2436,6 +2436,14 @@ window.LANG_JA = {
       "failed": "ヘルパープログラムに接続できません。プログラムが実行中か確認してください。",
       "downloading": "動画ダウンロード中: {percent}%",
       "skip": "スキップ"
+    },
+    "quick": {
+      "title": "歌詞を自分好みに",
+      "subtitle": "言語と表示を選べば準備完了です。あとからいつでも変更できます。",
+      "language": "言語",
+      "appearance": "表示",
+      "playback": "再生",
+      "languageHint": "初めて聴く言語の曲を再生するときに、発音と翻訳を選べます。"
     }
   },
   "vinyl": {

@@ -911,8 +911,8 @@ window.LANG_TR = {
     "pinyin": "Pinyin"
   },
   "firstLanguagePrompt": {
-    "title": "İlk kez {language} dilinde bir şarkı çalıyorsunuz",
-    "description": "Bu şarkı nasıl çevrilsin?",
+    "title": "{language} şarkı sözleri",
+    "description": "Bu dildeki şarkılarda ne gösterileceğini seçin.",
     "original": "Yalnızca orijinal",
     "originalDescription": "Telaffuz veya çeviri olmadan yalnızca orijinal şarkı sözlerini gösterir.",
     "pronunciation": "Telaffuz",
@@ -921,8 +921,8 @@ window.LANG_TR = {
     "translationDescription": "Orijinal şarkı sözlerini çeviriyle gösterir.",
     "both": "Telaffuz + çeviri",
     "bothDescription": "Hem telaffuz kılavuzunu hem de çeviriyi gösterir.",
-    "notNow": "Ayarlama",
-    "apply": "Bu ayarları uygula",
+    "notNow": "Yalnızca orijinal",
+    "apply": "Uygula",
     "aiProviderHint": "Şu anda yalnızca Bing ve Google Çeviri etkin. Daha doğal ve zengin çeviriler için AI sağlayıcı ayarlarından bir AI sağlayıcısı ekleyin.",
     "pronunciationAiProviderHint": "Telaffuz ancak AI sağlayıcı ayarlarından bir AI sağlayıcısı ekledikten sonra oluşturulur."
   },
@@ -2436,6 +2436,14 @@ window.LANG_TR = {
       "failed": "Yardımcı Programa bağlanılamıyor. Lütfen çalıştığını kontrol edin.",
       "downloading": "Video indiriliyor: %{percent}",
       "skip": "Atla"
+    },
+    "quick": {
+      "title": "Şarkı sözlerini kişiselleştirin",
+      "subtitle": "Dilinizi ve görünümü seçin. Her şeyi daha sonra değiştirebilirsiniz.",
+      "language": "Dil",
+      "appearance": "Görünüm",
+      "playback": "Çalma",
+      "languageHint": "Yeni bir dilde ilk kez şarkı çaldığınızda telaffuz ve çeviriyi seçin."
     }
   },
   "vinyl": {
