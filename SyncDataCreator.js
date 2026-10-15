@@ -2,6 +2,16 @@
  * SyncDataCreator - 노래방 싱크 데이터 생성 UI
  */
 
+// The built-in LRCLIB extension owns public LRCLIB transport even while its
+// provider is disabled. Editor ID lookups/search must use the same CORS retry.
+const fetchSyncCreatorLrclib = async (url) => {
+	const transport = window.IvLyricsLrclibTransport;
+	if (typeof transport?.fetch !== 'function') throw new Error('LRCLIB transport unavailable');
+	const response = await transport.fetch(url, {}, 35000);
+	if (!response) throw new Error('LRCLIB network request failed');
+	return response;
+};
+
 const SYNC_CREATOR_RTL_STRONG_CHAR_REGEX = /[\u0590-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFC]/u;
 const SYNC_CREATOR_LTR_STRONG_CHAR_REGEX = /[A-Za-z\u00C0-\u02AF\u0370-\u052F\u1E00-\u1EFF]/u;
 const SYNC_CREATOR_JAPANESE_KANA_REGEX = /[\u3040-\u30ff\uff66-\uff9f]/u;
@@ -4046,11 +4056,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		clearLrclibCandidateState();
 
 		try {
-			const response = await fetch(`https://lrclib.net/api/get/${encodeURIComponent(lrclibId)}`, {
-				headers: {
-					'x-user-agent': `spicetify v${Spicetify.Config?.version || 'unknown'}`
-				}
-			});
+			const response = await fetchSyncCreatorLrclib(`https://lrclib.net/api/get/${encodeURIComponent(lrclibId)}`);
 			if (!response.ok) {
 				throw new Error(`LRCLIB ${response.status}`);
 			}
@@ -4121,11 +4127,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		setError(null);
 		try {
 			const params = new URLSearchParams({ q: query });
-			const response = await fetch(`https://lrclib.net/api/search?${params.toString()}`, {
-				headers: {
-					'x-user-agent': `spicetify v${Spicetify.Config?.version || 'unknown'}`
-				}
-			});
+			const response = await fetchSyncCreatorLrclib(`https://lrclib.net/api/search?${params.toString()}`);
 			if (!response.ok) {
 				throw new Error(`LRCLIB ${response.status}`);
 			}

@@ -662,60 +662,108 @@
         return bestScore;
     }
 
+    function getLrclibReadUrl(input) {
+        const target = new URL(input);
+        const isSearch = target.pathname === '/api/search';
+        const isSignatureLookup = target.pathname === '/api/get';
+        // Validate before either request: this export only supports public reads.
+        if (target.origin !== 'https://lrclib.net' || target.username || target.password
+            || target.hash || (!isSearch && !isSignatureLookup && !/^\/api\/get\/\d+$/.test(target.pathname))) {
+            throw new Error('Invalid public LRCLIB URL');
+        }
+        const allowedParameters = isSearch
+            ? ['q', 'track_name', 'artist_name', 'album_name']
+            : (isSignatureLookup ? ['track_name', 'artist_name', 'album_name', 'duration'] : []);
+        if (Array.from(target.searchParams.keys()).some(key => !allowedParameters.includes(key))) {
+            throw new Error('Invalid public LRCLIB query parameter');
+        }
+        return target;
+    }
+
+    function getLrclibCorsUrl(target) {
+        let template = 'https://cors-proxy.spicetify.app/{url}';
+        try {
+            template = window.localStorage?.getItem('spicetify:corsProxyTemplate') || template;
+        } catch {
+            // Match the other providers when Spicetify's storage is unavailable.
+        }
+        if (typeof template !== 'string' || template.split('{url}').length !== 2) {
+            throw new Error('Invalid Spicetify CORS proxy template');
+        }
+        const proxyUrl = new URL(template.replace('{url}', target.href));
+        if (!/^https?:$/.test(proxyUrl.protocol) || proxyUrl.username || proxyUrl.password
+            || proxyUrl.origin === target.origin) {
+            throw new Error('Invalid Spicetify CORS proxy URL');
+        }
+        return proxyUrl.href;
+    }
+
     /**
-     * ────────────────────────────────────────────────────────────────────────────
-     * 타임아웃 및 재시도 지원 Fetch 함수
-     * ────────────────────────────────────────────────────────────────────────────
-     *
-     * 【목적】
-     * 네트워크 요청에 타임아웃을 적용하고, 실패 시 자동으로 1회 재시도합니다.
-     * LRCLIB 서버의 간헐적 장애나 네트워크 불안정에 대응합니다.
-     *
-     * 【동작 방식】
-     * 1. AbortController를 사용하여 타임아웃 구현
-     * 2. 첫 번째 시도 실패 시 500ms 대기 후 재시도
-     * 3. 재시도도 실패하면 null 반환 (에러 throw 대신)
-     *
-     * 【설계 결정】
-     * - null 반환: UI에 에러 메시지를 노출하지 않기 위함
-     * - 500ms 대기: 서버 부하 완화 및 네트워크 복구 시간 확보
-     * - 35초 타임아웃: LRCLIB 서버 응답 시간을 고려한 값
-     *
-     * @param {string} url - 요청할 URL
-     * @param {Object} options - fetch 옵션 (headers 등)
-     * @param {number} timeoutMs - 타임아웃 시간 (기본 35초)
-     * @returns {Promise<Response|null>} Response 객체 또는 실패 시 null
+     * Public LRCLIB GET with one shared timeout and at most one CORS-proxy retry.
+     * Only GET without a body is supported; invalid inputs/failures resolve null.
+     * Callers keep HTTP status/JSON handling. Timeout is capped at 35 seconds.
      */
     async function fetchWithTimeout(url, options = {}, timeoutMs = 35000) {
-        // 최대 2회 시도 (첫 시도 + 1회 재시도)
-        for (let attempt = 0; attempt < 2; attempt++) {
-            // AbortController: fetch 요청을 강제 중단할 수 있게 해주는 Web API
-            const controller = new AbortController();
-
-            // 타임아웃 설정: timeoutMs 후 요청 강제 중단
-            const id = setTimeout(() => controller.abort(), timeoutMs);
-
-            try {
-                // fetch 요청 실행 (signal 연결로 abort 가능하게 함)
-                const response = await fetch(url, { ...options, signal: controller.signal });
-                clearTimeout(id);  // 성공 시 타임아웃 타이머 정리
-                return response;   // 응답 반환 (성공)
-            } catch (error) {
-                clearTimeout(id);  // 실패 시에도 타이머 정리
-
-                if (attempt === 0) {
-                    // 첫 번째 시도 실패: 500ms 대기 후 재시도
-                    await new Promise(r => setTimeout(r, 500));
-                    window.__ivLyricsDebugLog?.(`[LR-DEBUG] 네트워크 오류, 재시도 중...`);
-                }
-                // attempt === 1이면 재시도도 실패 → 루프 종료
+        let target;
+        try {
+            target = getLrclibReadUrl(url);
+            if ((options.method !== undefined && (typeof options.method !== 'string'
+                || options.method.toUpperCase() !== 'GET')) || options.body != null) {
+                throw new Error('LRCLIB transport only supports GET without a body');
             }
+        } catch (error) {
+            window.__ivLyricsDebugLog?.(`[LR-DEBUG] Invalid LRCLIB request: ${error?.message || error}`);
+            return null;
         }
+        const callerSignal = options.signal;
+        if (callerSignal?.aborted) return null;
 
-        // 모든 재시도 실패 → null 반환 (에러 메시지 노출 방지)
-        window.__ivLyricsDebugLog?.(`[LR-DEBUG] 네트워크 재시도 실패, 스킵`);
-        return null;
+        const controller = new AbortController();
+        const abort = () => controller.abort(callerSignal.reason);
+        callerSignal?.addEventListener('abort', abort, { once: true });
+        const boundedTimeout = Number.isFinite(timeoutMs) ? Math.max(1, Math.min(timeoutMs, 35000)) : 35000;
+        const id = setTimeout(() => controller.abort(), boundedTimeout);
+        // LRCLIB requires client identification. X-User-Agent triggers preflight,
+        // so keep that public header and relay network/CORS failures below.
+        // Never forward Authorization, cookies, or other caller headers.
+        const requestOptions = {
+            method: 'GET',
+            headers: {
+                Accept: 'application/json',
+                'x-user-agent': `spicetify v${Spicetify.Config?.version || 'unknown'}`
+            },
+            signal: controller.signal,
+            credentials: 'omit',
+            referrerPolicy: 'no-referrer'
+        };
+
+        try {
+            try {
+                return await fetch(target.href, requestOptions);
+            } catch (error) {
+                const isNetworkError = error?.name === 'TypeError' || error?.name === 'NetworkError'
+                    || /failed to fetch|network request failed|load failed/i.test(error?.message || '');
+                if (controller.signal.aborted || error?.name === 'AbortError' || error?.name === 'TimeoutError'
+                    || !isNetworkError) {
+                    return null;
+                }
+            }
+
+            const proxyUrl = getLrclibCorsUrl(target);
+            if (controller.signal.aborted) return null;
+            window.__ivLyricsDebugLog?.('[LR-DEBUG] Direct network/CORS failure, retrying through Spicetify CORS proxy');
+            return await fetch(proxyUrl, requestOptions);
+        } catch (error) {
+            window.__ivLyricsDebugLog?.(`[LR-DEBUG] LRCLIB CORS retry failed: ${error?.message || error}`);
+            return null;
+        } finally {
+            clearTimeout(id);
+            callerSignal?.removeEventListener('abort', abort);
+        }
     }
+
+    // Available before manager registration and independent of provider enablement.
+    window.IvLyricsLrclibTransport = Object.freeze({ fetch: fetchWithTimeout });
 
     let lrclibMetadataLookupQueue = Promise.resolve();
 
