@@ -535,10 +535,10 @@ window.LANG_ID = {
       "sonarModelsFallback": "Sonar tidak memiliki API daftar model. Daftar bawaan model yang didukung ditampilkan.",
       "pollinationsAllModels": "Akses ke semua model akan diminta. Pilih model setelah terhubung.",
       "model": "Model",
-      "modelId": "Model ID",
-      "baseUrl": "Basis URL",
+      "modelId": "ID Model",
+      "baseUrl": "URL Dasar",
       "baseUrlDesc": "Gunakan URL API kustom yang kompatibel dengan OpenAI.",
-      "apiKey": "API Kunci",
+      "apiKey": "Kunci API",
       "apiKeyDesc": "Mendukung satu kunci, daftar baris baru, atau array JSON. Hanya disimpan di perangkat ini.",
       "refreshModels": "Segarkan",
       "selectModel": "Pilih dari daftar model",
@@ -732,7 +732,7 @@ window.LANG_ID = {
     "background": "Latar Belakang",
     "backgroundOptions": {
       "albumArt": "Sampul Album",
-      "animatedCanvas": "Kanvas Animasi",
+      "animatedCanvas": "Canvas Animasi",
       "artistArt": "Gambar Artis",
       "staticColor": "Warna Solid"
     },
@@ -1187,7 +1187,7 @@ window.LANG_ID = {
         "desc": "Ketebalan font teks asli"
       },
       "opacity": {
-        "label": "Transparansi",
+        "label": "Opasitas",
         "desc": "Opasitas teks asli (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_ID = {
         "desc": "Ketebalan font pelafalan"
       },
       "opacity": {
-        "label": "Transparansi",
+        "label": "Opasitas",
         "desc": "Opasitas pelafalan (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_ID = {
         "desc": "Ketebalan font terjemahan"
       },
       "opacity": {
-        "label": "Transparansi",
+        "label": "Opasitas",
         "desc": "Opasitas terjemahan (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_ID = {
         "desc": "Ketebalan font furigana"
       },
       "opacity": {
-        "label": "Transparansi",
+        "label": "Opasitas",
         "desc": "Opasitas furigana (0-100%)"
       },
       "spacing": {
@@ -1298,7 +1298,7 @@ window.LANG_ID = {
         "desc": "Warna bayangan (Kode HEX)"
       },
       "opacity": {
-        "label": "Transparansi Bayangan",
+        "label": "Opasitas Bayangan",
         "desc": "Opasitas bayangan (0-100%)"
       },
       "blur": {
@@ -2030,7 +2030,7 @@ window.LANG_ID = {
     "error": "Terjadi kesalahan.",
     "localTrackNeedsVideo": "Untuk lagu lokal, atur URL YouTube secara manual dari tombol video.",
     "loadingMessage": "Memuat latar belakang video... Membutuhkan waktu sekitar 30 detik.",
-    "downloadingVideo": "engunduh video...",
+    "downloadingVideo": "Mengunduh video...",
     "downloading": "Mengunduh: {percent}%",
     "processing": "Memproses video...",
     "checking": "Memeriksa video...",
@@ -2158,7 +2158,7 @@ window.LANG_ID = {
     "selectLyricsHint": "Klik baris lirik yang ingin dimasukkan (Maks 10 baris)",
     "template": "Preset",
     "templates": {
-      "cover": "ภาพปกเบลอ",
+      "cover": "Sampul Blur",
       "gradient": "Gradien",
       "minimal": "Minimal",
       "glass": "Glass",
@@ -2480,7 +2480,7 @@ window.LANG_ID = {
     "errorQuotaHint": "Coba lagi nanti atau pilih penyedia AI lain di Pengaturan",
     "sourcesEmpty": "Tidak ada tautan sumber yang dikembalikan",
     "disclaimer": "Penelitian yang dihasilkan AI mungkin mengandung ketidakakuratan. Periksa sumber terkait sebelum mengandalkan klaim faktual",
-    "styleTitle": "Teliti pengaturan teks",
+    "styleTitle": "Pengaturan teks Riset",
     "styleSubtitle": "Sesuaikan ukuran teks dan kerangka yang digunakan dalam dokumen Riset layar penuh",
     "fontSizeDesc": "Ukuran teks penelitian",
     "fontSizeInfo": "Sesuaikan ukuran teks keseluruhan dokumen Penelitian",
@@ -2498,8 +2498,8 @@ window.LANG_ID = {
       "trivia": "Fakta Menarik",
       "title": "Analisis judul",
       "lyrics": "Analisis lirik",
-      "chorus": "Analisis paduan suara",
-      "ending": "Analisis lirik terakhir",
+      "chorus": "Analisis refrein",
+      "ending": "Baris terakhir",
       "music": "Analisis musik",
       "artist": "Konteks artis",
       "comparison": "Analisis komparatif",
@@ -2520,7 +2520,7 @@ window.LANG_ID = {
       "interpretations": "Interpretasi",
       "uncertain": "Item yang tidak pasti",
       "conflicts": "Informasi yang bertentangan",
-      "missing": "Informasi yang hilang",
+      "missing": "Informasi yang belum ditemukan",
       "empty": "Tidak ada catatan Penelitian tambahan"
     },
     "labels": {
@@ -2529,8 +2529,8 @@ window.LANG_ID = {
       "sourceFootnote": "sumber",
       "reading": "Pengucapan dan membaca",
       "meaning": "Artinya",
-      "lyricConnection": "Koneksi ke lirik",
-      "endingConnection": "Koneksi ke lirik terakhir",
+      "lyricConnection": "Kaitan dengan lirik",
+      "endingConnection": "Kaitan dengan baris terakhir",
       "speaker": "Narator lirik",
       "listener": "Orang yang disapa dalam lirik",
       "relationship": "Hubungan",
@@ -2539,12 +2539,12 @@ window.LANG_ID = {
       "symbolic": "Makna simbolis",
       "contextual": "Makna kontekstual",
       "nuance": "Nuansa",
-      "role": "Berperan dalam lagu tersebut",
+      "role": "Peran dalam lagu",
       "repeatedPhrases": "Frase yang berulang",
       "change": "Perkembangan di seluruh lagu",
       "finalLyric": "Baris lirik terakhir",
-      "titleConnection": "Koneksi ke judul",
-      "openingConnection": "Koneksi ke lirik pembuka",
+      "titleConnection": "Kaitan dengan judul",
+      "openingConnection": "Kaitan dengan bagian pembuka",
       "reinterpretation": "Penafsiran ulang",
       "genre": "Aliran",
       "tempo": "Tempo",

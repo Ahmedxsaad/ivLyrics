@@ -457,7 +457,7 @@ window.LANG_HI = {
       "providerSelectionDesc": "अनुवाद, रोमनकरण और TMI पीढ़ी के लिए उपयोग किए जाने वाले AI प्रदाता का चयन करें",
       "metadataProvider": "मेटाडेटा अनुवाद",
       "lyricsProvider": "गीत अनुवाद/रोमनकरण",
-      "tmiProvider": "TMI पीढ़ी",
+      "tmiProvider": "TMI निर्माण",
       "selectProvider": "प्रदाता चुनें...",
       "addonSettings": "एडऑन सेटिंग्स",
       "addonSettingsDesc": "प्रत्येक AI एडऑन की व्यक्तिगत सेटिंग्स कॉन्फ़िगर करें",
@@ -546,7 +546,7 @@ window.LANG_HI = {
       "modelsUnavailable": "मॉडल सूची लोड नहीं हो सकी। आप मॉडल ID मैन्युअल रूप से दर्ज कर सकते हैं।",
       "testingConnection": "कनेक्शन जाँचें…",
       "testConnection": "कनेक्शन जाँचें",
-      "getApiKey": "को पुनर्जीवित करें कुंजी",
+      "getApiKey": "कुंजी प्राप्त करें",
       "noModels": "कोई मॉडल उपलब्ध नहीं है",
       "pollinationsAccount": "Pollinations खाता",
       "pollinationsConnect": "Pollinations में साइन इन करें",
@@ -910,8 +910,8 @@ window.LANG_HI = {
     "latestVersion": "यह नवीनतम संस्करण है",
     "noLyricsLoaded": "लिरिक्स लोड नहीं हुए।",
     "translationRegenerateGeminiOnly": "अनुवाद पुनर्जनन केवल Gemini अनुवाद के लिए उपलब्ध है।",
-    "regeneratingTranslation": "अनुवाद पुनर्जीवित हो रहा है...",
-    "translationRegenerated": "अनुवाद पुनर्जीवित हो गया",
+    "regeneratingTranslation": "अनुवाद फिर से बनाया जा रहा है...",
+    "translationRegenerated": "अनुवाद फिर से बनाया गया",
     "culturalAnnotationsRegenerated": "सांस्कृतिक संदर्भ की व्याख्याएँ फिर से बनाई गईं।",
     "translationRegenerateFailed": "अनुवाद पुनर्जनन विफल",
     "culturalAnnotationsRegenerateFailed": "सांस्कृतिक संदर्भ की व्याख्याएँ फिर से नहीं बनाई जा सकीं।",
@@ -1136,19 +1136,19 @@ window.LANG_HI = {
       },
       "showLabel": {
         "label": "टेक्स्ट लेबल दिखाएं",
-        "desc": "गीत की स्थिति के आधार पर आइकन के पास प्रस्तावना, अंतराल या उपसंहार दिखाता है"
+        "desc": "गीत की स्थिति के आधार पर आइकन के पास इंट्रो, अंतराल या आउट्रो दिखाता है"
       },
       "labelStyle": {
         "fontFamily": {
           "label": "टेक्स्ट लेबल फ़ॉन्ट",
-          "desc": "प्रस्तावना, अंतराल या उपसंहार लेबल के लिए फ़ॉन्ट चुनें"
+          "desc": "इंट्रो, अंतराल या आउट्रो लेबल के लिए फ़ॉन्ट चुनें"
         },
         "fontSize": {
           "label": "टेक्स्ट लेबल आकार",
           "desc": "टेक्स्ट लेबल का फ़ॉन्ट आकार"
         },
         "fontWeight": {
-          "label": "टेक्स्ट लेबल वजन",
+          "label": "टेक्स्ट लेबल की मोटाई",
           "desc": "टेक्स्ट लेबल का फ़ॉन्ट वजन"
         },
         "opacity": {
@@ -1161,9 +1161,9 @@ window.LANG_HI = {
         "desc": "आइकन एनीमेशन की गति समायोजित करें"
       },
       "labels": {
-        "prelude": "प्रस्तावना",
+        "prelude": "इंट्रो",
         "break": "अंतराल",
-        "postlude": "उपसंहार"
+        "postlude": "आउट्रो"
       }
     },
     "livePreview": {
@@ -1187,7 +1187,7 @@ window.LANG_HI = {
         "desc": "मूल लिरिक्स की फ़ॉन्ट मोटाई"
       },
       "opacity": {
-        "label": "पारदर्शिता",
+        "label": "अपारदर्शिता",
         "desc": "मूल लिरिक्स की अपारदर्शिता (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_HI = {
         "desc": "उच्चारण की फ़ॉन्ट मोटाई"
       },
       "opacity": {
-        "label": "पारदर्शिता",
+        "label": "अपारदर्शिता",
         "desc": "उच्चारण की अपारदर्शिता (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_HI = {
         "desc": "अनुवाद की फ़ॉन्ट मोटाई"
       },
       "opacity": {
-        "label": "पारदर्शिता",
+        "label": "अपारदर्शिता",
         "desc": "अनुवाद की अपारदर्शिता (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_HI = {
         "desc": "फुरिगाना की फ़ॉन्ट मोटाई"
       },
       "opacity": {
-        "label": "पारदर्शिता",
+        "label": "अपारदर्शिता",
         "desc": "फुरिगाना की अपारदर्शिता (0-100%)"
       },
       "spacing": {
@@ -1298,7 +1298,7 @@ window.LANG_HI = {
         "desc": "छाया का रंग (HEX कोड)"
       },
       "opacity": {
-        "label": "छाया पारदर्शिता",
+        "label": "छाया अपारदर्शिता",
         "desc": "छाया की अपारदर्शिता (0-100%)"
       },
       "blur": {
@@ -2480,9 +2480,9 @@ window.LANG_HI = {
     "errorQuotaHint": "बाद में पुनः प्रयास करें या सेटिंग्स में कोई अन्य AI प्रदाता चुनें",
     "sourcesEmpty": "कोई स्रोत लिंक वापस नहीं किया गया",
     "disclaimer": "एआई-जनित अनुसंधान में अशुद्धियाँ हो सकती हैं। तथ्यात्मक दावों पर भरोसा करने से पहले जुड़े हुए स्रोतों की जाँच करें",
-    "styleTitle": "पाठ सेटिंग्स पर शोध करें",
+    "styleTitle": "रिसर्च टेक्स्ट सेटिंग्स",
     "styleSubtitle": "फ़ुलस्क्रीन रिसर्च दस्तावेज़ में उपयोग किए गए टेक्स्ट आकार और रूपरेखा को समायोजित करें",
-    "fontSizeDesc": "पाठ के आकार पर शोध करें",
+    "fontSizeDesc": "रिसर्च टेक्स्ट का आकार",
     "fontSizeInfo": "अनुसंधान दस्तावेज़ के समग्र पाठ आकार को समायोजित करें",
     "gestureHint": "रिसर्च खोलने के लिए एल्बम आर्टवर्क पर राइट-क्लिक करें या दबाए रखें",
     "gesture": "राइट-क्लिक करें · होल्ड करें",
@@ -2497,9 +2497,9 @@ window.LANG_HI = {
       "listeningGuide": "सुनने की मार्गदर्शिका",
       "trivia": "रोचक तथ्य",
       "title": "शीर्षक विश्लेषण",
-      "lyrics": "गीतात्मक विश्लेषण",
+      "lyrics": "गीत के बोल का विश्लेषण",
       "chorus": "कोरस विश्लेषण",
-      "ending": "अंतिम गीत विश्लेषण",
+      "ending": "अंतिम पंक्ति",
       "music": "संगीत विश्लेषण",
       "artist": "कलाकार प्रसंग",
       "comparison": "तुलनात्मक विश्लेषण",
@@ -2518,9 +2518,9 @@ window.LANG_HI = {
     "quality": {
       "verified": "सत्यापित तथ्य",
       "interpretations": "व्याख्याएँ",
-      "uncertain": "अनिश्चित वस्तुएं",
+      "uncertain": "अनिश्चित बातें",
       "conflicts": "परस्पर विरोधी जानकारी",
-      "missing": "गुम जानकारी",
+      "missing": "अनुपलब्ध जानकारी",
       "empty": "कोई अतिरिक्त शोध नोट नहीं"
     },
     "labels": {
@@ -2530,9 +2530,9 @@ window.LANG_HI = {
       "reading": "उच्चारण और पढ़ना",
       "meaning": "मतलब",
       "lyricConnection": "गीत के बोल से जुड़ाव",
-      "endingConnection": "अंतिम गीत से संबंध",
+      "endingConnection": "अंतिम पंक्ति से संबंध",
       "speaker": "गीतात्मक कथावाचक",
-      "listener": "गीत में व्यक्ति को संबोधित किया गया है",
+      "listener": "गीत में संबोधित व्यक्ति",
       "relationship": "रिश्ता",
       "emotionalArc": "भावनात्मक विकास",
       "literal": "शाब्दिक अर्थ",
@@ -2544,15 +2544,15 @@ window.LANG_HI = {
       "change": "पूरे गाने में विकास",
       "finalLyric": "अंतिम गीत पंक्ति",
       "titleConnection": "शीर्षक से संबंध",
-      "openingConnection": "आरंभिक गीत से संबंध",
+      "openingConnection": "आरंभिक पंक्तियों से संबंध",
       "reinterpretation": "पुनर्व्याख्या",
       "genre": "शैली",
       "tempo": "टेम्पो",
       "rhythm": "ताल",
-      "instrumentation": "वाद्ययंत्र और लय",
+      "instrumentation": "वाद्ययंत्र और ध्वनि-गुण",
       "vocal": "स्वर",
       "harmony": "संगीतमय सामंजस्य",
-      "arrangement": "संगीतमय व्यवस्था",
+      "arrangement": "संगीत संयोजन",
       "structure": "संरचना",
       "lyricMusic": "गीत और संगीत",
       "history": "ऐतिहासिक संदर्भ",
@@ -2562,7 +2562,7 @@ window.LANG_HI = {
       "mv": "संगीत वीडियो",
       "artwork": "कलाकृति",
       "visualInterpretation": "दृश्य व्याख्या",
-      "core": "केंद्रीय व्याख्या",
+      "core": "मुख्य व्याख्या",
       "literary": "साहित्यिक व्याख्या",
       "musical": "संगीतमय व्याख्या",
       "career": "कैरियर सन्दर्भ",
@@ -2571,7 +2571,7 @@ window.LANG_HI = {
       "careerStage": "कैरियर चरण",
       "significance": "कलात्मक महत्व",
       "similarities": "समानताएँ",
-      "differences": "मतभेद",
+      "differences": "अंतर",
       "whyItMatters": "तुलना क्यों मायने रखती है",
       "listenHere": "यहाँ से सुनें",
       "listenFor": "इस पर ध्यान दें",
@@ -2879,7 +2879,7 @@ window.LANG_HI = {
     "kindAdlib": "साँस",
     "kindPulse": "पल्स",
     "kindWave": "लहर",
-    "kindSparkle": "चमक",
+    "kindSparkle": "जगमगाहट",
     "kindEcho": "गूंज",
     "kindWhisper": "फुसफुसाहट",
     "kindBounce": "उछाल",

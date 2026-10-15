@@ -546,7 +546,7 @@ window.LANG_BN = {
       "modelsUnavailable": "মডেলের তালিকা লোড করা যায়নি। আপনি ম্যানুয়ালি মডেল ID লিখতে পারেন।",
       "testingConnection": "সংযোগ পরীক্ষা করুন…",
       "testConnection": "সংযোগ পরীক্ষা করুন",
-      "getApiKey": "পুনরায় তৈরি করুন কী",
+      "getApiKey": "কী সংগ্রহ করুন",
       "noModels": "কোনো মডেল উপলভ্য নেই",
       "pollinationsAccount": "Pollinations অ্যাকাউন্ট",
       "pollinationsConnect": "Pollinations-এ সাইন ইন করুন",
@@ -1148,7 +1148,7 @@ window.LANG_BN = {
           "desc": "টেক্সট লেবেলের ফন্টের আকার"
         },
         "fontWeight": {
-          "label": "টেক্সট লেবেলের ওজন",
+          "label": "টেক্সট লেবেলের পুরুত্ব",
           "desc": "টেক্সট লেবেলের ফন্টের ওজন"
         },
         "opacity": {
@@ -1187,7 +1187,7 @@ window.LANG_BN = {
         "desc": "মূল লিরিক্সের ফন্টের ঘনত্ব"
       },
       "opacity": {
-        "label": "স্বচ্ছতা",
+        "label": "অস্বচ্ছতা",
         "desc": "মূল লিরিক্সের অস্বচ্ছতা (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_BN = {
         "desc": "উচ্চারণের ফন্টের ঘনত্ব"
       },
       "opacity": {
-        "label": "স্বচ্ছতা",
+        "label": "অস্বচ্ছতা",
         "desc": "উচ্চারণের অস্বচ্ছতা (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_BN = {
         "desc": "অনুবাদ লিরিক্সের ফন্টের ঘনত্ব"
       },
       "opacity": {
-        "label": "স্বচ্ছতা",
+        "label": "অস্বচ্ছতা",
         "desc": "অনুবাদ লিরিক্সের অস্বচ্ছতা (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_BN = {
         "desc": "ফুরিগানার ফন্টের ঘনত্ব"
       },
       "opacity": {
-        "label": "স্বচ্ছতা",
+        "label": "অস্বচ্ছতা",
         "desc": "ফুরিগানার অস্বচ্ছতা (0-100%)"
       },
       "spacing": {
@@ -1298,7 +1298,7 @@ window.LANG_BN = {
         "desc": "শ্যাডোর রং (HEX কোড)"
       },
       "opacity": {
-        "label": "শ্যাডোর স্বচ্ছতা",
+        "label": "শ্যাডোর অস্বচ্ছতা",
         "desc": "শ্যাডোর অস্বচ্ছতা (0-100%)"
       },
       "blur": {
@@ -2499,7 +2499,7 @@ window.LANG_BN = {
       "title": "শিরোনাম বিশ্লেষণ",
       "lyrics": "লিরিক বিশ্লেষণ",
       "chorus": "কোরাস বিশ্লেষণ",
-      "ending": "চূড়ান্ত লিরিক বিশ্লেষণ",
+      "ending": "শেষ পংক্তি",
       "music": "সঙ্গীত বিশ্লেষণ",
       "artist": "শিল্পী প্রসঙ্গ",
       "comparison": "তুলনামূলক বিশ্লেষণ",
@@ -2521,7 +2521,7 @@ window.LANG_BN = {
       "uncertain": "অনিশ্চিত আইটেম",
       "conflicts": "পরস্পরবিরোধী তথ্য",
       "missing": "অনুপস্থিত তথ্য",
-      "empty": "কোন অতিরিক্ত গবেষণা নোট"
+      "empty": "কোনো অতিরিক্ত গবেষণা নোট নেই"
     },
     "labels": {
       "original": "মূল ভাষার পাঠ্য",
@@ -2529,9 +2529,9 @@ window.LANG_BN = {
       "sourceFootnote": "সূত্র",
       "reading": "উচ্চারণ এবং পড়া",
       "meaning": "অর্থ",
-      "lyricConnection": "গানের সাথে সংযোগ",
-      "endingConnection": "চূড়ান্ত গানের সাথে সংযোগ",
-      "speaker": "গীতিকার কথক",
+      "lyricConnection": "গানের কথার সাথে সংযোগ",
+      "endingConnection": "শেষ পংক্তির সাথে সংযোগ",
+      "speaker": "গানের কথক",
       "listener": "গানের কথায় সম্বোধন করা ব্যক্তি",
       "relationship": "সম্পর্ক",
       "emotionalArc": "মানসিক বিকাশ",
@@ -2544,14 +2544,14 @@ window.LANG_BN = {
       "change": "গান জুড়ে উন্নয়ন",
       "finalLyric": "শেষ লিরিক লাইন",
       "titleConnection": "শিরোনামের সাথে সংযোগ",
-      "openingConnection": "উদ্বোধনী গানের সাথে সংযোগ",
+      "openingConnection": "প্রথম পংক্তির সাথে সংযোগ",
       "reinterpretation": "পুনর্ব্যাখ্যা",
       "genre": "ধারা",
       "tempo": "টেম্পো",
       "rhythm": "ছন্দ",
-      "instrumentation": "ইন্সট্রুমেন্টেশন এবং কাঠবাদাম",
+      "instrumentation": "বাদ্যযন্ত্র ও ধ্বনিগুণ",
       "vocal": "ভোকাল",
-      "harmony": "বাদ্যযন্ত্রের সুর",
+      "harmony": "স্বরসংগতি",
       "arrangement": "সঙ্গীত আয়োজন",
       "structure": "গঠন",
       "lyricMusic": "গানের কথা ও সঙ্গীত",
@@ -2564,7 +2564,7 @@ window.LANG_BN = {
       "visualInterpretation": "চাক্ষুষ ব্যাখ্যা",
       "core": "কেন্দ্রীয় ব্যাখ্যা",
       "literary": "সাহিত্যের ব্যাখ্যা",
-      "musical": "বাদ্যযন্ত্র ব্যাখ্যা",
+      "musical": "সাংগীতিক ব্যাখ্যা",
       "career": "ক্যারিয়ার প্রসঙ্গ",
       "background": "পটভূমি",
       "ageAtRelease": "গানটি প্রকাশের সময় বয়স",

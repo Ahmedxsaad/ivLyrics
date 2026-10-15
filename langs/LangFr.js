@@ -535,10 +535,10 @@ window.LANG_FR = {
       "sonarModelsFallback": "Sonar ne dispose pas d’API de liste des modèles. La liste intégrée des modèles pris en charge est affichée.",
       "pollinationsAllModels": "L’accès à tous les modèles est demandé. Choisissez un modèle après la connexion.",
       "model": "Modèle",
-      "modelId": "Modèle ID",
-      "baseUrl": "Socle URL",
+      "modelId": "ID du modèle",
+      "baseUrl": "URL de base",
       "baseUrlDesc": "Utilisez une URL personnalisée pour une API compatible avec OpenAI.",
-      "apiKey": "API Clé",
+      "apiKey": "Clé API",
       "apiKeyDesc": "Prend en charge une clé unique, une liste de nouvelles lignes ou un tableau JSON. Stocké uniquement sur cet appareil.",
       "refreshModels": "Actualiser",
       "selectModel": "Choisir dans la liste",
@@ -1136,12 +1136,12 @@ window.LANG_FR = {
       },
       "showLabel": {
         "label": "Afficher le libellé",
-        "desc": "Affiche Intro, Pont ou Outro à côté de l'icône selon la position des paroles"
+        "desc": "Affiche Intro, Interlude ou Outro à côté de l'icône selon la position des paroles"
       },
       "labelStyle": {
         "fontFamily": {
           "label": "Police du libellé",
-          "desc": "Sélectionnez la police du libellé Intro, Pont ou Outro"
+          "desc": "Sélectionnez la police du libellé Intro, Interlude ou Outro"
         },
         "fontSize": {
           "label": "Taille du libellé",
@@ -1162,7 +1162,7 @@ window.LANG_FR = {
       },
       "labels": {
         "prelude": "Intro",
-        "break": "Pont",
+        "break": "Interlude",
         "postlude": "Outro"
       }
     },
@@ -1187,7 +1187,7 @@ window.LANG_FR = {
         "desc": "Épaisseur du texte original"
       },
       "opacity": {
-        "label": "Transparence",
+        "label": "Opacité",
         "desc": "Opacité du texte original (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_FR = {
         "desc": "Épaisseur de la prononciation"
       },
       "opacity": {
-        "label": "Transparence",
+        "label": "Opacité",
         "desc": "Opacité de la prononciation (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_FR = {
         "desc": "Épaisseur de la traduction"
       },
       "opacity": {
-        "label": "Transparence",
+        "label": "Opacité",
         "desc": "Opacité de la traduction (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_FR = {
         "desc": "Épaisseur des furiganas"
       },
       "opacity": {
-        "label": "Transparence",
+        "label": "Opacité",
         "desc": "Opacité des furiganas (0-100%)"
       },
       "spacing": {
@@ -2498,8 +2498,8 @@ window.LANG_FR = {
       "trivia": "Anecdotes",
       "title": "Analyse du titre",
       "lyrics": "Analyse des paroles",
-      "chorus": "Analyse du chœur",
-      "ending": "Analyse finale des paroles",
+      "chorus": "Analyse du refrain",
+      "ending": "Dernière ligne",
       "music": "Analyse musicale",
       "artist": "Contexte de l'artiste",
       "comparison": "Analyse comparative",
@@ -2518,7 +2518,7 @@ window.LANG_FR = {
     "quality": {
       "verified": "Faits vérifiés",
       "interpretations": "Interprétations",
-      "uncertain": "Articles incertains",
+      "uncertain": "Éléments incertains",
       "conflicts": "Informations contradictoires",
       "missing": "Informations manquantes",
       "empty": "Aucune note de recherche supplémentaire"
@@ -2530,7 +2530,7 @@ window.LANG_FR = {
       "reading": "Prononciation et lecture",
       "meaning": "Signification",
       "lyricConnection": "Lien avec les paroles",
-      "endingConnection": "Connexion aux paroles finales",
+      "endingConnection": "Lien avec la dernière ligne",
       "speaker": "Narrateur lyrique",
       "listener": "Personne adressée dans les paroles",
       "relationship": "Relation",
@@ -2544,7 +2544,7 @@ window.LANG_FR = {
       "change": "Développement à travers la chanson",
       "finalLyric": "Dernière ligne de paroles",
       "titleConnection": "Lien avec le titre",
-      "openingConnection": "Connexion aux paroles d'ouverture",
+      "openingConnection": "Lien avec l'ouverture",
       "reinterpretation": "Réinterprétation",
       "genre": "Genre",
       "tempo": "Tempo",

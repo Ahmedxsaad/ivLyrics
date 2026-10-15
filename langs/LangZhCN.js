@@ -732,7 +732,7 @@ window.LANG_ZH_CN = {
     "background": "背景",
     "backgroundOptions": {
       "albumArt": "专辑封面",
-      "animatedCanvas": "动态画布",
+      "animatedCanvas": "动态 Canvas",
       "artistArt": "艺人图片",
       "staticColor": "纯色"
     },
@@ -1187,7 +1187,7 @@ window.LANG_ZH_CN = {
         "desc": "原文歌词的字体粗细"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "原文歌词的不透明度 (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_ZH_CN = {
         "desc": "发音标记的字体粗细"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "发音标记的不透明度 (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_ZH_CN = {
         "desc": "翻译歌词的字体粗细"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "翻译歌词的不透明度 (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_ZH_CN = {
         "desc": "振假名的字体粗细"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "振假名的不透明度 (0-100%)"
       },
       "spacing": {
@@ -1298,7 +1298,7 @@ window.LANG_ZH_CN = {
         "desc": "阴影的颜色 (HEX 代码)"
       },
       "opacity": {
-        "label": "阴影透明度",
+        "label": "阴影不透明度",
         "desc": "阴影的不透明度 (0-100%)"
       },
       "blur": {
@@ -1354,7 +1354,7 @@ window.LANG_ZH_CN = {
         "desc": "翻译歌词使用的字体（留空使用默认字体，可用逗号分隔多个字体）"
       },
       "originalSize": {
-        "label": "原文体大小",
+        "label": "原文字体大小",
         "desc": "原文歌词的默认字体大小 (px)"
       },
       "phoneticSize": {
@@ -1955,7 +1955,7 @@ window.LANG_ZH_CN = {
       "copyToClipboard": "复制到剪贴板",
       "copied": "已复制!",
       "copyFailed": "复制失败",
-      "sendToDiscord": "报告给 Discord",
+      "sendToDiscord": "通过 Discord 报告",
       "rawJson": "JSON 数据"
     },
     "api": {
@@ -2501,7 +2501,7 @@ window.LANG_ZH_CN = {
       "chorus": "副歌分析",
       "ending": "结尾歌词分析",
       "music": "音乐分析",
-      "artist": "艺术家背景",
+      "artist": "艺人背景",
       "comparison": "对比分析",
       "culture": "文化背景",
       "visual": "视觉世界",
@@ -2547,7 +2547,7 @@ window.LANG_ZH_CN = {
       "openingConnection": "与开场歌词的联系",
       "reinterpretation": "重新诠释",
       "genre": "流派",
-      "tempo": "节奏",
+      "tempo": "速度",
       "rhythm": "节奏",
       "instrumentation": "乐器和音色",
       "vocal": "人声",
@@ -2562,7 +2562,7 @@ window.LANG_ZH_CN = {
       "mv": "音乐录影带",
       "artwork": "艺术品",
       "visualInterpretation": "视觉解读",
-      "core": "中央解读",
+      "core": "核心解读",
       "literary": "文学诠释",
       "musical": "音乐诠释",
       "career": "职业背景",

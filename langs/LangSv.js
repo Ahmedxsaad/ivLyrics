@@ -20,7 +20,7 @@ window.LANG_SV = {
     "searchResults": "Sökresultat"
   },
   "search": {
-    "placeholder": "Sökinställningar...",
+    "placeholder": "Sök i inställningar...",
     "noResults": "Inga resultat hittades",
     "noResultsDesc": "Prova olika sökord",
     "resultCount": "{count} resultat",
@@ -46,7 +46,7 @@ window.LANG_SV = {
         "typography": "Text",
         "performance": "FPS",
         "behavior": "Flöde",
-        "surface": "Visa",
+        "surface": "Vy",
         "providers": "Källa",
         "system": "Ops"
       },
@@ -87,10 +87,10 @@ window.LANG_SV = {
     "syncModeSubtitle": "Konfigurera hur synkronisering av texter fungerar",
     "typography": "Typografi",
     "typographySubtitle": "Justera stilen på sångtexten",
-    "textShadow": "Text skugga",
+    "textShadow": "Textskugga",
     "textShadowSubtitle": "Lägg till skuggeffekter i sångtexten",
     "updateCheck": "Uppdateringskontroll",
-    "backgroundOpacity": "Bakgrund Opacitet",
+    "backgroundOpacity": "Bakgrundsopacitet",
     "contentWidth": "Innehållsbredd",
     "japaneseConversion": "Japansk konvertering",
     "displayContent": "Visa innehåll",
@@ -166,7 +166,7 @@ window.LANG_SV = {
       "options": {
         "left": "Vänster",
         "center": "Center",
-        "right": "Rätt"
+        "right": "Höger"
       }
     },
     "noise": {
@@ -174,7 +174,7 @@ window.LANG_SV = {
       "desc": "Lägg till en filmkorneffekt i bakgrunden"
     },
     "albumBgBlur": {
-      "label": "Album bakgrund oskärpa",
+      "label": "Oskärpa för albumbakgrund",
       "desc": "Justera oskärpa intensiteten för albumbakgrunden"
     },
     "reduceMotion": {
@@ -182,7 +182,7 @@ window.LANG_SV = {
       "desc": "Minska gränssnittsanimationer."
     },
     "blurGradientBackground": {
-      "label": "Oskärpa Gradient Bakgrund",
+      "label": "Suddig övertoningsbakgrund",
       "desc": "Använd en oskärpa övertoningsbakgrund genom att extrahera färger från albumomslaget"
     },
     "colorful": {
@@ -194,11 +194,11 @@ window.LANG_SV = {
       "desc": "Använd det aktuella skivomslaget som bakgrund (fungerar kanske inte korrekt i helskärmsläge)"
     },
     "solidBackground": {
-      "label": "Solid Bakgrund",
+      "label": "Enfärgad bakgrund",
       "desc": "Använd en anpassad solid färg som bakgrund"
     },
     "solidBackgroundColor": {
-      "label": "Solid bakgrundsfärg",
+      "label": "Färg för enfärgad bakgrund",
       "desc": "Välj färg för den solida bakgrunden"
     },
     "videoFallback": {
@@ -206,7 +206,7 @@ window.LANG_SV = {
       "desc": "Välj bakgrunden som visas när en video saknas eller inte kan spelas upp."
     },
     "videoBackground": {
-      "label": "Video bakgrund",
+      "label": "Videobakgrund",
       "desc": "Använd en YouTube-video som bakgrund (beta)"
     },
     "videoHelper": {
@@ -243,7 +243,7 @@ window.LANG_SV = {
       "desc": "Justera oskärpa intensiteten som tillämpas på videobakgrunden (0-40px)"
     },
     "videoCover": {
-      "label": "Videofyllningsskärm",
+      "label": "Fyll skärmen med video",
       "desc": "Zooma videon för att fylla skärmen (överst/botten eller sidorna kan vara beskurna)"
     },
     "videoScale": {
@@ -261,7 +261,7 @@ window.LANG_SV = {
       "info": "Uppdateringar kontrolleras högst var 24:e timme."
     },
     "backgroundOpacity": {
-      "label": "Cover Bakgrund Opacitet",
+      "label": "Omslagsbakgrundens opacitet",
       "desc": "Ställ in täckets opacitet"
     },
     "contentWidth": {
@@ -304,7 +304,7 @@ window.LANG_SV = {
         "karaoke": "Karaoke",
         "synced": "Synkroniserad",
         "unsynced": "Vanlig text",
-        "genius": "Genialitet"
+        "genius": "Genius"
       }
     },
     "playBarButton": {
@@ -329,7 +329,7 @@ window.LANG_SV = {
       "desc": "Visa inledningsnedräkningen som siffror. Om det är inaktiverat kommer prickar att visas."
     },
     "blurInactive": {
-      "label": "Oskärpa inaktiva linjer",
+      "label": "Oskärpa på inaktiva rader",
       "desc": "Oskärpa inaktiva rader i synkroniserade texter",
       "info": "Prestandaproblem kan uppstå när det här alternativet är aktiverat."
     },
@@ -381,15 +381,15 @@ window.LANG_SV = {
       "charcoal": "Träkol",
       "darkSlate": "Mörk skiffer",
       "gray": "Grå",
-      "darkNavy": "Mörk marin",
-      "navy": "Marinen",
+      "darkNavy": "Mörk marinblå",
+      "navy": "Marinblå",
       "royalBlue": "Kungsblå",
-      "sky": "Sky",
+      "sky": "Himmelsblå",
       "indigo": "Indigo",
       "purple": "Lila",
       "fuchsia": "Fuchsia",
       "pink": "Rosa",
-      "wine": "Vin",
+      "wine": "Vinröd",
       "red": "Röd",
       "orange": "Orange",
       "amber": "Amber",
@@ -397,7 +397,7 @@ window.LANG_SV = {
       "lime": "Lime",
       "green": "Grönt",
       "emerald": "Smaragd",
-      "teal": "Kricka",
+      "teal": "Blågrön",
       "cyan": "Cyan",
       "brown": "Brun",
       "chocolate": "Choklad"
@@ -447,7 +447,7 @@ window.LANG_SV = {
         "description": "Välj hur nära AI-översättningen ska följa originalets formulering. Radstruktur och betydelse bevaras i alla lägen.",
         "natural": { "label": "Naturlig (standard)", "description": "Använder naturliga och idiomatiska formuleringar med bibehållen betydelse och ton." },
         "literal": { "label": "Ordagrann", "description": "Ligger så nära originalets ordval och ordning som möjligt." },
-        "adaptive": { "label": "Anpassad", "description": "Använder omgivande rader för ett så flytande och sammanhängande språk som möjligt." }
+        "adaptive": { "label": "Fri", "description": "Använder omgivande rader för ett så flytande och sammanhängande språk som möjligt." }
       },
       "retryCount": {
         "label": "Återförsök per leverantör",
@@ -535,10 +535,10 @@ window.LANG_SV = {
       "sonarModelsFallback": "Sonar saknar ett API för modellistor. Den inbyggda listan över modeller som stöds visas.",
       "pollinationsAllModels": "Åtkomst till alla modeller begärs. Välj en modell efter anslutningen.",
       "model": "Modell",
-      "modelId": "Modell ID",
-      "baseUrl": "Bas URL",
+      "modelId": "Modell-ID",
+      "baseUrl": "Bas-URL",
       "baseUrlDesc": "Använd en egen URL till ett OpenAI-kompatibelt API.",
-      "apiKey": "API Nyckel",
+      "apiKey": "API-nyckel",
       "apiKeyDesc": "Stöder en enda nyckel, nyradslista eller JSON-array. Lagras endast på den här enheten.",
       "refreshModels": "Uppdatera",
       "selectModel": "Välj från modellistan",
@@ -581,9 +581,9 @@ window.LANG_SV = {
       "types": {
         "character": "Teckensynkroniserad text",
         "word": "Ordsynkroniserad text",
-        "karaoke": "Karaoke texter",
+        "karaoke": "Karaoketexter",
         "synced": "Synkroniserad text",
-        "unsynced": "Vanlig text sångtexter"
+        "unsynced": "Vanliga texter"
       },
       "supports": {
         "character": "Teckensynk",
@@ -603,7 +603,7 @@ window.LANG_SV = {
     "export": "Exportera",
     "open": "Öppna",
     "close": "Stäng",
-    "apply": "Ansök",
+    "apply": "Tillämpa",
     "confirm": "Bekräfta",
     "delete": "Ta bort",
     "edit": "Redigera",
@@ -707,7 +707,7 @@ window.LANG_SV = {
     "copied": "Kopierade",
     "deleted": "Raderad",
     "updated": "Uppdaterad",
-    "applied": "Tillämpas",
+    "applied": "Tillämpat",
     "noTrackInfo": "Ingen spårinformation",
     "syncedLyricsCopied": "Synkroniserade texter har kopierats till urklipp.",
     "unsyncedLyricsCopied": "Vanlig text sångtexter kopierade till urklipp."
@@ -715,7 +715,7 @@ window.LANG_SV = {
   "update": {
     "newVersion": "Ny uppdateringsversion",
     "available": "finns tillgänglig!",
-    "notes": "Uppdatera anteckningar",
+    "notes": "Uppdateringsanteckningar",
     "update": "Uppdatering",
     "dismiss": "Senare",
     "alreadyLatest": "Redan på den senaste versionen",
@@ -724,7 +724,7 @@ window.LANG_SV = {
     "copyCommand": "Kopiera kommando",
     "releaseNotes": "Versionsinformation",
     "expand": "Expandera",
-    "collapse": "Kollapsa",
+    "collapse": "Fäll ihop",
     "copied": "Kopierade"
   },
   "fullscreen": {
@@ -732,9 +732,9 @@ window.LANG_SV = {
     "background": "Bakgrund",
     "backgroundOptions": {
       "albumArt": "Albumkonst",
-      "animatedCanvas": "Animerad duk",
-      "artistArt": "Konstnär Konst",
-      "staticColor": "Enfärgad färg"
+      "animatedCanvas": "Animerad Canvas",
+      "artistArt": "Artistbild",
+      "staticColor": "Enfärgad"
     },
     "showExtraControls": {
       "label": "Visa extra kontroller",
@@ -753,7 +753,7 @@ window.LANG_SV = {
       "desc": "Visa volymkontroller i helskärmsläge"
     },
     "controls": {
-      "like": "Gillar",
+      "like": "Gilla",
       "unlike": "Ta bort Gilla",
       "shuffle": "Blanda",
       "previous": "Föregående",
@@ -766,7 +766,7 @@ window.LANG_SV = {
       "repeatOne": "Upprepa ett",
       "mute": "Ljud av",
       "unmute": "Slå på ljudet",
-      "share": "Kopiera dela länk",
+      "share": "Kopiera delningslänk",
       "shareCopied": "🔗 Delningslänken har kopierats",
       "addToPlaylist": "Lägg till i spellista",
       "playlistLoading": "Läser in spellistor...",
@@ -787,7 +787,7 @@ window.LANG_SV = {
       "title": "Kö",
       "recentlyPlayed": "Nyligen spelad",
       "nowPlaying": "Spelar nu",
-      "upNext": "Upp Nästa",
+      "upNext": "Näst på tur",
       "empty": "Kön är tom",
       "noRecent": "Ingen senaste uppspelningshistorik",
       "recommended": "Rekommenderade låtar"
@@ -795,7 +795,7 @@ window.LANG_SV = {
     "contextType": {
       "playlist": "Spellista",
       "album": "Album",
-      "artist": "Konstnär",
+      "artist": "Artist",
       "collection": "Gillade låtar",
       "station": "Station"
     },
@@ -823,8 +823,8 @@ window.LANG_SV = {
     "microsoft": "Microsoft Translate",
     "geminiRomaji": "Uttal",
     "geminiKo": "Översättning",
-    "romajiGemini": "Romaji (Tvillingarna)",
-    "koGemini": "engelska (Tvillingarna)",
+    "romajiGemini": "Romaji (Gemini)",
+    "koGemini": "Svenska (Gemini)",
     "simplifiedChinese": "Förenklad kinesiska",
     "traditionalChineseHK": "Traditionell kinesiska (HK)",
     "traditionalChineseTW": "Traditionell kinesiska (TW)",
@@ -887,7 +887,7 @@ window.LANG_SV = {
     "secondTranslationCopyFailed": "Det gick inte att kopiera den andra översättningen",
     "installCommandCopied": "Installationskommandot har kopierats",
     "copyFailed": "Kopieringen misslyckades",
-    "memoryCacheCleared": "Minnescacheminnet rensades",
+    "memoryCacheCleared": "Minnescachen rensades",
     "localCacheCleared": "All lokal cache rensad",
     "localCacheTrackCleared": "Lokal cache för aktuellt spår har rensats",
     "localLyricsDeleted": "Lokala texter har tagits bort",
@@ -959,11 +959,11 @@ window.LANG_SV = {
     "off": "Av",
     "yes": "Ja",
     "no": "Nej",
-    "items": "föremål",
+    "items": "objekt",
     "seconds": "sek",
     "minutes": "min",
     "lyricsProvider": "Textleverantör",
-    "syncContributor": "Synkronisera bidragsgivare",
+    "syncContributor": "Synkbidragsgivare",
     "seekToTime": "Hoppa till {time}"
   },
   "creatorProfile": {
@@ -973,7 +973,7 @@ window.LANG_SV = {
     "loading": "Laddar skaparprofil...",
     "loadFailed": "Det gick inte att läsa in skaparprofilen.",
     "back": "Tillbaka",
-    "contributions": "Synkronisera bidrag",
+    "contributions": "Synkbidrag",
     "tracks": "Synkroniserade spår",
     "points": "Bidragspoäng",
     "pointsShort": "p",
@@ -983,7 +983,7 @@ window.LANG_SV = {
     "typeMixed": "Blandad",
     "typeUnknown": "Äldre synk",
     "likes": "Gillar",
-    "like": "Gillar",
+    "like": "Gilla",
     "liked": "Gillade",
     "likeActionFailed": "Det gick inte att uppdatera innehållsskaparens like.",
     "likeLoginRequired": "Discord-inloggning krävs för att gilla kreatörer.",
@@ -1002,8 +1002,8 @@ window.LANG_SV = {
     "noContributions": "Inga synkroniseringsbidrag än.",
     "unknownTrack": "Okänt spår",
     "updated": "Uppdaterad",
-    "topArtists": "Topp artister",
-    "artistGroups": "Konstnärsgrupper",
+    "topArtists": "Toppartister",
+    "artistGroups": "Artistgrupper",
     "noArtistStats": "Ingen artiststatistik ännu.",
     "clearArtistFilter": "Rensa artistfilter",
     "filteredArtist": "Filtrerad artist",
@@ -1013,7 +1013,7 @@ window.LANG_SV = {
     "nicknameStyleDesc": "Den här färgen används för ditt namn i krediteringen av synkskaparen under låttexten.",
     "solid": "Enfärgad",
     "gradient": "Toning",
-    "solidColor": "Enfärgad färg",
+    "solidColor": "Enfärgad",
     "gradientStart": "Startfärg",
     "gradientEnd": "Slutfärg",
     "gradientAngle": "Toningsvinkel",
@@ -1086,15 +1086,15 @@ window.LANG_SV = {
         "desc": "Antal rader som ska visas efter den aktuella aktiva raden"
       },
       "fadeoutBlur": {
-        "label": "Fadeout oskärpa effekt",
+        "label": "Oskärpeeffekt vid uttoning",
         "desc": "Tillämpa oskärpa effekt på inaktiva texter"
       },
       "highlightMode": {
-        "label": "Markera läge",
+        "label": "Markeringsläge",
         "desc": "Markera bara de aktuella sångtexterna ljust och dämpa resten"
       },
       "highlightIntensity": {
-        "label": "Markera Intensitet",
+        "label": "Markeringsintensitet",
         "desc": "Justera transparensen för inaktiva sångtexter (nedre är svagare)"
       }
     },
@@ -1213,7 +1213,7 @@ window.LANG_SV = {
         "desc": "Opacitet för uttal (0-100 %)"
       },
       "gap": {
-        "label": "Gap från Original",
+        "label": "Avstånd från originalet",
         "desc": "Marginal mellan originaltext och uttal"
       },
       "letterSpacing": {
@@ -1221,7 +1221,7 @@ window.LANG_SV = {
         "desc": "Mellanrum mellan tecken för uttal (px)"
       },
       "hyphenReplace": {
-        "label": "Bindestreck (-) Hantering",
+        "label": "Hantering av bindestreck (-)",
         "desc": "Välj hur bindestreck ska visas i uttal (t.ex. Tah-shee-kah → Tah shee kah eller Tahsheekah)",
         "options": {
           "keep": "Behåll (Tah-shee-kah)",
@@ -1248,7 +1248,7 @@ window.LANG_SV = {
         "desc": "Opacitet för översatta texter (0-100 %)"
       },
       "gap": {
-        "label": "Glapp från uttal",
+        "label": "Avstånd från uttal",
         "desc": "Marginal mellan uttal och översättning (px)"
       },
       "letterSpacing": {
@@ -1287,7 +1287,7 @@ window.LANG_SV = {
       }
     },
     "textShadow": {
-      "title": "Text skugga",
+      "title": "Textskugga",
       "subtitle": "Skuggeffekter för att förbättra läsbarheten",
       "enabled": {
         "label": "Skuggeffekt",
@@ -1302,7 +1302,7 @@ window.LANG_SV = {
         "desc": "Opacitet för skuggan (0-100 %)"
       },
       "blur": {
-        "label": "Oskärpa radie",
+        "label": "Oskärperadie",
         "desc": "Skuggans suddighet"
       }
     },
@@ -1327,7 +1327,7 @@ window.LANG_SV = {
       }
     },
     "nowPlayingPanel": {
-      "title": "Spelar nu paneltexter",
+      "title": "Sångtexter i panelen Spelas nu",
       "subtitle": "Inställningar för visning av sångtexter för panelen \"Now Playing\" till höger",
       "enabled": {
         "label": "Aktivera paneltexter",
@@ -1346,23 +1346,23 @@ window.LANG_SV = {
         "desc": "Teckensnitt för originaltexter (Använder standard om tom, kommaseparerad tillåten)"
       },
       "phoneticFont": {
-        "label": "Uttal Teckensnitt",
+        "label": "Teckensnitt för uttal",
         "desc": "Teckensnitt för uttal (Använder standard om tom, kommaavgränsad tillåten)"
       },
       "translationFont": {
-        "label": "Översättning teckensnitt",
+        "label": "Teckensnitt för översättning",
         "desc": "Teckensnitt för översatta texter (Använder standard om tom, kommaseparerad tillåten)"
       },
       "originalSize": {
-        "label": "Original teckenstorlek",
+        "label": "Teckenstorlek för original",
         "desc": "Basteckensnittsstorlek för originaltexter (px)"
       },
       "phoneticSize": {
-        "label": "Uttal Teckenstorlek",
+        "label": "Teckenstorlek för uttal",
         "desc": "Basteckensnittsstorlek för uttal (px)"
       },
       "translationSize": {
-        "label": "Översättning teckenstorlek",
+        "label": "Teckenstorlek för översättning",
         "desc": "Basteckensnittsstorlek för översatta sångtexter (px)"
       },
       "preview": "Förhandsgranska",
@@ -1372,7 +1372,7 @@ window.LANG_SV = {
         "type": {
           "label": "Bakgrundstyp",
           "desc": "Välj bakgrundsstil",
-          "album": "Album färg",
+          "album": "Albumfärg",
           "gradient": "Anpassad gradient",
           "custom": "Enfärgad",
           "transparent": "Transparent"
@@ -1390,12 +1390,12 @@ window.LANG_SV = {
           "desc": "Andra gradientfärg"
         },
         "opacity": {
-          "label": "Bakgrund Opacitet",
+          "label": "Bakgrundsopacitet",
           "desc": "Bakgrundsopacitet (0%=Transparent, 100%=Ogenomskinlig)"
         }
       },
       "border": {
-        "title": "Gräns",
+        "title": "Kantlinje",
         "subtitle": "Inställningar för panelkantstil",
         "enabled": {
           "label": "Aktivera kantlinje",
@@ -1427,7 +1427,7 @@ window.LANG_SV = {
         "desc": "Återställer radens rörelse när den aktiva textraden ändras. Det kan öka GPU-användningen."
       },
       "spotifyFakeKaraoke": {
-        "label": "Pseudo karaoke",
+        "label": "Pseudokaraoke",
         "desc": "När texter endast tillhandahåller linjesynkroniserad timing, syntetisera karaoke-timing från Spotify-ljudanalys. Koreanska, japanska och kinesiska linjer delas tätare när förtroendet är högt."
       },
       "pseudoKaraokeRenderAdvance": {
@@ -1467,7 +1467,7 @@ window.LANG_SV = {
         "desc": "Dela automatiskt synkroniseringsförskjutningar med communityn när du ändrar dem"
       },
       "minConfidence": {
-        "label": "Minsta förtroende",
+        "label": "Lägsta tillförlitlighet",
         "desc": "Minsta förtroende som krävs för automatisk applicering (0,0 ~ 1,0). Förtroendet beräknas baserat på antalet inlämningar och konsistens. Högre värde innebär att fler användare skickade in liknande offset."
       }
     },
@@ -1523,10 +1523,10 @@ window.LANG_SV = {
       "subtitle": "API-nycklar för externa tjänster"
     },
     "exportImport": {
-      "title": "Inställningar för export/import",
+      "title": "Exportera/importera inställningar",
       "subtitle": "Överför inställningar till en annan enhet",
       "export": {
-        "label": "Exportinställningar",
+        "label": "Exportera inställningar",
         "button": "Exportera",
         "processing": "Exporterar..."
       },
@@ -1622,7 +1622,7 @@ window.LANG_SV = {
         "info": "Ställ in kortkommandon för att växla helskärmsläge"
       },
       "toggleTvModeKey": {
-        "desc": "TV-läge Växla genväg",
+        "desc": "Kortkommando för att växla TV-läge",
         "info": "Fungerar endast i helskärmsläge. Växlar mellan TV-läge och Normalläge."
       },
       "tvMode": {
@@ -1669,7 +1669,7 @@ window.LANG_SV = {
         }
       },
       "infoGap": {
-        "desc": "Albumkonst Gap",
+        "desc": "Avstånd till albumkonst",
         "info": "Justera gapet mellan albumomslag och kontroller/info (px)"
       },
       "centerWhenNoLyrics": {
@@ -1677,7 +1677,7 @@ window.LANG_SV = {
         "info": "Placera albumomslag i mitten när sångtexter saknas eller laddas"
       },
       "twoColumnLayout": {
-        "desc": "Använd 2-kolumns layout"
+        "desc": "Använd tvåkolumnslayout"
       },
       "browserFullscreen": {
         "desc": "Använd webbläsaren i helskärm",
@@ -1693,7 +1693,7 @@ window.LANG_SV = {
       }
     },
     "normalMode": {
-      "title": "Normalläge Layout",
+      "title": "Layout för normalläge",
       "subtitle": "Ställ in layout för normalt helskärmsläge (icke-TV-läge)",
       "showAlbumName": {
         "desc": "Visa albumnamn",
@@ -1724,23 +1724,23 @@ window.LANG_SV = {
       "title": "Helskärmsstil",
       "subtitle": "Visuella inställningar för helskärmsläge",
       "albumSize": {
-        "desc": "Albumkonst Max storlek",
+        "desc": "Max storlek för albumkonst",
         "info": "Ställ in maximal storlek för albumomslag i helskärm (100–500 px)"
       },
       "albumRadius": {
-        "desc": "Albumkonst Radius",
+        "desc": "Hörnradie för albumkonst",
         "info": "Ställ in hörnavrundning för albumomslag (0-50px)"
       },
       "titleFontSize": {
-        "desc": "Titel teckenstorlek",
+        "desc": "Teckenstorlek för titel",
         "info": "Ställ in teckenstorlek för låttitel i helskärm (24-72px)"
       },
       "artistFontSize": {
-        "desc": "Konstnärens teckensnittsstorlek",
+        "desc": "Teckenstorlek för artist",
         "info": "Ställ in teckenstorlek för artistnamn i helskärm (14-36px)"
       },
       "lyricsRightMargin": {
-        "desc": "Text högermarginal",
+        "desc": "Högermarginal för text",
         "info": "Ställ in högermarginal för textområdet. Förhindrar att texter ser för långt till höger när de är centrerade (0-300px)"
       }
     },
@@ -1768,7 +1768,7 @@ window.LANG_SV = {
         "info": "Visa info om nästa spår längst upp till höger innan låten slutar (sändningsstil)"
       },
       "nextTrackTime": {
-        "desc": "Nästa spår visningstid",
+        "desc": "Visningstid för nästa spår",
         "info": "Sekunder före slutet av låten för att visa info om nästa spår (5-30s)",
         "unit": "sek"
       },
@@ -1785,7 +1785,7 @@ window.LANG_SV = {
         "info": "Visa förloppsindikator som visar uppspelningsposition och total tid"
       },
       "showLyricsProgress": {
-        "desc": "Visa framsteg för texter",
+        "desc": "Visa textens förlopp",
         "info": "Visa aktuellt radnummer för sångtexter och totala rader"
       },
       "showQueue": {
@@ -1794,14 +1794,14 @@ window.LANG_SV = {
       }
     },
     "controllerStyle": {
-      "title": "Controller stil",
+      "title": "Kontrollstil",
       "subtitle": "Konfigurera utseendet på spelarkontrollerna",
       "buttonSize": {
         "desc": "Kontrollknappstorlek",
         "info": "Ställ in storlek för uppspelning, föregående/nästa knappar (28-48px)"
       },
       "background": {
-        "desc": "Controller bakgrund",
+        "desc": "Kontrollbakgrund",
         "info": "Lägg till semi-transparent bakgrund till kontrollern"
       }
     },
@@ -1818,10 +1818,10 @@ window.LANG_SV = {
       }
     },
     "tmiStyle": {
-      "title": "Trivia stil",
+      "title": "Triviastil",
       "subtitle": "Stilinställningar för Trivia-modal som visas när du klickar på albumomslag",
       "fontSize": {
-        "desc": "Trivia teckenstorlek",
+        "desc": "Teckenstorlek för trivia",
         "info": "Justera den globala teckenstorleken för Trivia-modal (80-150%)"
       }
     },
@@ -1833,10 +1833,10 @@ window.LANG_SV = {
         "subtitle": "Länka till ditt Discord-konto",
         "description": "Discord-baserat ivLyrics bidragskonto",
         "info": "Logga in med Discord för att hantera din kreatörsprofil. Tidigare anonyma bidrag överförs inte automatiskt utan verifiering av ägarskap.",
-        "loginButton": "Logga in med discord",
+        "loginButton": "Logga in med Discord",
         "loading": "Laddar kontoinformation...",
         "linked": "Länkad",
-        "linkedAt": "Länkad på",
+        "linkedAt": "Länkad den",
         "lastSync": "Senaste inloggning",
         "manageAccount": "Byt konto",
         "refresh": "Uppdatera",
@@ -1900,7 +1900,7 @@ window.LANG_SV = {
       "originalProject": "Originalprojekt:",
       "thanks": "Särskilt tack till alla som bidragit till detta open source-projekt.",
       "clientInfo": {
-        "title": "Kundinformation",
+        "title": "Klientinformation",
         "subtitle": "Unik identifierare för denna klient",
         "description": "Detta är en unik identifierare som genereras automatiskt för kontolänkning. Detta värde kan inte ändras och är unikt för varje klient. Vänligen håll detta värde privat.",
         "copied": "Klient-ID har kopierats",
@@ -1948,7 +1948,7 @@ window.LANG_SV = {
       "currentTrack": "Aktuell spårinformation",
       "trackInfo": "Spårinfo",
       "lyricsInfo": "Textinformation",
-      "settingsInfo": "Inställningar Info",
+      "settingsInfo": "Inställningsinformation",
       "noLyrics": "Ingen textinformation",
       "loading": "Läser in information...",
       "refresh": "Uppdatera",
@@ -1991,10 +1991,10 @@ window.LANG_SV = {
     "communityTitle": "Community-synkronisering",
     "communityOffset": "Offset",
     "submissions": "Inlämningar",
-    "confidenceHigh": "Högt självförtroende",
-    "confidenceMedium": "Medellång självförtroende",
-    "confidenceLow": "Lågt förtroende",
-    "applyCommunity": "Ansök",
+    "confidenceHigh": "Hög tillförlitlighet",
+    "confidenceMedium": "Medelhög tillförlitlighet",
+    "confidenceLow": "Låg tillförlitlighet",
+    "applyCommunity": "Tillämpa",
     "submitMine": "Skicka in min offset",
     "submitting": "Skickar...",
     "submitSuccess": "Inlämnad till gemenskapen",
@@ -2105,7 +2105,7 @@ window.LANG_SV = {
     "localTrackDesc": "Det här är ett lokalt spår. YouTube-URL:en sparas bara på den här enheten och skickas inte till servern.",
     "localOnlyApplied": "Lokal video tillämpad.",
     "autoDetected": "Automatiskt upptäckt",
-    "startTime": "Starta",
+    "startTime": "Start",
     "submittedBy": "Inskickad av",
     "addVideo": "Lägg till video",
     "addVideoNoEmoji": "Lägg till video",
@@ -2123,8 +2123,8 @@ window.LANG_SV = {
     "validationError": "Det går inte att verifiera videon. Försök igen.",
     "selectVideo": "Välj Video",
     "preview": "Förhandsgranska",
-    "apply": "Ansök",
-    "applyShort": "Ansök",
+    "apply": "Tillämpa",
+    "applyShort": "Använd",
     "applied": "Video tillämpad",
     "videoTitle": "Videotitel",
     "openOnYouTube": "Öppna på YouTube",
@@ -2158,7 +2158,7 @@ window.LANG_SV = {
     "selectLyricsHint": "Klicka på textraderna för att inkludera (max 10 rader)",
     "template": "Förinställningar",
     "templates": {
-      "cover": "Omslagsskärpa",
+      "cover": "Omslagsoskärpa",
       "gradient": "Gradient",
       "minimal": "Minimal",
       "glass": "Glas",
@@ -2178,31 +2178,31 @@ window.LANG_SV = {
     "copyrightPoint1": "Använd endast för personligt bruk",
     "copyrightPoint2": "Använd inte för kommersiella ändamål",
     "copyrightPoint3": "Respektera ursprungliga skapare när de delar på sociala medier",
-    "copyrightConfirm": "Håll med och fortsätt",
+    "copyrightConfirm": "Godkänn och fortsätt",
     "settings": {
       "backgroundType": "Bakgrundsstil",
-      "coverBlur": "Omslagsskärpa",
+      "coverBlur": "Omslagsoskärpa",
       "gradient": "Gradient",
-      "solid": "Enfärgad färg",
-      "backgroundBlur": "Bakgrundsskärpa",
-      "backgroundOpacity": "Bakgrundsbländning",
+      "solid": "Enfärgad",
+      "backgroundBlur": "Bakgrundsoskärpa",
+      "backgroundOpacity": "Bakgrundsdämpning",
       "showCover": "Albumomslag",
       "showTrackInfo": "Spårinfo",
-      "coverPosition": "Lockets position",
+      "coverPosition": "Omslagets position",
       "posLeft": "Vänster",
       "posCenter": "Center",
       "coverSize": "Omslagsstorlek",
-      "coverRadius": "Täckradie",
+      "coverRadius": "Omslagets hörnradie",
       "showPronunciation": "Uttal",
       "showTranslation": "Översättning",
       "lyricsAlign": "Låttextjustering",
       "alignLeft": "Vänster",
       "alignCenter": "Center",
       "fontSize": "Teckenstorlek",
-      "blockGap": "Linjegap",
+      "blockGap": "Radavstånd",
       "aspectRatio": "Bildförhållande",
       "imageWidth": "Bildbredd",
-      "padding": "Vaddering",
+      "padding": "Utfyllnad",
       "showWatermark": "Visa vattenstämpel",
       "trackTitleSize": "Titelstorlek",
       "trackTitleColor": "Titelfärg",
@@ -2292,7 +2292,7 @@ window.LANG_SV = {
         "colorful": "Färgglada",
         "gradient": "Albumomslag",
         "blurGradient": "Suddighetsgradient",
-        "solid": "Enfärgad färg",
+        "solid": "Enfärgad",
         "video": "Video"
       }
     },
@@ -2312,7 +2312,7 @@ window.LANG_SV = {
       "downloadApp": "Ladda ner Overlay-appen"
     },
     "nowPlayingTip": {
-      "title": "Spelar nu paneltexter",
+      "title": "Sångtexter i panelen Spelas nu",
       "subtitle": "Kontrollera aktuella texter i den högra panelen",
       "description": "Visar aktuella texter i Spotifys \"Now Playing\"-panel. Du kan se texter utan att använda helskärmsläge.",
       "enabled": "Visa paneltexter",
@@ -2432,7 +2432,7 @@ window.LANG_SV = {
     "didYouKnow": "Visste du det?",
     "close": "Stäng",
     "cancel": "Avbryt",
-    "loading": "Hitta intressanta fakta...",
+    "loading": "Letar efter intressanta fakta...",
     "noData": "Ingen trivia tillgänglig för den här låten än.",
     "clickForTMI": "Se trivia",
     "clickToClose": "✕ eller Klicka på albumomslag för att stänga",
@@ -2448,16 +2448,16 @@ window.LANG_SV = {
     "verifiedSources": "Verifierade källor",
     "relatedSources": "Relaterade källor",
     "otherSources": "Andra källor",
-    "confidenceVeryHigh": "Mycket högt förtroende",
-    "confidenceHigh": "Högt självförtroende",
-    "confidenceMedium": "Medellång självförtroende",
-    "confidenceLow": "Lågt förtroende",
+    "confidenceVeryHigh": "Mycket hög tillförlitlighet",
+    "confidenceHigh": "Hög tillförlitlighet",
+    "confidenceMedium": "Medelhög tillförlitlighet",
+    "confidenceLow": "Låg tillförlitlighet",
     "confidenceNone": "Inga källor"
   },
   "research": {
     "title": "Forskning",
     "eyebrow": "Musikredaktionell forskning",
-    "thesis": "Central uppsats",
+    "thesis": "Central tes",
     "contents": "Innehåll",
     "editorialNote": "Redaktörens anteckning",
     "fact": "Faktum",
@@ -2480,7 +2480,7 @@ window.LANG_SV = {
     "errorQuotaHint": "Försök igen senare eller välj en annan AI-leverantör i Inställningar",
     "sourcesEmpty": "Inga källlänkar returnerades",
     "disclaimer": "AI-genererad forskning kan innehålla felaktigheter. Kontrollera de länkade källorna innan du förlitar dig på faktiska påståenden",
-    "styleTitle": "Undersök textinställningar",
+    "styleTitle": "Textinställningar för Research",
     "styleSubtitle": "Justera textstorleken och konturerna som används i forskningsdokumentet i helskärmsläge",
     "fontSizeDesc": "Forskningstextstorlek",
     "fontSizeInfo": "Justera den övergripande textstorleken för forskningsdokumentet",
@@ -2497,11 +2497,11 @@ window.LANG_SV = {
       "listeningGuide": "Lyssningsguide",
       "trivia": "Kuriosa",
       "title": "Titelanalys",
-      "lyrics": "Lyrisk analys",
-      "chorus": "Köranalys",
-      "ending": "Slutlig lyrisk analys",
+      "lyrics": "Textanalys",
+      "chorus": "Analys av refrängen",
+      "ending": "Sista raden",
       "music": "Musikanalys",
-      "artist": "Konstnärskontext",
+      "artist": "Artistkontext",
       "comparison": "Jämförande analys",
       "culture": "Kulturella sammanhang",
       "visual": "Visuell värld",
@@ -2520,7 +2520,7 @@ window.LANG_SV = {
       "interpretations": "Tolkningar",
       "uncertain": "Osäkra saker",
       "conflicts": "Motstridig information",
-      "missing": "Saknar information",
+      "missing": "Information som saknas",
       "empty": "Inga ytterligare forskningsanteckningar"
     },
     "labels": {
@@ -2530,7 +2530,7 @@ window.LANG_SV = {
       "reading": "Uttal och läsning",
       "meaning": "Mening",
       "lyricConnection": "Koppling till texten",
-      "endingConnection": "Anslutning till den slutliga sångtexten",
+      "endingConnection": "Koppling till sista raden",
       "speaker": "Lyrisk berättare",
       "listener": "Person tilltalad i texten",
       "relationship": "Förhållande",
@@ -2544,7 +2544,7 @@ window.LANG_SV = {
       "change": "Utveckling över låten",
       "finalLyric": "Sista lyriska raden",
       "titleConnection": "Koppling till titeln",
-      "openingConnection": "Anslutning till öppningslyriken",
+      "openingConnection": "Koppling till inledningen",
       "reinterpretation": "Omtolkning",
       "genre": "Genre",
       "tempo": "Tempo",
@@ -2557,7 +2557,7 @@ window.LANG_SV = {
       "lyricMusic": "Text och musik",
       "history": "Historisk kontext",
       "genreContext": "Genrekontext",
-      "popCulture": "Populär kultur",
+      "popCulture": "Populärkultur",
       "aesthetic": "Visuell estetik",
       "mv": "Musikvideo",
       "artwork": "Konstverk",
@@ -2640,7 +2640,7 @@ window.LANG_SV = {
     "quizReviewQuestion": "Visa fråga",
     "quizNoWrong": "Inga missade frågor.",
     "quizGoWordbook": "Öppna ordlistan",
-    "quizRetryWrong": "Gör fel igen",
+    "quizRetryWrong": "Gör om felaktiga",
     "quizRetry": "Gör quiz igen",
     "wordbookTitle": "Sparade uttryck",
     "wordCount": "{count}",
@@ -2725,7 +2725,7 @@ window.LANG_SV = {
     "selectProvider": "Välj en textleverantör i vänstra sidofältet",
     "noLyrics": "Texten hittades inte",
     "loadError": "Det gick inte att läsa in texten",
-    "currentLine": "Nuvarande linje",
+    "currentLine": "Aktuell rad",
     "nextLine": "Nästa rad",
     "progress": "Framsteg",
     "linesCompleted": "Raderna är klara",
@@ -2816,9 +2816,9 @@ window.LANG_SV = {
     "parentheticalLayoutBody": "Den här raden har flera sångdelar inom parentes. Välj hur de ska visas och synkas.",
     "parentheticalLayoutOriginal": "Original",
     "parentheticalLayoutSeparateLabel": "Separera varje del",
-    "parentheticalLayoutSeparateDesc": "Synka varje parentesdel som en egen vokalrad.",
+    "parentheticalLayoutSeparateDesc": "Synka varje parentesdel som en egen sångrad.",
     "parentheticalLayoutGroupedLabel": "Gruppera på en rad",
-    "parentheticalLayoutGroupedDesc": "Synka intilliggande parentesröster som en enda vokalrad.",
+    "parentheticalLayoutGroupedDesc": "Synka intilliggande parentesröster som en enda sångrad.",
     "back": "Stäng",
     "lrclibSearchResults": "LRCLIB sökresultat",
     "showLrclibSearchResults": "Visa sökresultat",
@@ -2832,7 +2832,7 @@ window.LANG_SV = {
     "lrclibBadgePlain": "Vanligt",
     "lrclibBadgePrimary": "Primär",
     "lrclibBadgeEnglish": "engelska",
-    "lrclibMetricArtist": "konstnär",
+    "lrclibMetricArtist": "artist",
     "lrclibMetricTitle": "titel",
     "lrclibMetricDiff": "diff",
     "lrclibIdLabel": "LRCLIB-ID",
@@ -2857,7 +2857,7 @@ window.LANG_SV = {
       "drag": "Håll ned för att dra",
       "rightClick": "Högerklick",
       "lockToCharacter": "Lås till tecken",
-      "finish": "Mållinje",
+      "finish": "Avsluta rad",
       "cancel": "Avbryt",
       "playPause": "Spela/Pausa",
       "seekBack": "-3 sek",
@@ -2869,9 +2869,9 @@ window.LANG_SV = {
     "lyricsCopied": "Texten har kopierats till urklipp",
     "copyError": "Kopieringen misslyckades",
     "export": "Exportera",
-    "exportSuccess": "Synkroniseringsdata exporteras",
+    "exportSuccess": "Synkroniseringsdata exporterades",
     "import": "Importera",
-    "importSuccess": "Synkronisera data importerad",
+    "importSuccess": "Synkroniseringsdata importerades",
     "importError": "Importen misslyckades",
     "importDifferentTrack": "Denna synkroniseringsdata kommer från ett annat spår. Vill du importera ändå?",
     "kindVocal": "Ingen effekt",
@@ -2975,7 +2975,7 @@ window.LANG_SV = {
     "backToLyrics": "Tillbaka",
     "retry": "Försök igen",
     "addonDetail": "Tilläggsdetaljer",
-    "addonCount": "{count} tillägg(er)",
+    "addonCount": "{count} tillägg",
     "developerAddons": "Tillägg av denna utvecklare",
     "developer": "Utvecklare",
     "moreByDeveloper": "Mer av denna utvecklare",

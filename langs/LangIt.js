@@ -535,10 +535,10 @@ window.LANG_IT = {
       "sonarModelsFallback": "Sonar non dispone di un’API per l’elenco dei modelli. Viene mostrato l’elenco integrato dei modelli supportati.",
       "pollinationsAllModels": "Viene richiesto l’accesso a tutti i modelli. Scegli un modello dopo la connessione.",
       "model": "Modello",
-      "modelId": "Modello ID",
-      "baseUrl": "Base URL",
+      "modelId": "ID modello",
+      "baseUrl": "URL di base",
       "baseUrlDesc": "Usa un URL personalizzato per un’API compatibile con OpenAI.",
-      "apiKey": "API Chiave",
+      "apiKey": "Chiave API",
       "apiKeyDesc": "Supporta una chiave singola, un elenco di nuova riga o un array JSON. Memorizzato solo su questo dispositivo.",
       "refreshModels": "Aggiorna",
       "selectModel": "Scegli dall'elenco",
@@ -1187,7 +1187,7 @@ window.LANG_IT = {
         "desc": "Spessore font testo originale"
       },
       "opacity": {
-        "label": "Trasparenza",
+        "label": "Opacità",
         "desc": "Opacità testo originale (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_IT = {
         "desc": "Spessore font pronuncia"
       },
       "opacity": {
-        "label": "Trasparenza",
+        "label": "Opacità",
         "desc": "Opacità pronuncia (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_IT = {
         "desc": "Spessore font testo tradotto"
       },
       "opacity": {
-        "label": "Trasparenza",
+        "label": "Opacità",
         "desc": "Opacità testo tradotto (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_IT = {
         "desc": "Spessore font Furigana"
       },
       "opacity": {
-        "label": "Trasparenza",
+        "label": "Opacità",
         "desc": "Opacità Furigana (0-100%)"
       },
       "spacing": {
@@ -1298,7 +1298,7 @@ window.LANG_IT = {
         "desc": "Colore dell'ombra (Codice HEX)"
       },
       "opacity": {
-        "label": "Trasparenza ombra",
+        "label": "Opacità ombra",
         "desc": "Opacità dell'ombra (0-100%)"
       },
       "blur": {
@@ -2480,12 +2480,12 @@ window.LANG_IT = {
     "errorQuotaHint": "Riprova più tardi o scegli un altro provider AI nelle Impostazioni",
     "sourcesEmpty": "Non è stato restituito alcun collegamento all'origine",
     "disclaimer": "La ricerca generata dall’intelligenza artificiale può contenere imprecisioni. Controlla le fonti collegate prima di fare affidamento su affermazioni fattuali",
-    "styleTitle": "Ricerca le impostazioni del testo",
+    "styleTitle": "Impostazioni testo della Ricerca",
     "styleSubtitle": "Regola la dimensione e il contorno del testo utilizzati nel documento di ricerca a schermo intero",
     "fontSizeDesc": "Dimensione del testo della ricerca",
     "fontSizeInfo": "Regola la dimensione complessiva del testo del documento di ricerca",
     "gestureHint": "Fai clic con il pulsante destro del mouse o tieni premuta la copertina dell'album per aprire la ricerca",
-    "gesture": "Fare clic con il pulsante destro del mouse su · Mantieni",
+    "gesture": "Clic destro · Tieni premuto",
     "tokenConsentTitle": "Prima di usare Ricerca",
     "tokenConsentBody": "La prima volta che viene generata la Ricerca, l’analisi del brano e la raccolta di informazioni di supporto possono utilizzare molti token.",
     "tokenConsentNote": "L’uso dei token e gli eventuali costi dipendono dal provider e dal modello IA selezionati.",
@@ -2497,9 +2497,9 @@ window.LANG_IT = {
       "listeningGuide": "Guida all'ascolto",
       "trivia": "Curiosità",
       "title": "Analisi del titolo",
-      "lyrics": "Analisi lirica",
-      "chorus": "Analisi del coro",
-      "ending": "Analisi lirica finale",
+      "lyrics": "Analisi del testo",
+      "chorus": "Analisi del ritornello",
+      "ending": "Verso finale",
       "music": "Analisi musicale",
       "artist": "Contesto dell'artista",
       "comparison": "Analisi comparativa",
@@ -2532,7 +2532,7 @@ window.LANG_IT = {
       "lyricConnection": "Collegamento al testo",
       "endingConnection": "Collegamento al testo finale",
       "speaker": "Narratore lirico",
-      "listener": "Persona a cui si fa riferimento nel testo",
+      "listener": "Persona a cui si rivolge il testo",
       "relationship": "Relazione",
       "emotionalArc": "Sviluppo emotivo",
       "literal": "Significato letterale",
@@ -2542,7 +2542,7 @@ window.LANG_IT = {
       "role": "Ruolo nella canzone",
       "repeatedPhrases": "Frasi ripetute",
       "change": "Sviluppo attraverso la canzone",
-      "finalLyric": "Linea lirica finale",
+      "finalLyric": "Verso finale",
       "titleConnection": "Collegamento al titolo",
       "openingConnection": "Collegamento al testo di apertura",
       "reinterpretation": "Reinterpretazione",
@@ -2566,7 +2566,7 @@ window.LANG_IT = {
       "literary": "Interpretazione letteraria",
       "musical": "Interpretazione musicale",
       "career": "Contesto di carriera",
-      "background": "Sfondo",
+      "background": "Contesto",
       "ageAtRelease": "Età in cui è stata pubblicata la canzone",
       "careerStage": "Fase di carriera",
       "significance": "Significato artistico",

@@ -535,10 +535,10 @@ window.LANG_PT = {
       "sonarModelsFallback": "O Sonar não tem uma API de lista de modelos. A lista integrada de modelos compatíveis será exibida.",
       "pollinationsAllModels": "O acesso a todos os modelos será solicitado. Escolha um modelo após conectar.",
       "model": "Modelo",
-      "modelId": "Modelo ID",
-      "baseUrl": "BaseURL",
+      "modelId": "ID do modelo",
+      "baseUrl": "URL base",
       "baseUrlDesc": "Use uma URL personalizada de uma API compatível com OpenAI.",
-      "apiKey": "API Chave",
+      "apiKey": "Chave de API",
       "apiKeyDesc": "Suporta uma única chave, lista de nova linha ou matriz JSON. Armazenado apenas neste dispositivo.",
       "refreshModels": "Atualizar",
       "selectModel": "Escolher da lista",
@@ -1187,7 +1187,7 @@ window.LANG_PT = {
         "desc": "Espessura da fonte da letra original"
       },
       "opacity": {
-        "label": "Transparência",
+        "label": "Opacidade",
         "desc": "Opacidade da letra original (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_PT = {
         "desc": "Espessura da fonte da pronúncia"
       },
       "opacity": {
-        "label": "Transparência",
+        "label": "Opacidade",
         "desc": "Opacidade da pronúncia (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_PT = {
         "desc": "Espessura da fonte da tradução"
       },
       "opacity": {
-        "label": "Transparência",
+        "label": "Opacidade",
         "desc": "Opacidade da tradução (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_PT = {
         "desc": "Espessura da fonte do Furigana"
       },
       "opacity": {
-        "label": "Transparência",
+        "label": "Opacidade",
         "desc": "Opacidade do Furigana (0-100%)"
       },
       "spacing": {
@@ -1298,7 +1298,7 @@ window.LANG_PT = {
         "desc": "Cor da sombra (Código HEX)"
       },
       "opacity": {
-        "label": "Transparência da Sombra",
+        "label": "Opacidade da Sombra",
         "desc": "Opacidade da sombra (0-100%)"
       },
       "blur": {
@@ -2499,7 +2499,7 @@ window.LANG_PT = {
       "title": "Análise de título",
       "lyrics": "Análise de letras",
       "chorus": "Análise do refrão",
-      "ending": "Análise final da letra",
+      "ending": "Linha final",
       "music": "Análise musical",
       "artist": "Contexto do artista",
       "comparison": "Análise comparativa",
@@ -2532,7 +2532,7 @@ window.LANG_PT = {
       "lyricConnection": "Conexão com as letras",
       "endingConnection": "Conexão com a letra final",
       "speaker": "Narrador lírico",
-      "listener": "Pessoa abordada na letra",
+      "listener": "Pessoa a quem a letra se dirige",
       "relationship": "Relacionamento",
       "emotionalArc": "Desenvolvimento emocional",
       "literal": "Significado literal",
@@ -2566,7 +2566,7 @@ window.LANG_PT = {
       "literary": "Interpretação literária",
       "musical": "Interpretação musical",
       "career": "Contexto de carreira",
-      "background": "Plano de fundo",
+      "background": "Contexto",
       "ageAtRelease": "Idade quando a música foi lançada",
       "careerStage": "Estágio de carreira",
       "significance": "Significado artístico",
@@ -2879,7 +2879,7 @@ window.LANG_PT = {
     "kindAdlib": "Respiração",
     "kindPulse": "Pulsar",
     "kindWave": "Onda",
-    "kindSparkle": "Brilho",
+    "kindSparkle": "Cintilar",
     "kindEcho": "Eco",
     "kindWhisper": "Sussurro",
     "kindBounce": "Quicar",

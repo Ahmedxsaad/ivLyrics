@@ -535,10 +535,10 @@ window.LANG_MS = {
       "sonarModelsFallback": "Sonar tiada API senarai model. Senarai terbina dalam bagi model yang disokong dipaparkan.",
       "pollinationsAllModels": "Akses kepada semua model akan diminta. Pilih model selepas disambungkan.",
       "model": "Model",
-      "modelId": "Model ID",
-      "baseUrl": "Pangkalan URL",
+      "modelId": "ID Model",
+      "baseUrl": "URL Asas",
       "baseUrlDesc": "Gunakan URL API tersuai yang serasi dengan OpenAI.",
-      "apiKey": "API Kunci",
+      "apiKey": "Kunci API",
       "apiKeyDesc": "Menyokong satu kunci, senarai baris baharu atau tatasusunan JSON. Hanya disimpan pada peranti ini.",
       "refreshModels": "Muat Semula",
       "selectModel": "Pilih daripada senarai",
@@ -546,7 +546,7 @@ window.LANG_MS = {
       "modelsUnavailable": "Senarai model tidak dapat dimuatkan. Anda boleh memasukkan ID model secara manual.",
       "testingConnection": "Uji sambungan…",
       "testConnection": "Uji sambungan",
-      "getApiKey": "Dapatkan Alat",
+      "getApiKey": "Dapatkan Kunci",
       "noModels": "Tiada model tersedia",
       "pollinationsAccount": "Akaun Pollinations",
       "pollinationsConnect": "Log masuk ke Pollinations",
@@ -626,7 +626,7 @@ window.LANG_MS = {
     "shareImage": "Kongsi Imej Lirik",
     "translationOptions": "Pilihan Penukaran",
     "translationOptionsSubtitle": "Tetapkan paparan sebutan dan terjemahan lirik",
-    "detectedLanguage": "Bahasa Terdan-kes",
+    "detectedLanguage": "Bahasa Dikesan",
     "detectedLanguageInfo": "Bahasa bagi lagu yang sedang dimainkan. Pilihan penukaran diterapkan secara berbeza mengikut bahasa.",
     "unknownLanguage": "Tidak Diketahui",
     "autoDetect": "Kesan Automatik",
@@ -732,7 +732,7 @@ window.LANG_MS = {
     "background": "Latar Belakang",
     "backgroundOptions": {
       "albumArt": "Seni Album",
-      "animatedCanvas": "Kanvas Beranimasi",
+      "animatedCanvas": "Canvas Beranimasi",
       "artistArt": "Seni Artis",
       "staticColor": "Warna Pepejal"
     },
@@ -824,7 +824,7 @@ window.LANG_MS = {
     "geminiRomaji": "Sebutan (Gemini)",
     "geminiKo": "Terjemahan (Gemini)",
     "romajiGemini": "Romaji (Gemini)",
-    "koGemini": "Korea (Gemini)",
+    "koGemini": "Bahasa Melayu (Gemini)",
     "simplifiedChinese": "Cina Ringkas",
     "traditionalChineseHK": "Cina Tradisional (Hong Kong)",
     "traditionalChineseTW": "Cina Tradisional (Taiwan)",
@@ -933,7 +933,7 @@ window.LANG_MS = {
     "noTrackPlaying": "Tiada trek yang sedang dimainkan",
     "overlayConnected": "Tindihan Disambungkan",
     "romajiTranslationFailed": "Gagal menukar Romaji/Sebutan",
-    "koreanTranslationFailed": "Gagal menterjemah Bahasa Korea",
+    "koreanTranslationFailed": "Gagal menterjemah ke Bahasa Melayu",
     "pinyinLibraryUnavailable": "Pustaka Pinyin tidak tersedia. Menampilkan teks asal. Sila benarkan jsDelivr atau unpkg.",
     "conversionSkippedSimplified": "Penukaran dilangkau: Teks sudah dalam format Cina Ringkas",
     "conversionCompleted": "Penukaran selesai",
@@ -955,8 +955,8 @@ window.LANG_MS = {
     "none": "Tiada",
     "auto": "Automatik",
     "manual": "Manual",
-    "on": "Buka",
-    "off": "Tutup",
+    "on": "Hidup",
+    "off": "Mati",
     "yes": "Ya",
     "no": "Tidak",
     "items": "item",
@@ -1148,7 +1148,7 @@ window.LANG_MS = {
           "desc": "Saiz fon untuk label teks"
         },
         "fontWeight": {
-          "label": "Berat label teks",
+          "label": "Ketebalan label teks",
           "desc": "Berat fon untuk label teks"
         },
         "opacity": {
@@ -1187,8 +1187,8 @@ window.LANG_MS = {
         "desc": "Ketebalan (weight) fon bagi lirik asal"
       },
       "opacity": {
-        "label": "Ketelusan",
-        "desc": "Kelegapan/ketelusan lirik asal (0-100%)"
+        "label": "Kelegapan",
+        "desc": "Kelegapan lirik asal (0-100%)"
       },
       "letterSpacing": {
         "label": "Jarak Huruf",
@@ -1209,8 +1209,8 @@ window.LANG_MS = {
         "desc": "Ketebalan fon bagi notasi sebutan Rumi"
       },
       "opacity": {
-        "label": "Ketelusan",
-        "desc": "Kelegapan/ketelusan notasi sebutan Rumi (0-100%)"
+        "label": "Kelegapan",
+        "desc": "Kelegapan notasi sebutan Rumi (0-100%)"
       },
       "gap": {
         "label": "Jarak dari Teks Asal",
@@ -1244,8 +1244,8 @@ window.LANG_MS = {
         "desc": "Ketebalan fon bagi lirik terjemahan"
       },
       "opacity": {
-        "label": "Ketelusan",
-        "desc": "Kelegapan/ketelusan lirik terjemahan (0-100%)"
+        "label": "Kelegapan",
+        "desc": "Kelegapan lirik terjemahan (0-100%)"
       },
       "gap": {
         "label": "Jarak dari Sebutan",
@@ -1268,8 +1268,8 @@ window.LANG_MS = {
         "desc": "Ketebalan fon bagi furigana"
       },
       "opacity": {
-        "label": "Ketelusan",
-        "desc": "Kelegapan/ketelusan furigana (0-100%)"
+        "label": "Kelegapan",
+        "desc": "Kelegapan furigana (0-100%)"
       },
       "spacing": {
         "label": "Jarak",
@@ -1298,8 +1298,8 @@ window.LANG_MS = {
         "desc": "Warna bagi bayang (kod HEX)"
       },
       "opacity": {
-        "label": "Ketelusan Bayang",
-        "desc": "Kelegapan/ketelusan bayang (0-100%)"
+        "label": "Kelegapan Bayang",
+        "desc": "Kelegapan bayang (0-100%)"
       },
       "blur": {
         "label": "Kekuatan Kabur (Blur)",
@@ -1611,7 +1611,7 @@ window.LANG_MS = {
         "desc": "Kembalikan semua tetapan kepada nilai lalai. Tindakan ini tidak boleh dibatalkan",
         "button": "Set Semula",
         "confirm": "Adakah anda pasti mahu mengeset semula semua tetapan?\n\nTindakan ini tidak boleh dibatalkan dan semua tetapan akan dikembalikan ke tetapan lalai.\n\nKlik 'Sahkan' untuk meneruskan.",
-        "processing": "Mengetset semula..."
+        "processing": "Menetapkan semula..."
       }
     },
     "fullscreenMode": {
@@ -1638,7 +1638,7 @@ window.LANG_MS = {
         "info": "Paparkan seni album di sebelah kiri dan lirik di sebelah kanan dalam mod skrin penuh"
       },
       "invertPosition": {
-        "desc": "Songsongkan Kedudukan Album/Lirik",
+        "desc": "Songsangkan Kedudukan Album/Lirik",
         "info": "Tukar kedudukan antara album dan lirik (kiri-kanan ↔ kanan-kiri, atau atas-bawah ↔ bawah-atas dalam mod menegak)"
       },
       "showAlbumArt": {
@@ -2104,7 +2104,7 @@ window.LANG_MS = {
     "noVideos": "Tiada video komuniti berdaftar",
     "localTrackDesc": "Ini ialah lagu setempat. URL YouTube hanya disimpan pada peranti ini dan tidak dihantar ke pelayan.",
     "localOnlyApplied": "Video setempat digunakan.",
-    "autoDetected": "Daftar_Automatik",
+    "autoDetected": "Daftar Automatik",
     "startTime": "Mula",
     "submittedBy": "Diserahkan oleh",
     "addVideo": "Tambah Video",
@@ -2480,7 +2480,7 @@ window.LANG_MS = {
     "errorQuotaHint": "Cuba lagi kemudian atau pilih pembekal AI lain dalam Tetapan",
     "sourcesEmpty": "Tiada pautan sumber dikembalikan",
     "disclaimer": "Penyelidikan yang dijana AI mungkin mengandungi ketidaktepatan. Semak sumber yang dipautkan sebelum bergantung pada tuntutan fakta",
-    "styleTitle": "Selidik tetapan teks",
+    "styleTitle": "Tetapan teks Penyelidikan",
     "styleSubtitle": "Laraskan saiz teks dan garis besar yang digunakan dalam dokumen Penyelidikan skrin penuh",
     "fontSizeDesc": "Saiz teks penyelidikan",
     "fontSizeInfo": "Laraskan saiz teks keseluruhan dokumen Penyelidikan",
@@ -2499,7 +2499,7 @@ window.LANG_MS = {
       "title": "Analisis tajuk",
       "lyrics": "Analisis lirik",
       "chorus": "Analisis korus",
-      "ending": "Analisis lirik akhir",
+      "ending": "Baris akhir",
       "music": "Analisis muzik",
       "artist": "Konteks artis",
       "comparison": "Analisis perbandingan",
@@ -2529,8 +2529,8 @@ window.LANG_MS = {
       "sourceFootnote": "sumber",
       "reading": "Sebutan dan bacaan",
       "meaning": "Maknanya",
-      "lyricConnection": "Sambungan kepada lirik",
-      "endingConnection": "Sambungan kepada lirik terakhir",
+      "lyricConnection": "Kaitan dengan lirik",
+      "endingConnection": "Kaitan dengan baris terakhir",
       "speaker": "Pencerita lirik",
       "listener": "Orang yang ditujukan dalam lirik",
       "relationship": "Perhubungan",
@@ -2543,8 +2543,8 @@ window.LANG_MS = {
       "repeatedPhrases": "Frasa berulang",
       "change": "Perkembangan merentas lagu",
       "finalLyric": "Baris lirik akhir",
-      "titleConnection": "Sambungan kepada tajuk",
-      "openingConnection": "Sambungan kepada lirik pembukaan",
+      "titleConnection": "Kaitan dengan tajuk",
+      "openingConnection": "Kaitan dengan bahagian pembuka",
       "reinterpretation": "Tafsiran semula",
       "genre": "Genre",
       "tempo": "Tempo",
@@ -2562,7 +2562,7 @@ window.LANG_MS = {
       "mv": "Video muzik",
       "artwork": "Karya seni",
       "visualInterpretation": "Tafsiran visual",
-      "core": "Tafsiran pusat",
+      "core": "Tafsiran teras",
       "literary": "Tafsiran sastera",
       "musical": "Tafsiran muzik",
       "career": "Konteks kerjaya",

@@ -535,10 +535,10 @@ window.LANG_ES = {
       "sonarModelsFallback": "Sonar no tiene una API de lista de modelos. Se muestra la lista integrada de modelos compatibles.",
       "pollinationsAllModels": "Se solicita acceso a todos los modelos. Elige un modelo después de conectar.",
       "model": "Modelo",
-      "modelId": "Modelo ID",
-      "baseUrl": "Base URL",
+      "modelId": "ID del modelo",
+      "baseUrl": "URL base",
       "baseUrlDesc": "Usa una URL personalizada de una API compatible con OpenAI.",
-      "apiKey": "API Clave",
+      "apiKey": "Clave API",
       "apiKeyDesc": "Admite una única clave, lista de nueva línea o matriz JSON. Almacenado solo en este dispositivo.",
       "refreshModels": "Actualizar",
       "selectModel": "Elegir de la lista",
@@ -732,7 +732,7 @@ window.LANG_ES = {
     "background": "Fondo",
     "backgroundOptions": {
       "albumArt": "Portada de álbum",
-      "animatedCanvas": "Lienzo animado",
+      "animatedCanvas": "Canvas animado",
       "artistArt": "Arte del artista",
       "staticColor": "Color sólido"
     },
@@ -1187,7 +1187,7 @@ window.LANG_ES = {
         "desc": "Grosor de fuente del texto original"
       },
       "opacity": {
-        "label": "Transparencia",
+        "label": "Opacidad",
         "desc": "Opacidad del texto original (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_ES = {
         "desc": "Grosor de fuente de la pronunciación"
       },
       "opacity": {
-        "label": "Transparencia",
+        "label": "Opacidad",
         "desc": "Opacidad de la pronunciación (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_ES = {
         "desc": "Grosor de fuente de la traducción"
       },
       "opacity": {
-        "label": "Transparencia",
+        "label": "Opacidad",
         "desc": "Opacidad de la traducción (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_ES = {
         "desc": "Grosor de fuente del furigana"
       },
       "opacity": {
-        "label": "Transparencia",
+        "label": "Opacidad",
         "desc": "Opacidad del furigana (0-100%)"
       },
       "spacing": {
@@ -2061,7 +2061,7 @@ window.LANG_ES = {
     "apiKeyError": "Error relacionado con la clave API de Gemini. Verifícala en ajustes.",
     "translationFailed": "Error en la traducción",
     "requestTimeout": "Tiempo de espera de traducción agotado. Intenta de nuevo.",
-    "failedPrefix": "Fallo traducción",
+    "failedPrefix": "Error de traducción",
     "noProviderConfigured": "No hay ningún proveedor de IA configurado. Elige uno en Ajustes."
   },
   "utils": {
@@ -2497,9 +2497,9 @@ window.LANG_ES = {
       "listeningGuide": "Guía de escucha",
       "trivia": "Datos curiosos",
       "title": "Análisis de título",
-      "lyrics": "Análisis lírico",
-      "chorus": "Análisis de coro",
-      "ending": "Análisis final de la letra",
+      "lyrics": "Análisis de la letra",
+      "chorus": "Análisis del estribillo",
+      "ending": "Línea final",
       "music": "Análisis musical",
       "artist": "Contexto del artista",
       "comparison": "Análisis comparativo",
@@ -2518,7 +2518,7 @@ window.LANG_ES = {
     "quality": {
       "verified": "Hechos verificados",
       "interpretations": "Interpretaciones",
-      "uncertain": "Artículos inciertos",
+      "uncertain": "Elementos inciertos",
       "conflicts": "Información contradictoria",
       "missing": "Información faltante",
       "empty": "Sin notas de investigación adicionales"
@@ -2554,7 +2554,7 @@ window.LANG_ES = {
       "harmony": "armonía musical",
       "arrangement": "arreglo musical",
       "structure": "Estructura",
-      "lyricMusic": "Letras y musica",
+      "lyricMusic": "Letras y música",
       "history": "Contexto histórico",
       "genreContext": "Contexto de género",
       "popCulture": "Cultura popular",

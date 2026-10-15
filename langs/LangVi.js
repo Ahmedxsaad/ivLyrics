@@ -534,11 +534,11 @@ window.LANG_VI = {
       "saveConnection": "Lưu",
       "sonarModelsFallback": "Sonar không có API danh sách mô hình. Danh sách mô hình được hỗ trợ tích hợp sẵn sẽ được hiển thị.",
       "pollinationsAllModels": "Yêu cầu quyền truy cập tất cả mô hình. Chọn mô hình sau khi kết nối.",
-      "model": "Người mẫu",
-      "modelId": "Người mẫu ID",
-      "baseUrl": "Căn cứ URL",
+      "model": "Mô hình",
+      "modelId": "ID mô hình",
+      "baseUrl": "URL cơ sở",
       "baseUrlDesc": "Sử dụng URL tùy chỉnh của API tương thích với OpenAI.",
-      "apiKey": "API Khóa",
+      "apiKey": "Khóa API",
       "apiKeyDesc": "Hỗ trợ một khóa duy nhất, danh sách dòng mới hoặc mảng JSON. Chỉ được lưu trữ trên thiết bị này.",
       "refreshModels": "Làm mới",
       "selectModel": "Chọn từ danh sách",
@@ -1187,8 +1187,8 @@ window.LANG_VI = {
         "desc": "Độ đậm của lời gốc"
       },
       "opacity": {
-        "label": "Độ trong suốt",
-        "desc": "Độ trong suốt của lời gốc (0-100%)"
+        "label": "Độ mờ đục",
+        "desc": "Độ mờ đục của lời gốc (0-100%)"
       },
       "letterSpacing": {
         "label": "Khoảng cách chữ",
@@ -1209,8 +1209,8 @@ window.LANG_VI = {
         "desc": "Độ đậm của phần phát âm"
       },
       "opacity": {
-        "label": "Độ trong suốt",
-        "desc": "Độ trong suốt của phần phát âm (0-100%)"
+        "label": "Độ mờ đục",
+        "desc": "Độ mờ đục của phần phát âm (0-100%)"
       },
       "gap": {
         "label": "Khoảng cách với lời gốc",
@@ -1244,8 +1244,8 @@ window.LANG_VI = {
         "desc": "Độ đậm của lời dịch"
       },
       "opacity": {
-        "label": "Độ trong suốt",
-        "desc": "Độ trong suốt của lời dịch (0-100%)"
+        "label": "Độ mờ đục",
+        "desc": "Độ mờ đục của lời dịch (0-100%)"
       },
       "gap": {
         "label": "Khoảng cách với phát âm",
@@ -1268,8 +1268,8 @@ window.LANG_VI = {
         "desc": "Độ đậm của Furigana"
       },
       "opacity": {
-        "label": "Độ trong suốt",
-        "desc": "Độ trong suốt của Furigana (0-100%)"
+        "label": "Độ mờ đục",
+        "desc": "Độ mờ đục của Furigana (0-100%)"
       },
       "spacing": {
         "label": "Khoảng cách",
@@ -1298,8 +1298,8 @@ window.LANG_VI = {
         "desc": "Màu của bóng (Mã HEX)"
       },
       "opacity": {
-        "label": "Độ trong suốt bóng",
-        "desc": "Độ trong suốt của bóng (0-100%)"
+        "label": "Độ mờ đục bóng",
+        "desc": "Độ mờ đục của bóng (0-100%)"
       },
       "blur": {
         "label": "Độ mờ",
@@ -2457,7 +2457,7 @@ window.LANG_VI = {
   "research": {
     "title": "Nghiên cứu",
     "eyebrow": "Nghiên cứu biên tập âm nhạc",
-    "thesis": "Luận văn trung tâm",
+    "thesis": "Luận điểm trung tâm",
     "contents": "Nội dung",
     "editorialNote": "Ghi chú của biên tập viên",
     "fact": "Sự thật",
@@ -2480,7 +2480,7 @@ window.LANG_VI = {
     "errorQuotaHint": "Hãy thử lại sau hoặc chọn nhà cung cấp AI khác trong Cài đặt",
     "sourcesEmpty": "Không có liên kết nguồn nào được trả lại",
     "disclaimer": "Nghiên cứu do AI tạo ra có thể có những điểm không chính xác. Kiểm tra các nguồn được liên kết trước khi dựa vào các tuyên bố thực tế",
-    "styleTitle": "Nghiên cứu cài đặt văn bản",
+    "styleTitle": "Cài đặt văn bản Nghiên cứu",
     "styleSubtitle": "Điều chỉnh kích thước văn bản và đường viền được sử dụng trong tài liệu Nghiên cứu toàn màn hình",
     "fontSizeDesc": "Kích thước văn bản nghiên cứu",
     "fontSizeInfo": "Điều chỉnh kích thước văn bản tổng thể của tài liệu Nghiên cứu",
@@ -2498,8 +2498,8 @@ window.LANG_VI = {
       "trivia": "Thông tin thú vị",
       "title": "Phân tích tiêu đề",
       "lyrics": "Phân tích lời bài hát",
-      "chorus": "Phân tích hợp xướng",
-      "ending": "Phân tích lời bài hát cuối cùng",
+      "chorus": "Phân tích điệp khúc",
+      "ending": "Câu cuối",
       "music": "Phân tích âm nhạc",
       "artist": "Bối cảnh nghệ sĩ",
       "comparison": "Phân tích so sánh",
@@ -2511,7 +2511,7 @@ window.LANG_VI = {
     },
     "status": {
       "verified": "Đã xác minh",
-      "interpretation": "Phiên dịch",
+      "interpretation": "Diễn giải",
       "uncertain": "không chắc chắn",
       "disputed": "Đang tranh chấp"
     },
@@ -2529,10 +2529,10 @@ window.LANG_VI = {
       "sourceFootnote": "nguồn",
       "reading": "Phát âm và đọc",
       "meaning": "Ý nghĩa",
-      "lyricConnection": "Kết nối với lời bài hát",
-      "endingConnection": "Kết nối với lời bài hát cuối cùng",
+      "lyricConnection": "Liên hệ với lời bài hát",
+      "endingConnection": "Liên hệ với câu cuối",
       "speaker": "Người kể lời bài hát",
-      "listener": "Người được nhắc đến trong lời bài hát",
+      "listener": "Người được hướng tới trong lời bài hát",
       "relationship": "Mối quan hệ",
       "emotionalArc": "Phát triển cảm xúc",
       "literal": "Nghĩa đen",
@@ -2543,8 +2543,8 @@ window.LANG_VI = {
       "repeatedPhrases": "Cụm từ lặp đi lặp lại",
       "change": "Sự phát triển xuyên suốt bài hát",
       "finalLyric": "Dòng lời bài hát cuối cùng",
-      "titleConnection": "Kết nối với tiêu đề",
-      "openingConnection": "Kết nối với lời mở đầu",
+      "titleConnection": "Liên hệ với tiêu đề",
+      "openingConnection": "Liên hệ với phần mở đầu",
       "reinterpretation": "Diễn giải lại",
       "genre": "thể loại",
       "tempo": "nhịp độ",
@@ -2552,7 +2552,7 @@ window.LANG_VI = {
       "instrumentation": "Nhạc cụ và âm sắc",
       "vocal": "Giọng hát",
       "harmony": "Hòa âm âm nhạc",
-      "arrangement": "Sự sắp xếp âm nhạc",
+      "arrangement": "Phối khí",
       "structure": "Cấu trúc",
       "lyricMusic": "Lời bài hát và âm nhạc",
       "history": "Bối cảnh lịch sử",
@@ -2562,11 +2562,11 @@ window.LANG_VI = {
       "mv": "Video ca nhạc",
       "artwork": "tác phẩm nghệ thuật",
       "visualInterpretation": "Giải thích trực quan",
-      "core": "Phiên dịch trung tâm",
+      "core": "Diễn giải cốt lõi",
       "literary": "Giải thích văn học",
       "musical": "Giải thích âm nhạc",
       "career": "Bối cảnh nghề nghiệp",
-      "background": "Nền",
+      "background": "Bối cảnh",
       "ageAtRelease": "Tuổi khi bài hát được phát hành",
       "careerStage": "Giai đoạn sự nghiệp",
       "significance": "Ý nghĩa nghệ thuật",

@@ -243,7 +243,7 @@ window.LANG_TR = {
       "desc": "Video arka planına uygulanan bulanıklık yoğunluğunu ayarla (0-40px)"
     },
     "videoCover": {
-      "label": "Videoyu Ekrana Sığdır",
+      "label": "Videoyla Ekranı Doldur",
       "desc": "Videoyu ekranı dolduracak şekilde yakınlaştır (Üst/alt veya yanlar kırpılabilir)"
     },
     "videoScale": {
@@ -591,7 +591,7 @@ window.LANG_TR = {
         "karaoke": "Karaoke",
         "synced": "Senkronize",
         "unsynced": "Düz Metin",
-        "ivLyricsSync": "ivLyrics Senk"
+        "ivLyricsSync": "ivLyrics Sync"
       }
     }
   },
@@ -732,7 +732,7 @@ window.LANG_TR = {
     "background": "Arka Plan",
     "backgroundOptions": {
       "albumArt": "Albüm Kapağı",
-      "animatedCanvas": "Animasyonlu Tuval",
+      "animatedCanvas": "Animasyonlu Canvas",
       "artistArt": "Sanatçı Görseli",
       "staticColor": "Düz Renk"
     },
@@ -741,7 +741,7 @@ window.LANG_TR = {
       "desc": "Tam ekran modunda ek kontrolleri göster"
     },
     "contextDisplay": {
-      "label": "İçerik Görünümü",
+      "label": "Bağlam Görünümü",
       "desc": "Tam ekran modunda geçerli çalma içeriğini göster"
     },
     "upcomingLyrics": {
@@ -1136,12 +1136,12 @@ window.LANG_TR = {
     },
     "showLabel": {
       "label": "Metin Etiketini Göster",
-      "desc": "Sözlerin konumuna göre simgenin yanında Giriş (Intro), Ara (Break) veya Çıkış (Outro) göster"
+      "desc": "Sözlerin konumuna göre simgenin yanında Giriş (Intro), Ara (Break) veya Kapanış (Outro) göster"
     },
     "labelStyle": {
       "fontFamily": {
         "label": "Metin Etiketi Yazı Tipi",
-        "desc": "Giriş, Ara veya Çıkış etiketi için yazı tipini seçin"
+        "desc": "Giriş, Ara veya Kapanış etiketi için yazı tipini seçin"
       },
       "fontSize": {
         "label": "Metin Etiketi Boyutu",
@@ -1163,7 +1163,7 @@ window.LANG_TR = {
     "labels": {
       "prelude": "Giriş",
       "break": "Ara",
-      "postlude": "Çıkış"
+      "postlude": "Kapanış"
     }
   },
   "livePreview": {
@@ -1549,7 +1549,7 @@ window.LANG_TR = {
     "notSaved": "Henüz kaydedilmedi",
     "updatedAt": "{date} tarihinde güncellendi",
     "upload": "Mevcut ayarları yükle",
-    "uploading": "Yükleniyor…",
+    "uploading": "Karşıya yükleniyor…",
     "uploaded": "PC ayarları {revision} revizyonu olarak yüklendi.",
     "download": "Bulut ayarlarını uygula",
     "downloading": "Uygulanıyor…",
@@ -1756,11 +1756,11 @@ window.LANG_TR = {
       "info": "Saat için yazı boyutunu ayarla (24-72px)"
     },
     "showContext": {
-      "desc": "Çalma İçeriğini Göster",
+      "desc": "Çalma Bağlamını Göster",
       "info": "Sol altta geçerli çalma listesi/albüm bilgisini göster"
     },
     "showContextImage": {
-      "desc": "İçerik Görselini Göster",
+      "desc": "Bağlam Görselini Göster",
       "info": "Çalma listesi/albüm küçük resmini göster"
     },
     "showNextTrack": {
@@ -2480,7 +2480,7 @@ window.LANG_TR = {
     "errorQuotaHint": "Daha sonra tekrar deneyin veya Ayarlar'dan başka bir AI sağlayıcı seçin",
     "sourcesEmpty": "Hiçbir kaynak bağlantısı döndürülmedi",
     "disclaimer": "Yapay zeka tarafından oluşturulan araştırmalar yanlışlıklar içerebilir. Gerçek iddialara güvenmeden önce bağlantılı kaynakları kontrol edin",
-    "styleTitle": "Metin ayarlarını araştırın",
+    "styleTitle": "Araştırma metin ayarları",
     "styleSubtitle": "Tam ekran Araştırma belgesinde kullanılan metin boyutunu ve ana hatlarını ayarlayın",
     "fontSizeDesc": "Araştırma metni boyutu",
     "fontSizeInfo": "Araştırma belgesinin genel metin boyutunu ayarlayın",
@@ -2498,8 +2498,8 @@ window.LANG_TR = {
       "trivia": "İlginç bilgiler",
       "title": "Başlık analizi",
       "lyrics": "Şarkı sözü analizi",
-      "chorus": "Koro analizi",
-      "ending": "Son şarkı sözü analizi",
+      "chorus": "Nakarat analizi",
+      "ending": "Son satır",
       "music": "Müzik analizi",
       "artist": "Sanatçı bağlamı",
       "comparison": "Karşılaştırmalı analiz",
@@ -2562,7 +2562,7 @@ window.LANG_TR = {
       "mv": "Müzik videosu",
       "artwork": "Sanat eseri",
       "visualInterpretation": "Görsel yorumlama",
-      "core": "Merkezi yorumlama",
+      "core": "Temel yorum",
       "literary": "Edebi yorumlama",
       "musical": "Müzikal yorum",
       "career": "Kariyer bağlamı",
@@ -2875,9 +2875,9 @@ window.LANG_TR = {
     "importError": "İçe aktarma başarısız",
     "importDifferentTrack": "Bu senkronizasyon verisi farklı bir parçaya ait. Yine de içe aktarmak istiyor musunuz?",
     "kindVocal": "Efekt yok",
-    "kindEffect": "Sallanma",
+    "kindEffect": "Sarsılma",
     "kindAdlib": "Nefes Alma",
-    "kindPulse": "Atma",
+    "kindPulse": "Nabız",
     "kindWave": "Dalga",
     "kindSparkle": "Kıvılcım",
     "kindEcho": "Yankı",
@@ -2960,10 +2960,10 @@ window.LANG_TR = {
     "uninstall": "Kaldır",
     "update": "Güncelle",
     "installed": "Yüklü",
-    "installing": "Yükleniyor...",
+    "installing": "Kuruluyor...",
     "uninstalling": "Kaldırılıyor...",
     "updateAvailable": "Güncelleme Mevcut",
-    "by": "yapan {author}",
+    "by": "{author} tarafından",
     "updated": "Güncellendi: {date}",
     "version": "v{version}",
     "noAddons": "Kullanılabilir eklenti yok",

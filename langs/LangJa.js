@@ -1187,7 +1187,7 @@ window.LANG_JA = {
         "desc": "原文歌詞のフォントの太さ"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "原文歌詞の不透明度 (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_JA = {
         "desc": "ローマ字発音表記のフォントの太さ"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "ローマ字発音表記の不透明度 (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_JA = {
         "desc": "翻訳歌詞のフォントの太さ"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "翻訳歌詞の不透明度 (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_JA = {
         "desc": "ふりがなのフォントの太さ"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "ふりがなの不透明度 (0-100%)"
       },
       "spacing": {
@@ -1298,7 +1298,7 @@ window.LANG_JA = {
         "desc": "影の色 (HEXコード)"
       },
       "opacity": {
-        "label": "影の透明度",
+        "label": "影の不透明度",
         "desc": "影の不透明度 (0-100%)"
       },
       "blur": {

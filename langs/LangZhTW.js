@@ -534,8 +534,8 @@ window.LANG_ZH_TW = {
       "saveConnection": "儲存",
       "sonarModelsFallback": "Sonar 沒有模型清單 API，將顯示內建的支援模型清單。",
       "pollinationsAllModels": "將請求存取所有模型。連線後請選擇要使用的模型。",
-      "model": "型號",
-      "modelId": "型號 ID",
+      "model": "模型",
+      "modelId": "模型 ID",
       "baseUrl": "基礎 URL",
       "baseUrlDesc": "可自訂 OpenAI 相容 API 的位址。",
       "apiKey": "API 金鑰",
@@ -732,7 +732,7 @@ window.LANG_ZH_TW = {
     "background": "背景",
     "backgroundOptions": {
       "albumArt": "專輯封面",
-      "animatedCanvas": "動態畫布",
+      "animatedCanvas": "動態 Canvas",
       "artistArt": "藝人圖片",
       "staticColor": "純色"
     },
@@ -1078,11 +1078,11 @@ window.LANG_ZH_TW = {
       "title": "同步模式",
       "subtitle": "精簡同步模式的顯示選項",
       "linesBefore": {
-        "label": "顯示行數 (以前)",
+        "label": "顯示行數 (之前)",
         "desc": "目前播放歌詞之前要顯示的行數"
       },
       "linesAfter": {
-        "label": "顯示行數 (以後)",
+        "label": "顯示行數 (之後)",
         "desc": "目前播放歌詞之後要顯示的行數"
       },
       "fadeoutBlur": {
@@ -1187,7 +1187,7 @@ window.LANG_ZH_TW = {
         "desc": "原文歌詞的字型粗細"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "原文歌詞的不透明度 (0-100%)"
       },
       "letterSpacing": {
@@ -1209,7 +1209,7 @@ window.LANG_ZH_TW = {
         "desc": "發音標記的字型粗細"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "發音標記的不透明度 (0-100%)"
       },
       "gap": {
@@ -1244,7 +1244,7 @@ window.LANG_ZH_TW = {
         "desc": "翻譯歌詞的字型粗細"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "翻譯歌詞的不透明度 (0-100%)"
       },
       "gap": {
@@ -1268,7 +1268,7 @@ window.LANG_ZH_TW = {
         "desc": "振假名的字型粗細"
       },
       "opacity": {
-        "label": "透明度",
+        "label": "不透明度",
         "desc": "振假名的不透明度 (0-100%)"
       },
       "spacing": {
@@ -1298,7 +1298,7 @@ window.LANG_ZH_TW = {
         "desc": "陰影的顏色 (HEX 代碼)"
       },
       "opacity": {
-        "label": "陰影透明度",
+        "label": "陰影不透明度",
         "desc": "陰影的不透明度 (0-100%)"
       },
       "blur": {
@@ -2184,7 +2184,7 @@ window.LANG_ZH_TW = {
       "gradient": "漸層",
       "solid": "純色",
       "backgroundBlur": "背景模糊",
-      "backgroundOpacity": "背景亮度",
+      "backgroundOpacity": "背景暗度",
       "showCover": "專輯封面",
       "showTrackInfo": "曲目資訊",
       "coverPosition": "封面位置",
@@ -2493,7 +2493,7 @@ window.LANG_ZH_TW = {
     "providerDescription": "選擇翻譯、發音、研究和學習模式的人工智慧供應商",
     "sections": {
       "overview": "概述",
-      "information": "基本訊息",
+      "information": "基本資訊",
       "listeningGuide": "聆聽指南",
       "trivia": "趣味知識",
       "title": "標題分析",
@@ -2501,7 +2501,7 @@ window.LANG_ZH_TW = {
       "chorus": "副歌分析",
       "ending": "結尾歌詞分析",
       "music": "音樂分析",
-      "artist": "藝術家背景",
+      "artist": "藝人背景",
       "comparison": "比較分析",
       "culture": "文化背景",
       "visual": "視覺世界",
@@ -2519,8 +2519,8 @@ window.LANG_ZH_TW = {
       "verified": "已核實的事實",
       "interpretations": "解釋",
       "uncertain": "不確定的項目",
-      "conflicts": "相互矛盾的訊息",
-      "missing": "缺少訊息",
+      "conflicts": "相互矛盾的資訊",
+      "missing": "缺少資訊",
       "empty": "沒有額外的研究筆記"
     },
     "labels": {
@@ -2547,7 +2547,7 @@ window.LANG_ZH_TW = {
       "openingConnection": "與開場歌詞的聯繫",
       "reinterpretation": "重新詮釋",
       "genre": "流派",
-      "tempo": "節奏",
+      "tempo": "速度",
       "rhythm": "節奏",
       "instrumentation": "樂器編制與音色",
       "vocal": "人聲",
@@ -2562,7 +2562,7 @@ window.LANG_ZH_TW = {
       "mv": "音樂錄影帶",
       "artwork": "藝術品",
       "visualInterpretation": "視覺解讀",
-      "core": "中央解讀",
+      "core": "核心解讀",
       "literary": "文學詮釋",
       "musical": "音樂詮釋",
       "career": "職業背景",

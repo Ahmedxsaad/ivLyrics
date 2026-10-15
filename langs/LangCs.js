@@ -69,7 +69,7 @@ window.LANG_CS = {
       "finetune": "Podrobnosti o pozadí"
     },
     "theme": {
-      "light": "Přepněte do světelného režimu",
+      "light": "Přepněte do světlého režimu",
       "dark": "Přepněte do tmavého režimu",
       "lightShort": "Světlý",
       "darkShort": "Tmavý",
@@ -182,7 +182,7 @@ window.LANG_CS = {
       "desc": "Omezte animace rozhraní."
     },
     "blurGradientBackground": {
-      "label": "Rozostření pozadí přechodu",
+      "label": "Rozostřené přechodové pozadí",
       "desc": "Použijte rozostření pozadí s přechodem extrahováním barev z obrázku alba"
     },
     "colorful": {
@@ -194,11 +194,11 @@ window.LANG_CS = {
       "desc": "Použít jako pozadí aktuální obal alba (v režimu celé obrazovky nemusí fungovat správně)"
     },
     "solidBackground": {
-      "label": "Pevné pozadí",
+      "label": "Jednobarevné pozadí",
       "desc": "Jako pozadí použijte vlastní plnou barvu"
     },
     "solidBackgroundColor": {
-      "label": "Pevná barva pozadí",
+      "label": "Barva jednobarevného pozadí",
       "desc": "Vyberte barvu plného pozadí"
     },
     "videoFallback": {
@@ -262,7 +262,7 @@ window.LANG_CS = {
     },
     "backgroundOpacity": {
       "label": "Krytí pozadí obalu",
-      "desc": "Nastavte neprůhlednost krytu"
+      "desc": "Nastavte neprůhlednost obalu"
     },
     "contentWidth": {
       "label": "Šířka obsahu",
@@ -329,7 +329,7 @@ window.LANG_CS = {
       "desc": "Zobrazte úvodní odpočítávání jako čísla. Pokud je zakázáno, budou se zobrazovat tečky."
     },
     "blurInactive": {
-      "label": "Rozostření neaktivních čar",
+      "label": "Rozostření neaktivních řádků",
       "desc": "Rozmazání neaktivních řádků v synchronizovaných textech",
       "info": "Pokud je tato možnost povolena, mohou nastat problémy s výkonem."
     },
@@ -339,7 +339,7 @@ window.LANG_CS = {
       "info": "Pokud je tato možnost povolena, mohou nastat problémy s výkonem."
     },
     "syncedAsFallback": {
-      "label": "Návrat k Synced Lyrics",
+      "label": "Návrat k synchronizovaným textům",
       "desc": "Pokud texty karaoke nejsou k dispozici, použijte synchronizované texty"
     },
     "unsyncedAsFallback": {
@@ -457,7 +457,7 @@ window.LANG_CS = {
       "providerSelectionDesc": "Vyberte poskytovatele AI pro překlad, výslovnost, TMI a režim učení",
       "metadataProvider": "Překlad metadat",
       "lyricsProvider": "Překlad/výslovnost textů",
-      "tmiProvider": "Generace TMI",
+      "tmiProvider": "Generování TMI",
       "selectProvider": "Vyberte poskytovatele...",
       "addonSettings": "Nastavení doplňku",
       "addonSettingsDesc": "Nakonfigurujte nastavení pro každý doplněk AI",
@@ -535,7 +535,7 @@ window.LANG_CS = {
       "sonarModelsFallback": "Sonar nemá API pro seznam modelů. Zobrazuje se vestavěný seznam podporovaných modelů.",
       "pollinationsAllModels": "Požaduje se přístup ke všem modelům. Po připojení vyberte model.",
       "model": "Model",
-      "modelId": "Model ID",
+      "modelId": "ID modelu",
       "baseUrl": "Základní URL",
       "baseUrlDesc": "Použijte vlastní URL API kompatibilního s OpenAI.",
       "apiKey": "Klíč API",
@@ -591,7 +591,7 @@ window.LANG_CS = {
         "karaoke": "Karaoke",
         "synced": "Synchronizováno",
         "unsynced": "Obyčejný",
-        "ivLyricsSync": "ivLyrics Synchronizovat"
+        "ivLyricsSync": "ivLyrics Sync"
       }
     }
   },
@@ -732,7 +732,7 @@ window.LANG_CS = {
     "background": "Pozadí",
     "backgroundOptions": {
       "albumArt": "Obal alba",
-      "animatedCanvas": "Animované plátno",
+      "animatedCanvas": "Animovaný Canvas",
       "artistArt": "Obrázek umělce",
       "staticColor": "Plná barva"
     },
@@ -770,13 +770,13 @@ window.LANG_CS = {
       "shareCopied": "🔗 Odkaz na sdílení zkopírován",
       "addToPlaylist": "Přidat do seznamu skladeb",
       "playlistLoading": "Načítání seznamů skladeb...",
-      "playlistEmpty": "Nebyly nalezeny žádné upravitelné seznamy videí.",
-      "playlistLoadFailed": "Načtení seznamů videí se nezdařilo.",
+      "playlistEmpty": "Nebyly nalezeny žádné upravitelné seznamy skladeb.",
+      "playlistLoadFailed": "Načtení seznamů skladeb se nezdařilo.",
       "playlistNoTrack": "Do seznamů stop lze přidat pouze Spotify skladeb.",
       "playlistAdded": "Přidáno do {playlist}.",
       "playlistAlreadyContains": "{playlist} již tuto skladbu obsahuje.",
       "playlistChecking": "Kontrola...",
-      "playlistAlreadyInList": "Již v",
+      "playlistAlreadyInList": "Již přidáno",
       "playlistRemove": "Odebrat",
       "playlistRemoved": "Odebráno z {playlist}.",
       "playlistAddFailed": "Přidání do seznamu videí se nezdařilo.",
@@ -824,7 +824,7 @@ window.LANG_CS = {
     "geminiRomaji": "Výslovnost",
     "geminiKo": "Překlad",
     "romajiGemini": "Romaji (Gemini)",
-    "koGemini": "angličtina (Gemini)",
+    "koGemini": "Čeština (Gemini)",
     "simplifiedChinese": "Zjednodušená čínština",
     "traditionalChineseHK": "tradiční čínština (HK)",
     "traditionalChineseTW": "tradiční čínština (TW)",
@@ -889,7 +889,7 @@ window.LANG_CS = {
     "copyFailed": "Kopírování se nezdařilo",
     "memoryCacheCleared": "Mezipaměť vymazána",
     "localCacheCleared": "Veškerá místní mezipaměť byla vymazána",
-    "localCacheTrackCleared": "Místní mezipaměť pro aktuální trasu byla vymazána",
+    "localCacheTrackCleared": "Místní mezipaměť pro aktuální skladbu byla vymazána",
     "localLyricsDeleted": "Místní texty byly smazány",
     "noLocalLyricsToDelete": "Pro tuto skladbu nejsou uloženy žádné místní texty",
     "exportSuccessDesc": "Soubor nastavení uložen.",
@@ -1037,18 +1037,18 @@ window.LANG_CS = {
       "button": "Darovat"
     },
     "multiVocalColors": {
-      "title": "Vícehlasé barvy",
-      "subtitle": "Přizpůsobte barvy mužských, ženských a duetových reproduktorů.",
-      "description": "Vyberte barvu textu použité pro každého vícehlasého reproduktoru.",
+      "title": "Barvy více hlasů",
+      "subtitle": "Přizpůsobte barvy mužských, ženských a duetových hlasů.",
+      "description": "Vyberte barvu textu pro každý hlas v režimu více vokálů.",
       "maleGroup": "Mužské",
-      "femaleGroup": "Žena",
+      "femaleGroup": "Ženské",
       "duetGroup": "Duet",
       "useCreatorColors": {
         "label": "Použijte vlastní barvy tvůrce synchronizace",
         "desc": "Použijte vlastní barvy reproduktorů vložené tvůrci synchronizace. Když jsou deaktivovány, CUSTOM reproduktory používají záložní režim vybraný tvůrcem synchronizace."
       },
       "reset": "Obnovit barvy",
-      "resetDone": "Vícehlasé barvy byly resetovány.",
+      "resetDone": "Barvy více hlasů byly obnoveny.",
       "invalidColor": "Zadejte platnou hexadecimální barvu."
     },
     "performance": {
@@ -1103,7 +1103,7 @@ window.LANG_CS = {
       "subtitle": "Nahraďte dlouhé prázdné mezery nebo mezery v textech pouze pro poznámky ikonou",
       "autoDetect": {
         "label": "Automatická detekce instrumentálních mezer",
-        "desc": "Po skončení karaoke lyrické linky ukažte instrumentální značku na dlouhou mezeru před dalším řádkem."
+        "desc": "Po skončení řádku karaoke textu zobrazí instrumentální značku, pokud je před dalším řádkem dlouhá mezera."
       },
       "icon": {
         "label": "Vzhled ikony",
@@ -1120,23 +1120,23 @@ window.LANG_CS = {
           "pulseDot": "09 Pulzní tečka",
           "stack": "10 Zásobník",
           "spark": "11 Jiskra",
-          "splitBars": "12 dělených tyčí",
+          "splitBars": "12 Dělené pruhy",
           "metronome": "13 Metronom",
           "vinyl": "14 Vinyl",
           "beat": "15 Beat",
-          "reels": "16 kotoučů",
+          "reels": "16 Kotouče",
           "triangle": "17 Trojúhelník",
           "morph": "18 Morf",
-          "strings": "19 strun",
+          "strings": "19 Struny",
           "piano": "20 Klavír",
           "bloom": "21 Bloom",
-          "speaker": "22 Řečník",
+          "speaker": "22 Reproduktor",
           "crossfade": "23 Prolínání"
         }
       },
       "showLabel": {
         "label": "Zobrazit textový štítek",
-        "desc": "Zobrazte úvod, přestávku nebo konec vedle ikony podle pozice textu"
+        "desc": "Zobrazte úvod, mezihru nebo konec vedle ikony podle pozice textu"
       },
       "labelStyle": {
         "fontFamily": {
@@ -1148,7 +1148,7 @@ window.LANG_CS = {
           "desc": "Velikost písma pro textový štítek"
         },
         "fontWeight": {
-          "label": "Hmotnost textového štítku",
+          "label": "Tloušťka textového štítku",
           "desc": "Tloušťka písma pro textový štítek"
         },
         "opacity": {
@@ -1162,7 +1162,7 @@ window.LANG_CS = {
       },
       "labels": {
         "prelude": "Úvod",
-        "break": "Přestávka",
+        "break": "Mezihra",
         "postlude": "Outro"
       }
     },
@@ -1221,7 +1221,7 @@ window.LANG_CS = {
         "desc": "Mezery mezi znaky pro výslovnost (px)"
       },
       "hyphenReplace": {
-        "label": "Spojovník (-) Manipulace",
+        "label": "Zpracování spojovníku (-)",
         "desc": "Vyberte způsob zobrazení pomlček ve výslovnosti (např. Tah-shee-kah → Tah shee kah nebo Tahsheekah)",
         "options": {
           "keep": "Ponechat (Tah-shee-kah)",
@@ -1310,7 +1310,7 @@ window.LANG_CS = {
       "title": "Chování při přehrávání",
       "subtitle": "Nastavení funkcí souvisejících s přehráváním",
       "replaceButton": {
-        "label": "Tlačítko Nahradit text",
+        "label": "Nahradit tlačítko textů",
         "info": "Nahrazuje výchozí tlačítko textu Spotify tlačítkem ivLyrics"
       },
       "replaceFullscreenButton": {
@@ -1342,11 +1342,11 @@ window.LANG_CS = {
         "desc": "Výchozí písmo pro texty panelu (používá se, pokud nejsou nastavena jednotlivá písma)"
       },
       "originalFont": {
-        "label": "Původní písmo",
+        "label": "Písmo originálu",
         "desc": "Písmo pro původní texty (Pokud je prázdné, použije výchozí, povoleno je oddělovat čárkami)"
       },
       "phoneticFont": {
-        "label": "Výslovnost písmo",
+        "label": "Písmo výslovnosti",
         "desc": "Písmo pro výslovnost (Pokud je prázdné, použije výchozí, povoleno je oddělovat čárkami)"
       },
       "translationFont": {
@@ -1354,7 +1354,7 @@ window.LANG_CS = {
         "desc": "Písmo pro přeložené texty (Pokud je prázdné, použije výchozí, povoleno je oddělovat čárkami)"
       },
       "originalSize": {
-        "label": "Původní velikost písma",
+        "label": "Velikost písma originálu",
         "desc": "Základní velikost písma pro původní texty (px)"
       },
       "phoneticSize": {
@@ -1395,7 +1395,7 @@ window.LANG_CS = {
         }
       },
       "border": {
-        "title": "Hranice",
+        "title": "Ohraničení",
         "subtitle": "Nastavení stylu ohraničení panelu",
         "enabled": {
           "label": "Povolit ohraničení",
@@ -1406,7 +1406,7 @@ window.LANG_CS = {
           "desc": "Barva ohraničení"
         },
         "opacity": {
-          "label": "Neprůhlednost hranic",
+          "label": "Neprůhlednost ohraničení",
           "desc": "Neprůhlednost ohraničení (0 % = průhledné, 100 % = neprůhledné)"
         }
       }
@@ -1419,16 +1419,16 @@ window.LANG_CS = {
         "desc": "Pro podporované skladby použijte kartu Karaoke. Pokud je zakázáno, jako výchozí je karta Synchronizováno."
       },
       "bounce": {
-        "label": "Efekt odrazu postavy",
-        "desc": "Aplikujte animaci odrazu na aktuálně zpívající postavy v režimu Karaoke"
+        "label": "Efekt poskakování znaků",
+        "desc": "Použije animaci poskakování na právě zpívané znaky v režimu Karaoke"
       },
       "lineTransition": {
-        "label": "Animace přechodu čáry",
+        "label": "Animace přechodu řádku",
         "desc": "Obnovte pohyb čáry, když se změní aktivní lyrická čára. To může zvýšit využití GPU."
       },
       "spotifyFakeKaraoke": {
         "label": "Pseudo karaoke",
-        "desc": "Pokud texty obsahují pouze synchronizované časování, syntetizujte časování karaoke ze zvukové analýzy Spotify. Korejské, japonské a čínské linie jsou rozděleny hustěji, když je důvěra vysoká."
+        "desc": "Pokud texty obsahují pouze časování po řádcích, syntetizujte časování karaoke ze zvukové analýzy Spotify. Korejské, japonské a čínské řádky jsou při vysoké spolehlivosti rozděleny hustěji."
       },
       "pseudoKaraokeRenderAdvance": {
         "label": "Předstih vykreslení virtuálního karaoke",
@@ -1452,10 +1452,10 @@ window.LANG_CS = {
       }
     },
     "communitySync": {
-      "title": "Synchronizace komunity",
+      "title": "Komunitní synchronizace",
       "subtitle": "Sdílejte offsety synchronizace textů s ostatními uživateli",
       "enabled": {
-        "label": "Použijte synchronizaci komunity",
+        "label": "Použít komunitní synchronizaci",
         "desc": "Použijte synchronizační offsety sdílené komunitou"
       },
       "autoApply": {
@@ -1467,7 +1467,7 @@ window.LANG_CS = {
         "desc": "Automaticky sdílet offsety synchronizace s komunitou, když je změníte"
       },
       "minConfidence": {
-        "label": "Minimální důvěra",
+        "label": "Minimální spolehlivost",
         "desc": "Minimální spolehlivost požadovaná pro automatické použití (0,0 ~ 1,0). Důvěra se vypočítává na základě počtu a konzistence odevzdání. Vyšší hodnota znamená, že více uživatelů odeslalo podobné offsety."
       }
     },
@@ -1483,7 +1483,7 @@ window.LANG_CS = {
         "label": "Správa místní mezipaměti (IndexedDB)",
         "desc": "Texty, překlady a výslovnosti jsou uloženy lokálně, aby se omezilo volání API při opakovaném poslechu.",
         "clearAll": "Smazat vše",
-        "clearCurrent": "Smazat aktuální trasu",
+        "clearCurrent": "Smazat aktuální skladbu",
         "stats": "Text: {lyrics}, Překlady: {translations}, Metadata: {metadata}"
       },
       "openDb": {
@@ -1523,15 +1523,15 @@ window.LANG_CS = {
       "subtitle": "Klíče API pro externí služby"
     },
     "exportImport": {
-      "title": "Nastavení exportu/importu",
+      "title": "Export/import nastavení",
       "subtitle": "Přeneste nastavení do jiného zařízení",
       "export": {
-        "label": "Nastavení exportu",
+        "label": "Exportovat nastavení",
         "button": "Exportovat",
         "processing": "Exportování..."
       },
       "import": {
-        "label": "Nastavení importu",
+        "label": "Importovat nastavení",
         "button": "Importovat",
         "processing": "Import...",
         "confirm": "Bude importováno {count} nastavení a vaše současná nastavení budou nahrazena. Pokračovat?"
@@ -1565,10 +1565,10 @@ window.LANG_CS = {
       "excluded": "API klíče, tokeny účtu, mezipaměti, předvolby a posuny skladeb zůstávají na tomto zařízení.",
     },
     "settingsPresets": {
-      "title": "Nastavení Předvolby",
+      "title": "Předvolby nastavení",
       "subtitle": "Uložte aktuální kombinaci nastavení a použijte ji najednou.",
       "nameLabel": "Název předvolby",
-      "namePlaceholder": "např. Režim ostření",
+      "namePlaceholder": "např. Režim soustředění",
       "saveCurrent": "Uložit aktuální",
       "savedPresets": "Uložené předvolby",
       "empty": "Zatím nejsou uloženy žádné předvolby.",
@@ -1634,7 +1634,7 @@ window.LANG_CS = {
         "info": "Nastavení velikosti obrázku alba v režimu TV (px)"
       },
       "splitView": {
-        "desc": "Rozdělení rozložení",
+        "desc": "Rozdělené rozložení",
         "info": "Na celé obrazovce zobrazí obrázek alba vlevo a text vpravo"
       },
       "invertPosition": {
@@ -1650,7 +1650,7 @@ window.LANG_CS = {
         "info": "Zobrazení názvu skladby a interpreta na celé obrazovce"
       },
       "trimTitle": {
-        "desc": "Zkraťte titulky",
+        "desc": "Zkrátit názvy",
         "info": "Odstraní další informace jako (Remaster), [feat. xxx], aby byly názvy stručné"
       },
       "translateMetadata": {
@@ -1728,7 +1728,7 @@ window.LANG_CS = {
         "info": "Nastavit maximální velikost obrázku alba na celou obrazovku (100–500 pixelů)"
       },
       "albumRadius": {
-        "desc": "Umění alba Radius",
+        "desc": "Zaoblení obalu alba",
         "info": "Nastavit zaoblení rohů obrázku alba (0–50 pixelů)"
       },
       "titleFontSize": {
@@ -1740,7 +1740,7 @@ window.LANG_CS = {
         "info": "Nastavit velikost písma pro jméno interpreta na celé obrazovce (14–36 pixelů)"
       },
       "lyricsRightMargin": {
-        "desc": "Texty Right Margin",
+        "desc": "Pravý okraj textů",
         "info": "Nastavte pravý okraj oblasti textu. Zabraňuje tomu, aby texty při vycentrování vypadaly příliš vpravo (0–300 pixelů)"
       }
     },
@@ -1821,7 +1821,7 @@ window.LANG_CS = {
       "title": "Styl trivia",
       "subtitle": "Nastavení stylu pro modal Trivia zobrazené po kliknutí na obrázek alba",
       "fontSize": {
-        "desc": "Trivia Velikost písma",
+        "desc": "Velikost písma trivia",
         "info": "Upravit globální velikost písma pro Trivia modal (80–150 %)"
       }
     },
@@ -1966,7 +1966,7 @@ window.LANG_CS = {
         "button": "Otevřete stránku klíče API"
       },
       "geminiKey": {
-        "desc": "Gemini Klíč API",
+        "desc": "Klíč API Gemini",
         "info": "K použití překladu textů pomocí Google Gemini AI je vyžadován klíč API"
       }
     },
@@ -1988,12 +1988,12 @@ window.LANG_CS = {
   "syncAdjust": {
     "info": "Přesunutím posuvníku doprava se texty zobrazí rychleji.",
     "reset": "Resetovat",
-    "communityTitle": "Synchronizace komunity",
+    "communityTitle": "Komunitní synchronizace",
     "communityOffset": "Offset",
     "submissions": "Podání",
-    "confidenceHigh": "Vysoká důvěra",
-    "confidenceMedium": "Střední důvěra",
-    "confidenceLow": "Nízká důvěra",
+    "confidenceHigh": "Vysoká spolehlivost",
+    "confidenceMedium": "Střední spolehlivost",
+    "confidenceLow": "Nízká spolehlivost",
     "applyCommunity": "Použít",
     "submitMine": "Odeslat můj offset",
     "submitting": "Odesílání...",
@@ -2051,14 +2051,14 @@ window.LANG_CS = {
   },
   "translator": {
     "missingApiKey": "Gemini API klíč není nastaven. Zadejte klíč API v nastavení.",
-    "invalidApiKeyFormat": "Neplatný formát klíče API. Gemini Klíč API musí začínat „AIza“.",
+    "invalidApiKeyFormat": "Neplatný formát klíče API. Klíč API Gemini musí začínat „AIza“.",
     "invalidRequestFormat": "Neplatný formát požadavku. Zkontrolujte prosím svůj klíč API.",
     "invalidApiKey": "Neplatný klíč API. Zkontrolujte prosím Gemini API klíč v nastavení.",
     "accessForbidden": "Přístup k API je zakázán. Zkontrolujte oprávnění klíče API.",
     "rateLimitExceeded": "Byl překročen limit požadavků. Zkuste to znovu později.",
     "serviceUnavailable": "Překladatelská služba je dočasně nedostupná. Zkuste to znovu později.",
     "requestFailed": "Požadavek API se nezdařil",
-    "apiKeyError": "Gemini Chyba klíče API. Zkontrolujte prosím svůj API klíč v nastavení.",
+    "apiKeyError": "Chyba klíče API Gemini. Zkontrolujte prosím svůj klíč API v nastavení.",
     "translationFailed": "Překlad se nezdařil",
     "requestTimeout": "Vypršel časový limit požadavku na překlad. Zkuste to znovu.",
     "failedPrefix": "Překlad se nezdařil",
@@ -2104,7 +2104,7 @@ window.LANG_CS = {
     "noVideos": "Nejsou zaregistrována žádná videa komunity",
     "localTrackDesc": "Toto je místní trať. Adresa URL YouTube je uložena pouze v tomto zařízení a neodesílá se na server.",
     "localOnlyApplied": "Bylo použito místní video.",
-    "autoDetected": "Auto Detekováno",
+    "autoDetected": "Automaticky detekováno",
     "startTime": "Začátek",
     "submittedBy": "Předložil",
     "addVideo": "Přidat video",
@@ -2131,7 +2131,7 @@ window.LANG_CS = {
     "edit": "Upravit",
     "updateAction": "Aktualizovat",
     "updateAndApplyAction": "Aktualizovat a použít",
-    "loadingTitle": "Získávání titulu...",
+    "loadingTitle": "Získávání názvu...",
     "startTimeLabel": "Čas zahájení prvních textů (s)",
     "startTimeHint": "Zadejte čas, kdy začíná první řádek textu ve videu YouTube",
     "skipSegmentsLabel": "Přeskakované úseky",
@@ -2269,7 +2269,7 @@ window.LANG_CS = {
       "subtitle": "Vyberte preferovaný jazyk"
     },
     "apiKey": {
-      "title": "Gemini Nastavení klíče API",
+      "title": "Nastavení klíče API Gemini",
       "subtitle": "K použití překladu AI je vyžadován klíč API",
       "guide": {
         "title": "Jak získat klíč API",
@@ -2426,7 +2426,7 @@ window.LANG_CS = {
     "getApiKeyInfo": "Používá se k získávání drobností. Můžete jej získat zdarma v Google AI Studio.",
     "viewInfo": "Kliknutím zobrazíte různé informace o této skladbě",
     "requireKey": "Poskytovatele AI je třeba nakonfigurovat v nastavení",
-    "settingTitle": "Gemini klíč API",
+    "settingTitle": "Klíč API Gemini",
     "settingDesc": "Vyžadováno k načtení drobností/informací o skladbě.",
     "title": "Drobnosti",
     "didYouKnow": "Věděli jste?",
@@ -2448,10 +2448,10 @@ window.LANG_CS = {
     "verifiedSources": "Ověřené zdroje",
     "relatedSources": "Související zdroje",
     "otherSources": "Jiné zdroje",
-    "confidenceVeryHigh": "Velmi vysoká důvěra",
-    "confidenceHigh": "Vysoká důvěra",
-    "confidenceMedium": "Střední důvěra",
-    "confidenceLow": "Nízká důvěra",
+    "confidenceVeryHigh": "Velmi vysoká spolehlivost",
+    "confidenceHigh": "Vysoká spolehlivost",
+    "confidenceMedium": "Střední spolehlivost",
+    "confidenceLow": "Nízká spolehlivost",
     "confidenceNone": "Žádné zdroje"
   },
   "research": {
@@ -2480,9 +2480,9 @@ window.LANG_CS = {
     "errorQuotaHint": "Zkuste to znovu později nebo v Nastavení vyberte jiného poskytovatele umělé inteligence",
     "sourcesEmpty": "Nebyly vráceny žádné odkazy na zdroje",
     "disclaimer": "Výzkum generovaný umělou inteligencí může obsahovat nepřesnosti. Než se budete spoléhat na faktická tvrzení, zkontrolujte propojené zdroje",
-    "styleTitle": "Prozkoumejte nastavení textu",
+    "styleTitle": "Typografie výzkumu",
     "styleSubtitle": "Upravte velikost textu a obrys použitý v dokumentu Výzkum na celou obrazovku",
-    "fontSizeDesc": "Zkoumejte velikost textu",
+    "fontSizeDesc": "Velikost textu výzkumu",
     "fontSizeInfo": "Upravte celkovou velikost textu výzkumného dokumentu",
     "gestureHint": "Kliknutím pravým tlačítkem nebo podržením obalu alba otevřete Výzkum",
     "gesture": "Klepněte pravým tlačítkem · Podržet",
@@ -2497,9 +2497,9 @@ window.LANG_CS = {
       "listeningGuide": "Průvodce poslechem",
       "trivia": "Zajímavosti",
       "title": "Analýza názvu",
-      "lyrics": "Lyrická analýza",
-      "chorus": "Analýza sboru",
-      "ending": "Závěrečná lyrická analýza",
+      "lyrics": "Analýza textu",
+      "chorus": "Analýza refrénu",
+      "ending": "Závěrečný verš",
       "music": "Hudební analýza",
       "artist": "Kontext umělce",
       "comparison": "Srovnávací analýza",
@@ -2530,7 +2530,7 @@ window.LANG_CS = {
       "reading": "Výslovnost a čtení",
       "meaning": "Význam",
       "lyricConnection": "Spojení s texty",
-      "endingConnection": "Připojení k závěrečné lyrice",
+      "endingConnection": "Návaznost na závěrečný verš",
       "speaker": "Lyrický vypravěč",
       "listener": "Osoba oslovená v textech",
       "relationship": "Vztah",
@@ -2542,9 +2542,9 @@ window.LANG_CS = {
       "role": "Role v písni",
       "repeatedPhrases": "Opakované fráze",
       "change": "Vývoj napříč skladbou",
-      "finalLyric": "Závěrečná lyrická linka",
+      "finalLyric": "Závěrečný verš",
       "titleConnection": "Spojení s titulem",
-      "openingConnection": "Napojení na úvodní lyriku",
+      "openingConnection": "Návaznost na úvodní verš",
       "reinterpretation": "Reinterpretace",
       "genre": "Žánr",
       "tempo": "Tempo",
@@ -2614,7 +2614,7 @@ window.LANG_CS = {
     "quizRegenerated": "Byly vytvořeny nové kvízové otázky.",
     "quizRegenerateFailed": "Nepodařilo se vytvořit nové kvízové otázky.",
     "loadingQuizOnly": "Vytváření nových kvízových otázek... ({current}/{total})",
-    "quizType": "Výrazová praxe",
+    "quizType": "Procvičování výrazů",
     "quizTypeMeaning": "Význam",
     "quizTypeBlank": "Vyplňte prázdné místo",
     "quizTypeUsage": "Použití v kontextu",
@@ -2627,7 +2627,7 @@ window.LANG_CS = {
     "nextQuiz": "Další otázka",
     "quizDone": "Hotovo",
     "quizResult": "Výsledky",
-    "quizResultPerfect": "Perfektní. Žádné zmeškané otázky.",
+    "quizResultPerfect": "Perfektní. Žádné chybné odpovědi.",
     "quizResultGood": "Pěkná práce. Zkontrolujte zapomenuté otázky ještě jednou.",
     "quizResultNeedsReview": "Začněte s poznámkami k recenzi a zkuste to znovu.",
     "quizAccuracy": "Přesnost",
@@ -2638,13 +2638,13 @@ window.LANG_CS = {
     "quizYourAnswer": "Vaše odpověď",
     "quizCorrectAnswer": "Správná odpověď",
     "quizReviewQuestion": "Zobrazit otázku",
-    "quizNoWrong": "Žádné zmeškané otázky.",
+    "quizNoWrong": "Žádné chybné odpovědi.",
     "quizGoWordbook": "Otevřít slovníček",
-    "quizRetryWrong": "Opakovat zmeškané",
+    "quizRetryWrong": "Opakovat chybné",
     "quizRetry": "Opakovat kvíz",
     "wordbookTitle": "Uložené výrazy",
     "wordCount": "{count}",
-    "wordSearch": "Hledaný výraz, význam, text",
+    "wordSearch": "Hledat výraz, význam nebo text",
     "wordStatAll": "Vše {count}",
     "wordStatCurrent": "Tato píseň {count}",
     "wordStatReading": "Čtení {count}",
@@ -2669,7 +2669,7 @@ window.LANG_CS = {
     "loadingSummary": "Shrnutí písně...",
     "loadingLines": "Vytváření textových karet... ({current}/{total})",
     "loadingExpressions": "Hledání klíčových výrazů... ({current}/{total})",
-    "loadingQuiz": "Otázky v kvízu při vytváření... ({current}/{total})",
+    "loadingQuiz": "Vytváření kvízových otázek... ({current}/{total})",
     "loadFailed": "Načtení výukových dat se nezdařilo.",
     "generateFailed": "Vygenerování režimu učení se nezdařilo.",
     "generated": "Vygenerován režim učení.",
@@ -2732,7 +2732,7 @@ window.LANG_CS = {
     "chars": "Znaky",
     "reset": "Resetovat",
     "resetConfirm": "Všechna probíhající synchronizovaná data budou smazána.\nZačít znovu od začátku?",
-    "firstLine": "Do První linie",
+    "firstLine": "Na první řádek",
     "prevLine": "Předchozí řádek",
     "nextLineBtn": "Další řádek",
     "recordMode": "Režim záznamu",
@@ -2747,7 +2747,7 @@ window.LANG_CS = {
     "incompleteConfirm": "Některé řádky ještě nejsou synchronizovány. Chcete přesto odeslat?",
     "submitSuccess": "Odeslaná data synchronizace! Bude použito po schválení správcem.",
     "submitError": "Odeslání synchronizačních dat se nezdařilo",
-    "dragHint": "Přetažením zaznamenáte časování postavy. Přetažením doleva zrušíte.",
+    "dragHint": "Přetažením zaznamenáte časování znaků. Přetažením doleva zrušíte.",
     "globalOffset": "Globální offset",
     "lineOffset": "Posun řádku",
     "lineOffsetUnavailable": "Dostupné po synchronizaci",
@@ -2808,19 +2808,19 @@ window.LANG_CS = {
     "characterPronunciationProgressRetryFormat": "Neplatné zarovnání AI. Opakuji pokus s menšími kousky...",
     "characterPronunciationProgressError": "Generování výslovnosti AI se nezdařilo. Zkouším záložní...",
     "characterPronunciationTokenWarningTitle": "Použití tokenu výslovnosti znaků AI",
-    "characterPronunciationTokenWarningBody": "Tato funkce generuje výslovnost zarovnanou s každou postavou pro synchronizaci karaoke, takže využívá více tokenů AI než běžné generování výslovnosti.",
+    "characterPronunciationTokenWarningBody": "Tato funkce generuje výslovnost zarovnanou s každým znakem pro synchronizaci karaoke, takže využívá více tokenů AI než běžné generování výslovnosti.",
     "characterPronunciationTokenWarningUsage": "Očekávané použití: asi 3-6x více tokenů než normální požadavek na výslovnost řádek po řádku. Skutečné využití se liší podle délky textu, jazyka a opakování poskytovatele.",
-    "characterPronunciationTokenWarningConfirm": "Rozumím a tvořím",
+    "characterPronunciationTokenWarningConfirm": "Rozumím, vygenerovat",
     "characterPronunciationTokenWarningCancel": "Zrušit",
     "parentheticalLayoutTitle": "Zvolte rozvržení vokálu v závorkách",
-    "parentheticalLayoutBody": "Tato linka má několik závorkových vokálních částí. Vyberte, jak se má zobrazovat a synchronizovat.",
+    "parentheticalLayoutBody": "Tento řádek má několik vokálních částí v závorkách. Vyberte, jak se má zobrazovat a synchronizovat.",
     "parentheticalLayoutOriginal": "Původní",
     "parentheticalLayoutSeparateLabel": "Oddělte každou část",
     "parentheticalLayoutSeparateDesc": "Synchronizujte každý vokál v závorce jako vlastní vokální linku.",
     "parentheticalLayoutGroupedLabel": "Skupina na jednom řádku",
     "parentheticalLayoutGroupedDesc": "Synchronizujte sousední závorkové vokály dohromady jako jednu vokální linku.",
     "back": "Zavřít",
-    "lrclibSearchResults": "LRCLIB Výsledky vyhledávání",
+    "lrclibSearchResults": "Výsledky vyhledávání LRCLIB",
     "showLrclibSearchResults": "Zobrazit výsledky vyhledávání",
     "hideLrclibSearchResults": "Skrýt výsledky vyhledávání",
     "lrclibNoCandidates": "Nebyli nalezeni žádní LRCLIB kandidáti",
@@ -2856,7 +2856,7 @@ window.LANG_CS = {
       "wordBack": "Vrátit zpět 1 slovo",
       "drag": "Podržením přetáhněte",
       "rightClick": "Pravé tlačítko",
-      "lockToCharacter": "Zamknout na char",
+      "lockToCharacter": "Zamknout po znak",
       "finish": "Dokončit řádek",
       "cancel": "Zrušit",
       "playPause": "Přehrát/Pozastavit",
@@ -2869,9 +2869,9 @@ window.LANG_CS = {
     "lyricsCopied": "Texty byly zkopírovány do schránky",
     "copyError": "Kopírování se nezdařilo",
     "export": "Exportovat",
-    "exportSuccess": "Exportovaná data synchronizace",
+    "exportSuccess": "Data synchronizace byla exportována",
     "import": "Importovat",
-    "importSuccess": "Importovaná data synchronizace",
+    "importSuccess": "Data synchronizace byla importována",
     "importError": "Import se nezdařil",
     "importDifferentTrack": "Tato synchronizační data pocházejí z jiné stopy. Chcete přesto importovat?",
     "kindVocal": "Žádný efekt",
@@ -2906,7 +2906,7 @@ window.LANG_CS = {
     "rangeStyleCleared": "Styl byl z vybraného rozsahu odstraněn.",
     "select": "Vybrat",
     "speakerLabel": "Zpěvák",
-    "speakerCustomColor": "Vlastní barva reproduktoru",
+    "speakerCustomColor": "Vlastní barva hlasu",
     "speakerCustomColorDesc": "Tato barva je uložena v synchronizačních datech a zobrazena posluchačům, kteří povolují barvy tvůrců.",
     "speakerCustomFallback": "Skupina záložních barev",
     "speakerCustomFallbackDesc": "Používá se, když posluchači deaktivují vlastní barvy tvůrce.",
@@ -2916,10 +2916,10 @@ window.LANG_CS = {
     "allLine": "Celý řádek",
     "bulkVocalLabel": "Všechny vokály",
     "bulkVocalPlaceholder": "Nastavit zpěváka...",
-    "bulkVocalApplied": "Aplikoval vokální reproduktor na celou skladbu.",
+    "bulkVocalApplied": "Hlas byl použit pro celou skladbu.",
     "enableMultiVocalMode": "Povolit režim více vokálů",
     "mergeWithNextLine": "Sloučit další řádek",
-    "mergedWithNextLine": "Sloučeno s další řadou jako samostatné vokální části.",
+    "mergedWithNextLine": "Sloučeno s dalším řádkem jako samostatné vokální části.",
     "manualSplit": "Manuální rozdělení",
     "useAutoSplit": "Použít automaticky",
     "splitHere": "Rozdělit zde",
@@ -2928,7 +2928,7 @@ window.LANG_CS = {
     "lineMissingSync": "Řádek {line} zatím nemá žádnou synchronizaci.",
     "lineAllPartsMissingSync": "Synchronizujte každý vokální part na řádku {line}.",
     "linePartMetaRequired": "Vyberte SPEAKER a textový efekt pro každý vokální part na řádku {line}.",
-    "lineMetaRequired": "Vyberte REPRODUKTOR a textový efekt pro řádek {line}.",
+    "lineMetaRequired": "Vyberte SPEAKER a textový efekt pro řádek {line}.",
     "multiVocalBannerParts": "Režim více vokálů: synchronizujte každý vokální part samostatně.",
     "multiVocalBannerLine": "Režim více vokálů: zvolte SPEAKER a textový efekt pro tento řádek.",
     "multiVocalDetectedTitle": "Bylo zjištěno více vokálů",
