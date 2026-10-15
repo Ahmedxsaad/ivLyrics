@@ -42,6 +42,22 @@ const getVideoSyncOffsetSeconds = (captionStartTime, lyricsStartTime, videoInfo)
 
 const VIDEO_SYNC_INTERVAL_MS = 250;
 const VIDEO_SYNC_SEEK_THRESHOLD_SECONDS = 0.5;
+// Drift below the seek threshold used to be left alone, so a video that resumed
+// late after a seek could stay up to half a second behind. Steady drift above
+// this is now corrected, and the time a seek needs to resume is learned so the
+// next seek lands on time.
+const VIDEO_DRIFT_SOFT_THRESHOLD_SECONDS = 0.15;
+const VIDEO_DRIFT_BACKOFF_THRESHOLD_SECONDS = 0.35;
+const VIDEO_DRIFT_SAMPLE_COUNT = 6;
+const VIDEO_DRIFT_MIN_SAMPLES = 4;
+const VIDEO_DRIFT_SETTLE_MS = 1200;
+const VIDEO_DRIFT_SOFT_INTERVAL_MS = 3000;
+// More small corrections than this within the window means the player cannot
+// hold sync (each one is a visible jump), so only larger drift is chased.
+const VIDEO_DRIFT_BACKOFF_CORRECTIONS = 4;
+const VIDEO_DRIFT_BACKOFF_WINDOW_MS = 30000;
+const VIDEO_DRIFT_MAX_LEAD_SECONDS = 0.8;
+const VIDEO_DRIFT_MAX_RATE_DELTA = 0.05;
 // Keep the outgoing artwork briefly while a new track's background is being
 // resolved.  This avoids a black flash when YouTube or the helper takes a
 // moment to produce its first frame.
@@ -239,12 +255,102 @@ const getYouTubeVideoCandidates = (responseData, communityVideos) => {
     return responseData?.youtubeVideoId ? [responseData, ...alternatives] : alternatives;
 };
 
+const createVideoDriftState = () => ({
+    samples: [],
+    leadSeconds: 0,
+    lastSeekAt: -Infinity,
+    measureLeadAfterSeek: false,
+    softCorrectionTimes: [],
+    softThresholdSeconds: VIDEO_DRIFT_SOFT_THRESHOLD_SECONDS,
+});
+
+// A new video starts with fresh samples; the learned seek lead depends on the
+// player and connection, so it carries over.
+const resetVideoDriftState = (state) => {
+    if (!state) return;
+    state.samples = [];
+    state.lastSeekAt = -Infinity;
+    state.measureLeadAfterSeek = false;
+    state.softCorrectionTimes = [];
+    state.softThresholdSeconds = VIDEO_DRIFT_SOFT_THRESHOLD_SECONDS;
+};
+
+const noteVideoDriftSeek = (state, now, measureLead) => {
+    state.lastSeekAt = now;
+    state.samples = [];
+    state.measureLeadAfterSeek = measureLead === true;
+};
+
+const getMedianValue = (values) => {
+    const sorted = [...values].sort((a, b) => a - b);
+    const middle = Math.floor(sorted.length / 2);
+    return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+};
+
+/**
+ * Decides how to bring the video back in line with Spotify.
+ * Drift is video time minus target time (positive: video ahead). Samples are
+ * only taken while the video plays steadily and a seek has settled; their
+ * median filters out the iframe clock's jitter.
+ * @returns {{type: "none"} | {type: "seek", time: number} | {type: "rate", rate: number}}
+ */
+const planVideoDriftCorrection = (state, {
+    currentTime,
+    targetTime,
+    now,
+    isPlaying = false,
+    isSteady = false,
+    canAdjustRate = false,
+}) => {
+    if (!state || !Number.isFinite(targetTime)) return { type: "none" };
+    const lead = isPlaying ? state.leadSeconds : 0;
+    const drift = Number.isFinite(currentTime) ? currentTime - targetTime : Infinity;
+    if (Math.abs(drift) > VIDEO_SYNC_SEEK_THRESHOLD_SECONDS) {
+        noteVideoDriftSeek(state, now, isPlaying);
+        return { type: "seek", time: Math.max(0, targetTime + lead) };
+    }
+    if (!isSteady || now - state.lastSeekAt < VIDEO_DRIFT_SETTLE_MS) return { type: "none" };
+
+    state.samples.push(drift);
+    if (state.samples.length > VIDEO_DRIFT_SAMPLE_COUNT) state.samples.shift();
+    if (state.samples.length < VIDEO_DRIFT_MIN_SAMPLES) return { type: "none" };
+    const median = getMedianValue(state.samples);
+
+    if (state.measureLeadAfterSeek) {
+        // A seek that resumed late shows up as the video trailing (negative
+        // median); land that much further ahead next time.
+        state.measureLeadAfterSeek = false;
+        state.leadSeconds = Math.min(VIDEO_DRIFT_MAX_LEAD_SECONDS,
+            Math.max(0, state.leadSeconds - median * 0.8));
+    }
+
+    if (canAdjustRate) {
+        const rateDelta = Math.abs(median) < 0.03 ? 0
+            : Math.min(VIDEO_DRIFT_MAX_RATE_DELTA, Math.max(-VIDEO_DRIFT_MAX_RATE_DELTA, median * 0.5));
+        return { type: "rate", rate: Math.round((1 - rateDelta) * 1000) / 1000 };
+    }
+
+    if (Math.abs(median) <= state.softThresholdSeconds || now - state.lastSeekAt < VIDEO_DRIFT_SOFT_INTERVAL_MS) {
+        return { type: "none" };
+    }
+    state.softCorrectionTimes = state.softCorrectionTimes
+        .filter((time) => now - time < VIDEO_DRIFT_BACKOFF_WINDOW_MS)
+        .concat(now);
+    if (state.softCorrectionTimes.length >= VIDEO_DRIFT_BACKOFF_CORRECTIONS) {
+        state.softThresholdSeconds = VIDEO_DRIFT_BACKOFF_THRESHOLD_SECONDS;
+    }
+    noteVideoDriftSeek(state, now, true);
+    return { type: "seek", time: Math.max(0, targetTime + state.leadSeconds) };
+};
+
 const syncYouTubePlayerTimeline = ({
     player,
     targetVideoTime,
     shouldHoldAtStart,
     shouldPlay,
     holdState,
+    driftState = null,
+    now = Date.now(),
 }) => {
     if (!player || !holdState) return;
     if (globalThis.VideoBackgroundDepend?.isAdPlayback?.(player)) {
@@ -292,7 +398,22 @@ const syncYouTubePlayerTimeline = ({
 
     holdState.primePending = false;
     const currentVideoTime = player.getCurrentTime();
-    if (
+    if (driftState) {
+        if (wasHoldingAtStart) {
+            // Leaving the held pre-roll lands exactly on the mapped position.
+            noteVideoDriftSeek(driftState, now, shouldPlay);
+            player.seekTo(targetVideoTime, true);
+        } else {
+            const correction = planVideoDriftCorrection(driftState, {
+                currentTime: currentVideoTime,
+                targetTime: targetVideoTime,
+                now,
+                isPlaying: shouldPlay,
+                isSteady: shouldPlay && playerState === 1,
+            });
+            if (correction.type === "seek") player.seekTo(correction.time, true);
+        }
+    } else if (
         wasHoldingAtStart ||
         !Number.isFinite(currentVideoTime) ||
         Math.abs(currentVideoTime - targetVideoTime) > VIDEO_SYNC_SEEK_THRESHOLD_SECONDS
@@ -436,6 +557,11 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
         isHolding: false,
         primePending: false,
     });
+    const videoDriftStateRef = useRef(null);
+    const getVideoDriftState = () => {
+        if (!videoDriftStateRef.current) videoDriftStateRef.current = createVideoDriftState();
+        return videoDriftStateRef.current;
+    };
     // "auto" when the server picked the video (checked against the song once
     // its length is known), "chosen" for a saved, external or random choice.
     const videoSourceRef = useRef("");
@@ -569,6 +695,10 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
             );
         };
     }, [trackUri]);
+
+    useEffect(() => {
+        resetVideoDriftState(videoDriftStateRef.current);
+    }, [videoInfo]);
 
     useEffect(() => {
         window.ivLyricsActiveCommunityVideoInfo = videoInfo?.youtubeVideoId
@@ -1435,6 +1565,8 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
                 shouldHoldAtStart: syncState.shouldHoldAtStart,
                 shouldPlay: isPlaying,
                 holdState: youtubeHoldStateRef.current,
+                driftState: getVideoDriftState(),
+                now: Date.now(),
             });
         } catch (e) { }
     }, [useHelper, isPlaying, isPlayerReady, helperVideoUrl, videoInfo]);
@@ -1448,13 +1580,22 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
         const syncVideo = () => {
             const syncState = computeVideoSyncState({ firstLyricTime, videoInfo, trackOffsetMs });
             const targetVideoTime = wrapVideoSyncTime(syncState.targetVideoTime, video.duration);
-            const currentVideoTime = video.currentTime;
-
-            if (
-                !Number.isFinite(currentVideoTime) ||
-                Math.abs(currentVideoTime - targetVideoTime) > VIDEO_SYNC_SEEK_THRESHOLD_SECONDS
-            ) {
-                video.currentTime = targetVideoTime;
+            const shouldPlayVideo = isPlaying && !syncState.shouldHoldAtStart;
+            // A local file can change speed freely, so small drift is eased out
+            // with the playback rate instead of a visible seek.
+            const correction = planVideoDriftCorrection(getVideoDriftState(), {
+                currentTime: video.currentTime,
+                targetTime: targetVideoTime,
+                now: Date.now(),
+                isPlaying: shouldPlayVideo,
+                isSteady: shouldPlayVideo && !video.paused && !video.seeking && video.readyState >= 3,
+                canAdjustRate: true,
+            });
+            if (correction.type === "seek") {
+                video.currentTime = correction.time;
+                video.playbackRate = 1;
+            } else if (correction.type === "rate" && video.playbackRate !== correction.rate) {
+                video.playbackRate = correction.rate;
             }
 
             if (!isPlaying || syncState.shouldHoldAtStart) {
@@ -1685,6 +1826,8 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
                 shouldHoldAtStart: syncState.shouldHoldAtStart,
                 shouldPlay: isPlaying,
                 holdState: youtubeHoldStateRef.current,
+                driftState: getVideoDriftState(),
+                now: Date.now(),
             });
         };
 

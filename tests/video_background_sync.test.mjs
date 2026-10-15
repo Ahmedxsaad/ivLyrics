@@ -5,6 +5,8 @@ import vm from "node:vm";
 
 const source = readFileSync(new URL("../VideoBackground.js", import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const helperBoundary = source.indexOf("const disableYouTubeCaptions");
+// Component effects read the per-player drift state through this getter.
+const driftStateGetter = "var getVideoDriftState = (() => { const state = createVideoDriftState(); return () => state; })();";
 assert.ok(helperBoundary > 0, "VideoBackground sync helpers must remain before the component helpers");
 
 const context = vm.createContext({});
@@ -368,6 +370,7 @@ test("Spotify playback effects preserve a pending frame refresh across pause and
         Utils: { mapVideoTimeWithSkipSegments: (time) => time },
     });
     vm.runInContext(source.slice(0, helperBoundary), effectContext);
+    vm.runInContext(driftStateGetter, effectContext);
     const runPlaybackEffect = () => vm.runInContext(`(() => { ${effectBody} })()`, effectContext);
 
     runPlaybackEffect();
@@ -476,6 +479,7 @@ for (const [stateName, playerState] of [["PLAYING", 1], ["BUFFERING", 3]]) {
             },
         });
         vm.runInContext(source.slice(0, helperBoundary), effectContext);
+        vm.runInContext(driftStateGetter, effectContext);
         const cleanup = vm.runInContext(`(() => { ${effectBody} })()`, effectContext);
         assert.equal(intervals.size, 1);
         assert.equal(intervals.get(1).delay, 250);
