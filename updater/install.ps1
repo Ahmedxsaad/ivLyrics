@@ -145,12 +145,13 @@ function Write-Success {
     param([string]$Version, [bool]$IsUpdate)
 
     $action = if ($IsUpdate) { "updated" } else { "installed" }
+    $successMessage = ("     ivLyrics has been $action successfully!").PadRight(50)
 
     $box = @"
 
     +--------------------------------------------------+
     |                                                  |
-    |     ivLyrics has been $action successfully!     |
+    |$successMessage|
     |                                                  |
     |     Spotify will now open with ivLyrics.         |
     |                                                  |

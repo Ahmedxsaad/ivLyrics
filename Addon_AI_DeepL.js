@@ -93,13 +93,16 @@
             return function DeepLSettings() {
                 const [key, setKey] = React.useState(getKey());
                 return React.createElement('div', { className: 'ai-addon-settings' },
-                    React.createElement('label', null, t('settings.aiProviders.apiKey', 'API Key')),
-                    React.createElement('input', { type: 'password', autoComplete: 'off', value: key,
-                        onChange: event => {
-                            setKey(event.target.value);
-                            window.AIAddonManager.setAddonSetting(ID, 'api-key', event.target.value.trim());
-                        } }),
-                    React.createElement('small', null, 'DeepL API Free / Pro')
+                    React.createElement('div', { className: 'ai-addon-setting' },
+                        React.createElement('label', { htmlFor: 'ivlyrics-deepl-api-key' }, t('settings.aiProviders.apiKey', 'API Key')),
+                        React.createElement('input', { id: 'ivlyrics-deepl-api-key', type: 'password', autoComplete: 'off', value: key,
+                            'aria-describedby': 'ivlyrics-deepl-api-key-help', spellCheck: false,
+                            onChange: event => {
+                                setKey(event.target.value);
+                                window.AIAddonManager.setAddonSetting(ID, 'api-key', event.target.value.trim());
+                            } }),
+                        React.createElement('small', { id: 'ivlyrics-deepl-api-key-help' }, 'DeepL API Free / Pro')
+                    )
                 );
             };
         },

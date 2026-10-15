@@ -88,6 +88,8 @@ window.LANG_DE = {
       "resetConfirm": "{count} Einstellungen auf den Standardwert zurücksetzen?"
     },
     "controls": {
+      "colorPickerAriaLabel": "{name} Farbauswahl",
+      "colorHexAriaLabel": "{name} HEX-Wert",
       "scrubHint": "Zum Anpassen seitlich ziehen · Shift für größere Schritte · {fineKey} für feinere Schritte"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_DE = {
       "joinDiscord": "Discord-Server beitreten"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "API-Anfrageprotokoll ({count})",
+        "empty": "Noch keine API-Anfragen. Spiele einen Titel ab, um sie hier anzuzeigen.",
+        "summary": "Gesamt: {total} · Im Cache: {cached}",
+        "unknownTime": "Zeit nicht verfügbar",
+        "request": "Anfrage:",
+        "response": "Antwort:",
+        "error": "Fehler:",
+        "status": {
+          "success": "Erfolgreich",
+          "error": "Fehler",
+          "pending": "Ausstehend",
+          "cached": "Im Cache"
+        }
+      },
       "title": "Debug-Info",
       "subtitle": "Informationen für Fehlerberichte an den Entwickler",
       "currentTrack": "Aktueller Track",

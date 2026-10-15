@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const source = readFileSync(new URL('../Settings.js', import.meta.url), 'utf8');
 const code = source.slice(source.indexOf('const KARAOKE_FILL_CURVE_DEFAULT_POINTS'), source.indexOf('const SETTINGS_HOTKEY_LABELS'));
 const elements = node => Array.isArray(node) ? node.flatMap(elements) : node?.props ? [node, ...elements(node.children)] : [];
-function harness() {
+function harness(changed = false) {
   const hooks = [], effects = [], listeners = new Map(), commits = [];
   let cursor = 0;
   const useRef = initial => { const i = cursor++; return hooks[i] ??= { current: initial }; };
@@ -27,6 +27,7 @@ function harness() {
     react: { createElement: (type, props, ...children) => ({ type, props: props || {}, children }) },
     window: { addEventListener: (type, cb) => listeners.set(type, cb), removeEventListener: type => listeners.delete(type) },
     getSettingsText: (_, fallback) => fallback,
+    isSettingChanged: () => changed,
   });
   vm.runInContext(code + '\nglobalThis.render = ConfigKaraokeFillCurveEditor;', context);
   const render = (props = {}) => {
@@ -42,6 +43,11 @@ function harness() {
     unmount() { hooks.forEach(hook => hook?.cleanup?.()); },
   };
 }
+
+test('a changed fill curve marks its setting row for the shared blue label style', () => {
+  assert.match(harness(true).render()[0].props.className, /\bis-changed\b/);
+  assert.doesNotMatch(harness(false).render()[0].props.className, /\bis-changed\b/);
+});
 
 test('curve dragging commits only on release by the initiating pointer', () => {
   const h = harness();

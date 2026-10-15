@@ -88,6 +88,8 @@ window.LANG_EN = {
       "resetConfirm": "Reset {count} settings to their defaults?"
     },
     "controls": {
+      "colorPickerAriaLabel": "{name} color picker",
+      "colorHexAriaLabel": "{name} HEX value",
       "scrubHint": "Drag sideways to adjust · Shift for bigger steps · {fineKey} for finer steps"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_EN = {
       "joinDiscord": "Join Discord Server"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "API request logs ({count})",
+        "empty": "No API requests yet. Play a track to see them here.",
+        "summary": "Total: {total} · Cached: {cached}",
+        "unknownTime": "Time unavailable",
+        "request": "Request:",
+        "response": "Response:",
+        "error": "Error:",
+        "status": {
+          "success": "Success",
+          "error": "Error",
+          "pending": "Pending",
+          "cached": "Cached"
+        }
+      },
       "title": "Debug Info",
       "subtitle": "Information to send to developer when reporting bugs",
       "currentTrack": "Current Track Info",

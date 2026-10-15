@@ -67,3 +67,32 @@ test('missing key, quota errors and malformed partial responses fail without cla
     await assert.rejects(harness(() => Response.json({}, { status: 456 })).addon.testConnection(), /456/);
     await assert.rejects(harness(() => Response.json({ translations: [] })).addon.testConnection(), /Invalid/);
 });
+
+test('DeepL settings use the shared field row with an associated password label and help text', () => {
+    let addon;
+    const saved = [];
+    const React = {
+        createElement: (type, props, ...children) => ({ type, props: { ...props, children } }),
+        useState: value => [value, () => {}],
+    };
+    const window = { AIAddonManager: {
+        register: value => { addon = value; },
+        getAddonSetting: () => 'fixture-key',
+        setAddonSetting: (...args) => saved.push(args),
+    } };
+    vm.runInNewContext(readFileSync(new URL('../Addon_AI_DeepL.js', import.meta.url), 'utf8'), {
+        window, Spicetify: { React }, TextEncoder, setTimeout,
+    });
+    const tree = addon.getSettingsUI()();
+    const row = tree.props.children[0];
+    assert.equal(row.props.className, 'ai-addon-setting');
+    const [label, input, help] = row.props.children;
+    assert.equal(label.props.htmlFor, input.props.id);
+    assert.equal(input.props['aria-describedby'], help.props.id);
+    assert.equal(input.props.type, 'password');
+    assert.equal(input.props.value, 'fixture-key');
+    input.props.onChange({ target: { value: ' new-key ' } });
+    assert.equal(saved.length, 1);
+    assert.equal(saved[0][1], 'api-key');
+    assert.equal(saved[0][2], 'new-key');
+});

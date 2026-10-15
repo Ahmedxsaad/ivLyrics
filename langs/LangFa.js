@@ -88,6 +88,8 @@ window.LANG_FA = {
       "resetConfirm": "{count} تنظیم به مقدار پیش‌فرض برگردد؟"
     },
     "controls": {
+      "colorPickerAriaLabel": "انتخابگر رنگ {name}",
+      "colorHexAriaLabel": "مقدار HEX {name}",
       "scrubHint": "برای تنظیم به چپ و راست بکشید · Shift برای تغییر سریع‌تر · {fineKey} برای تنظیم دقیق"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_FA = {
       "joinDiscord": "عضویت در سرور Discord"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "گزارش درخواست‌های API ({count})",
+        "empty": "هنوز درخواست API ثبت نشده است. برای نمایش درخواست‌ها در اینجا، آهنگی پخش کنید.",
+        "summary": "مجموع: {total} · از حافظهٔ نهان: {cached}",
+        "unknownTime": "زمان در دسترس نیست",
+        "request": "درخواست:",
+        "response": "پاسخ:",
+        "error": "خطا:",
+        "status": {
+          "success": "موفق",
+          "error": "خطا",
+          "pending": "در انتظار",
+          "cached": "از حافظهٔ نهان"
+        }
+      },
       "title": "اطلاعات دیباگ",
       "subtitle": "اطلاعات برای گزارش باگ به توسعه‌دهنده",
       "currentTrack": "اطلاعات آهنگ فعلی",

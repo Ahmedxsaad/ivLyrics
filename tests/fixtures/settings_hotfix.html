@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ivLyrics · offline production Settings</title>
+  <link rel="icon" href="data:,">
+  <script>
+    // Install the network guard before loading any app code. No host credentials
+    // or Spotify storage are read; this origin has its own in-memory settings.
+    const fixtureParams = new URLSearchParams(location.search);
+    const fixtureState = window.__settingsFixtureState = {
+      errors: [], blockedNetwork: [], calls: [], toasts: [], configEvents: [], ready: false,
+    };
+    const fixtureRecord = (type, detail = {}) => {
+      const entry = { type, ...detail };
+      fixtureState.calls.push(entry);
+      return entry;
+    };
+    const fixtureBlock = (type, input) => {
+      // Deliberately do not log request headers, bodies, tokens or API keys.
+      let pathname = "";
+      try { pathname = new URL(String(input?.url || input || ""), location.href).pathname; } catch {}
+      fixtureState.blockedNetwork.push({ type, pathname });
+      return new Error(`Offline Settings fixture blocked ${type}: ${pathname}`);
+    };
+    window.addEventListener("error", event => fixtureState.errors.push({
+      message: event.message || "Resource failed to load", source: event.filename || event.target?.src || "", line: event.lineno || 0,
+    }));
+    window.addEventListener("unhandledrejection", event => fixtureState.errors.push({ message: String(event.reason?.stack || event.reason) }));
+    const fixtureNativeFetch = window.fetch.bind(window);
+    window.fetch = (input, options) => {
+      const url = new URL(String(input?.url || input), location.href);
+      if (url.origin === location.origin && ["/health", "/fixture-fonts.css"].includes(url.pathname)) return fixtureNativeFetch(input, options);
+      return Promise.reject(fixtureBlock("fetch", input));
+    };
+    window.ivLyricsFetch = (...args) => Promise.reject(fixtureBlock("ivLyricsFetch", args[0]));
+    window.XMLHttpRequest = class { open(_method, url) { throw fixtureBlock("XMLHttpRequest", url); } };
+    window.WebSocket = class { constructor(url) { throw fixtureBlock("WebSocket", url); } };
+    window.EventSource = class { constructor(url) { throw fixtureBlock("EventSource", url); } };
+    Object.defineProperty(navigator, "sendBeacon", { configurable: true, value: url => { fixtureBlock("sendBeacon", url); return false; } });
+    window.open = url => { fixtureRecord("open", { pathname: (() => { try { return new URL(url, location.href).pathname; } catch { return ""; } })() }); return null; };
+    document.addEventListener("click", event => {
+      const link = event.target.closest?.("a[href]");
+      if (link && new URL(link.href, location.href).origin !== location.origin) {
+        event.preventDefault(); fixtureBlock("link", link.href);
+      }
+    }, true);
+    // Production font loading remains callable, but resolves to this local stub.
+    const fixtureLinkHref = Object.getOwnPropertyDescriptor(HTMLLinkElement.prototype, "href");
+    Object.defineProperty(HTMLLinkElement.prototype, "href", {
+      configurable: true, get: fixtureLinkHref.get,
+      set(value) {
+        const url = new URL(value, location.href);
+        fixtureLinkHref.set.call(this, url.origin === location.origin ? value : "/fixture-fonts.css");
+      },
+    });
+  </script>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    /* Host shell only. Settings layout, controls, responsive rules and themes
+       come from the current production SettingsStyles.js and style.css. */
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #101012; }
+    #fixture { width: 100vw; height: 100dvh; }
+    /* The parent requested viewport-sized content for DOM measurements. This
+       changes only the host shell, not any settings layout or control rule. */
+    #ivLyrics-settings-overlay { padding: 0; }
+    #ivLyrics-settings-overlay > .ivlyrics-settings-modal-shell:has(> #ivLyrics-config-container) {
+      width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh;
+    }
+    #fixture-status { position: fixed; inset: 20px; color: #ededef; font: 14px system-ui; }
+    #fixture-status[hidden] { display: none; }
+  </style>
+  <script src="/react.js"></script>
+  <script src="/react-dom.js"></script>
+  <script>
+    const react = React, reactDOM = ReactDOM, APP_NAME = "ivLyrics";
+    const { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect, useReducer } = React;
+    const thresholdSizeLimit = { min: 0, max: 100, step: 5 };
+    const fixtureStore = new Map();
+    const fixtureLanguage = fixtureParams.get("language") || fixtureParams.get("lang") || "en";
+    const fixtureTheme = fixtureParams.get("theme") === "light" ? "light" : "dark";
+    // Only this loopback origin's theme/language preference is persisted.
+    localStorage.removeItem("ivLyrics:return-to-settings");
+    localStorage.setItem("ivLyrics:visual:language", fixtureLanguage);
+    localStorage.setItem("ivLyrics:settings-ui-theme", fixtureTheme);
+    document.documentElement.lang = fixtureLanguage;
+    fixtureStore.set("ivLyrics:visual:language", fixtureLanguage);
+    fixtureStore.set("ivLyrics:settings-ui-theme", fixtureTheme);
+    const StorageManager = {
+      getItem: key => fixtureStore.get(key) ?? null,
+      setItem(key, value) { fixtureStore.set(key, String(value)); fixtureRecord("storage:set", { key }); },
+      removeItem(key) { fixtureStore.delete(key); fixtureRecord("storage:remove", { key }); },
+      get(key, fallback = true) { const value = fixtureStore.get(key); return value == null ? fallback : value === "true"; },
+      getPersisted: key => fixtureStore.get(key) ?? null,
+      setPersisted(key, value) { this.setItem(key, value); },
+      saveConfig(key, value) { this.setItem(`ivLyrics:visual:${key}`, value); },
+      exportConfig: () => Object.fromEntries(fixtureStore),
+      exportCloudConfig: () => ({}),
+      importConfig: () => { fixtureRecord("importConfig"); return true; },
+      importCloudConfig: () => { fixtureRecord("importCloudConfig"); return true; },
+    };
+    window.StorageManager = StorageManager;
+    const fixtureTrack = {
+      uri: "spotify:track:offlineSettingsFixture", name: "Offline Settings Song",
+      artists: [{ name: "Fixture Artist" }], album: { name: "Fixture Album", images: [] },
+      duration: { milliseconds: 180000 }, duration_ms: 180000,
+      metadata: { title: "Offline Settings Song", artist_name: "Fixture Artist", album_title: "Fixture Album", duration: "180000" },
+    };
+    const fixtureNoop = (..._args) => {};
+    const fixtureAsync = async (..._args) => null;
+    const fixtureEscapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+    const fixtureClipboard = { copy: async () => { fixtureRecord("clipboard:copy"); } };
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText: fixtureClipboard.copy } });
+    window.Spicetify = {
+      React, ReactDOM, Config: { version: "offline-fixture" },
+      LocalStorage: { get: StorageManager.getItem, set: StorageManager.setItem.bind(StorageManager), remove: StorageManager.removeItem.bind(StorageManager) },
+      Player: {
+        data: { item: fixtureTrack, isPaused: true, context: { metadata: {} } },
+        getProgress: () => 12000, getDuration: () => 180000, isPlaying: () => false,
+        getRepeat: () => 0, getVolume: () => 0.5, addEventListener: fixtureNoop, removeEventListener: fixtureNoop,
+      },
+      Platform: { ClipboardAPI: fixtureClipboard, History: { push: fixtureNoop, replace: fixtureNoop, location: { pathname: "/ivLyrics" } },
+        Session: { username: "offline-fixture" }, LocalStorageAPI: { getItem: StorageManager.getItem, setItem: StorageManager.setItem.bind(StorageManager) } },
+      CosmosAsync: { get: async url => { throw fixtureBlock("CosmosAsync", url); }, post: async url => { throw fixtureBlock("CosmosAsync", url); } },
+      SVGIcons: { check: '<path d="m4 8 3 3 6-6" fill="none" stroke="currentColor" stroke-width="2"/>',
+        info: '<circle cx="8" cy="8" r="6" fill="none" stroke="currentColor"/>' },
+      showNotification: message => fixtureState.toasts.push(String(message)),
+    };
+    const Utils = {
+      currentVersion: "offline-source", detectPlatform: () => "macOS (offline fixture)",
+      extractTrackId: uri => String(uri).split(":").pop(), getTranslationCacheId: () => "offline-fixture",
+      getUserHash: async () => null, getAuthToken: () => null, isDiscordUserHash: () => false,
+      getApiHeaders: () => ({}), getAccountApiBase: () => "/offline-account",
+      fetchAccountProfile: async () => ({ authenticated: false, userHash: null, discord: null }),
+      fetchDiscordSupportTier: fixtureAsync,
+      fetchSyncCreatorPrivacy: async () => ({ success: true, private: false }),
+      setSyncCreatorPrivacy: async value => ({ success: true, private: value }),
+      setCachedDiscordSupportTier: fixtureNoop, logoutDiscordSession: fixtureAsync,
+      resetUserHash: fixtureAsync, startDiscordLogin: async () => { throw new Error("Login is disabled in the offline fixture"); },
+      checkForUpdates: async () => ({ updateAvailable: false, currentVersion: "offline-source", latestVersion: "offline-source" }),
+      escapeHtml: fixtureEscapeHtml, escapeAttribute: fixtureEscapeHtml,
+      sanitizeHttpUrl: value => /^https?:\/\//.test(String(value)) ? String(value) : "",
+      renderSafeMarkdownToHTML: value => fixtureEscapeHtml(value).replace(/\n/g, "<br>"),
+      requestSaveFileTarget: fixtureAsync, saveBlobAs: fixtureAsync, openUpdaterProtocol: fixtureNoop,
+      saveCloudSettings: fixtureAsync, fetchCloudSettings: fixtureAsync, deleteCloudSettings: fixtureAsync, restoreAccountSettings: fixtureAsync,
+    };
+    const Toast = Object.fromEntries(["show", "success", "error", "info", "warning"].map(type => [type, (message, options) => {
+      fixtureState.toasts.push({ type, message: String(message), hasAction: !!options?.action });
+    }]));
+    const lyricContainerUpdate = () => fixtureRecord("lyricContainerUpdate");
+    const reloadLyrics = (...args) => fixtureRecord("reloadLyrics", { args });
+    const LyricsCache = {
+      getStats: async () => ({ count: 3, totalEntries: 3, totalSize: 4096, lyrics: 2, translations: 1,
+        byType: { lyrics: 2, translation: 1 }, oldestEntry: "2026-10-15T00:00:00.000Z" }),
+      clearAll: fixtureAsync, clearTrack: fixtureAsync,
+    };
+    const VideoHelperService = { checkHealth: async () => ({ available: false, connected: false }), openDownloadPage: fixtureNoop };
+    const DBExportManager = { exportAllDBs: fixtureAsync, importAllDBs: fixtureAsync };
+    Object.assign(window, { Utils, Toast, LyricsCache, VideoHelperService, DBExportManager });
+    window.OverlaySender = { enabled: false, trimMetadata: false, isConnected: false, port: 15000,
+      setSettingsOpen: fixtureNoop, getDownloadUrl: () => "/offline-overlay" };
+    window.lyricsHelperSender = { enabled: false, connected: false, isConnected: false };
+    window.SyncDataService = { clearCache: fixtureNoop, getOpenDbCacheInfo: () => ({ ready: true, count: 10,
+      trackCount: 10, version: "offline-fixture", updatedAt: "2026-10-15T00:00:00.000Z" }),
+      refreshOpenDbCache: async () => ({ ready: true, count: 10 }) };
+    window.Translator = { clearAllMemoryCache: fixtureNoop, clearAllInflightRequests: fixtureNoop,
+      clearMemoryCache: fixtureNoop, clearInflightRequests: fixtureNoop };
+    window.CacheManager = { clear: fixtureNoop, clearByUri: fixtureNoop };
+    window.LyricsService = { clearLyricsSnapshot: fixtureNoop };
+    function fixtureManager() {
+      const addons = new Map(), settings = new Map(), enabled = new Map(), capabilities = new Map(), listeners = new Map();
+      let order = [], style = "natural", retryCount = 2;
+      const emit = (event, data) => listeners.get(event)?.forEach(listener => listener(data));
+      return {
+        register(addon) { addons.set(addon.id, addon); order.push(addon.id); enabled.set(addon.id, true); },
+        getAddons: () => [...addons.values()], getAddon: id => addons.get(id),
+        getProviderOrder: () => [...order], setProviderOrder: next => { order = [...next]; },
+        isProviderEnabled: id => enabled.get(id) !== false, setProviderEnabled: (id, value) => enabled.set(id, value),
+        isCapabilityEnabled: (id, cap) => !!addons.get(id)?.supports?.[cap] && capabilities.get(`${id}:${cap}`) !== false,
+        setCapabilityEnabled: (id, cap, value) => capabilities.set(`${id}:${cap}`, value),
+        getAddonSetting: (id, key, fallback = "") => settings.get(`${id}:${key}`) ?? fallback,
+        setAddonSetting(id, key, value) { settings.set(`${id}:${key}`, value); fixtureRecord("addonSetting", { id, key }); },
+        getEnabledProviders: () => order.map(id => addons.get(id)).filter(addon => enabled.get(addon.id) !== false),
+        getEnabledProvidersFor(cap) { return this.getEnabledProviders().filter(addon => this.isCapabilityEnabled(addon.id, cap)); },
+        getTranslationStyle: () => style, setTranslationStyle(value) { style = value; emit("translation:style:changed", { style }); return style; },
+        getProviderRetryCount: () => retryCount, setProviderRetryCount(value) { retryCount = Number(value); emit("provider:retry-count:changed", { retryCount }); return retryCount; },
+        on(event, listener) { if (!listeners.has(event)) listeners.set(event, new Set()); listeners.get(event).add(listener); return () => listeners.get(event)?.delete(listener); },
+        isPreferSyncDataProviderEnabled: () => CONFIG.visual["prefer-sync-data-provider"] !== false,
+        isPreferLyricsTypeOverProviderOrderEnabled: () => CONFIG.visual["prefer-lyrics-type-over-provider-order"] !== false,
+        setPreferSyncDataProviderEnabled: value => { CONFIG.visual["prefer-sync-data-provider"] = value; },
+        setPreferLyricsTypeOverProviderOrderEnabled: value => { CONFIG.visual["prefer-lyrics-type-over-provider-order"] = value; },
+        _triggerLyricsRefresh: fixtureNoop,
+      };
+    }
+    window.AIAddonManager = fixtureManager();
+    window.LyricsAddonManager = fixtureManager();
+    window.LyricsAddonManager.register({ id: "lrclib", name: "LrcLib", author: "offline fixture", version: "1.0.0",
+      description: { en: "Offline provider data", ko: "오프라인 제공자 데이터" }, supports: { karaoke: false, synced: true, unsynced: true } });
+    // The playback-only KaraokeLine is an explicit host stub. All settings controls,
+    // preview typography variables and break-icon markup are production code.
+    const KaraokeLine = ({ line }) => react.createElement("span", { className: "karaoke-line", "data-fixture-playback-stub": "true" }, line.text);
+    // openConfig uses the Spotify host's render/unmount contract. Adapt that
+    // contract to real React 18 roots without changing the production source.
+    const fixtureReactRoots = new WeakMap();
+    window.ivLyricsEnsureReactDOM = () => ({
+      render(element, container) {
+        let root = fixtureReactRoots.get(container);
+        if (!root) { root = ReactDOM.createRoot(container); fixtureReactRoots.set(container, root); }
+        ReactDOM.flushSync(() => root.render(element));
+      },
+      unmountComponentAtNode(container) {
+        const root = fixtureReactRoots.get(container);
+        if (!root) return false;
+        ReactDOM.flushSync(() => root.unmount());
+        fixtureReactRoots.delete(container);
+        return true;
+      },
+    });
+    window.addEventListener("ivLyrics", event => {
+      if (event.detail?.type === "config") fixtureState.configEvents.push({ ...event.detail });
+    });
+  </script>
+  <!-- LANGUAGE_SCRIPTS -->
+  <script src="/I18n.js"></script>
+  <script src="/fixture-config.js"></script>
+  <script src="/fixture-preview-helpers.js"></script>
+  <script src="/SettingsStyles.js"></script>
+  <script src="/Addon_AI_DeepL.js"></script>
+  <script src="/Settings.js"></script>
+</head>
+<body>
+  <div id="fixture"><p id="fixture-status">Loading the production Settings window…</p></div>
+  <script>
+    Object.assign(CONFIG.visual, SETTINGS_FALLBACK_DEFAULT_VALUES, { language: fixtureLanguage });
+    const fixtureSeed = fixtureParams.get("seed") !== "defaults" && fixtureParams.get("changed") !== "0";
+    if (fixtureSeed) Object.assign(CONFIG.visual, {
+      "original-font-family": "Georgia", "original-font-size": 52, "translation-font-size": 24,
+      "lines-before": 0, "lines-after": 10,
+    });
+    for (const [param, key] of [["before", "lines-before"], ["after", "lines-after"]]) {
+      if (fixtureParams.has(param)) CONFIG.visual[key] = Math.max(0, Math.min(10, Number(fixtureParams.get(param)) || 0));
+    }
+    for (const [key, value] of Object.entries(CONFIG.visual)) fixtureStore.set(`ivLyrics:visual:${key}`, String(value));
+    // Mirror LyricsService.js ApiTracker's complete in-memory contract. Cached
+    // hits intentionally use epoch startTime/endTime, status 'cached', 0ms and
+    // [CACHE] endpoints, including long cache keys for overflow measurements.
+    const fixtureLogs = Array.from({ length: 5 }, (_, index) => ({
+      id: 1000 + index, category: "youtube", status: "cached", cached: true,
+      startTime: Date.UTC(2026, 9, 16, 3, 4, 5) + index * 1000,
+      endTime: Date.UTC(2026, 9, 16, 3, 4, 5) + index * 1000,
+      duration: 0, error: null, request: null,
+      endpoint: `[CACHE] youtube:offlineSettingsFixture:${index + 1}:artist=Fixture%20Artist&title=Offline%20Settings%20Song&query=offline_settings_fixture_cached_video_search_result`,
+      response: { videoId: `offline-video-${index + 1}`, title: "Offline Settings Song", cached: true },
+    }));
+    window.ApiTracker = {
+      _logs: fixtureLogs, _listeners: [], _maxLogs: 100, _currentTrackId: "offlineSettingsFixture",
+      getLogs() { return [...this._logs]; },
+      getLogsByCategory(category) { return this._logs.filter(log => log.category === category); },
+      addListener(listener) {
+        this._listeners.push(listener);
+        return () => { this._listeners = this._listeners.filter(item => item !== listener); };
+      },
+      removeListener(listener) { this._listeners = this._listeners.filter(item => item !== listener); },
+      _notifyListeners() { this._listeners.forEach(listener => { try { listener(this._logs); } catch {} }); },
+      clear() { this._logs = []; this._notifyListeners(); },
+      setCurrentTrack(trackId) {
+        if (this._currentTrackId !== trackId) { this._currentTrackId = trackId; this.clear(); }
+      },
+      logRequest(category, endpoint, request = null) {
+        const entry = { id: Date.now() + Math.random(), category, endpoint, request, response: null,
+          status: "pending", startTime: Date.now(), endTime: null, duration: null, error: null, cached: false };
+        this._logs.push(entry);
+        if (this._logs.length > this._maxLogs) this._logs.shift();
+        this._notifyListeners(); return entry.id;
+      },
+      logResponse(id, response, status = "success", error = null, cached = false) {
+        const entry = [...this._logs].reverse().find(log => log.id === id);
+        if (!entry) return;
+        Object.assign(entry, { response, status, error, cached, endTime: Date.now() });
+        entry.duration = entry.endTime - entry.startTime; this._notifyListeners();
+      },
+      logCacheHit(category, cacheKey, data) {
+        const time = Date.now();
+        this._logs.push({ id: time + Math.random(), category, endpoint: `[CACHE] ${cacheKey}`, request: null,
+          response: data, status: "cached", startTime: time, endTime: time, duration: 0, error: null, cached: true });
+        if (this._logs.length > this._maxLogs) this._logs.shift();
+        this._notifyListeners();
+      },
+      getSummary() {
+        const summary = { total: this._logs.length, pending: 0, success: 0, error: 0, cached: 0, byCategory: {} };
+        for (const log of this._logs) {
+          if (["pending", "success", "error"].includes(log.status)) summary[log.status]++;
+          if (log.cached) summary.cached++;
+          const category = summary.byCategory[log.category] ||= { total: 0, success: 0, error: 0, cached: 0 };
+          category.total++;
+          if (["success", "error"].includes(log.status)) category[log.status]++;
+          if (log.cached) category.cached++;
+        }
+        return summary;
+      },
+    };
+    const fixtureLineCount = Math.max(0, Math.min(10, Number(fixtureParams.get("syncCount") ?? 10) || 0));
+    window.CACHE = { [fixtureTrack.uri]: { provider: "lrclib", synced: Array.from({ length: fixtureLineCount }, (_, index) => ({
+      text: `Offline lyric ${index + 1}`, startTime: index * 3000, endTime: (index + 1) * 3000,
+    })), unsynced: [{ text: "Offline lyric" }] } };
+
+    const fixtureRect = element => {
+      if (!element) return null;
+      const rect = element.getBoundingClientRect(), style = getComputedStyle(element);
+      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, right: rect.right, bottom: rect.bottom,
+        clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, clientHeight: element.clientHeight, scrollHeight: element.scrollHeight,
+        display: style.display, order: style.order, gap: style.gap, gridTemplateColumns: style.gridTemplateColumns,
+        marginLeft: style.marginLeft, marginRight: style.marginRight, text: element.textContent.trim().slice(0, 160) };
+    };
+    const fixtureTabs = ["general", "lyrics-providers", "ai-providers", "appearance", "performance", "lyrics", "fullscreen", "nowplaying", "advanced", "debug", "about"];
+    const fixtureOpen = (tab = "general", settingKey = null) => {
+      if (!fixtureTabs.includes(tab)) throw new Error(`Unknown production Settings tab: ${tab}`);
+      window.ivLyricsCloseConfig?.(true);
+      window.ivLyricsOpenConfig({ initialTab: tab, initialSettingKey: settingKey });
+    };
+    window.settingsFixture = window.__settingsFixture = {
+      state: fixtureState, tabs: fixtureTabs, defaults: FIXTURE_CONFIG_DEFAULTS, config: CONFIG,
+      open: fixtureOpen, navigate: fixtureOpen,
+      setConfig(values) {
+        for (const [name, value] of Object.entries(values)) {
+          CONFIG.visual[name] = value; StorageManager.saveConfig(name, value);
+          window.dispatchEvent(new CustomEvent("ivLyrics", { detail: { type: "config", name, value } }));
+        }
+        window.dispatchEvent(new CustomEvent("ivLyrics:settings-refresh"));
+      },
+      metrics(selector) {
+        const root = document.getElementById("ivLyrics-config-container");
+        const select = value => [...(root || document).querySelectorAll(value)].map(fixtureRect);
+        return { viewport: { width: innerWidth, height: innerHeight, dpr: devicePixelRatio },
+          language: I18n.getCurrentLanguage(), theme: root?.dataset.uiTheme,
+          tab: root?.querySelector(".tab-content.active")?.dataset.tabId,
+          document: { width: document.documentElement.clientWidth, scrollWidth: document.documentElement.scrollWidth },
+          root: fixtureRect(root), overlay: fixtureRect(document.getElementById("ivLyrics-settings-overlay")),
+          content: select(".settings-content"), topbar: select(".settings-topbar"),
+          changed: select(".settings-changed-chip"), themes: select(".settings-theme-control"),
+          rows: select(selector || "[data-setting-key]"), errors: [...fixtureState.errors],
+          blockedNetwork: [...fixtureState.blockedNetwork] };
+      },
+      elements: selector => [...document.querySelectorAll(selector)].map(fixtureRect),
+      setLogs(logs) { window.ApiTracker._logs = [...logs]; window.ApiTracker._notifyListeners(); },
+      setSyncCount(count) { window.CACHE[fixtureTrack.uri].synced = Array.from({ length: Math.max(0, Math.min(10, Number(count) || 0)) }, (_, index) => ({ text: `Offline lyric ${index + 1}`, startTime: index * 3000 })); },
+    };
+    try {
+      fixtureOpen(fixtureParams.get("tab") || "general", fixtureParams.get("setting"));
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        fixtureState.ready = !!document.getElementById("ivLyrics-config-container");
+        document.getElementById("fixture-status").hidden = fixtureState.ready;
+        document.documentElement.dataset.fixtureReady = String(fixtureState.ready);
+      }));
+    } catch (error) {
+      fixtureState.errors.push({ message: error.stack });
+      document.getElementById("fixture-status").textContent = error.stack;
+    }
+  </script>
+</body>
+</html>

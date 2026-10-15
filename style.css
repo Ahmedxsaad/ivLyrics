@@ -12783,6 +12783,11 @@ html.is-lp-view-exit::view-transition-new(root) {
   filter: brightness(0.94);
 }
 
+.ivlyrics-sync-creator-shell .sync-creator-granularity button:focus:not(:focus-visible) {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
 .ivlyrics-sync-creator-shell button:focus-visible {
   box-shadow: 0 0 0 3px rgba(var(--iv-sync-accent-rgb, 30, 215, 96), 0.34);
 }

@@ -88,6 +88,8 @@ window.LANG_RU = {
       "resetConfirm": "Сбросить настройки ({count}) до значений по умолчанию?"
     },
     "controls": {
+      "colorPickerAriaLabel": "Выбор цвета {name}",
+      "colorHexAriaLabel": "HEX-значение {name}",
       "scrubHint": "Перетащите вбок, чтобы изменить · Shift — быстрее · {fineKey} — точнее"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_RU = {
       "joinDiscord": "Присоединиться к Discord"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "Журнал запросов API ({count})",
+        "empty": "Запросов API пока нет. Включите трек, чтобы увидеть их здесь.",
+        "summary": "Всего: {total} · Из кэша: {cached}",
+        "unknownTime": "Время недоступно",
+        "request": "Запрос:",
+        "response": "Ответ:",
+        "error": "Ошибка:",
+        "status": {
+          "success": "Успешно",
+          "error": "Ошибка",
+          "pending": "Ожидание",
+          "cached": "Из кэша"
+        }
+      },
       "title": "Инфо для отладки",
       "subtitle": "Информация для сообщения о багах разработчику",
       "currentTrack": "Текущий трек",

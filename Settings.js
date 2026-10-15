@@ -2851,6 +2851,35 @@ const DebugInfoPanel = () => {
   const [apiLogs, setApiLogs] = useState([]);
   const [copied, setCopied] = useState(false);
   const [showApiDetails, setShowApiDetails] = useState({});
+  const apiLogIds = useRef({ nextId: 0, missingIds: new WeakMap() });
+
+  const getApiLogId = (log) => {
+    if (log.id !== null && log.id !== undefined) {
+      return `debug-api-${typeof log.id}-${encodeURIComponent(String(log.id))}`;
+    }
+    // ApiTracker retains each entry object when updating or reordering logs.
+    // Object identity keeps id-less entries independent without index keys.
+    const ids = apiLogIds.current;
+    if (!ids.missingIds.has(log)) {
+      ids.missingIds.set(log, `debug-api-missing-${++ids.nextId}`);
+    }
+    return ids.missingIds.get(log);
+  };
+
+  const getApiLogDate = (log) => {
+    for (const value of [log.startTime, log.timestamp, log.endTime]) {
+      if (typeof value !== "number" && typeof value !== "string") continue;
+      if (typeof value === "string" && !value.trim()) continue;
+      const date = new Date(value);
+      if (Number.isFinite(date.getTime())) return date;
+    }
+    return null;
+  };
+
+  const getApiSummary = () => window.ApiTracker?.getSummary() || {
+    total: apiLogs.length,
+    cached: apiLogs.filter(log => log.cached || log.status === "cached").length
+  };
 
   // 현재 트랙 정보 및 가사 정보 수집
   const collectDebugInfo = () => {
@@ -2931,20 +2960,13 @@ const DebugInfoPanel = () => {
     setDebugInfo(collectDebugInfo());
 
     // ApiTracker에서 로그 가져오기
-    if (window.ApiTracker) {
-      setApiLogs(window.ApiTracker.getLogs());
+    const tracker = window.ApiTracker;
+    if (tracker) {
+      setApiLogs(tracker.getLogs());
 
       // 리스너 등록
       const updateLogs = (logs) => setApiLogs([...logs]);
-      window.ApiTracker.addListener(updateLogs);
-
-      return () => {
-        // 리스너 제거 (ApiTracker에 removeListener가 있다면)
-        const listenerIndex = window.ApiTracker._listeners?.indexOf(updateLogs);
-        if (listenerIndex > -1) {
-          window.ApiTracker._listeners.splice(listenerIndex, 1);
-        }
-      };
+      return tracker.addListener(updateLogs);
     }
   }, []);
 
@@ -2959,21 +2981,13 @@ const DebugInfoPanel = () => {
 
   // 전체 디버그 정보 (API 로그 포함) 생성
   const getFullDebugInfo = () => {
-    const summary = window.ApiTracker?.getSummary() || {};
     return {
       ...debugInfo,
       apiLogs: apiLogs.map(log => ({
-        category: log.category,
-        endpoint: log.endpoint,
-        request: log.request,
-        response: log.response,
-        status: log.status,
-        error: log.error,
-        duration: log.duration,
-        cached: log.cached,
-        timestamp: log.timestamp
+        ...log,
+        timestamp: getApiLogDate(log)?.toISOString() ?? null
       })),
-      apiSummary: summary
+      apiSummary: getApiSummary()
     };
   };
 
@@ -3025,7 +3039,7 @@ const DebugInfoPanel = () => {
     if (status === 'success') return '#4ade80';
     if (status === 'error') return '#ef4444';
     if (status === 'pending') return '#fbbf24';
-    return '#888';
+    return 'var(--text-3, #888)';
   };
 
   if (!debugInfo) {
@@ -3104,17 +3118,24 @@ const DebugInfoPanel = () => {
       )
     );
 
-  const renderDebugApiLogs = () =>
+  const renderDebugApiLogs = () => {
+    const summary = getApiSummary();
+    const statusLabels = {
+      success: I18n.t("settingsAdvanced.debugTab.apiLogs.status.success"),
+      error: I18n.t("settingsAdvanced.debugTab.apiLogs.status.error"),
+      pending: I18n.t("settingsAdvanced.debugTab.apiLogs.status.pending"),
+      cached: I18n.t("settingsAdvanced.debugTab.apiLogs.status.cached")
+    };
     // API 요청 로그 섹션
-    react.createElement(
+    return react.createElement(
       "div",
       { className: "debug-info-section" },
       react.createElement("div", {
         className: "debug-info-section-label debug-info-section-label-row"
       },
-        react.createElement("span", null, `API 요청 로그 (${apiLogs.length})`),
-        window.ApiTracker && react.createElement("span", { className: "debug-info-inline-meta" },
-          `Total: ${window.ApiTracker.getSummary()?.totalRequests || 0} requests`
+        react.createElement("span", null, I18n.t("settingsAdvanced.debugTab.apiLogs.title", { count: apiLogs.length })),
+        react.createElement("span", { className: "debug-info-inline-meta" },
+          I18n.t("settingsAdvanced.debugTab.apiLogs.summary", { total: summary.total, cached: summary.cached })
         )
       ),
       react.createElement("div", {
@@ -3123,78 +3144,109 @@ const DebugInfoPanel = () => {
         apiLogs.length === 0
           ? react.createElement("div", {
             className: "debug-api-empty"
-          }, "아직 API 요청이 없습니다. 곡을 재생하면 여기에 표시됩니다.")
-          : apiLogs.map((log, idx) => react.createElement(
-            "div",
-            {
-              key: log.id || idx,
-              className: "debug-api-item",
-              style: {
-                marginBottom: idx < apiLogs.length - 1 ? "8px" : 0,
-                borderLeft: `2px solid ${getCategoryColor(log.category)}`
-              }
-            },
-            // 로그 헤더 (클릭 가능)
-            react.createElement(
+          }, I18n.t("settingsAdvanced.debugTab.apiLogs.empty"))
+          : apiLogs.map((log, idx) => {
+            const logId = getApiLogId(log);
+            const expanded = !!showApiDetails[logId];
+            const date = getApiLogDate(log);
+            const status = log.status === "error" || log.error ? "error"
+              : log.cached || log.status === "cached" ? "cached"
+                : log.status === "success" ? "success" : "pending";
+            return react.createElement(
               "div",
               {
-                onClick: () => toggleApiDetail(log.id),
-                className: "debug-api-header"
+                key: logId,
+                className: "debug-api-item",
+                style: {
+                  marginBottom: idx < apiLogs.length - 1 ? "8px" : 0,
+                  borderLeft: `2px solid ${getCategoryColor(log.category)}`
+                }
               },
-              react.createElement("div", { className: "debug-api-header-left" },
-                // 카테고리 뱃지
+              // 로그 헤더 (클릭 가능)
+              react.createElement(
+                "button",
+                {
+                  type: "button",
+                  id: `${logId}-header`,
+                  "aria-expanded": expanded,
+                  "aria-controls": `${logId}-details`,
+                  "aria-describedby": `${logId}-endpoint`,
+                  onClick: () => toggleApiDetail(logId),
+                  className: "debug-api-header"
+                },
+                react.createElement("span", { className: "debug-api-header-left" },
+                  // 카테고리 뱃지
+                  react.createElement("span", {
+                    className: "debug-api-category",
+                    style: {
+                      background: getCategoryColor(log.category),
+                      color: "#0f172a",
+                    }
+                  }, log.category),
+                  // 상태 표시
+                  react.createElement("span", {
+                    className: "debug-api-status",
+                    style: { color: getStatusColor(status) }
+                  }, statusLabels[status]),
+                  // 소요 시간
+                  Number.isFinite(log.duration) && log.duration >= 0 ? react.createElement("span", {
+                    className: "debug-api-duration"
+                  }, `${log.duration}ms`) : null
+                ),
+                // 타임스탬프
                 react.createElement("span", {
-                  className: "debug-api-category",
-                  style: {
-                    background: getCategoryColor(log.category),
-                    color: "#0f172a",
-                  }
-                }, log.category),
-                // 상태 표시
-                react.createElement("span", {
-                  className: "debug-api-status",
-                  style: { color: getStatusColor(log.status) }
-                }, log.cached ? "CACHED" : log.status?.toUpperCase() || "PENDING"),
-                // 소요 시간
-                log.duration && react.createElement("span", {
-                  className: "debug-api-duration"
-                }, `${log.duration}ms`)
+                  className: "debug-api-timestamp"
+                }, date ? date.toLocaleTimeString(I18n.getCurrentLanguage())
+                  : I18n.t("settingsAdvanced.debugTab.apiLogs.unknownTime"))
               ),
-              // 타임스탬프
-              react.createElement("span", {
-                className: "debug-api-timestamp"
-              }, new Date(log.timestamp).toLocaleTimeString())
-            ),
-            // 엔드포인트 URL (축약)
-            react.createElement("div", {
-              className: "debug-api-endpoint"
-            }, log.endpoint?.replace(/https?:\/\/[^/]+/, '') || '-'),
-            // 상세 정보 (토글)
-            showApiDetails[log.id] && react.createElement(
-              "div",
-              { className: "debug-api-details" },
-              // 요청 정보
-              log.request && react.createElement("div", { className: "debug-api-detail-group" },
-                react.createElement("div", {
-                  className: "debug-json-label"
-                }, "REQUEST:"),
-                react.createElement("pre", {
-                  className: "debug-json-block"
-                }, JSON.stringify(log.request, null, 2))
-              ),
-              // 응답 정보
-              log.response && react.createElement("div", null,
-                react.createElement("div", {
-                  className: "debug-json-label"
-                }, "RESPONSE:"),
-                react.createElement("pre", {
-                  className: `debug-json-block ${log.status === 'error' ? 'error' : ''}`
-                }, log.error || JSON.stringify(log.response, null, 2))
+              // 엔드포인트 URL (축약)
+              react.createElement("div", {
+                id: `${logId}-endpoint`,
+                title: log.endpoint,
+                className: "debug-api-endpoint"
+              }, log.endpoint?.replace(/https?:\/\/[^/]+/, '') || '-'),
+              // 상세 정보 (토글)
+              react.createElement(
+                "div",
+                {
+                  id: `${logId}-details`,
+                  className: "debug-api-details",
+                  role: "region",
+                  "aria-labelledby": `${logId}-header`,
+                  hidden: !expanded
+                },
+                // 요청 정보
+                expanded && log.request != null && react.createElement("div", { className: "debug-api-detail-group" },
+                  react.createElement("div", {
+                    className: "debug-json-label"
+                  }, I18n.t("settingsAdvanced.debugTab.apiLogs.request")),
+                  react.createElement("pre", {
+                    className: "debug-json-block"
+                  }, JSON.stringify(log.request, null, 2))
+                ),
+                // 응답 정보
+                expanded && log.response != null && react.createElement("div", { className: "debug-api-detail-group" },
+                  react.createElement("div", {
+                    className: "debug-json-label"
+                  }, I18n.t("settingsAdvanced.debugTab.apiLogs.response")),
+                  react.createElement("pre", {
+                    className: "debug-json-block"
+                  }, JSON.stringify(log.response, null, 2))
+                ),
+                expanded && log.error != null && react.createElement("div", { className: "debug-api-detail-group" },
+                  react.createElement("div", {
+                    className: "debug-json-label"
+                  }, I18n.t("settingsAdvanced.debugTab.apiLogs.error")),
+                  react.createElement("pre", {
+                    className: "debug-json-block error"
+                  }, typeof log.error === "string" ? log.error : JSON.stringify(log.error, null, 2))
+                )
               )
-            )
-          ))
+            );
+          })
       )
     );
+  };
 
   const renderDebugLyricsInfo = () =>
     // 가사 정보
@@ -3546,32 +3598,58 @@ const SettingsScrubField = ({
   const [draft, setDraft] = useState(null);
   const [dragging, setDragging] = useState(false);
   const currentRef = useRef(current);
+  const committedRef = useRef(current);
   const dragRef = useRef(null);
   const inputRef = useRef(null);
-  currentRef.current = current;
 
   useEffect(() => {
-    if (!dragRef.current) setCurrent(toNumber(value));
+    dragRef.current = null;
+    const next = toNumber(value);
+    committedRef.current = next;
+    currentRef.current = next;
+    setCurrent(next);
+    setDragging(false);
   }, [value]);
 
-  const emit = (next) => {
+  const showValue = (next) => {
     if (next === currentRef.current) return;
     currentRef.current = next;
     setCurrent(next);
+  };
+  const emit = (next) => {
+    if (disabled) return;
+    showValue(next);
+    if (next === committedRef.current) return;
+    committedRef.current = next;
     onChange(next);
   };
   const span = high - low || 1;
   const percent = Math.min(100, Math.max(0, ((current - low) / span) * 100));
   const finishDrag = (event) => {
     const drag = dragRef.current;
-    if (!drag || (event && event.pointerId !== drag.pointerId)) return;
+    if (!drag || (event?.pointerId !== undefined && event.pointerId !== drag.pointerId)) return;
     dragRef.current = null;
     setDragging(false);
-    if (!drag.moved && event?.type === "pointerup") {
+    if (event?.type !== "pointerup" || disabled) {
+      showValue(committedRef.current);
+    } else if (drag.moved) {
+      emit(currentRef.current);
+    } else {
       inputRef.current?.focus();
       inputRef.current?.select?.();
     }
   };
+  useEffect(() => {
+    if (disabled) finishDrag();
+  }, [disabled]);
+  useEffect(() => {
+    const cancel = () => finishDrag();
+    window.addEventListener("blur", cancel);
+    return () => {
+      window.removeEventListener("blur", cancel);
+      dragRef.current = null;
+    };
+  }, []);
   const commitDraft = (text) => {
     setDraft(null);
     const raw = String(text ?? "").replace(",", ".").trim();
@@ -3588,7 +3666,7 @@ const SettingsScrubField = ({
       style: { "--scrub-percent": `${percent}%` },
       title: `${label} · ${hint}`,
       onPointerDown: (event) => {
-        if (disabled || event.button !== 0 || document.activeElement === inputRef.current) return;
+        if (disabled || event.button !== 0 || dragRef.current || document.activeElement === inputRef.current) return;
         event.preventDefault();
         event.currentTarget.setPointerCapture?.(event.pointerId);
         dragRef.current = { x: event.clientX, last: event.clientX, value: currentRef.current, moved: false, pointerId: event.pointerId };
@@ -3603,7 +3681,9 @@ const SettingsScrubField = ({
         const speed = event.shiftKey ? 4 : event.altKey ? 0.2 : 1;
         drag.value = Math.min(high, Math.max(low, drag.value + (event.clientX - drag.last) * (span / 240) * speed));
         drag.last = event.clientX;
-        emit(snapSettingsNumber(drag.value, low, high, step));
+        // Keep high-frequency motion local; saving also refreshes every
+        // settings row and the playing lyrics, so do that once on release.
+        showValue(snapSettingsNumber(drag.value, low, high, step));
       },
       onPointerUp: finishDrag,
       onPointerCancel: finishDrag,
@@ -3804,14 +3884,28 @@ const ConfigSliderRange = ({
       : Number(min) || 0;
   };
   const [value, setValue] = useState(() => toNumber(defaultValue));
+  const currentRef = useRef(value);
+  const committedRef = useRef(value);
+  const dragRef = useRef(null);
   useEffect(() => {
-    setValue(toNumber(defaultValue));
+    dragRef.current = null;
+    const next = toNumber(defaultValue);
+    currentRef.current = next;
+    committedRef.current = next;
+    setValue(next);
   }, [defaultValue]);
 
+  const showValue = (next) => {
+    currentRef.current = next;
+    setValue(next);
+  };
   const updateValue = useCallback(
     (newValue) => {
       if (disabled) return;
+      currentRef.current = newValue;
       setValue(newValue);
+      if (newValue === committedRef.current) return;
+      committedRef.current = newValue;
       onChange(newValue);
     },
     [onChange, disabled]
@@ -3819,10 +3913,31 @@ const ConfigSliderRange = ({
 
   const handleInput = useCallback(
     (event) => {
-      updateValue(Number(event.target.value));
+      if (disabled) return;
+      const next = Number(event.target.value);
+      if (dragRef.current) showValue(next);
+      else updateValue(next);
     },
-    [updateValue]
+    [updateValue, disabled]
   );
+  const finishDrag = (event) => {
+    const drag = dragRef.current;
+    if (!drag || (event?.pointerId !== undefined && event.pointerId !== drag.pointerId)) return;
+    dragRef.current = null;
+    if (event?.type === "pointerup" && !disabled) updateValue(currentRef.current);
+    else showValue(committedRef.current);
+  };
+  useEffect(() => {
+    if (disabled) finishDrag();
+  }, [disabled]);
+  useEffect(() => {
+    const cancel = () => finishDrag();
+    window.addEventListener("blur", cancel);
+    return () => {
+      window.removeEventListener("blur", cancel);
+      dragRef.current = null;
+    };
+  }, []);
 
   const span = max - min || 1;
   const progress = Math.min(100, Math.max(0, ((value - min) / span) * 100));
@@ -3868,6 +3983,14 @@ const ConfigSliderRange = ({
         value,
         disabled,
         onChange: handleInput,
+        onPointerDown: (event) => {
+          if (disabled || event.button !== 0 || dragRef.current) return;
+          dragRef.current = { pointerId: event.pointerId };
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+        },
+        onPointerUp: finishDrag,
+        onPointerCancel: finishDrag,
+        onLostPointerCapture: finishDrag,
         "aria-label": name,
         "aria-valuetext": ariaValueFormatter
           ? ariaValueFormatter(Number(value))
@@ -3977,6 +4100,9 @@ const ConfigColorControl = ({
 }) => {
   const normalizedColor = normalizeSettingsHexColor(value);
   const isValid = Boolean(normalizedColor);
+  const ariaParams = { name: label || "" };
+  const pickerLabel = I18n.t("settingsUi.controls.colorPickerAriaLabel", ariaParams).trim();
+  const hexLabel = I18n.t("settingsUi.controls.colorHexAriaLabel", ariaParams).trim();
 
   return react.createElement(
     "div",
@@ -3993,8 +4119,8 @@ const ConfigColorControl = ({
           onCommit(nextColor);
         },
         className: "config-color-picker",
-        "aria-label": `${label || "Color"} 색상 선택`,
-        title: `${label || "Color"} 색상 선택`,
+        "aria-label": pickerLabel,
+        title: pickerLabel,
       })
     ),
     react.createElement("input", {
@@ -4009,7 +4135,7 @@ const ConfigColorControl = ({
       pattern: "^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$",
       placeholder: "#000000",
       spellCheck: false,
-      "aria-label": `${label || "Color"} HEX 값`,
+      "aria-label": hexLabel,
       "aria-invalid": !isValid,
     })
   );
@@ -5531,7 +5657,7 @@ const ConfigInstrumentalBreakIconPicker = ({
   return react.createElement(
     "div",
     {
-      className: "setting-row instrumental-break-picker-row",
+      className: `setting-row instrumental-break-picker-row${isSettingChanged(settingKey) ? " is-changed" : ""}`,
       "data-setting-key": settingKey,
       style: disabled ? { opacity: 0.5, pointerEvents: "none" } : {},
     },
@@ -5610,7 +5736,7 @@ const ConfigInput = ({ name, settingKey, defaultValue, onChange = () => { }, inp
   return react.createElement(
     "div",
     {
-      className: "setting-row",
+      className: `setting-row${isSettingChanged(settingKey) ? " is-changed" : ""}`,
       "data-setting-key": settingKey,
     },
     react.createElement(
@@ -5832,7 +5958,7 @@ const ConfigFontSelector = ({
     return react.createElement(
       "div",
       {
-        className: "setting-row config-font-setting-row",
+        className: `setting-row config-font-setting-row${isSettingChanged(settingKey) ? " is-changed" : ""}`,
         "data-setting-key": settingKey,
         style: disabled ? { opacity: 0.5, pointerEvents: "none" } : {},
       },
@@ -6563,7 +6689,7 @@ const ConfigKaraokeFillCurveEditor = ({
   return react.createElement(
     "div",
     {
-      className: "setting-row karaoke-fill-curve-row",
+      className: `setting-row karaoke-fill-curve-row${isSettingChanged(settingKey) ? " is-changed" : ""}`,
       "data-setting-key": settingKey,
       style: disabled ? { opacity: 0.5, pointerEvents: "none" } : {},
     },
@@ -6760,7 +6886,7 @@ const ConfigHotkey = ({ name, settingKey, defaultValue, onChange = () => { } }) 
   return react.createElement(
     "div",
     {
-      className: "setting-row",
+      className: `setting-row${isSettingChanged(settingKey) ? " is-changed" : ""}`,
       "data-setting-key": settingKey,
     },
     react.createElement(
@@ -6888,7 +7014,7 @@ const ConfigKeyList = ({ name, settingKey, defaultValue, onChange = () => { } })
   return react.createElement(
     "div",
     {
-      className: "setting-row",
+      className: `setting-row${isSettingChanged(settingKey) ? " is-changed" : ""}`,
       "data-setting-key": settingKey,
     },
     react.createElement(
@@ -7137,7 +7263,6 @@ const OptionList = ({ type, items, onChange }) => {
           react.createElement(
             "div",
             { className: "setting-name-row" },
-            react.createElement("span", { className: "settings-changed-dot", "aria-hidden": "true" }),
             react.createElement("div", { className: "setting-name" }, item.desc),
             item.cost && react.createElement("span", { className: "settings-cost-tag" }, "GPU")
           ),
@@ -7190,6 +7315,19 @@ const OptionList = ({ type, items, onChange }) => {
 
 const getEffectiveReducedMotionPreference = () =>
   CONFIG.visual["reduce-motion"] === true;
+
+const saveSettingsTranslationTargetLanguage = (name, value) => {
+  if (settingValuesEqual(CONFIG.visual[name], value)) return;
+  CONFIG.visual[name] = value;
+  StorageManager.saveConfig(name, value);
+  // The existing config channel refreshes panel lyrics and shared snapshots.
+  window.dispatchEvent(new CustomEvent("ivLyrics", {
+    detail: { type: "config", name, value },
+  }));
+  // Rebuild the current presentation without deleting saved lyrics or
+  // restarting Spotify (which also closes this settings window).
+  if (Spicetify.Player.data?.item?.uri) reloadLyrics?.(false);
+};
 
 const getSettingsMotionDurationMs = () =>
   getEffectiveReducedMotionPreference() ? 24 : 280;
@@ -7524,13 +7662,55 @@ const SettingsCrumbs = ({ menuLabel, sections, signal }) => {
   );
 };
 
+const isSettingsTocNeeded = (sections, content, toc) => {
+  if (!sections || sections.length < 2) return false;
+  if (!content || !toc || content.clientHeight <= 0) return true;
+  const rendered = Array.from(content.querySelectorAll(".tab-content.active .settings-section"))
+    .filter((section) => !section.closest("[hidden]") && section.getClientRects().length > 0);
+  if (rendered.length < 2) return false;
+  // Ignore the page's trailing scroll padding. Removing the strip must not
+  // change the decision, including when it alone pushed a short page over.
+  const tocHeight = toc.hidden ? 0 : toc.offsetHeight + (parseFloat(getComputedStyle(toc).marginTop) || 0);
+  const bottom = rendered[rendered.length - 1].getBoundingClientRect().bottom
+    - content.getBoundingClientRect().top + content.scrollTop - tocHeight;
+  return bottom > content.clientHeight + 1;
+};
+
 // Section tabs of a menu. A plain mouse wheel over the strip scrolls it
 // sideways (eased for wheel notches, 1:1 for trackpads). A wheel gesture that
 // was already scrolling the page keeps doing so, and one that scrolled the
 // strip does not spill into the page when it reaches an end.
-const SettingsToc = ({ sections, signal, onSelect, pageWheelRef, label }) => {
+const SettingsToc = ({ sections, signal, onSelect, pageWheelRef, contentRef, label }) => {
   const activeKey = useSettingsSignal(signal);
   const tocRef = useRef(null);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const content = contentRef?.current;
+    const toc = tocRef.current;
+    if (!content || !toc) return undefined;
+    let frameId = null;
+    const update = () => {
+      frameId = null;
+      const next = isSettingsTocNeeded(sections, content, toc);
+      if (!next && toc.contains(document.activeElement)) content.focus({ preventScroll: true });
+      setVisible(next);
+    };
+    const schedule = () => {
+      if (frameId == null) frameId = requestAnimationFrame(update);
+    };
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(schedule) : null;
+    observer?.observe(content);
+    const page = content.querySelector(".settings-page");
+    if (page) observer?.observe(page);
+    window.addEventListener("resize", schedule);
+    update();
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", schedule);
+      if (frameId != null) cancelAnimationFrame(frameId);
+    };
+  }, [sections, contentRef]);
 
   const syncEdges = useCallback(() => {
     const toc = tocRef.current;
@@ -7615,11 +7795,15 @@ const SettingsToc = ({ sections, signal, onSelect, pageWheelRef, label }) => {
     } else if (left + link.offsetWidth + pad > toc.scrollLeft + toc.clientWidth) {
       toc.scrollTo({ left: left + link.offsetWidth + pad - toc.clientWidth, behavior: "smooth" });
     }
-  }, [activeKey, sections, syncEdges]);
+  }, [activeKey, sections, visible, syncEdges]);
 
   return react.createElement(
     "nav",
-    { className: "settings-toc", ref: tocRef, "aria-label": label },
+    {
+      className: "settings-toc", ref: tocRef, "aria-label": label,
+      hidden: !visible,
+      style: visible ? undefined : { display: "none" },
+    },
     ...(sections || []).map((section) =>
       react.createElement(
         "button",
@@ -8086,7 +8270,6 @@ const SettingsLayerMatrix = ({ columns, rows, onChange, label, muted = false, ma
           style: { "--layer-color": column.color },
         },
         react.createElement("span", { className: "settings-visually-hidden setting-name" }, ariaLabel),
-        react.createElement("span", { className: "settings-changed-dot is-cell", "aria-hidden": "true" }),
         renderControl(column, item, ariaLabel, off),
         hasSettingDefault(item.key)
           ? react.createElement(
@@ -8128,22 +8311,23 @@ const SettingsLayerMatrix = ({ columns, rows, onChange, label, muted = false, ma
 const SettingsLineWindow = ({ items, onChange }) => {
   useSettingsConfigRevision();
   const [beforeItem, afterItem] = items;
-  const before = Number(CONFIG.visual?.[beforeItem.key]) || 0;
-  const after = Number(CONFIG.visual?.[afterItem.key]) || 0;
+  const count = (key) => Math.max(0, Math.min(10, Math.floor(Number(CONFIG.visual?.[key])) || 0));
+  const before = count(beforeItem.key);
+  const after = count(afterItem.key);
   const lines = [];
-  for (let index = 3; index >= 1; index -= 1) {
+  for (let index = before; index >= 1; index -= 1) {
     lines.push(react.createElement("span", {
       key: `before-${index}`,
-      className: `settings-linewin-line${index > before ? " is-hidden" : ""}`,
-      style: { "--line-width": `${50 + ((index * 13) % 30)}%`, "--line-opacity": 0.25 + 0.12 * (3 - index) },
+      className: "settings-linewin-line",
+      style: { "--w": `${50 + ((index * 13) % 30)}%`, "--o": Math.max(0.14, 0.25 + 0.12 * (3 - index)) },
     }));
   }
-  lines.push(react.createElement("span", { key: "active", className: "settings-linewin-line is-active", style: { "--line-width": "82%" } }));
-  for (let index = 1; index <= 3; index += 1) {
+  lines.push(react.createElement("span", { key: "active", className: "settings-linewin-line is-active", style: { "--w": "82%" } }));
+  for (let index = 1; index <= after; index += 1) {
     lines.push(react.createElement("span", {
       key: `after-${index}`,
-      className: `settings-linewin-line${index > after ? " is-hidden" : ""}`,
-      style: { "--line-width": `${45 + ((index * 17) % 35)}%`, "--line-opacity": 0.55 - 0.12 * index },
+      className: "settings-linewin-line",
+      style: { "--w": `${45 + ((index * 17) % 35)}%`, "--o": Math.max(0.14, 0.55 - 0.12 * index) },
     }));
   }
   const values = Array.from({ length: 11 }, (_, index) => String(index));
@@ -8231,7 +8415,6 @@ const SettingsTiles = ({ chips, onChange }) => {
             title: chip.item.info || undefined,
             onClick: () => onChange(chip.item.key, !on),
           },
-          react.createElement("span", { className: "settings-changed-dot", "aria-hidden": "true" }),
           react.createElement(
             "span",
             { className: "settings-tile-top" },
@@ -8749,6 +8932,10 @@ const FullscreenPresentationPicker = ({ defaultValue, onChange }) => {
   const [selectedMode, setSelectedMode] = react.useState(() =>
     normalizeFullscreenPresentationPreset(defaultValue)
   );
+  useEffect(() => {
+    setSelectedMode(normalizeFullscreenPresentationPreset(defaultValue));
+  }, [defaultValue]);
+  const selectedIndex = FULLSCREEN_PRESENTATION_PRESETS.findIndex(preset => preset.id === selectedMode);
 
   const applyMode = (modeId) => {
     const normalized = normalizeFullscreenPresentationPreset(modeId);
@@ -8803,7 +8990,14 @@ const FullscreenPresentationPicker = ({ defaultValue, onChange }) => {
             type: "button",
             role: "radio",
             "aria-checked": selectedMode === preset.id,
+            tabIndex: selectedMode === preset.id ? 0 : -1,
             onClick: () => applyMode(preset.id),
+            onKeyDown: (event) => handleSettingsRadioKeys(
+              event,
+              FULLSCREEN_PRESENTATION_PRESETS.map(option => ({ value: option.id })),
+              selectedIndex,
+              applyMode
+            ),
           },
           react.createElement(
             "div",
@@ -11078,7 +11272,8 @@ const ConfigModal = ({
               {
                 key: tab.id,
                 type: "button",
-                className: `settings-rail-item${current ? " is-active" : ""}`,
+                className: `settings-rail-item${current ? " is-active" : ""}${count ? " is-modified" : ""}`,
+                title: tab.label,
                 "aria-current": current ? "page" : undefined,
                 onClick: () => openMenu(tab.id),
               },
@@ -11158,6 +11353,7 @@ const ConfigModal = ({
           signal: activeSectionSignal,
           onSelect: selectSection,
           pageWheelRef,
+          contentRef: settingsContentRef,
           label: activeTabMeta.label,
         })
         : null
@@ -11577,7 +11773,7 @@ const ConfigModal = ({
         react.createElement(OptionList, {
           items: [
             {
-              desc: I18n.t("settings.language.label") + " (Language)",
+              desc: I18n.t("settings.language.label"),
               key: "language",
               info: I18n.t("settings.language.desc"),
               type: ConfigSelection,
@@ -11610,14 +11806,7 @@ const ConfigModal = ({
                   I18n.getAvailableLanguages().map(language => [language.code, language.name])
                 ),
               },
-              onChange: (name, value) => {
-                CONFIG.visual[name] = value;
-                StorageManager.saveConfig(name, value);
-                queueReloadIntoIvLyrics({
-                  reopenSettings: true,
-                  initialTab: "general",
-                });
-              },
+              onChange: saveSettingsTranslationTargetLanguage,
             },
           ],
         })

@@ -88,6 +88,8 @@ window.LANG_HI = {
       "resetConfirm": "{count} सेटिंग्स को डिफ़ॉल्ट पर रीसेट करें?"
     },
     "controls": {
+      "colorPickerAriaLabel": "{name} रंग चयनकर्ता",
+      "colorHexAriaLabel": "{name} HEX मान",
       "scrubHint": "बदलने के लिए दाएँ-बाएँ खींचें · तेज़ी के लिए Shift · बारीकी के लिए {fineKey}"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_HI = {
       "joinDiscord": "Discord सर्वर से जुड़ें"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "API अनुरोध लॉग ({count})",
+        "empty": "अभी कोई API अनुरोध नहीं है। इन्हें यहाँ देखने के लिए कोई गाना चलाएँ।",
+        "summary": "कुल: {total} · कैश किए गए: {cached}",
+        "unknownTime": "समय उपलब्ध नहीं है",
+        "request": "अनुरोध:",
+        "response": "प्रतिक्रिया:",
+        "error": "त्रुटि:",
+        "status": {
+          "success": "सफल",
+          "error": "त्रुटि",
+          "pending": "लंबित",
+          "cached": "कैश किया गया"
+        }
+      },
       "title": "डिबग जानकारी",
       "subtitle": "बग रिपोर्ट करते समय डेवलपर को देने के लिए जानकारी",
       "currentTrack": "वर्तमान ट्रैक जानकारी",

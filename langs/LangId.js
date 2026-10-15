@@ -88,6 +88,8 @@ window.LANG_ID = {
       "resetConfirm": "Kembalikan {count} pengaturan ke bawaan?"
     },
     "controls": {
+      "colorPickerAriaLabel": "Pemilih warna {name}",
+      "colorHexAriaLabel": "Nilai HEX {name}",
       "scrubHint": "Seret ke samping untuk menyesuaikan · Shift untuk langkah besar · {fineKey} untuk langkah halus"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_ID = {
       "joinDiscord": "Gabung Server Discord"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "Log permintaan API ({count})",
+        "empty": "Belum ada permintaan API. Putar lagu untuk melihatnya di sini.",
+        "summary": "Total: {total} · Dari cache: {cached}",
+        "unknownTime": "Waktu tidak tersedia",
+        "request": "Permintaan:",
+        "response": "Respons:",
+        "error": "Galat:",
+        "status": {
+          "success": "Berhasil",
+          "error": "Galat",
+          "pending": "Menunggu",
+          "cached": "Dari cache"
+        }
+      },
       "title": "Info Debug",
       "subtitle": "Info untuk diberikan ke pengembang saat melaporkan bug",
       "currentTrack": "Info Trek Saat Ini",

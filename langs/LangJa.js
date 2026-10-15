@@ -88,6 +88,8 @@ window.LANG_JA = {
       "resetConfirm": "{count}件の設定を初期値に戻しますか?"
     },
     "controls": {
+      "colorPickerAriaLabel": "{name} カラーピッカー",
+      "colorHexAriaLabel": "{name} HEX 値",
       "scrubHint": "左右にドラッグして調整 · Shiftで大きく · {fineKey}で細かく"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_JA = {
       "joinDiscord": "Discordサーバーに参加"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "API リクエストログ（{count}）",
+        "empty": "API リクエストはまだありません。曲を再生すると、ここに表示されます。",
+        "summary": "合計：{total}件 · キャッシュ：{cached}件",
+        "unknownTime": "時刻情報なし",
+        "request": "リクエスト：",
+        "response": "レスポンス：",
+        "error": "エラー：",
+        "status": {
+          "success": "成功",
+          "error": "エラー",
+          "pending": "待機中",
+          "cached": "キャッシュ済み"
+        }
+      },
       "title": "デバッグ情報",
       "subtitle": "バグ報告時に開発者に提供する情報です",
       "currentTrack": "現在のトラック情報",

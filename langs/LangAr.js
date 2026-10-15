@@ -88,6 +88,8 @@ window.LANG_AR = {
       "resetConfirm": "هل تريد إعادة {count} من الإعدادات إلى قيمها الافتراضية؟"
     },
     "controls": {
+      "colorPickerAriaLabel": "منتقي الألوان {name}",
+      "colorHexAriaLabel": "قيمة HEX {name}",
       "scrubHint": "اسحب أفقيًا للضبط · Shift للتغيير الأسرع · {fineKey} للضبط الدقيق"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_AR = {
       "joinDiscord": "الانضمام لسيرفر Discord"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "سجل طلبات API ({count})",
+        "empty": "لا توجد طلبات API بعد. شغّل مقطعًا لعرضها هنا.",
+        "summary": "الإجمالي: {total} · من الذاكرة المؤقتة: {cached}",
+        "unknownTime": "الوقت غير متاح",
+        "request": "الطلب:",
+        "response": "الاستجابة:",
+        "error": "الخطأ:",
+        "status": {
+          "success": "نجاح",
+          "error": "خطأ",
+          "pending": "قيد الانتظار",
+          "cached": "من الذاكرة المؤقتة"
+        }
+      },
       "title": "معلومات التصحيح",
       "subtitle": "معلومات لتقديمها للمطور عند الإبلاغ عن خطأ",
       "currentTrack": "معلومات المسار الحالي",

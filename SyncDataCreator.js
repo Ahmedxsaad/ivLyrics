@@ -10138,7 +10138,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		},
 		granularityButton: {
 			height: '26px', padding: '0 9px', borderRadius: '6px',
-			background: 'transparent', border: '1px solid transparent',
+			background: 'transparent', borderWidth: '1px', borderStyle: 'solid', borderColor: 'transparent',
 			color: 'var(--spice-subtext)', cursor: 'pointer',
 			fontSize: '10.5px', fontWeight: '600', lineHeight: 1,
 			whiteSpace: 'nowrap'

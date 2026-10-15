@@ -88,6 +88,8 @@ window.LANG_MS = {
       "resetConfirm": "Set semula {count} tetapan kepada lalai?"
     },
     "controls": {
+      "colorPickerAriaLabel": "Pemilih warna {name}",
+      "colorHexAriaLabel": "Nilai HEX {name}",
       "scrubHint": "Seret ke sisi untuk melaraskan · Shift untuk langkah besar · {fineKey} untuk langkah halus"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_MS = {
       "joinDiscord": "Sertai Pelayan Discord"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "Log permintaan API ({count})",
+        "empty": "Belum ada permintaan API. Mainkan lagu untuk melihatnya di sini.",
+        "summary": "Jumlah: {total} · Dari cache: {cached}",
+        "unknownTime": "Masa tidak tersedia",
+        "request": "Permintaan:",
+        "response": "Respons:",
+        "error": "Ralat:",
+        "status": {
+          "success": "Berjaya",
+          "error": "Ralat",
+          "pending": "Menunggu",
+          "cached": "Dari cache"
+        }
+      },
       "title": "Maklumat Nyahpepijat",
       "subtitle": "Maklumat yang perlu diserahkan kepada pembangun semasa membuat laporan pepijat (bug report)",
       "currentTrack": "Maklumat Trek Semasa",

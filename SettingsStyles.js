@@ -239,7 +239,7 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .search-no-results-title { margin: 0; color: var(--text); font-size: 13.5px; font-weight: 500; }
 #${APP_NAME}-config-container .search-no-results-desc { margin: 0; font-size: 12.5px; }
 
-#${APP_NAME}-config-container .settings-changed-chip { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: transparent; color: var(--text-2); font-size: 12.5px; font-weight: 500; white-space: nowrap; transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast); }
+#${APP_NAME}-config-container .settings-changed-chip { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 10px; border-radius: var(--r-md); border: 1px solid var(--line-2); background: transparent; color: var(--text-2); font-size: 12.5px; font-weight: 500; white-space: nowrap; transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast); }
 #${APP_NAME}-config-container .settings-changed-chip svg { width: 15px; height: 15px; }
 #${APP_NAME}-config-container .settings-changed-chip:hover { color: var(--text); background: var(--surface-2); }
 #${APP_NAME}-config-container .settings-changed-chip[aria-pressed="true"] { background: var(--surface-3); color: var(--text); border-color: var(--line-3); }
@@ -260,6 +260,7 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .settings-rail-item.is-active, #${APP_NAME}-config-container .settings-rail-item[aria-current="page"] { background: var(--surface-3); color: var(--text); }
 #${APP_NAME}-config-container .settings-rail-icon { width: 16px; height: 16px; flex: 0 0 auto; color: var(--text-3); }
 #${APP_NAME}-config-container .settings-rail-item.is-active .settings-rail-icon { color: var(--text); }
+#${APP_NAME}-config-container .settings-rail-item.is-modified .settings-rail-label, #${APP_NAME}-config-container .settings-rail-item.is-modified .settings-rail-icon { color: var(--accent-text); }
 #${APP_NAME}-config-container .settings-rail-label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 #${APP_NAME}-config-container .settings-rail-count { display: grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-xs); background: var(--accent-soft); color: var(--accent-text); font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums; }
 #${APP_NAME}-config-container .settings-rail-foot { display: grid; gap: 2px; margin-top: 8px; padding: 12px 10px 0; border-top: 1px solid var(--line); font-size: 11.5px; line-height: 1.6; color: var(--text-4); }
@@ -322,8 +323,8 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .setting-row-content { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 24px; min-height: 30px; }
 #${APP_NAME}-config-container .setting-row.is-stack > .setting-row-content { grid-template-columns: minmax(0, 1fr); }
 #${APP_NAME}-config-container .setting-row-content[style*="flex-direction: column"] { grid-template-columns: minmax(0, 1fr); }
-/* rows that can show a reset button keep its slot, so controls in a group line up */
-#${APP_NAME}-config-container .setting-row.is-inline:not(.is-toggle-row) > .setting-row-content > .setting-row-right:not(:has(> .settings-reset-btn))::after { content: ""; flex: 0 0 26px; }
+/* Reset sits before a control, so ranges and switches share the same right edge. */
+#${APP_NAME}-config-container .setting-row.is-inline > .setting-row-content > .setting-row-right > .settings-reset-btn { order: -1; }
 #${APP_NAME}-config-container .setting-row.is-stack > .setting-row-content > .setting-row-left { padding-right: 32px; }
 #${APP_NAME}-config-container .setting-row.is-stack > .setting-row-content > .setting-row-right { justify-content: flex-start; }
 #${APP_NAME}-config-container .setting-row.is-stack > .setting-row-content > .setting-row-right > .settings-reset-btn { position: absolute; top: 12px; right: 12px; }
@@ -338,8 +339,7 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .option-list-wrapper > .setting-row.is-inline:hover, #${APP_NAME}-config-container .settings-section-body > .setting-row:hover { background: color-mix(in srgb, var(--text) 2.5%, transparent); }
 #${APP_NAME}-config-container .setting-row.is-disabled { opacity: .45; }
 #${APP_NAME}-config-container .setting-row.is-disabled .setting-row-right { pointer-events: none; }
-#${APP_NAME}-config-container .settings-changed-dot { width: 6px; height: 6px; margin: 0 -2px 0 -12px; flex: 0 0 auto; border-radius: 50%; background: var(--accent); opacity: 0; transform: scale(.4); transition: opacity var(--t) var(--ease-out), transform var(--t) var(--ease-out); }
-#${APP_NAME}-config-container .setting-row.is-changed .settings-changed-dot { opacity: 1; transform: scale(1); }
+#${APP_NAME}-config-container .setting-row.is-changed .setting-name, #${APP_NAME}-config-container .settings-linewin-control.is-changed .setting-name { color: var(--accent-text); }
 #${APP_NAME}-config-container .settings-reset-btn { display: inline-grid; place-items: center; width: 26px; height: 26px; flex: 0 0 auto; padding: 0; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-3); opacity: 0; pointer-events: none; transition: opacity var(--t-fast), background var(--t-fast), color var(--t-fast); }
 #${APP_NAME}-config-container .is-changed .settings-reset-btn, #${APP_NAME}-config-container .is-changed > .settings-reset-btn { opacity: .6; pointer-events: auto; }
 #${APP_NAME}-config-container .setting-row:hover .is-changed .settings-reset-btn, #${APP_NAME}-config-container .setting-row.is-changed:hover .settings-reset-btn, #${APP_NAME}-config-container .settings-reset-btn:focus-visible { opacity: 1; }
@@ -570,12 +570,12 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .multi-vocal-color-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 #${APP_NAME}-config-container .multi-vocal-color-copy { min-width: 0; }
 #${APP_NAME}-config-container .multi-vocal-color-groups { display: grid; gap: 12px; margin-top: 14px; }
-#${APP_NAME}-config-container .multi-vocal-color-group { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 12px; }
-#${APP_NAME}-config-container .multi-vocal-color-group-title { font-size: 12.5px; font-weight: 500; color: var(--text-2); }
-#${APP_NAME}-config-container .multi-vocal-color-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px; }
-#${APP_NAME}-config-container .multi-vocal-color-speaker { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; padding: 4px 4px 4px 8px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface-2); font-size: 12px; color: var(--text-2); }
-#${APP_NAME}-config-container .multi-vocal-color-speaker .config-color-control { height: 28px; background: var(--surface); }
-#${APP_NAME}-config-container .multi-vocal-color-speaker .config-color-control .config-color-input { width: 64px; font-size: 11px; }
+#${APP_NAME}-config-container .multi-vocal-color-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr)); align-items: center; gap: 6px 10px; }
+#${APP_NAME}-config-container .multi-vocal-color-group-title { grid-column: 1 / -1; font-size: 12.5px; font-weight: 500; color: var(--text-2); }
+#${APP_NAME}-config-container .multi-vocal-color-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; min-height: 40px; padding: 4px 6px 4px 10px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface-2); }
+#${APP_NAME}-config-container .multi-vocal-color-speaker { min-width: 0; font-size: 12px; color: var(--text-2); overflow-wrap: anywhere; }
+#${APP_NAME}-config-container .multi-vocal-color-row .config-color-control { flex: 0 0 auto; height: 30px; background: var(--surface); }
+#${APP_NAME}-config-container .multi-vocal-color-row .config-color-input { width: 68px; font-size: 11.5px; }
 
 /* ---------------------------------------------------------------- hotkeys */
 #${APP_NAME}-config-container .config-hotkey-control { display: inline-flex; align-items: center; gap: 6px; }
@@ -597,6 +597,7 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .settings-hotkey-label { font-size: 13px; font-weight: 500; }
 #${APP_NAME}-config-container .settings-hotkey-cell .setting-row { display: contents; }
 #${APP_NAME}-config-container .settings-hotkey-cell .setting-row-content { display: block; width: 100%; min-height: 0; }
+#${APP_NAME}-config-container .settings-hotkey-cell.is-changed .config-hotkey-recorder { color: var(--accent-text); border-color: var(--accent-line); }
 #${APP_NAME}-config-container .settings-hotkey-cell .setting-row-left { display: none; }
 #${APP_NAME}-config-container .settings-hotkey-cell .setting-row-right, #${APP_NAME}-config-container .settings-hotkey-cell .config-hotkey-control { width: 100%; }
 #${APP_NAME}-config-container .settings-hotkey-cell .config-hotkey-recorder { flex: 1; min-width: 0; }
@@ -633,8 +634,17 @@ const SETTINGS_MODAL_CSS = `
 
 /* ---------------------------------------------------------------- fullscreen presentation */
 #${APP_NAME}-config-container .fullscreen-presentation-picker { display: grid; gap: 10px; width: 100%; }
-#${APP_NAME}-config-container .fullscreen-presentation-picker-heading { font-size: 12px; font-weight: 500; color: var(--text-3); }
+#${APP_NAME}-config-container .fullscreen-presentation-picker-heading { display: grid; gap: 2px; font-size: 12.5px; line-height: 1.55; color: var(--text-3); }
+#${APP_NAME}-config-container .fullscreen-presentation-picker-heading strong { font-size: 13.5px; font-weight: 500; line-height: 1.4; color: var(--text); }
 #${APP_NAME}-config-container .fullscreen-presentation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; }
+#${APP_NAME}-config-container .fullscreen-presentation-grid .settings-choice-card { display: flex; flex-direction: column; align-items: stretch; gap: 10px; min-width: 0; margin: 0; padding: 14px; border: 1px solid var(--line-2); border-radius: var(--r-md); background: var(--surface); color: var(--text); text-align: left; transition: background var(--t-fast), border-color var(--t-fast); }
+#${APP_NAME}-config-container .fullscreen-presentation-grid .settings-choice-card:hover { background: var(--surface-2); border-color: var(--line-3); }
+#${APP_NAME}-config-container .fullscreen-presentation-grid .settings-choice-card.active { border-color: var(--accent-line); background: var(--accent-soft); }
+#${APP_NAME}-config-container .fullscreen-presentation-grid .settings-choice-icon { display: flex; color: var(--text-2); }
+#${APP_NAME}-config-container .fullscreen-presentation-grid .active .settings-choice-icon { color: var(--accent-text); }
+#${APP_NAME}-config-container .fullscreen-presentation-grid .settings-choice-content { display: grid; gap: 4px; }
+#${APP_NAME}-config-container .fullscreen-presentation-grid .settings-choice-content strong { font-size: 13px; line-height: 1.4; font-weight: 500; }
+#${APP_NAME}-config-container .fullscreen-presentation-grid .settings-choice-content span { font-size: 12px; line-height: 1.55; color: var(--text-3); overflow-wrap: anywhere; }
 
 /* ---------------------------------------------------------------- line window */
 #${APP_NAME}-config-container .settings-linewin { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 20px; align-items: center; padding: 14px 16px; }
@@ -660,8 +670,7 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .settings-tile-state { font-size: 11.5px; font-weight: 500; color: var(--text-3); }
 #${APP_NAME}-config-container .settings-tile.is-on .settings-tile-state { color: var(--accent-text); }
 #${APP_NAME}-config-container .settings-tile-label, #${APP_NAME}-config-container .settings-tile .setting-name { font-size: 13px; font-weight: 500; line-height: 1.35; }
-#${APP_NAME}-config-container .settings-tile .settings-changed-dot { position: absolute; top: 9px; right: 9px; margin: 0; }
-#${APP_NAME}-config-container .settings-tile.is-changed .settings-changed-dot { opacity: 1; transform: none; }
+#${APP_NAME}-config-container .settings-tile.is-changed .settings-tile-label { color: var(--accent-text); }
 
 /* ---------------------------------------------------------------- load meter */
 #${APP_NAME}-config-container .settings-load-group { overflow: hidden; }
@@ -687,23 +696,21 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .settings-matrix-layer .switch-checkbox { transform: scale(.85); transform-origin: right center; }
 #${APP_NAME}-config-container .settings-matrix-layer-sub { font-size: 11.5px; line-height: 1.4; color: var(--text-3); }
 #${APP_NAME}-config-container .settings-matrix-label { display: flex; align-items: center; min-width: 0; padding: 8px 8px 8px 16px; border-top: 1px solid var(--line); font-size: 12.5px; font-weight: 500; color: var(--text-2); }
-#${APP_NAME}-config-container .settings-matrix-cell { position: relative; display: flex; align-items: center; gap: 4px; min-width: 0; padding: 8px 6px; border-top: 1px solid var(--line); container-type: inline-size; }
-#${APP_NAME}-config-container .settings-matrix-cell > :not(.settings-reset-btn):not(.settings-changed-dot):not(.settings-visually-hidden) { flex: 1; min-width: 0; }
+#${APP_NAME}-config-container .settings-matrix-cell { position: relative; display: flex; align-items: center; gap: 4px; min-width: 0; padding: 8px 30px 8px 8px; border-top: 1px solid var(--line); container-type: inline-size; }
+#${APP_NAME}-config-container .settings-matrix-cell > :not(.settings-reset-btn):not(.settings-visually-hidden) { flex: 1; min-width: 0; }
 #${APP_NAME}-config-container .settings-matrix-cell.is-empty::after { content: "\\2014"; padding-left: 8px; font-size: 13px; color: var(--text-4); }
 #${APP_NAME}-config-container .settings-matrix-cell.is-off { opacity: .35; }
-#${APP_NAME}-config-container .settings-matrix-head.is-last, #${APP_NAME}-config-container .settings-matrix-cell.is-last { padding-right: 12px; }
-#${APP_NAME}-config-container .settings-matrix-cell .settings-reset-btn.is-cell { position: absolute; z-index: 2; right: 2px; top: 2px; width: 20px; height: 20px; flex: 0 0 auto; background: var(--surface-3); }
+#${APP_NAME}-config-container .settings-matrix-head.is-last { padding-right: 12px; }
+#${APP_NAME}-config-container .settings-matrix-cell .settings-reset-btn.is-cell { position: absolute; z-index: 2; right: 5px; top: calc(50% - 10px); width: 20px; height: 20px; flex: 0 0 auto; background: var(--surface-3); }
 #${APP_NAME}-config-container .settings-matrix-cell .settings-reset-btn.is-cell svg { width: 12px; height: 12px; }
 #${APP_NAME}-config-container .settings-matrix-cell:not(:hover):not(:focus-within) .settings-reset-btn.is-cell:not(:focus-visible) { opacity: 0; pointer-events: none; }
-#${APP_NAME}-config-container .settings-matrix-cell .settings-changed-dot.is-cell { position: absolute; left: 1px; top: 50%; width: 5px; height: 5px; margin: -2.5px 0 0; }
-#${APP_NAME}-config-container .settings-matrix-cell.is-changed .settings-changed-dot.is-cell { opacity: 1; transform: none; }
+#${APP_NAME}-config-container .settings-matrix-cell.is-changed :is(select, .settings-scrub-input, .config-color-input) { color: var(--accent-text); }
+#${APP_NAME}-config-container .settings-matrix-cell.is-changed :is(select, .settings-scrub, .config-color-control) { border-color: var(--accent-line); }
 #${APP_NAME}-config-container .settings-matrix.is-stacked { grid-template-columns: repeat(var(--columns), minmax(0, 1fr)); }
 #${APP_NAME}-config-container .settings-matrix.is-stacked > .settings-matrix-head.is-corner { display: none; }
 #${APP_NAME}-config-container .settings-matrix.is-stacked > .settings-matrix-head { padding: 12px 10px 10px; }
 #${APP_NAME}-config-container .settings-matrix.is-stacked > .settings-matrix-label { grid-column: 1 / -1; padding: 10px 12px 0; border-top: 1px solid var(--line); font-size: 12px; color: var(--text-3); }
-#${APP_NAME}-config-container .settings-matrix.is-stacked > .settings-matrix-cell { border-top: 0; padding: 4px 4px 10px; }
-#${APP_NAME}-config-container .settings-matrix.is-stacked > .settings-matrix-label + .settings-matrix-cell { padding-left: 10px; }
-#${APP_NAME}-config-container .settings-matrix.is-stacked > .settings-matrix-cell.is-last { padding-right: 10px; }
+#${APP_NAME}-config-container .settings-matrix.is-stacked > .settings-matrix-cell { border-top: 0; padding: 4px 30px 10px 8px; }
 #${APP_NAME}-config-container .settings-matrix.is-tabs { display: block; }
 #${APP_NAME}-config-container .settings-matrix-switcher { padding: 12px 14px 6px; }
 #${APP_NAME}-config-container .settings-matrix-switcher .settings-seg { width: 100%; }
@@ -922,7 +929,7 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .debug-info-timestamp { margin: 2px 0 0; font: 11.5px var(--mono); color: var(--text-3); }
 #${APP_NAME}-config-container .debug-info-section { margin-top: 14px; }
 #${APP_NAME}-config-container .debug-info-section-label, #${APP_NAME}-config-container .debug-json-label { margin-bottom: 6px; font-size: 12px; font-weight: 500; color: var(--text-3); }
-#${APP_NAME}-config-container .debug-info-section-label-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+#${APP_NAME}-config-container .debug-info-section-label-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 8px; }
 #${APP_NAME}-config-container .debug-info-block, #${APP_NAME}-config-container .debug-json-block { padding: 10px 12px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--bg); font-size: 12.5px; line-height: 1.75; color: var(--text-2); overflow-wrap: anywhere; }
 #${APP_NAME}-config-container .debug-json-block { max-height: 260px; overflow: auto; white-space: pre; font: 12px/1.6 var(--mono); }
 #${APP_NAME}-config-container .debug-info-key { margin-right: 6px; color: var(--text-3); }
@@ -934,10 +941,10 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .debug-info-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 #${APP_NAME}-config-container .debug-api-list { display: grid; gap: 6px; }
 #${APP_NAME}-config-container .debug-api-item { border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface-2); overflow: hidden; }
-#${APP_NAME}-config-container .debug-api-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; cursor: pointer; }
-#${APP_NAME}-config-container .debug-api-header-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+#${APP_NAME}-config-container .debug-api-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; width: 100%; padding: 8px 10px; border: 0; background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+#${APP_NAME}-config-container .debug-api-header-left { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
 #${APP_NAME}-config-container .debug-api-category { display: inline-flex; align-items: center; height: 18px; padding: 0 6px; border-radius: var(--r-xs); background: var(--surface-3); color: var(--text-2); font-size: 11px; font-weight: 600; }
-#${APP_NAME}-config-container .debug-api-endpoint { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px var(--mono); color: var(--text); }
+#${APP_NAME}-config-container .debug-api-endpoint { min-width: 0; padding: 0 10px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 12px/1.5 var(--mono); color: var(--text); }
 #${APP_NAME}-config-container .debug-api-status { font: 600 11.5px var(--mono); }
 #${APP_NAME}-config-container .debug-api-duration, #${APP_NAME}-config-container .debug-api-timestamp { font: 11px var(--mono); color: var(--text-3); white-space: nowrap; }
 #${APP_NAME}-config-container .debug-api-details { padding: 8px 10px 10px; border-top: 1px solid var(--line); }
@@ -1093,6 +1100,18 @@ const SETTINGS_MODAL_CSS = `
   #${APP_NAME}-config-container .settings-kbd { display: none; }
   #${APP_NAME}-config-container .settings-body { grid-template-columns: 172px minmax(0, 1fr); }
 }
+/* Very narrow desktop windows keep a labelled, keyboard-accessible icon rail
+   rather than spending almost half their width on the sidebar. */
+@container settings-window (max-width: 560px) {
+  #${APP_NAME}-config-container .settings-topbar { grid-template-columns: minmax(0, 1fr) auto; gap: 8px; padding: 0 8px; }
+  #${APP_NAME}-config-container .settings-topbar-title { display: none; }
+  #${APP_NAME}-config-container .settings-body { grid-template-columns: 52px minmax(0, 1fr); }
+  #${APP_NAME}-config-container .settings-rail { padding: 6px 4px; }
+  #${APP_NAME}-config-container .settings-rail-group { margin-bottom: 6px; }
+  #${APP_NAME}-config-container .settings-rail-item { min-height: 44px; justify-content: center; padding: 0; }
+  #${APP_NAME}-config-container .settings-rail-label, #${APP_NAME}-config-container .settings-rail-group-label { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  #${APP_NAME}-config-container .settings-rail-count, #${APP_NAME}-config-container .settings-rail-foot { display: none; }
+}
 /* narrow content: wide controls drop under their label instead of squeezing it */
 @container settings-content (max-width: 700px) {
   #${APP_NAME}-config-container .setting-row.is-inline:not([data-control="toggle"]):not([data-control="color"]):not([data-control="stepper"]) > .setting-row-content { grid-template-columns: minmax(0, 1fr); }
@@ -1117,6 +1136,7 @@ const SETTINGS_MODAL_CSS = `
   #${APP_NAME}-config-container .settings-mode-grid, #${APP_NAME}-config-container .settings-mode-grid.settings-cards, #${APP_NAME}-config-container .ai-translation-style-options, #${APP_NAME}-config-container .settings-tiles { grid-template-columns: minmax(0, 1fr); }
   #${APP_NAME}-config-container .settings-hotkey-table { grid-template-columns: minmax(0, 1fr); }
   #${APP_NAME}-config-container .settings-hotkey-table > .settings-hotkey-head { display: none; }
+  #${APP_NAME}-config-container .debug-info-header { flex-wrap: wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {

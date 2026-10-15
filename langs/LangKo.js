@@ -88,6 +88,8 @@ window.LANG_KO = {
       "resetConfirm": "{count}개 설정을 기본값으로 되돌릴까요?"
     },
     "controls": {
+      "colorPickerAriaLabel": "{name} 색상 선택",
+      "colorHexAriaLabel": "{name} HEX 값",
       "scrubHint": "좌우로 드래그해 조절 · Shift 빠르게 · {fineKey} 세밀하게"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_KO = {
       "joinDiscord": "Discord 서버 참여"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "API 요청 로그 ({count})",
+        "empty": "아직 API 요청이 없습니다. 곡을 재생하면 여기에 표시됩니다.",
+        "summary": "전체: {total}건 · 캐시: {cached}건",
+        "unknownTime": "시간 정보 없음",
+        "request": "요청:",
+        "response": "응답:",
+        "error": "오류:",
+        "status": {
+          "success": "성공",
+          "error": "오류",
+          "pending": "대기 중",
+          "cached": "캐시됨"
+        }
+      },
       "title": "디버그 정보",
       "subtitle": "버그 리포트 시 개발자에게 전달할 정보입니다",
       "currentTrack": "현재 트랙 정보",

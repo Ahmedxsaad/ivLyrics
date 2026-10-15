@@ -88,6 +88,8 @@ window.LANG_CS = {
       "resetConfirm": "Obnovit výchozí hodnoty u {count} nastavení?"
     },
     "controls": {
+      "colorPickerAriaLabel": "Výběr barvy {name}",
+      "colorHexAriaLabel": "Hodnota HEX {name}",
       "scrubHint": "Táhněte do stran pro úpravu · Shift pro větší kroky · {fineKey} pro jemné kroky"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_CS = {
       "joinDiscord": "Připojte se k serveru Discord"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "Protokol požadavků API ({count})",
+        "empty": "Zatím žádné požadavky API. Přehrajte skladbu a zobrazí se zde.",
+        "summary": "Celkem: {total} · Z mezipaměti: {cached}",
+        "unknownTime": "Čas není k dispozici",
+        "request": "Požadavek:",
+        "response": "Odpověď:",
+        "error": "Chyba:",
+        "status": {
+          "success": "Úspěch",
+          "error": "Chyba",
+          "pending": "Čeká",
+          "cached": "Z mezipaměti"
+        }
+      },
       "title": "Informace o ladění",
       "subtitle": "Informace, které se mají odeslat vývojáři při hlášení chyb",
       "currentTrack": "Aktuální informace o skladbě",

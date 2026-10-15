@@ -88,6 +88,8 @@ window.LANG_ZH_CN = {
       "resetConfirm": "要将 {count} 项设置恢复为默认值吗？"
     },
     "controls": {
+      "colorPickerAriaLabel": "{name} 颜色选择器",
+      "colorHexAriaLabel": "{name} HEX 颜色值",
       "scrubHint": "左右拖动调整 · 按住 Shift 加快 · 按住 {fineKey} 微调"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_ZH_CN = {
       "joinDiscord": "加入 Discord 服务器"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "API 请求日志（{count}）",
+        "empty": "暂无 API 请求。播放歌曲后，请求将显示在此处。",
+        "summary": "总计：{total} · 缓存：{cached}",
+        "unknownTime": "时间不可用",
+        "request": "请求：",
+        "response": "响应：",
+        "error": "错误：",
+        "status": {
+          "success": "成功",
+          "error": "错误",
+          "pending": "等待中",
+          "cached": "已缓存"
+        }
+      },
       "title": "调试信息",
       "subtitle": "报告 Bug 时提供给开发者的信息",
       "currentTrack": "当前曲目信息",

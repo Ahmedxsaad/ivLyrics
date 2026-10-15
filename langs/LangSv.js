@@ -88,6 +88,8 @@ window.LANG_SV = {
       "resetConfirm": "Återställa {count} inställningar till standardvärdena?"
     },
     "controls": {
+      "colorPickerAriaLabel": "{name} färgväljare",
+      "colorHexAriaLabel": "{name} HEX-värde",
       "scrubHint": "Dra i sidled för att justera · Skift för större steg · {fineKey} för finare steg"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_SV = {
       "joinDiscord": "Gå med i Discord Server"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "Logg över API-anrop ({count})",
+        "empty": "Inga API-anrop ännu. Spela en låt för att se dem här.",
+        "summary": "Totalt: {total} · Cachade: {cached}",
+        "unknownTime": "Tid saknas",
+        "request": "Begäran:",
+        "response": "Svar:",
+        "error": "Fel:",
+        "status": {
+          "success": "Lyckades",
+          "error": "Fel",
+          "pending": "Väntar",
+          "cached": "Cachad"
+        }
+      },
       "title": "Felsökningsinformation",
       "subtitle": "Information att skicka till utvecklaren vid felrapportering",
       "currentTrack": "Aktuell spårinformation",

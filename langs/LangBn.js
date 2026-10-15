@@ -88,6 +88,8 @@ window.LANG_BN = {
       "resetConfirm": "{count}টি সেটিং ডিফল্টে ফিরিয়ে আনবেন?"
     },
     "controls": {
+      "colorPickerAriaLabel": "{name} রং নির্বাচন",
+      "colorHexAriaLabel": "{name} HEX মান",
       "scrubHint": "সামঞ্জস্য করতে পাশে টানুন · দ্রুত করতে Shift · সূক্ষ্মভাবে করতে {fineKey}"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_BN = {
       "joinDiscord": "Discord সার্ভারে যোগ দিন"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "API অনুরোধের লগ ({count})",
+        "empty": "এখনও কোনো API অনুরোধ নেই। এখানে অনুরোধ দেখতে একটি গান চালান।",
+        "summary": "মোট: {total} · ক্যাশে থাকা: {cached}",
+        "unknownTime": "সময় পাওয়া যায়নি",
+        "request": "অনুরোধ:",
+        "response": "প্রতিক্রিয়া:",
+        "error": "ত্রুটি:",
+        "status": {
+          "success": "সফল",
+          "error": "ত্রুটি",
+          "pending": "অপেক্ষমাণ",
+          "cached": "ক্যাশে রয়েছে"
+        }
+      },
       "title": "ডিবাগ তথ্য",
       "subtitle": "বাগ রিপোর্ট করার সময় ডেভেলপারকে দেওয়ার তথ্য",
       "currentTrack": "বর্তমান ট্র্যাক তথ্য",

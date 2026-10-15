@@ -88,6 +88,8 @@ window.LANG_TH = {
       "resetConfirm": "รีเซ็ตการตั้งค่า {count} รายการเป็นค่าเริ่มต้นหรือไม่"
     },
     "controls": {
+      "colorPickerAriaLabel": "ตัวเลือกสี {name}",
+      "colorHexAriaLabel": "ค่า HEX {name}",
       "scrubHint": "ลากซ้ายขวาเพื่อปรับ · กด Shift เพื่อปรับเร็วขึ้น · กด {fineKey} เพื่อปรับละเอียด"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_TH = {
       "joinDiscord": "เข้าร่วม Discord Server"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "บันทึกคำขอ API ({count})",
+        "empty": "ยังไม่มีคำขอ API เล่นเพลงเพื่อดูคำขอที่นี่",
+        "summary": "ทั้งหมด: {total} · จากแคช: {cached}",
+        "unknownTime": "ไม่มีข้อมูลเวลา",
+        "request": "คำขอ:",
+        "response": "การตอบกลับ:",
+        "error": "ข้อผิดพลาด:",
+        "status": {
+          "success": "สำเร็จ",
+          "error": "ข้อผิดพลาด",
+          "pending": "กำลังรอ",
+          "cached": "จากแคช"
+        }
+      },
       "title": "ข้อมูลดีบัก",
       "subtitle": "ข้อมูลสำหรับส่งให้นักพัฒนาเมื่อแจ้งบั๊ก",
       "currentTrack": "ข้อมูลแทร็กปัจจุบัน",

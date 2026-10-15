@@ -88,6 +88,8 @@ window.LANG_VI = {
       "resetConfirm": "Đặt lại {count} cài đặt về mặc định?"
     },
     "controls": {
+      "colorPickerAriaLabel": "Bộ chọn màu {name}",
+      "colorHexAriaLabel": "Giá trị HEX {name}",
       "scrubHint": "Kéo sang ngang để điều chỉnh · Shift để chỉnh nhanh · {fineKey} để chỉnh tinh"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_VI = {
       "joinDiscord": "Tham gia máy chủ Discord"
     },
     "debugTab": {
+      "apiLogs": {
+        "title": "Nhật ký yêu cầu API ({count})",
+        "empty": "Chưa có yêu cầu API. Phát một bài hát để xem các yêu cầu tại đây.",
+        "summary": "Tổng: {total} · Từ bộ nhớ đệm: {cached}",
+        "unknownTime": "Không có thời gian",
+        "request": "Yêu cầu:",
+        "response": "Phản hồi:",
+        "error": "Lỗi:",
+        "status": {
+          "success": "Thành công",
+          "error": "Lỗi",
+          "pending": "Đang chờ",
+          "cached": "Từ bộ nhớ đệm"
+        }
+      },
       "title": "Thông tin gỡ lỗi",
       "subtitle": "Thông tin để gửi cho nhà phát triển khi báo lỗi",
       "currentTrack": "Thông tin track hiện tại",

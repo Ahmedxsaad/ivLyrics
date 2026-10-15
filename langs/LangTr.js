@@ -88,6 +88,8 @@ window.LANG_TR = {
       "resetConfirm": "{count} ayar varsayılana sıfırlansın mı?"
     },
     "controls": {
+      "colorPickerAriaLabel": "{name} renk seçici",
+      "colorHexAriaLabel": "{name} HEX değeri",
       "scrubHint": "Ayarlamak için yana sürükleyin · Shift ile hızlı · {fineKey} ile hassas"
     },
     "footer": {
@@ -2023,6 +2025,21 @@ window.LANG_TR = {
     "joinDiscord": "Discord Sunucusuna Katıl"
   },
   "debugTab": {
+    "apiLogs": {
+      "title": "API istek günlükleri ({count})",
+      "empty": "Henüz API isteği yok. İstekleri burada görmek için bir parça çalın.",
+      "summary": "Toplam: {total} · Önbellekten: {cached}",
+      "unknownTime": "Saat bilgisi yok",
+      "request": "İstek:",
+      "response": "Yanıt:",
+      "error": "Hata:",
+      "status": {
+        "success": "Başarılı",
+        "error": "Hata",
+        "pending": "Bekliyor",
+        "cached": "Önbellekten"
+      }
+    },
     "title": "Hata Ayıklama Bilgisi",
     "subtitle": "Hata bildirirken geliştiriciye gönderilecek bilgiler",
     "currentTrack": "Mevcut Parça Bilgisi",

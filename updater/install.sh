@@ -151,12 +151,15 @@ print_success() {
         action="updated"
     fi
 
+    local success_message
+    printf -v success_message '%-50s' "     ivLyrics has been $action successfully!"
+
     echo ""
     echo -e "${GREEN}"
     cat << EOF
     +--------------------------------------------------+
     |                                                  |
-    |     ivLyrics has been $action successfully!     |
+    |$success_message|
     |                                                  |
     |     Please restart Spotify to use ivLyrics.      |
     |                                                  |
