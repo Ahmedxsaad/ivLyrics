@@ -121,6 +121,22 @@ function harness(language = "en", { withTracker = true } = {}) {
   };
 }
 
+test("same-timestamp API entries have unique IDs even when random values collide", () => {
+  const h = harness();
+  vm.runInContext("Math.random = () => 0;", h.context);
+  const first = h.tracker.logRequest("lyrics", "first");
+  const second = h.tracker.logRequest("translation", "second");
+  for (let i = 0; i < 50; i++) h.tracker.logCacheHit("youtube", `cached-${i}`, {});
+  const ids = h.tracker.getLogs().map(entry => entry.id);
+  assert.equal(new Set(ids).size, ids.length);
+  h.tracker.logResponse(second, { translated: true });
+  assert.equal(h.tracker.getLogs().find(entry => entry.id === first).status, "pending");
+  assert.equal(h.tracker.getLogs().find(entry => entry.id === second).status, "success");
+  h.tracker.clear();
+  h.tracker.logCacheHit("youtube", "new-track", {});
+  assert.ok(!ids.includes(h.tracker.getLogs()[0].id), "clearing logs must not reuse IDs or expansion state");
+});
+
 test("five production YouTube cache hits render valid times, accurate counts and 0ms without raw zeros", () => {
   const h = harness();
   h.tracker.setCurrentTrack("fixture");
