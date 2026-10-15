@@ -29,7 +29,16 @@ test("behavior tab renders each section renderer once", () => {
 	const renderers = [...tree.matchAll(/\.\.\.(render\w+)\(\)/g)].map((match) => match[1]);
 	assert.ok(renderers.length >= 6, "expected the behavior tab section renderers");
 	assert.equal(new Set(renderers).size, renderers.length, `duplicate renderers: ${renderers.join(", ")}`);
-	assert.deepEqual(renderers.slice(0, 2), ["renderLyricsPlaybackSection", "renderLyricsSyncControlsSection"]);
+	// Section order of the redesigned settings window (playback, karaoke mode,
+	// Sync Creator, prefetch, cache, helper).
+	assert.deepEqual(renderers, [
+		"renderLyricsPlaybackSection",
+		"renderLyricsLanguageSection",
+		"renderLyricsSyncControlsSection",
+		"renderLyricsProviderPrioritySection",
+		"renderLyricsCacheSection",
+		"renderLyricsHelperSection",
+	]);
 });
 
 test("behavior tab section keys are unique", () => {

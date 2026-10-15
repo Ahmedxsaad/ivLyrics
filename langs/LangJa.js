@@ -77,7 +77,57 @@ window.LANG_JA = {
       "autoShort": "自動",
       "selector": "設定テーマ"
     },
-    "close": "設定を閉じる"
+    "close": "設定を閉じる",
+    "changed": {
+      "title": "変更した設定",
+      "button": "変更済み",
+      "desc": "初期値から変更した設定だけを表示します。",
+      "emptyTitle": "変更した設定はありません",
+      "emptyDesc": "すべての設定が初期値です",
+      "count": "{count}件",
+      "resetConfirm": "{count}件の設定を初期値に戻しますか?"
+    },
+    "controls": {
+      "scrubHint": "左右にドラッグして調整 · Shiftで大きく · {fineKey}で細かく"
+    },
+    "footer": {
+      "counts": "設定 {settings}件 · メニュー {menus}個"
+    },
+    "fullscreenViews": {
+      "basic": "基本",
+      "normal": "通常モード",
+      "tv": "TVモード"
+    },
+    "performance": {
+      "loadSummary": "GPU負荷の高い効果 {on}/{total}件オン · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "「此処(ここ)」は「ここ」の古風な漢字表記で、歌詞に趣を添えたいときによく使われます。",
+      "sampleNote": "サンプルデータで表示しており、再生中の曲とは関係ありません。"
+    },
+    "providers": {
+      "firstTried": "最初に試行"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "接続",
+        "subtitle": "APIキーやモデルなど、プロバイダーごとに必要な接続情報を管理します。"
+      },
+      "aiRequest": {
+        "title": "リクエスト"
+      },
+      "aiTasks": {
+        "title": "機能ごとのプロバイダー"
+      },
+      "lyricLayers": {
+        "title": "歌詞レイヤー",
+        "subtitle": "原文・発音・翻訳・ふりがなのフォントを一画面で見比べながら調整します。"
+      },
+      "lyricsLookup": {
+        "title": "検索順序",
+        "subtitle": "歌詞を探すときに、どの条件を優先するかを決めます。"
+      }
+    }
   },
   "sections": {
     "language": "言語",

@@ -77,7 +77,57 @@ window.LANG_PT = {
       "autoShort": "Automático",
       "selector": "Tema das configurações"
     },
-    "close": "Fechar configurações"
+    "close": "Fechar configurações",
+    "changed": {
+      "title": "Configurações alteradas",
+      "button": "Alteradas",
+      "desc": "Apenas as configurações diferentes do padrão.",
+      "emptyTitle": "Nenhuma configuração alterada",
+      "emptyDesc": "Todas as configurações estão no padrão",
+      "count": "{count} configurações",
+      "resetConfirm": "Restaurar {count} configurações para o padrão?"
+    },
+    "controls": {
+      "scrubHint": "Arraste para os lados para ajustar · Shift para passos maiores · {fineKey} para ajuste fino"
+    },
+    "footer": {
+      "counts": "{settings} configurações · {menus} menus"
+    },
+    "fullscreenViews": {
+      "basic": "Básico",
+      "normal": "Modo normal",
+      "tv": "Modo TV"
+    },
+    "performance": {
+      "loadSummary": "Efeitos pesados para a GPU ativos: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "“此処” (koko) é uma grafia antiga em kanji de “aqui”, muito usada em letras para dar um toque literário.",
+      "sampleNote": "Exibido com dados de exemplo, não com a faixa em reprodução."
+    },
+    "providers": {
+      "firstTried": "Tentado primeiro"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Conexões",
+        "subtitle": "Gerencie os dados de conexão de cada provedor, como chaves de API e modelos."
+      },
+      "aiRequest": {
+        "title": "Solicitações"
+      },
+      "aiTasks": {
+        "title": "Provedores por tarefa"
+      },
+      "lyricLayers": {
+        "title": "Camadas da letra",
+        "subtitle": "Compare e ajuste as fontes do original, da pronúncia, da tradução e do furigana em uma única tela."
+      },
+      "lyricsLookup": {
+        "title": "Ordem de busca",
+        "subtitle": "Escolha o que verificar primeiro ao procurar a letra."
+      }
+    }
   },
   "sections": {
     "language": "Idioma",

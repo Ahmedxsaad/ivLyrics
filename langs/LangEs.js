@@ -77,7 +77,57 @@ window.LANG_ES = {
       "autoShort": "Auto",
       "selector": "Tema de ajustes"
     },
-    "close": "Cerrar ajustes"
+    "close": "Cerrar ajustes",
+    "changed": {
+      "title": "Ajustes modificados",
+      "button": "Modificados",
+      "desc": "Solo los ajustes que difieren de su valor predeterminado.",
+      "emptyTitle": "No hay ajustes modificados",
+      "emptyDesc": "Todos los ajustes tienen su valor predeterminado",
+      "count": "{count} ajustes",
+      "resetConfirm": "¿Restablecer {count} ajustes a sus valores predeterminados?"
+    },
+    "controls": {
+      "scrubHint": "Arrastra a los lados para ajustar · Shift para pasos más grandes · {fineKey} para pasos más finos"
+    },
+    "footer": {
+      "counts": "{settings} ajustes · {menus} menús"
+    },
+    "fullscreenViews": {
+      "basic": "Básico",
+      "normal": "Modo normal",
+      "tv": "Modo TV"
+    },
+    "performance": {
+      "loadSummary": "Efectos exigentes para la GPU activos: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "«此処» (koko) es una forma antigua de escribir «aquí» con kanji, habitual en las letras para darles un toque literario.",
+      "sampleNote": "Se muestra con datos de ejemplo, no con la canción que suena."
+    },
+    "providers": {
+      "firstTried": "Se prueba primero"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Conexiones",
+        "subtitle": "Gestiona los datos de conexión que necesita cada proveedor, como claves de API y modelos."
+      },
+      "aiRequest": {
+        "title": "Solicitudes"
+      },
+      "aiTasks": {
+        "title": "Proveedores por tarea"
+      },
+      "lyricLayers": {
+        "title": "Capas de la letra",
+        "subtitle": "Compara y ajusta las fuentes del original, la pronunciación, la traducción y el furigana en una sola vista."
+      },
+      "lyricsLookup": {
+        "title": "Orden de búsqueda",
+        "subtitle": "Elige qué comprobar primero al buscar la letra."
+      }
+    }
   },
   "sections": {
     "language": "Idioma",

@@ -77,7 +77,57 @@ window.LANG_DE = {
       "autoShort": "Auto",
       "selector": "Einstellungsdesign"
     },
-    "close": "Einstellungen schließen"
+    "close": "Einstellungen schließen",
+    "changed": {
+      "title": "Geänderte Einstellungen",
+      "button": "Geändert",
+      "desc": "Nur Einstellungen, die vom Standardwert abweichen.",
+      "emptyTitle": "Keine geänderten Einstellungen",
+      "emptyDesc": "Alle Einstellungen haben ihren Standardwert",
+      "count": "{count} Einstellungen",
+      "resetConfirm": "{count} Einstellungen auf den Standardwert zurücksetzen?"
+    },
+    "controls": {
+      "scrubHint": "Zum Anpassen seitlich ziehen · Shift für größere Schritte · {fineKey} für feinere Schritte"
+    },
+    "footer": {
+      "counts": "{settings} Einstellungen · {menus} Menüs"
+    },
+    "fullscreenViews": {
+      "basic": "Grundlagen",
+      "normal": "Normaler Modus",
+      "tv": "TV-Modus"
+    },
+    "performance": {
+      "loadSummary": "GPU-intensive Effekte aktiv: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "„此処“ (koko) ist eine altertümliche Kanji-Schreibweise für „hier“ und verleiht Liedtexten oft eine poetische Note.",
+      "sampleNote": "Mit Beispieldaten dargestellt, nicht mit dem laufenden Titel."
+    },
+    "providers": {
+      "firstTried": "Zuerst versucht"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Verbindungen",
+        "subtitle": "Verwalte die Verbindungsdaten, die jeder Anbieter braucht, etwa API-Schlüssel und Modelle."
+      },
+      "aiRequest": {
+        "title": "Anfragen"
+      },
+      "aiTasks": {
+        "title": "Anbieter nach Aufgabe"
+      },
+      "lyricLayers": {
+        "title": "Liedtext-Ebenen",
+        "subtitle": "Schriften von Original, Aussprache, Übersetzung und Furigana in einer Ansicht vergleichen und anpassen."
+      },
+      "lyricsLookup": {
+        "title": "Suchreihenfolge",
+        "subtitle": "Lege fest, was bei der Liedtextsuche zuerst geprüft wird."
+      }
+    }
   },
   "sections": {
     "language": "Sprache",

@@ -131,14 +131,6 @@ const SettingsOutlineIcon = ({ name, className = "", size = 16 }) =>
     "aria-hidden": "true",
   }, react.createElement("path", { d: SETTINGS_OUTLINE_ICONS[name] || SETTINGS_OUTLINE_ICONS.general }));
 
-const ProviderSupportIconChip = ({ type, label }) =>
-  react.createElement("span", {
-    className: `support-icon-chip support-icon-${type}`,
-    role: "img",
-    "aria-label": label,
-    title: label,
-  }, react.createElement(SettingsOutlineIcon, { name: type, size: 14 }));
-
 // 데스크탑 오버레이 설정 컴포넌트
 const OverlaySettings = () => {
   const [enabled, setEnabled] = useState(window.OverlaySender?.enabled ?? false);
@@ -196,6 +188,10 @@ const OverlaySettings = () => {
   // 포트 저장 핸들러
   const handlePortSave = () => {
     const newPort = parseInt(portInput, 10);
+    if (newPort === port) {
+      setPortInput(String(port));
+      return;
+    }
     if (newPort >= 1024 && newPort <= 65535) {
       setPort(newPort);
       if (window.OverlaySender) {
@@ -221,32 +217,28 @@ const OverlaySettings = () => {
     return I18n.t("overlay.status.disconnected");
   };
 
+  const statusTone = checking ? "is-pending" : isConnected ? "is-ok" : "is-error";
+
   const renderOverlayEnableRow = () =>
     // Enable/Disable Row
     react.createElement(
       "div",
-      { className: "setting-row" },
+      { className: "setting-row is-inline is-toggle-row" },
       react.createElement(
         "div",
         { className: "setting-row-content" },
         react.createElement(
           "div",
-          { className: "setting-row-left" },
-          react.createElement("div", { className: "setting-name" },
-            I18n.t("overlay.enabled.label"),
+          {
+            className: "setting-row-left",
+            onPointerDown: handleSettingsToggleRowPointerDown,
+            onClick: handleSettingsToggleRowClick,
+          },
+          react.createElement("div", { className: "setting-name-row" },
+            react.createElement("div", { className: "setting-name" }, I18n.t("overlay.enabled.label")),
             // Status Tag (Connected / Disconnected / Checking) only when enabled
             enabled && react.createElement("span", {
-              style: {
-                marginLeft: "10px",
-                fontSize: "10px",
-                padding: "2px 8px",
-                borderRadius: "12px",
-                backgroundColor: isConnected ? "rgba(74, 222, 128, 0.2)" : "rgba(239, 68, 68, 0.2)",
-                color: isConnected ? "#4ade80" : "#ef4444",
-                border: `1px solid ${isConnected ? "rgba(74, 222, 128, 0.3)" : "rgba(239, 68, 68, 0.3)"}`,
-                fontWeight: "600",
-                verticalAlign: "middle"
-              }
+              className: `settings-pill settings-status-pill ${statusTone}`,
             }, getStatusText())
           ),
           react.createElement("div", { className: "setting-description" },
@@ -255,14 +247,14 @@ const OverlaySettings = () => {
         ),
         react.createElement(
           "div",
-          { className: "setting-row-right", style: { display: "flex", alignItems: "center", gap: "10px" } },
+          { className: "setting-row-right" },
           // Download Button (Only if enabled AND disconnected)
           enabled && !isConnected && react.createElement(
             "button",
             {
-              className: "btn",
+              type: "button",
+              className: "btn settings-btn is-small",
               onClick: handleDownload,
-              style: { fontSize: "11px", padding: "4px 8px", height: "auto" }
             },
             I18n.t("overlay.download")
           ),
@@ -270,9 +262,11 @@ const OverlaySettings = () => {
           react.createElement(
             "button",
             {
+              type: "button",
               className: `switch-checkbox${enabled ? " active" : ""}`,
               onClick: handleToggle,
               "aria-checked": enabled,
+              "aria-label": I18n.t("overlay.enabled.label"),
               role: "checkbox",
             },
             react.createElement("svg", {
@@ -294,14 +288,19 @@ const OverlaySettings = () => {
   const renderOverlayTrimRow = () =>
     react.createElement(
       "div",
-      { className: "setting-row", "data-setting-key": "overlay-trim-metadata" },
+      { className: "setting-row is-inline is-toggle-row", "data-setting-key": "overlay-trim-metadata" },
       react.createElement(
         "div",
         { className: "setting-row-content" },
         react.createElement(
           "div",
-          { className: "setting-row-left" },
-          react.createElement("div", { className: "setting-name" }, I18n.t("overlay.trimMetadata.label")),
+          {
+            className: "setting-row-left",
+            onPointerDown: handleSettingsToggleRowPointerDown,
+            onClick: handleSettingsToggleRowClick,
+          },
+          react.createElement("div", { className: "setting-name-row" },
+            react.createElement("div", { className: "setting-name" }, I18n.t("overlay.trimMetadata.label"))),
           react.createElement("div", { className: "setting-description" }, I18n.t("overlay.trimMetadata.desc"))
         ),
         react.createElement(
@@ -321,42 +320,36 @@ const OverlaySettings = () => {
     // Port Setting Row (Only shown when enabled)
     enabled && react.createElement(
       "div",
-      { className: "setting-row" },
+      { className: "setting-row is-inline" },
       react.createElement(
         "div",
         { className: "setting-row-content" },
         react.createElement(
           "div",
           { className: "setting-row-left" },
-          react.createElement("div", { className: "setting-name" },
-            I18n.t("overlay.port.label")
-          ),
+          react.createElement("div", { className: "setting-name-row" },
+            react.createElement("div", { className: "setting-name" },
+              I18n.t("overlay.port.label")
+            )),
           react.createElement("div", { className: "setting-description" },
             I18n.t("overlay.port.desc")
           )
         ),
         react.createElement(
           "div",
-          { className: "setting-row-right", style: { display: "flex", alignItems: "center", gap: "8px" } },
+          { className: "setting-row-right" },
           react.createElement("input", {
-            type: "number",
+            type: "text",
+            inputMode: "numeric",
+            autoComplete: "off",
+            spellCheck: false,
+            maxLength: 5,
+            className: "settings-port-input",
+            "aria-label": I18n.t("overlay.port.label"),
             value: portInput,
             onChange: handlePortChange,
             onBlur: handlePortSave,
             onKeyDown: (e) => { if (e.key === 'Enter') handlePortSave(); },
-            min: 1024,
-            max: 65535,
-            style: {
-              width: "80px",
-              padding: "6px 10px",
-              borderRadius: "6px",
-              border: "1px solid rgba(255,255,255,0.1)",
-              backgroundColor: "rgba(0,0,0,0.2)",
-              color: "var(--spice-text)",
-              fontSize: "13px",
-              textAlign: "center",
-              fontFamily: "monospace"
-            }
           })
         )
       )
@@ -560,7 +553,7 @@ const NicknameSection = ({ userHash }) => {
               maxLength: 20,
               style: {
                 background: themeTokens.inputBackground,
-                border: "1px solid #5865f2",
+                border: "1px solid var(--settings-accent-line)",
                 borderRadius: "6px",
                 color: themeTokens.textPrimary,
                 padding: "8px 10px",
@@ -582,9 +575,9 @@ const NicknameSection = ({ userHash }) => {
           disabled: loading,
           style: {
             padding: "8px 12px",
-            borderRadius: "8px",
-            background: editing ? "#5865f2" : themeTokens.subtleButtonBackground,
-            color: editing ? "#fff" : themeTokens.subtleButtonText,
+            borderRadius: "6px",
+            background: editing ? "var(--settings-ink)" : themeTokens.subtleButtonBackground,
+            color: editing ? "var(--settings-ink-text)" : themeTokens.subtleButtonText,
             border: "none",
             fontSize: "12px",
             cursor: "pointer",
@@ -882,16 +875,7 @@ const AccountSection = () => {
 react.createElement(
     "div",
     {
-      className: "info-card",
-      style: {
-        padding: "20px",
-        background: "linear-gradient(145deg, rgba(88, 101, 242, 0.1) 0%, rgba(34, 197, 94, 0.08) 100%)",
-        border: "1px solid rgba(88, 101, 242, 0.22)",
-        borderRadius: "0 0 12px 12px",
-        backdropFilter: "blur(30px) saturate(150%)",
-        WebkitBackdropFilter: "blur(30px) saturate(150%)",
-        marginBottom: "24px",
-      },
+      className: "info-card settings-account-card",
     },
     react.createElement(
       "div",
@@ -912,12 +896,12 @@ react.createElement(
             borderRadius: "50%",
             background: accountInfo.profileImage
               ? `url(${accountInfo.profileImage}) center/cover no-repeat`
-              : "linear-gradient(135deg, #5865f2 0%, #7983f5 100%)",
+              : "#5865f2",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             flexShrink: 0,
-            border: "2px solid rgba(88, 101, 242, 0.25)",
+            border: "1px solid var(--settings-line)",
             color: "#fff",
             fontSize: "18px",
             fontWeight: "700",
@@ -1094,16 +1078,7 @@ react.createElement(
 react.createElement(
       "div",
       {
-        className: "info-card",
-        style: {
-          padding: "20px",
-          background: "linear-gradient(145deg, rgba(88, 101, 242, 0.1) 0%, rgba(46, 51, 122, 0.16) 100%)",
-          border: "1px solid rgba(88, 101, 242, 0.22)",
-          borderRadius: "0 0 12px 12px",
-          backdropFilter: "blur(30px) saturate(150%)",
-          WebkitBackdropFilter: "blur(30px) saturate(150%)",
-          marginBottom: "24px",
-        },
+        className: "info-card settings-account-card",
       },
       react.createElement(
         "div",
@@ -1121,8 +1096,8 @@ react.createElement(
             style: {
               width: "52px",
               height: "52px",
-              borderRadius: "16px",
-              background: "linear-gradient(135deg, #5865f2 0%, #7983f5 100%)",
+              borderRadius: "10px",
+              background: "#5865f2",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -1200,21 +1175,8 @@ react.createElement(
         {
           onClick: openLoginPage,
           disabled: loginLoading || logoutLoading,
-          style: {
-            width: "100%",
-            padding: "12px 20px",
-            background: "linear-gradient(135deg, #5865f2 0%, #7983f5 100%)",
-            border: "none",
-            borderRadius: "10px",
-            color: "#ffffff",
-            fontSize: "14px",
-            fontWeight: "700",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "8px",
-          },
+          type: "button",
+          className: "btn btn-primary settings-account-login",
         },
         loginLoading ? copy.loggingIn : copy.loginButton
       )
@@ -1223,13 +1185,8 @@ react.createElement(
 react.createElement(
       "div",
       {
-        className: "info-card",
+        className: "info-card settings-account-card",
         style: {
-          padding: "20px",
-          background: "linear-gradient(145deg, rgba(88, 101, 242, 0.1) 0%, rgba(46, 51, 122, 0.16) 100%)",
-          border: "1px solid rgba(88, 101, 242, 0.22)",
-          borderRadius: "0 0 12px 12px",
-          marginBottom: "24px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -1270,23 +1227,38 @@ const getOrderedAddonCapabilities = (supports) => {
   ];
 };
 
-const AddonSettingsCard = ({ addon, isEnabled, onToggle, isExpanded, onExpandToggle }) => {
+const AddonSettingsCard = ({
+  addon,
+  isEnabled,
+  onToggle,
+  isExpanded,
+  onExpandToggle,
+  variant = "row",
+  capabilityColumns,
+  owners,
+  onCapabilityChange,
+}) => {
   const SettingsUI = useMemo(
     () => addon.getSettingsUI ? addon.getSettingsUI() : null,
     [addon, addon.getSettingsUI]
   );
 
-  const [capabilities, setCapabilities] = useState({});
+  const readCapabilities = () => {
+    const caps = {};
+    if (window.AIAddonManager && addon.supports) {
+      Object.keys(addon.supports).forEach(cap => {
+        if (addon.supports[cap]) {
+          caps[cap] = window.AIAddonManager.isCapabilityEnabled(addon.id, cap);
+        }
+      });
+    }
+    return caps;
+  };
+  const [capabilities, setCapabilities] = useState(readCapabilities);
 
   useEffect(() => {
     if (window.AIAddonManager && addon.supports) {
-      const initialCaps = {};
-      Object.keys(addon.supports).forEach(cap => {
-        if (addon.supports[cap]) {
-          initialCaps[cap] = window.AIAddonManager.isCapabilityEnabled(addon.id, cap);
-        }
-      });
-      setCapabilities(initialCaps);
+      setCapabilities(readCapabilities());
     }
   }, [addon.id, isExpanded]); // isExpanded가 변경될 때도 상태 동기화 확인
 
@@ -1295,10 +1267,12 @@ const AddonSettingsCard = ({ addon, isEnabled, onToggle, isExpanded, onExpandTog
       const newValue = !capabilities[cap];
       setCapabilities(prev => ({ ...prev, [cap]: newValue }));
       window.AIAddonManager.setCapabilityEnabled(addon.id, cap, newValue);
+      onCapabilityChange?.(cap, newValue);
     }
   };
 
   const getLocalizedDescription = (desc) => {
+    if (!desc) return '';
     if (typeof desc === 'string') return desc;
     const storedLang = (Spicetify.LocalStorage.get("ivLyrics:visual:language") || window.I18n?.getCurrentLanguage?.() || 'en')
       .replace(/"/g, '');
@@ -1309,162 +1283,139 @@ const AddonSettingsCard = ({ addon, isEnabled, onToggle, isExpanded, onExpandTog
     return desc[storedLang] || (normalizedZh && desc[normalizedZh]) || desc[baseLang] || desc.en || Object.values(desc)[0] || '';
   };
 
-  // 아코디언 헤더 클릭 핸들러
-  const handleHeaderClick = (e) => {
-    // 버튼, 체크박스 클릭은 무시
-    if (e.target.closest('button') || e.target.closest('input[type="checkbox"]')) return;
-    onExpandToggle();
-  };
+  const displayName = addon.name || addon.id;
+  const description = getLocalizedDescription(addon.description);
 
-  // 지원 기능 뱃지 렌더링
-  const renderSupportBadges = () => {
-    const badges = [];
-    if (addon.supports?.pronunciation) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "pronunciation", type: "pronunciation", label: I18n.t("settings.aiProviders.supports.pronunciation") || "Pronunciation" }));
-    }
-    if (addon.supports?.translate) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "translate", type: "translate", label: I18n.t("settings.aiProviders.supports.translate") || "Translation" }));
-    }
-    if (addon.supports?.metadata) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "metadata", type: "metadata", label: I18n.t("settings.aiProviders.supports.metadata") || "Metadata" }));
-    }
-    if (addon.supports?.tmi) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "tmi", type: "tmi", label: I18n.t("settings.aiProviders.supports.tmi") || "Research" }));
-    }
-    if (addon.supports?.lyricsStudy) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "lyricsStudy", type: "lyricsStudy", label: I18n.t("settings.aiProviders.supports.lyricsStudy") || "Lyrics study" }));
-    }
-    if (addon.supports?.characterPronunciation) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "characterPronunciation", type: "characterPronunciation", label: I18n.t("settings.aiProviders.supports.characterPronunciation") || "Pronunciation" }));
-    }
-    if (addon.supports?.culturalAnnotations) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "culturalAnnotations", type: "culturalAnnotations", label: I18n.t("settings.aiProviders.supports.culturalAnnotations") || "Cultural context" }));
-    }
-    if (addon.supports?.wordSupplements) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "wordSupplements", type: "wordSupplements", label: I18n.t("settings.aiProviders.supports.wordSupplements") || "Word details" }));
-    }
-    return badges;
-  };
+  // 연결 카드: 제공자별 API 키·모델 등 Addon 고유 설정 UI.
+  // 검색 결과가 중복되지 않도록 작업 표의 행만 검색 앵커를 가진다.
+  if (variant === "connection") {
+    const words = String(displayName || "AI").replace(/[^A-Za-z0-9가-힣 ]/g, " ").trim().split(/\s+/).filter(Boolean);
+    const initials = (words.length > 1 ? words[0][0] + words[1][0] : (words[0] || "AI").slice(0, 2)).toUpperCase();
+    const meta = [addon.version ? `v${addon.version}` : "", addon.author || ""].filter(Boolean).join(" · ");
+    return react.createElement("div", {
+      className: `settings-connection-card${isExpanded ? " is-open" : ""}${isEnabled ? "" : " is-off"}`,
+      id: `ivlyrics-ai-connection-${addon.id}`,
+    },
+      react.createElement("button", {
+        type: "button",
+        className: "settings-connection-head",
+        "aria-expanded": !!isExpanded,
+        disabled: !SettingsUI,
+        onClick: onExpandToggle,
+      },
+        react.createElement("span", { className: "settings-connection-avatar", "aria-hidden": "true" }, initials),
+        react.createElement("span", { className: "settings-connection-name" },
+          react.createElement("b", null, displayName,
+            meta ? react.createElement("span", { className: "settings-connection-meta" }, meta) : null),
+          description ? react.createElement("small", null, description) : null
+        ),
+        react.createElement("span", { className: `settings-pill${isEnabled ? " is-ok" : ""}` },
+          isEnabled ? getSettingsText("misc.enabled", "Enabled") : getSettingsText("misc.disabled", "Disabled")),
+        react.createElement(SettingsUiIcon, { name: "down", size: 16, className: "settings-connection-chevron" })
+      ),
+      isExpanded && SettingsUI && react.createElement("div", { className: "settings-connection-body" },
+        react.createElement(SettingsUI)
+      )
+    );
+  }
 
-  const hasCapabilities = addon.supports && Object.keys(addon.supports).some(k => addon.supports[k]) && !addon.perEndpointCapabilities;
+  // 작업별 제공자 표의 한 행: 켜기/끄기, 기능 칸, 연결 카드로 이동
+  const columns = Array.isArray(capabilityColumns)
+    ? capabilityColumns
+    : getSettingsAiProviderColumns([addon]);
+  const perEndpoint = addon.perEndpointCapabilities === true;
+  const capabilityLabel = getSettingsAiCapabilityLabel;
+  const connectionLabel = getSettingsText("settingsUi.sections.aiConnections.title", "Connection");
+  const firstTriedLabel = getSettingsText("settingsUi.providers.firstTried", "Tried first");
+  const searchText = [
+    addon.name,
+    addon.author,
+    description,
+    ...Object.keys(addon.supports || {})
+      .filter((capability) => addon.supports[capability])
+      .map((capability) =>
+        `${capability} ${I18n.t(`settings.aiProviders.supports.${capability}`) || ""}`
+      ),
+  ].filter(Boolean).join(" ");
+
+  const renderCapability = (cap, chip) => {
+    if (!addon.supports?.[cap]) {
+      return chip ? null : react.createElement("span", { key: cap, className: "settings-cap-cell" },
+        react.createElement("span", { className: "settings-cap-none", "aria-hidden": "true" }));
+    }
+    const enabled = perEndpoint || capabilities[cap] === true;
+    const isOwner = owners?.[cap] === addon.id;
+    const label = `${displayName} · ${capabilityLabel(cap)}`;
+    const title = isOwner ? `${label} · ${firstTriedLabel}` : label;
+    const className = [
+      chip ? "settings-cap-chip" : "settings-cap-toggle",
+      enabled ? "is-on" : "",
+      isOwner ? "is-owner" : "",
+      perEndpoint ? "is-static" : "",
+    ].filter(Boolean).join(" ");
+    const content = chip
+      ? capabilityLabel(cap)
+      : react.createElement(SettingsUiIcon, { name: "check", size: 13 });
+    // 엔드포인트별로 기능을 고르는 제공자는 연결 카드에서만 바꾼다.
+    const control = perEndpoint
+      ? react.createElement("span", { key: cap, className, title, role: "img", "aria-label": title }, content)
+      : react.createElement("button", {
+        key: cap,
+        type: "button",
+        className,
+        "aria-pressed": enabled,
+        "aria-label": title,
+        title,
+        onClick: () => toggleCapability(cap),
+      }, content);
+    return chip ? control : react.createElement("span", { key: cap, className: "settings-cap-cell" }, control);
+  };
 
   return react.createElement("div", {
-    className: `lyrics-provider-card ${isExpanded ? 'expanded' : ''} ${isEnabled ? '' : 'disabled'}`,
+    className: `lyrics-provider-card settings-provider-row${isExpanded ? " expanded" : ""}${isEnabled ? "" : " disabled"}`,
     "data-setting-key": `ai-provider:${addon.id}`,
-    "data-search-text": [
-      addon.name,
-      addon.author,
-      getLocalizedDescription(addon.description),
-      ...Object.keys(addon.supports || {})
-        .filter((capability) => addon.supports[capability])
-        .map((capability) =>
-          `${capability} ${I18n.t(`settings.aiProviders.supports.${capability}`) || ""}`
-        ),
-    ].filter(Boolean).join(" "),
+    "data-search-text": searchText,
   },
-    // 카드 헤더
-    react.createElement("div", {
-      className: "lyrics-provider-card-header",
-      onClick: handleHeaderClick
-    },
-      // 왼쪽: 활성화 토글, 아이콘, 이름
-      react.createElement("div", { className: "lyrics-provider-card-header-left" },
-        react.createElement("label", { className: "lyrics-provider-toggle" },
-          react.createElement("input", {
-            type: "checkbox",
-            checked: isEnabled,
-            onChange: (e) => onToggle(e.target.checked)
-          }),
-          react.createElement("span", { className: "toggle-slider" })
-        ),
-        react.createElement("div", { className: "lyrics-provider-title-group" },
-          react.createElement("span", { className: "lyrics-provider-name" }, addon.name),
-          react.createElement("div", { className: "lyrics-provider-title-meta" },
-            react.createElement("span", null, `v${addon.version}`),
-            react.createElement("span", { className: "lyrics-provider-title-meta-divider" }, "•"),
-            react.createElement("span", null, addon.author)
-          ),
-          react.createElement(
-            "div",
-            { className: "lyrics-provider-summary" },
-            getLocalizedDescription(addon.description)
-          )
-        )
-      ),
-      // 오른쪽: 지원 뱃지, 확장 아이콘
-      react.createElement("div", { className: "lyrics-provider-card-header-right" },
-        react.createElement("div", { className: "support-badges" }, renderSupportBadges()),
-        react.createElement("svg", {
-          className: `lyrics-provider-expand-icon ${isExpanded ? 'expanded' : ''}`,
-          width: 16, height: 16, viewBox: "0 0 24 24", fill: "none",
-          stroke: "currentColor", strokeWidth: "2"
-        },
-          react.createElement("polyline", { points: "6 9 12 15 18 9" })
-        )
+    react.createElement("div", { className: "settings-provider-name" },
+      react.createElement("span", { className: "lyrics-provider-name" }, displayName),
+      description ? react.createElement("span", { className: "lyrics-provider-summary" }, description) : null
+    ),
+    react.createElement("div", { className: "settings-provider-switch" },
+      react.createElement("label", { className: "lyrics-provider-toggle" },
+        react.createElement("input", {
+          type: "checkbox",
+          role: "switch",
+          checked: !!isEnabled,
+          "aria-label": displayName,
+          onChange: (e) => onToggle(e.target.checked)
+        }),
+        react.createElement("span", { className: "toggle-slider" })
       )
     ),
-    // 확장 영역 (설정 UI + Capabilities)
-    isExpanded && (hasCapabilities || SettingsUI) && react.createElement("div", { className: "lyrics-provider-card-body" },
-      // Capabilities Toggles (자동 렌더링)
-      hasCapabilities && react.createElement("div", { className: "ai-addon-settings-group" },
-        react.createElement("div", { className: "ai-addon-capabilities-title" },
-          I18n.t("settings.aiProviders.enabledCapabilities") || "Enabled Capabilities"
-        ),
-        react.createElement("div", { className: "ai-addon-caps-container" },
-          getOrderedAddonCapabilities(addon.supports).map(cap =>
-            react.createElement("div", {
-              key: cap,
-              className: `ai-addon-cap-chip ${capabilities[cap] ? 'active' : ''} cap-${cap}`,
-              onClick: () => toggleCapability(cap)
-            },
-              capabilities[cap] && react.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, react.createElement("polyline", { points: "20 6 9 17 4 12" })),
-              I18n.t(`settings.aiProviders.supports.${cap}`) || cap
-            )
-          )
-        ),
-        react.createElement("div", { className: "ai-addon-capabilities-desc" },
-          I18n.t("settings.aiProviders.capabilitiesDesc") || "Select which features this provider handles"
-        )
-      ),
-      // 개별 Addon Custom UI
-      SettingsUI && react.createElement(SettingsUI)
+    ...columns.map((cap) => renderCapability(cap, false)),
+    react.createElement("button", {
+      type: "button",
+      className: "settings-provider-more",
+      "aria-label": `${displayName} · ${connectionLabel}`,
+      title: connectionLabel,
+      disabled: !SettingsUI,
+      onClick: onExpandToggle,
+    }, react.createElement(SettingsUiIcon, { name: "right", size: 16 })),
+    react.createElement("div", { className: "settings-provider-chips" },
+      ...columns.map((cap) => renderCapability(cap, true))
     )
   );
 };
 
-const getLyricsProviderGranularitySupport = (provider) => {
-  const declared = new Set(
-    (Array.isArray(provider?.supports?.karaokeGranularities)
-      ? provider.supports.karaokeGranularities
-      : [])
-      .map(value => {
-        const normalized = String(value || '').trim().toLowerCase();
-        if (normalized === 'char' || normalized === 'letter') return 'character';
-        if (normalized === 'token') return 'word';
-        return normalized;
-      })
-  );
-  if (provider?.supports?.character === true || provider?.supports?.karaokeCharacter === true) {
-    declared.add('character');
-  }
-  if (provider?.supports?.word === true || provider?.supports?.karaokeWord === true) {
-    declared.add('word');
-  }
-  const legacyGeneric = declared.size === 0 && provider?.supports?.karaoke === true;
-  return {
-    character: declared.has('character') || legacyGeneric,
-    word: declared.has('word') || legacyGeneric
-  };
-};
-
-// 가사 제공자 카드 컴포넌트
-const LyricsProviderCard = ({ provider, isEnabled, onToggle, isExpanded, onExpandToggle }) => {
+// 가사 제공자 카드 컴포넌트 (제공자 표의 한 행)
+const LyricsProviderCard = ({ provider, isEnabled, onToggle, isExpanded, onExpandToggle, owners, onTypeChange }) => {
   const SettingsUI = useMemo(
     () => provider.getSettingsUI ? provider.getSettingsUI() : null,
     [provider, provider.getSettingsUI]
   );
 
   const getLocalizedDescription = (desc) => {
+    if (!desc) return '';
     if (typeof desc === 'string') return desc;
     const storedLang = (StorageManager.getItem("ivLyrics:visual:language") || window.I18n?.getCurrentLanguage?.() || 'en')
       .replace(/"/g, '');
@@ -1473,30 +1424,6 @@ const LyricsProviderCard = ({ provider, isEnabled, onToggle, isExpanded, onExpan
       ? ((/tw|hant/i.test(storedLang) || storedLang === 'zh-TW') ? 'zh-TW' : 'zh-CN')
       : null;
     return desc[storedLang] || (normalizedZh && desc[normalizedZh]) || desc[baseLang] || desc.en || Object.values(desc)[0] || '';
-  };
-
-  const handleHeaderClick = (e) => {
-    if (e.target.closest('button') || e.target.closest('input[type="checkbox"]')) return;
-    onExpandToggle();
-  };
-
-  // 지원 유형 뱃지 렌더링
-  const renderSupportBadges = () => {
-    const badges = [];
-    const { character: supportsCharacter, word: supportsWord } = getLyricsProviderGranularitySupport(provider);
-    if (supportsCharacter) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "character", type: "character", label: I18n.t("settings.lyricsProviders.supports.character") || "Character-synced" }));
-    }
-    if (supportsWord) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "word", type: "word", label: I18n.t("settings.lyricsProviders.supports.word") || "Word-synced" }));
-    }
-    if (provider.supports?.synced) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "synced", type: "synced", label: I18n.t("settings.lyricsProviders.supports.synced") || "Synced" }));
-    }
-    if (provider.supports?.unsynced) {
-      badges.push(react.createElement(ProviderSupportIconChip, { key: "unsynced", type: "unsynced", label: I18n.t("settings.lyricsProviders.supports.unsynced") || "Plain" }));
-    }
-    return badges;
   };
 
   // 상세 설정 상태 (가사 유형별 활성화 여부)
@@ -1533,22 +1460,52 @@ const LyricsProviderCard = ({ provider, isEnabled, onToggle, isExpanded, onExpan
       setEnableUnsynced(value);
       window.LyricsAddonManager.setAddonSetting(provider.id, 'enable_unsynced', value);
     }
+    onTypeChange?.(type, value);
   };
 
   const {
     character: showCharacterToggle,
     word: showWordToggle
   } = getLyricsProviderGranularitySupport(provider);
-  const showSyncedToggle = provider.supports?.synced;
-  const showUnsyncedToggle = provider.supports?.unsynced;
+  const typeStates = {
+    character: { supported: showCharacterToggle, enabled: enableCharacter },
+    word: { supported: showWordToggle, enabled: enableWord },
+    synced: { supported: !!provider.supports?.synced, enabled: enableSynced },
+    unsynced: { supported: !!provider.supports?.unsynced, enabled: enableUnsynced },
+  };
+  const displayName = provider.name || provider.id;
+  const description = getLocalizedDescription(provider.description);
+  const typeLabel = (type) => I18n.t(`settings.lyricsProviders.supports.${type}`) || type;
+  const detailLabel = getSettingsText("shareImage.advancedSettings", "Advanced Settings");
+  const firstTriedLabel = getSettingsText("settingsUi.providers.firstTried", "Tried first");
+
+  const renderType = (type, chip) => {
+    const state = typeStates[type];
+    if (!state.supported) {
+      return chip ? null : react.createElement("span", { key: type, className: "settings-cap-cell" },
+        react.createElement("span", { className: "settings-cap-none", "aria-hidden": "true" }));
+    }
+    const isOwner = owners?.[type] === provider.id;
+    const label = `${displayName} · ${typeLabel(type)}${isOwner ? ` · ${firstTriedLabel}` : ""}`;
+    const control = react.createElement("button", {
+      key: type,
+      type: "button",
+      className: `${chip ? "settings-cap-chip" : "settings-cap-toggle"}${state.enabled ? " is-on" : ""}${isOwner ? " is-owner" : ""} type-${type}`,
+      "aria-pressed": !!state.enabled,
+      "aria-label": label,
+      title: label,
+      onClick: () => handleTypeToggle(type, !state.enabled),
+    }, chip ? typeLabel(type) : react.createElement(SettingsUiIcon, { name: "check", size: 13 }));
+    return chip ? control : react.createElement("span", { key: type, className: "settings-cap-cell" }, control);
+  };
 
   return react.createElement("div", {
-    className: `lyrics-provider-card ${isExpanded ? 'expanded' : ''} ${isEnabled ? '' : 'disabled'}`,
+    className: `lyrics-provider-card settings-provider-row${isExpanded ? " expanded" : ""}${isEnabled ? "" : " disabled"}`,
     "data-setting-key": `lyrics-provider:${provider.id}`,
     "data-search-text": [
       provider.name,
       provider.author,
-      getLocalizedDescription(provider.description),
+      description,
       ...Object.keys(provider.supports || {})
         .filter((lyricsType) => provider.supports[lyricsType])
         .map((lyricsType) =>
@@ -1556,88 +1513,37 @@ const LyricsProviderCard = ({ provider, isEnabled, onToggle, isExpanded, onExpan
         ),
     ].filter(Boolean).join(" "),
   },
-    // 카드 헤더
-    react.createElement("div", {
-      className: "lyrics-provider-card-header",
-      onClick: handleHeaderClick
-    },
-      // 왼쪽: 활성화 토글, 아이콘, 이름
-      react.createElement("div", { className: "lyrics-provider-card-header-left" },
-        react.createElement("label", { className: "lyrics-provider-toggle" },
-          react.createElement("input", {
-            type: "checkbox",
-            checked: isEnabled,
-            onChange: (e) => onToggle(e.target.checked)
-          }),
-          react.createElement("span", { className: "toggle-slider" })
-        ),
-        react.createElement("div", { className: "lyrics-provider-title-group" },
-          react.createElement("span", { className: "lyrics-provider-name" }, provider.name),
-          react.createElement("div", { className: "lyrics-provider-title-meta" },
-            react.createElement("span", null, `v${provider.version}`),
-            react.createElement("span", { className: "lyrics-provider-title-meta-divider" }, "•"),
-            react.createElement("span", null, provider.author)
-          ),
-          react.createElement(
-            "div",
-            { className: "lyrics-provider-summary" },
-            getLocalizedDescription(provider.description)
-          )
-        )
-      ),
-      // 오른쪽: 지원 뱃지, 확장 아이콘
-      react.createElement("div", { className: "lyrics-provider-card-header-right" },
-        react.createElement("div", { className: "support-badges" }, renderSupportBadges()),
-        react.createElement("svg", {
-          className: `lyrics-provider-expand-icon ${isExpanded ? 'expanded' : ''}`,
-          width: 16, height: 16, viewBox: "0 0 24 24", fill: "none",
-          stroke: "currentColor", strokeWidth: "2"
-        },
-          react.createElement("polyline", { points: "6 9 12 15 18 9" })
-        )
+    react.createElement("div", { className: "settings-provider-name" },
+      react.createElement("span", { className: "lyrics-provider-name" }, displayName),
+      description ? react.createElement("span", { className: "lyrics-provider-summary" }, description) : null
+    ),
+    react.createElement("div", { className: "settings-provider-switch" },
+      react.createElement("label", { className: "lyrics-provider-toggle" },
+        react.createElement("input", {
+          type: "checkbox",
+          role: "switch",
+          checked: !!isEnabled,
+          "aria-label": displayName,
+          onChange: (e) => onToggle(e.target.checked)
+        }),
+        react.createElement("span", { className: "toggle-slider" })
       )
     ),
-    // 확장 영역 (설정 UI)
-    isExpanded && react.createElement("div", { className: "lyrics-provider-card-body" },
-      // 가사 유형별 필터 토글 영역
-      react.createElement("div", { className: "lyrics-type-toggles-container" },
-        react.createElement("div", { className: "lyrics-type-toggles-title" }, I18n.t("settings.lyricsProviders.allowedTypes") || "Allowed Lyrics Types"),
-        react.createElement("div", { className: "lyrics-type-toggles" },
-          showCharacterToggle && react.createElement("button", {
-            type: "button",
-            onClick: () => handleTypeToggle('character', !enableCharacter),
-            className: `lyrics-type-toggle-chip type-character ${enableCharacter ? "active" : ""}`
-          },
-            enableCharacter && react.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, react.createElement("polyline", { points: "20 6 9 17 4 12" })),
-            I18n.t("settings.lyricsProviders.types.character") || "Character-synced Lyrics"
-          ),
-          showWordToggle && react.createElement("button", {
-            type: "button",
-            onClick: () => handleTypeToggle('word', !enableWord),
-            className: `lyrics-type-toggle-chip type-word ${enableWord ? "active" : ""}`
-          },
-            enableWord && react.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, react.createElement("polyline", { points: "20 6 9 17 4 12" })),
-            I18n.t("settings.lyricsProviders.types.word") || "Word-synced Lyrics"
-          ),
-          showSyncedToggle && react.createElement("button", {
-            type: "button",
-            onClick: () => handleTypeToggle('synced', !enableSynced),
-            className: `lyrics-type-toggle-chip type-synced ${enableSynced ? "active" : ""}`
-          },
-            enableSynced && react.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, react.createElement("polyline", { points: "20 6 9 17 4 12" })),
-            I18n.t("settings.lyricsProviders.types.synced") || "Synced Lyrics"
-          ),
-          showUnsyncedToggle && react.createElement("button", {
-            type: "button",
-            onClick: () => handleTypeToggle('unsynced', !enableUnsynced),
-            className: `lyrics-type-toggle-chip type-unsynced ${enableUnsynced ? "active" : ""}`
-          },
-            enableUnsynced && react.createElement("svg", { width: 14, height: 14, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" }, react.createElement("polyline", { points: "20 6 9 17 4 12" })),
-            I18n.t("settings.lyricsProviders.types.unsynced") || "Unsynced Lyrics"
-          )
-        )
-      ),
-      SettingsUI && react.createElement(SettingsUI)
+    ...LYRICS_PROVIDER_TYPE_COLUMNS.map((type) => renderType(type, false)),
+    react.createElement("button", {
+      type: "button",
+      className: "settings-provider-more is-disclosure",
+      "aria-expanded": !!isExpanded,
+      "aria-label": `${displayName} · ${detailLabel}`,
+      title: detailLabel,
+      disabled: !SettingsUI,
+      onClick: onExpandToggle,
+    }, react.createElement(SettingsUiIcon, { name: "down", size: 16 })),
+    react.createElement("div", { className: "settings-provider-chips" },
+      ...LYRICS_PROVIDER_TYPE_COLUMNS.map((type) => renderType(type, true))
+    ),
+    isExpanded && SettingsUI && react.createElement("div", { className: "lyrics-provider-card-body" },
+      react.createElement(SettingsUI)
     )
   );
 };
@@ -1698,11 +1604,141 @@ const createSettingsProviderOrderControls = (
   return { moveProvider, handleDragStart, handleDragOver, handleDrop, clearDragState };
 };
 
+// Section frame shared by every settings menu. The title is the scroll-spy,
+// section-tab and search anchor; the body holds the rows. It is plain markup
+// so the provider tabs can render their own sections.
+const renderSettingsSectionShell = ({
+  sectionKey, title, subtitle, view, hidden, className = "", children,
+}) =>
+  react.createElement(
+    "section",
+    {
+      key: sectionKey,
+      className: `settings-section${className ? ` ${className}` : ""}`,
+      "data-section-key": sectionKey,
+      "data-view": view || undefined,
+      hidden: hidden ? true : undefined,
+    },
+    react.createElement(
+      "div",
+      { className: "section-title", "data-setting-key": sectionKey },
+      react.createElement(
+        "div",
+        { className: "section-title-content" },
+        react.createElement(
+          "div",
+          { className: "section-text" },
+          react.createElement("h3", null, title),
+          subtitle ? react.createElement("p", null, subtitle) : null
+        )
+      )
+    ),
+    react.createElement(
+      "div",
+      { className: "settings-section-body" },
+      ...(Array.isArray(children) ? children : [children])
+    )
+  );
+
+// Lyrics types a provider can be limited to, in lookup order.
+const LYRICS_PROVIDER_TYPE_COLUMNS = Object.freeze(["character", "word", "synced", "unsynced"]);
+
+const SETTINGS_AI_CAPABILITY_LABELS = Object.freeze({
+  pronunciation: ["settings.aiProviders.supports.pronunciation", "Pronunciation"],
+  translate: ["settings.aiProviders.supports.translate", "Translation"],
+  metadata: ["settings.aiProviders.supports.metadata", "Metadata"],
+  tmi: ["settings.aiProviders.supports.tmi", "TMI"],
+  researchWebSearch: ["settings.aiProviders.supports.researchWebSearch", "Research web search"],
+  lyricsStudy: ["settings.aiProviders.supports.lyricsStudy", "Learning"],
+  characterPronunciation: ["settings.aiProviders.supports.characterPronunciation", "Character pronunciation"],
+  culturalAnnotations: ["settings.aiProviders.supports.culturalAnnotations", "Cultural context"],
+  wordSupplements: ["settings.aiProviders.supports.wordSupplements", "Word details"],
+});
+
+const getSettingsAiCapabilityLabel = (capability) => {
+  const [key, fallback] = SETTINGS_AI_CAPABILITY_LABELS[capability]
+    || [`settings.aiProviders.supports.${capability}`, capability];
+  return I18n.t(key) || fallback;
+};
+
+// Columns of the AI provider table: every capability an add-on declares, in
+// the provider cards' order (pronunciation before translation).
+const getSettingsAiProviderColumns = (providers) => {
+  const supports = {};
+  (providers || []).forEach((provider) => {
+    Object.keys(provider?.supports || {}).forEach((capability) => {
+      if (provider.supports[capability]) supports[capability] = true;
+    });
+  });
+  return typeof getOrderedAddonCapabilities === "function"
+    ? getOrderedAddonCapabilities(supports)
+    : Object.keys(supports);
+};
+
+const SETTINGS_PROVIDER_GLYPHS = Object.freeze({
+  character: "M5 9v6M9 6v12M13 9v6M17 4v16M21 8v8",
+  word: "M3 6h4l2 12h2l3-12h4l3 12M4.5 13h3M14.5 13h5",
+  synced: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4.5V12l3 2",
+  unsynced: "M5 6h14M5 12h14M5 18h9",
+  translate: "M4 5h8M8 3v2M6 5c0 4 2 7 6 9M11 5c-.4 3.4-2.2 6.2-5.5 8M14 21l3.5-9L21 21M15.5 18h4",
+  pronunciation: "M11 5 6 9H3v6h3l5 4V5ZM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13",
+  metadata: "M4 4h7l9 9-7 7-9-9V4Zm4 4h.01",
+  tmi: "M21 12a9 9 0 0 1-9 9H5l1.8-3.2A9 9 0 1 1 21 12Zm-9-1v5M12 7h.01",
+  researchWebSearch: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm9 16-4.35-4.35",
+  lyricsStudy: "M4 5.5A3.5 3.5 0 0 1 7.5 2H12v17H7.5A3.5 3.5 0 0 0 4 22V5.5ZM20 5.5A3.5 3.5 0 0 0 16.5 2H12v17h4.5A3.5 3.5 0 0 1 20 22V5.5Z",
+  characterPronunciation: "M5 9v6M9 6v12M13 9v6M17 4v16M21 8v8",
+  culturalAnnotations: "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Zm0-20c3 3 4.5 6.3 4.5 10S15 19 12 22M12 2C9 5 7.5 8.3 7.5 12S9 19 12 22M2 12h20",
+  wordSupplements: "M3 6h4l2 12h2l3-12h4l3 12M4.5 13h3M14.5 13h5M4 20h16",
+  arrow: "m9 6 6 6-6 6",
+});
+
+const renderSettingsProviderGlyph = (name) =>
+  SETTINGS_PROVIDER_GLYPHS[name]
+    ? react.createElement("svg", {
+      className: "settings-provider-glyph",
+      width: 15,
+      height: 15,
+      viewBox: "0 0 24 24",
+      fill: "none",
+      stroke: "currentColor",
+      strokeWidth: 1.6,
+      strokeLinecap: "round",
+      strokeLinejoin: "round",
+      "aria-hidden": "true",
+    }, react.createElement("path", { d: SETTINGS_PROVIDER_GLYPHS[name] }))
+    : null;
+
+const getLyricsProviderGranularitySupport = (provider) => {
+  const declared = new Set(
+    (Array.isArray(provider?.supports?.karaokeGranularities)
+      ? provider.supports.karaokeGranularities
+      : [])
+      .map(value => {
+        const normalized = String(value || '').trim().toLowerCase();
+        if (normalized === 'char' || normalized === 'letter') return 'character';
+        if (normalized === 'token') return 'word';
+        return normalized;
+      })
+  );
+  if (provider?.supports?.character === true || provider?.supports?.karaokeCharacter === true) {
+    declared.add('character');
+  }
+  if (provider?.supports?.word === true || provider?.supports?.karaokeWord === true) {
+    declared.add('word');
+  }
+  const legacyGeneric = declared.size === 0 && provider?.supports?.karaoke === true;
+  return {
+    character: declared.has('character') || legacyGeneric,
+    word: declared.has('word') || legacyGeneric
+  };
+};
+
 // Return the existing DOM tree directly; do not introduce a remounting wrapper.
 const renderSettingsProviderItems = ({
   sortedProviders, dragState, enabledProviders, expandedProviders,
   handleDragOver, handleDrop, handleDragStart, clearDragState, moveProvider,
-  handleToggleEnabled, toggleExpanded, translationKey, Card, providerProp
+  handleToggleEnabled, toggleExpanded, translationKey, Card, providerProp,
+  onExpandProvider, cardProps
 }) => (
   sortedProviders.map((provider, providerIndex) =>
     react.createElement("div", {
@@ -1712,14 +1748,11 @@ const renderSettingsProviderItems = ({
         "lyrics-provider-item",
         dragState.sourceId === provider.id ? "dragging" : "",
         dragState.targetId === provider.id ? `drag-over-${dragState.position}` : "",
+        enabledProviders[provider.id] === false ? "is-off" : "",
       ].filter(Boolean).join(" "),
       onDragOver: (event) => handleDragOver(event, provider.id),
       onDrop: (event) => handleDrop(event, provider.id),
     },
-      react.createElement("span", {
-        className: "provider-order-index",
-        "aria-hidden": "true",
-      }, providerIndex + 1),
       react.createElement(ProviderDragHandle, {
         provider,
         label: `${provider.name || provider.id}: ${I18n.t(`${translationKey}.moveUp`) || "Move Up"} / ${I18n.t(`${translationKey}.moveDown`) || "Move Down"}`,
@@ -1727,17 +1760,61 @@ const renderSettingsProviderItems = ({
         onDragEnd: clearDragState,
         onMove: moveProvider,
       }),
+      react.createElement("span", {
+        className: "provider-order-index",
+        "aria-hidden": "true",
+      }, providerIndex + 1),
       // Provider 카드
       react.createElement(Card, {
+        ...(cardProps || {}),
         [providerProp]: provider,
         isEnabled: enabledProviders[provider.id] !== false,
         onToggle: (enabled) => handleToggleEnabled(provider.id, enabled),
         isExpanded: expandedProviders.has(provider.id),
-        onExpandToggle: () => toggleExpanded(provider.id)
+        onExpandToggle: () => (onExpandProvider || toggleExpanded)(provider.id)
       })
     )
   )
 );
+
+// Column header of a provider table. Its cells use the same grid as the rows.
+const renderSettingsProviderTableHead = ({
+  columns, labelFor, owners, providerNames, noneLabel, providerLabel,
+}) =>
+  react.createElement("div", { className: "settings-provider-head" },
+    react.createElement("span", { className: "settings-provider-head-spacer", "aria-hidden": "true" }),
+    react.createElement("div", { className: "settings-provider-head-cells" },
+      react.createElement("span", { className: "settings-provider-head-label" }, providerLabel),
+      react.createElement("span", { "aria-hidden": "true" }),
+      ...columns.map((column) => {
+        const ownerId = owners ? owners[column] : null;
+        const ownerName = ownerId ? (providerNames[ownerId] || ownerId) : "";
+        return react.createElement("span", {
+          key: column,
+          className: "settings-provider-head-cap",
+          title: labelFor(column),
+        },
+          renderSettingsProviderGlyph(column),
+          react.createElement("span", { className: "settings-provider-head-text" }, labelFor(column)),
+          owners ? react.createElement("span", {
+            className: `settings-provider-owner${ownerId ? "" : " is-none"}`,
+            title: ownerName || noneLabel,
+          }, ownerName || noneLabel) : null
+        );
+      }),
+      react.createElement("span", { "aria-hidden": "true" })
+    )
+  );
+
+const renderSettingsProviderLegend = () =>
+  react.createElement("div", { className: "settings-provider-legend", "aria-hidden": "true" },
+    react.createElement("span", null,
+      react.createElement("i", { className: "is-on" }),
+      I18n.t("misc.enabled") || "Enabled"),
+    react.createElement("span", null,
+      react.createElement("i", { className: "is-owner" }),
+      I18n.t("settingsUi.providers.firstTried") || "Tried first")
+  );
 
 // 가사 제공자 설정 탭 컴포넌트
 const LyricsProvidersTab = () => {
@@ -1747,6 +1824,9 @@ const LyricsProvidersTab = () => {
   const [expandedProviders, setExpandedProviders] = useState(new Set());
   const [refreshKey, setRefreshKey] = useState(0);
   const [dragState, setDragState] = useState({ sourceId: null, targetId: null, position: "before" });
+  // Lookup toggles and per-type switches only change how the chain and the
+  // "tried first" marks read; re-render to redraw them.
+  const [, setDisplayRevision] = useState(0);
   const preferSyncDataProviderEnabled =
     window.LyricsAddonManager?.isPreferSyncDataProviderEnabled?.()
     ?? (CONFIG.visual["prefer-sync-data-provider"] !== false);
@@ -1808,64 +1888,145 @@ const LyricsProvidersTab = () => {
 
   // 정렬된 provider 목록
   const sortedProviders = buildOrderedProviderList(providers, providerOrder);
+  const typeLabel = (type) => I18n.t(`settings.lyricsProviders.supports.${type}`) || type;
+  const isTypeSupported = (provider, type) => (
+    type === "synced" || type === "unsynced"
+      ? !!provider?.supports?.[type]
+      : !!getLyricsProviderGranularitySupport(provider)[type]
+  );
+  // Same defaults as the provider rows, including the legacy karaoke switch.
+  const isTypeEnabled = (provider, type) => {
+    const manager = window.LyricsAddonManager;
+    if (typeof manager?.getAddonSetting !== "function") return true;
+    let fallback = true;
+    if (type === "character" || type === "word") {
+      const legacy = manager.getAddonSetting(provider.id, "enable_karaoke", null);
+      fallback = legacy === null || legacy === undefined ? true : legacy !== false;
+    }
+    return !!(manager.getAddonSetting(provider.id, `enable_${type}`, fallback) ?? true);
+  };
+  const typeOwners = {};
+  LYRICS_PROVIDER_TYPE_COLUMNS.forEach((type) => {
+    const owner = sortedProviders.find((provider) =>
+      enabledProviders[provider.id] !== false && isTypeSupported(provider, type) && isTypeEnabled(provider, type));
+    typeOwners[type] = owner ? owner.id : null;
+  });
 
-  return react.createElement("div", { className: "settings-section lyrics-providers-section" },
-    // 통합 컨테이너
-    react.createElement("div", { className: "lyrics-providers-container" },
-      react.createElement(OptionList, {
-        items: [
-          {
-            desc: I18n.t("settings.lyricsProviders.preferSyncDataProvider.label") || "Prioritize providers with sync data",
-            info: I18n.t("settings.lyricsProviders.preferSyncDataProvider.desc") || "When sync data is available for the current track, try its matching lyrics provider before the normal provider order.",
-            key: "prefer-sync-data-provider",
-            type: ConfigSlider,
-            defaultValue: preferSyncDataProviderEnabled,
+  const lookupSteps = [];
+  if (preferSyncDataProviderEnabled) {
+    lookupSteps.push({
+      id: "sync",
+      label: I18n.t("settings.lyricsProviders.supports.ivLyricsSync") || "ivLyrics Sync",
+      accent: true,
+    });
+  }
+  if (preferLyricsTypeOverProviderOrderEnabled) {
+    LYRICS_PROVIDER_TYPE_COLUMNS.forEach((type) => lookupSteps.push({ id: `type-${type}`, label: typeLabel(type) }));
+  } else {
+    sortedProviders
+      .filter((provider) => enabledProviders[provider.id] !== false)
+      .forEach((provider) => lookupSteps.push({ id: `provider-${provider.id}`, label: provider.name || provider.id }));
+  }
+
+  return react.createElement("div", { className: "settings-provider-tab lyrics-providers-section", style: { display: "contents" } },
+    renderSettingsSectionShell({
+      sectionKey: "lyrics-lookup",
+      title: I18n.t("settingsUi.sections.lyricsLookup.title") || "Lookup order",
+      subtitle: I18n.t("settingsUi.sections.lyricsLookup.subtitle") || "Choose what to check first when looking for lyrics.",
+      children: react.createElement("div", { className: "settings-group settings-lookup-group" },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settings.lyricsProviders.preferSyncDataProvider.label") || "Prioritize providers with sync data",
+              info: I18n.t("settings.lyricsProviders.preferSyncDataProvider.desc") || "When sync data is available for the current track, try its matching lyrics provider before the normal provider order.",
+              key: "prefer-sync-data-provider",
+              type: ConfigSlider,
+              defaultValue: preferSyncDataProviderEnabled,
+            },
+            {
+              desc: I18n.t("settings.lyricsProviders.preferLyricsTypeOverProviderOrder.label") || "Prioritize lyrics type over provider order",
+              info: I18n.t("settings.lyricsProviders.preferLyricsTypeOverProviderOrder.desc") || "Try karaoke lyrics across all providers first, then synced lyrics, then plain lyrics. Provider order is preserved within each type.",
+              key: "prefer-lyrics-type-over-provider-order",
+              type: ConfigSlider,
+              defaultValue: preferLyricsTypeOverProviderOrderEnabled,
+            },
+          ],
+          onChange: (name, value) => {
+            if (
+              name === "prefer-sync-data-provider"
+              && typeof window.LyricsAddonManager?.setPreferSyncDataProviderEnabled === "function"
+            ) {
+              window.LyricsAddonManager.setPreferSyncDataProviderEnabled(value);
+            } else if (
+              name === "prefer-lyrics-type-over-provider-order"
+              && typeof window.LyricsAddonManager?.setPreferLyricsTypeOverProviderOrderEnabled === "function"
+            ) {
+              window.LyricsAddonManager.setPreferLyricsTypeOverProviderOrderEnabled(value);
+            } else {
+              CONFIG.visual[name] = value;
+              StorageManager.saveConfig(name, value);
+              window.LyricsAddonManager?._triggerLyricsRefresh?.();
+            }
+            window.dispatchEvent(new CustomEvent("ivLyrics", {
+              detail: { type: "config", name, value },
+            }));
+            setDisplayRevision((revision) => revision + 1);
           },
-          {
-            desc: I18n.t("settings.lyricsProviders.preferLyricsTypeOverProviderOrder.label") || "Prioritize lyrics type over provider order",
-            info: I18n.t("settings.lyricsProviders.preferLyricsTypeOverProviderOrder.desc") || "Try karaoke lyrics across all providers first, then synced lyrics, then plain lyrics. Provider order is preserved within each type.",
-            key: "prefer-lyrics-type-over-provider-order",
-            type: ConfigSlider,
-            defaultValue: preferLyricsTypeOverProviderOrderEnabled,
-          },
-        ],
-        onChange: (name, value) => {
-          if (
-            name === "prefer-sync-data-provider"
-            && typeof window.LyricsAddonManager?.setPreferSyncDataProviderEnabled === "function"
-          ) {
-            window.LyricsAddonManager.setPreferSyncDataProviderEnabled(value);
-          } else if (
-            name === "prefer-lyrics-type-over-provider-order"
-            && typeof window.LyricsAddonManager?.setPreferLyricsTypeOverProviderOrderEnabled === "function"
-          ) {
-            window.LyricsAddonManager.setPreferLyricsTypeOverProviderOrderEnabled(value);
-          } else {
-            CONFIG.visual[name] = value;
-            StorageManager.saveConfig(name, value);
-            window.LyricsAddonManager?._triggerLyricsRefresh?.();
-          }
-          window.dispatchEvent(new CustomEvent("ivLyrics", {
-            detail: { type: "config", name, value },
-          }));
+        }),
+        lookupSteps.length > 0 && react.createElement("div", {
+          className: "settings-lookup-chain",
+          "aria-live": "polite",
         },
-      }),
-
-      // Provider 목록
-      providers.length > 0 && react.createElement("div", { className: "lyrics-providers-list", role: "list" },
-        renderSettingsProviderItems({
-          sortedProviders, dragState, enabledProviders, expandedProviders,
-          handleDragOver, handleDrop, handleDragStart, clearDragState, moveProvider,
-          handleToggleEnabled, toggleExpanded,
-          translationKey: "settings.lyricsProviders", Card: LyricsProviderCard, providerProp: "provider"
-        })
+          ...lookupSteps.flatMap((step, index) => [
+            index > 0 ? react.createElement("span", {
+              key: `arrow-${step.id}`,
+              className: "settings-lookup-arrow",
+              "aria-hidden": "true",
+            }, renderSettingsProviderGlyph("arrow")) : null,
+            react.createElement("span", {
+              key: step.id,
+              className: `settings-lookup-step${step.accent ? " is-accent" : ""}`,
+            }, step.label),
+          ])
+        )
       ),
-
-      // Provider가 없을 때
-      providers.length === 0 && react.createElement("div", { className: "no-providers-message" },
-        react.createElement("p", null, I18n.t("settings.lyricsProviders.noProviders") || "등록된 가사 제공자가 없습니다.")
-      )
-    )
+    }),
+    renderSettingsSectionShell({
+      sectionKey: "lyrics-provider-list",
+      title: I18n.t("settings.lyricsProviders.title") || "Lyrics Providers",
+      subtitle: I18n.t("settings.lyricsProviders.description") || "Select and prioritize lyrics providers. Providers at the top are tried first.",
+      children: providers.length > 0
+        ? react.createElement("div", {
+          className: "settings-group settings-provider-table",
+          style: { "--provider-caps": LYRICS_PROVIDER_TYPE_COLUMNS.length },
+        },
+          react.createElement("div", { className: "settings-provider-caption" },
+            react.createElement("b", null, I18n.t("settings.lyricsProviders.allowedTypes") || "Allowed Lyrics Types")),
+          renderSettingsProviderTableHead({
+            columns: LYRICS_PROVIDER_TYPE_COLUMNS,
+            labelFor: typeLabel,
+            providerLabel: I18n.t("settingsUi.groups.providers") || "Providers",
+          }),
+          // Provider 목록
+          react.createElement("div", { className: "lyrics-providers-list", role: "list" },
+            renderSettingsProviderItems({
+              sortedProviders, dragState, enabledProviders, expandedProviders,
+              handleDragOver, handleDrop, handleDragStart, clearDragState, moveProvider,
+              handleToggleEnabled, toggleExpanded,
+              translationKey: "settings.lyricsProviders", Card: LyricsProviderCard, providerProp: "provider",
+              cardProps: {
+                owners: typeOwners,
+                onTypeChange: () => setDisplayRevision((revision) => revision + 1),
+              },
+            })
+          ),
+          renderSettingsProviderLegend()
+        )
+        // Provider가 없을 때
+        : react.createElement("div", { className: "no-providers-message" },
+          react.createElement("p", null, I18n.t("settings.lyricsProviders.noProviders") || "등록된 가사 제공자가 없습니다.")
+        ),
+    })
   );
 };
 
@@ -1893,8 +2054,8 @@ const AI_TRANSLATION_STYLE_OPTIONS = [
   }
 ];
 
-// AI 제공자 설정 탭 컴포넌트 (LyricsProvidersTab과 동일 스타일)
-const AIProvidersTab = () => {
+// AI 제공자 설정 탭 컴포넌트. 문화적 배경 설명 섹션은 설정 창이 children으로 넘긴다.
+const AIProvidersTab = ({ children } = {}) => {
   const [providers, setProviders] = useState([]);
   const [providerOrder, setProviderOrder] = useState([]);
   const [enabledProviders, setEnabledProviders] = useState({});
@@ -1907,12 +2068,8 @@ const AIProvidersTab = () => {
   const [providerRetryCount, setProviderRetryCount] = useState(
     () => window.AIAddonManager?.getProviderRetryCount?.() ?? 2
   );
-  const [culturalAnnotationsEnabled, setCulturalAnnotationsEnabled] = useState(() => {
-    const value = CONFIG.visual["cultural-annotations-enabled"];
-    return value === true || value === "true";
-  });
-  const [culturalDetailsExpanded, setCulturalDetailsExpanded] = useState(false);
-  const vinylModeLabel = I18n.t("vinyl.mode") || "LP";
+  // Capability switches change which provider is tried first per column.
+  const [, setCapabilityRevision] = useState(0);
 
   useEffect(() => {
     let retryTimer = null;
@@ -2003,199 +2160,140 @@ const AIProvidersTab = () => {
     });
   };
 
+  // The row's arrow opens the provider's connection card and brings it into
+  // view inside the settings scroller (never scrolls Spotify's own shell).
+  const revealConnection = (providerId) => {
+    setExpandedProviders(prev => {
+      if (prev.has(providerId)) return prev;
+      const next = new Set(prev);
+      next.add(providerId);
+      return next;
+    });
+    const bringIntoView = () => {
+      const card = document.getElementById?.(`ivlyrics-ai-connection-${providerId}`);
+      const scroller = card?.closest?.(".settings-content");
+      if (!card || !scroller) return;
+      const pageHead = scroller.querySelector(".settings-page-head");
+      const offset = (pageHead ? pageHead.getBoundingClientRect().height : 0) + 12;
+      const top = card.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - offset;
+      scroller.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      card.classList.remove("is-flash");
+      void card.offsetWidth;
+      card.classList.add("is-flash");
+      card.querySelector(".settings-connection-head")?.focus({ preventScroll: true });
+    };
+    window.requestAnimationFrame?.(() => window.requestAnimationFrame?.(bringIntoView));
+  };
+
   const { moveProvider, handleDragStart, handleDragOver, handleDrop, clearDragState } =
     createSettingsProviderOrderControls(
       "AIAddonManager", providers, providerOrder, setProviderOrder, dragState, setDragState
     );
 
-  const handleCulturalSettingChange = (name, value) => {
-    CONFIG.visual[name] = value;
-    StorageManager.saveConfig(name, value);
-    if (name === "cultural-annotations-enabled") {
-      const enabled = value === true || value === "true";
-      setCulturalAnnotationsEnabled(enabled);
-      if (!enabled) setCulturalDetailsExpanded(false);
-    }
-    if (name.endsWith("font-family")) loadGoogleFontFamily(value);
-    lyricContainerUpdate?.();
-    window.dispatchEvent(new CustomEvent("ivLyrics", {
-      detail: { type: "config", name, value },
-    }));
-  };
-
-  const renderAiTranslationStylePanel = () =>
-      react.createElement("section", {
-        className: "ai-translation-style-panel",
-        "aria-labelledby": "ai-translation-style-title"
-      },
-        react.createElement("div", { className: "ai-translation-style-header" },
-          react.createElement("div", {
-            id: "ai-translation-style-title",
-            className: "ai-translation-style-title"
-          }, I18n.t("settings.aiProviders.translationStyle.title") || "Translation style"),
-          react.createElement("p", { className: "ai-translation-style-description" },
-            I18n.t("settings.aiProviders.translationStyle.description")
-              || "Choose how closely AI translations follow the original wording. Line structure and meaning are preserved in every mode."
-          )
-        ),
-        react.createElement("div", {
-          className: "ai-translation-style-options",
-          role: "radiogroup",
-          "aria-label": I18n.t("settings.aiProviders.translationStyle.title") || "Translation style"
-        },
-          AI_TRANSLATION_STYLE_OPTIONS.map((option, index) => {
-            const active = translationStyle === option.id;
-            return react.createElement("button", {
-              key: option.id,
-              type: "button",
-              role: "radio",
-              "aria-checked": active,
-              tabIndex: active ? 0 : -1,
-              className: `ai-translation-style-option${active ? " active" : ""}`,
-              "data-translation-style": option.id,
-              onClick: () => handleTranslationStyleChange(option.id),
-              onKeyDown: (event) => handleTranslationStyleKeyDown(event, index)
-            },
-              react.createElement("span", { className: "ai-translation-style-option-heading" },
-                react.createElement("span", { className: "ai-translation-style-indicator", "aria-hidden": "true" }),
-                react.createElement("span", { className: "ai-translation-style-option-label" },
-                  I18n.t(option.labelKey) || option.labelFallback
-                )
-              ),
-              react.createElement("span", { className: "ai-translation-style-option-description" },
-                I18n.t(option.descriptionKey) || option.descriptionFallback
-              )
-            );
-          })
-        )
-      );
-
-  const renderCulturalAnnotationGroup = () =>
-      react.createElement("div", {
-        className: `cultural-annotation-group${culturalAnnotationsEnabled ? " is-enabled" : ""}${culturalDetailsExpanded ? " is-expanded" : ""}`,
-        "data-setting-key": "cultural-annotations-group",
-      },
-        react.createElement(OptionList, {
-          items: [
-            {
-              desc: I18n.t("settings.culturalAnnotations.label"),
-              key: "cultural-annotations-enabled",
-              info: I18n.t("settings.culturalAnnotations.desc"),
-              type: ConfigSlider,
-              defaultValue: CONFIG.visual["cultural-annotations-enabled"] ?? false,
-            },
-          ],
-          onChange: handleCulturalSettingChange,
-        }),
-        culturalAnnotationsEnabled && react.createElement("button", {
-          type: "button",
-          className: `cultural-details-toggle${culturalDetailsExpanded ? " expanded" : ""}`,
-          "aria-expanded": culturalDetailsExpanded,
-          "aria-controls": "cultural-annotation-details",
-          onClick: () => setCulturalDetailsExpanded((expanded) => !expanded),
-        },
-          react.createElement("span", null, I18n.t("shareImage.advancedSettings") || "Detailed settings"),
-          react.createElement("svg", {
-            width: 16,
-            height: 16,
-            viewBox: "0 0 24 24",
-            fill: "none",
-            stroke: "currentColor",
-            strokeWidth: 2,
-            strokeLinecap: "round",
-            strokeLinejoin: "round",
-            "aria-hidden": "true",
-          }, react.createElement("polyline", { points: "6 9 12 15 18 9" }))
-        ),
-        culturalAnnotationsEnabled && culturalDetailsExpanded && react.createElement("div", {
-          id: "cultural-annotation-details",
-          className: "cultural-annotation-details",
-        }, react.createElement(OptionList, {
-        items: [
-          {
-            desc: I18n.t("settings.culturalAnnotations.fontFamily.label"),
-            key: "cultural-annotations-font-family",
-            info: I18n.t("settings.culturalAnnotations.fontFamily.desc"),
-            type: ConfigFontSelector,
-            defaultValue: CONFIG.visual["cultural-annotations-font-family"] || "Pretendard Variable",
-          },
-          {
-            desc: I18n.t("settings.culturalAnnotations.fontSize.label"),
-            key: "cultural-annotations-font-size",
-            info: I18n.t("settings.culturalAnnotations.fontSize.desc"),
-            type: ConfigSliderRange,
-            min: 12,
-            max: 48,
-            step: 1,
-            unit: "px",
-          },
-          {
-            desc: I18n.t("settings.culturalAnnotations.fontWeight.label"),
-            key: "cultural-annotations-font-weight",
-            info: I18n.t("settings.culturalAnnotations.fontWeight.desc"),
-            type: ConfigFontWeightSlider,
-          },
-          {
-            desc: I18n.t("settings.culturalAnnotations.opacity.label"),
-            key: "cultural-annotations-opacity",
-            info: I18n.t("settings.culturalAnnotations.opacity.desc"),
-            type: ConfigSliderRange,
-            min: 20,
-            max: 100,
-            step: 1,
-            unit: "%",
-          },
-          ...createTextOutlineSettingItems("cultural-annotations"),
-          {
-            desc: `${vinylModeLabel} · ${I18n.t("settings.culturalAnnotations.fontFamily.label")}`,
-            key: "cultural-annotations-vinyl-font-family",
-            info: `${vinylModeLabel}: ${I18n.t("settings.culturalAnnotations.fontFamily.desc")}`,
-            type: ConfigFontSelector,
-            defaultValue: CONFIG.visual["cultural-annotations-vinyl-font-family"] || "Pretendard Variable",
-          },
-          {
-            desc: `${vinylModeLabel} · ${I18n.t("settings.culturalAnnotations.fontSize.label")}`,
-            key: "cultural-annotations-vinyl-font-size",
-            info: `${vinylModeLabel}: ${I18n.t("settings.culturalAnnotations.fontSize.desc")}`,
-            type: ConfigSliderRange,
-            min: 10,
-            max: 32,
-            step: 1,
-            unit: "px",
-          },
-          {
-            desc: `${vinylModeLabel} · ${I18n.t("settings.culturalAnnotations.fontWeight.label")}`,
-            key: "cultural-annotations-vinyl-font-weight",
-            info: `${vinylModeLabel}: ${I18n.t("settings.culturalAnnotations.fontWeight.desc")}`,
-            type: ConfigFontWeightSlider,
-          },
-          {
-            desc: `${vinylModeLabel} · ${I18n.t("settings.culturalAnnotations.opacity.label")}`,
-            key: "cultural-annotations-vinyl-opacity",
-            info: `${vinylModeLabel}: ${I18n.t("settings.culturalAnnotations.opacity.desc")}`,
-            type: ConfigSliderRange,
-            min: 20,
-            max: 100,
-            step: 1,
-            unit: "%",
-          },
-          ...createTextOutlineSettingItems("cultural-annotations-vinyl", {
-            labelPrefix: `${vinylModeLabel} · `,
-            infoPrefix: `${vinylModeLabel}: `,
-          }),
-        ],
-          onChange: handleCulturalSettingChange,
-        }))
-      );
-
   // 정렬된 provider 목록
   const sortedProviders = buildOrderedProviderList(providers, providerOrder);
+  const capabilityColumns = getSettingsAiProviderColumns(sortedProviders);
+  // Mirrors AIAddonManager.getEnabledProvidersFor: per-endpoint add-ons
+  // decide inside their connection, everything else defaults to on.
+  const isCapabilityOn = (provider, capability) => {
+    if (!provider?.supports?.[capability]) return false;
+    if (provider.perEndpointCapabilities === true) return true;
+    return window.AIAddonManager?.isCapabilityEnabled?.(provider.id, capability) ?? true;
+  };
+  const owners = {};
+  capabilityColumns.forEach((capability) => {
+    const owner = sortedProviders.find((provider) =>
+      enabledProviders[provider.id] !== false && isCapabilityOn(provider, capability));
+    owners[capability] = owner ? owner.id : null;
+  });
+  const providerNames = {};
+  sortedProviders.forEach((provider) => { providerNames[provider.id] = provider.name || provider.id; });
+  const connectionProviders = sortedProviders.filter((provider) => typeof provider.getSettingsUI === "function");
 
-  return react.createElement("div", { className: "settings-section lyrics-providers-section" },
-    // 통합 컨테이너
-    react.createElement("div", { className: "lyrics-providers-container" },
-      renderAiTranslationStylePanel(),
-      react.createElement(OptionList, {
+  return react.createElement("div", { className: "settings-provider-tab ai-providers-section", style: { display: "contents" } },
+    renderSettingsSectionShell({
+      sectionKey: "ai-tasks",
+      title: I18n.t("settingsUi.sections.aiTasks.title") || "Providers by task",
+      subtitle: I18n.t("settings.aiProviders.description") || "Select and prioritize AI providers. Providers at the top are tried first. On failure, the next provider is automatically used.",
+      children: providers.length > 0
+        ? react.createElement("div", {
+          className: "settings-group settings-provider-table is-ai",
+          style: { "--provider-caps": capabilityColumns.length },
+        },
+          react.createElement("div", { className: "settings-provider-caption" },
+            react.createElement("b", null, I18n.t("settings.aiProviders.enabledCapabilities") || "Enabled Capabilities"),
+            react.createElement("span", null, I18n.t("settings.aiProviders.capabilitiesDesc") || "Select which features this provider handles")),
+          renderSettingsProviderTableHead({
+            columns: capabilityColumns,
+            labelFor: getSettingsAiCapabilityLabel,
+            owners,
+            providerNames,
+            noneLabel: I18n.t("misc.none") || "None",
+            providerLabel: I18n.t("settingsUi.groups.providers") || "Providers",
+          }),
+          // Provider 목록
+          react.createElement("div", { className: "lyrics-providers-list", role: "list" },
+            renderSettingsProviderItems({
+              sortedProviders, dragState, enabledProviders, expandedProviders,
+              handleDragOver, handleDrop, handleDragStart, clearDragState, moveProvider,
+              handleToggleEnabled, toggleExpanded,
+              translationKey: "settings.aiProviders", Card: AddonSettingsCard, providerProp: "addon",
+              onExpandProvider: revealConnection,
+              cardProps: {
+                capabilityColumns,
+                owners,
+                onCapabilityChange: () => setCapabilityRevision((revision) => revision + 1),
+              },
+            })
+          ),
+          renderSettingsProviderLegend()
+        )
+        // Provider가 없을 때
+        : react.createElement("div", { className: "no-providers-message" },
+          react.createElement("p", null, I18n.t("settings.aiProviders.noProviders") || "등록된 AI 제공자가 없습니다.")
+        ),
+    }),
+    renderSettingsSectionShell({
+      sectionKey: "ai-translation",
+      title: I18n.t("settings.aiProviders.translationStyle.title") || "Translation style",
+      subtitle: I18n.t("settings.aiProviders.translationStyle.description")
+        || "Choose how closely AI translations follow the original wording. Line structure and meaning are preserved in every mode.",
+      children: react.createElement("div", {
+        className: "ai-translation-style-options",
+        role: "radiogroup",
+        "aria-label": I18n.t("settings.aiProviders.translationStyle.title") || "Translation style"
+      },
+        AI_TRANSLATION_STYLE_OPTIONS.map((option, index) => {
+          const active = translationStyle === option.id;
+          return react.createElement("button", {
+            key: option.id,
+            type: "button",
+            role: "radio",
+            "aria-checked": active,
+            tabIndex: active ? 0 : -1,
+            className: `ai-translation-style-option${active ? " active" : ""}`,
+            "data-translation-style": option.id,
+            onClick: () => handleTranslationStyleChange(option.id),
+            onKeyDown: (event) => handleTranslationStyleKeyDown(event, index)
+          },
+            react.createElement("span", { className: "ai-translation-style-option-heading" },
+              react.createElement("span", { className: "ai-translation-style-indicator", "aria-hidden": "true" }),
+              react.createElement("span", { className: "ai-translation-style-option-label" },
+                I18n.t(option.labelKey) || option.labelFallback
+              )
+            ),
+            react.createElement("span", { className: "ai-translation-style-option-description" },
+              I18n.t(option.descriptionKey) || option.descriptionFallback
+            )
+          );
+        })
+      ),
+    }),
+    children,
+    renderSettingsSectionShell({
+      sectionKey: "ai-request",
+      title: I18n.t("settingsUi.sections.aiRequest.title") || "Requests",
+      children: react.createElement(OptionList, {
         items: [
           {
             desc: I18n.t("settings.aiProviders.retryCount.label") || "Retries per provider",
@@ -2203,6 +2301,7 @@ const AIProvidersTab = () => {
             info: I18n.t("settings.aiProviders.retryCount.description")
               || "Number of additional attempts after a failed request. Set to 0 to switch to the next provider immediately.",
             type: ConfigSliderRange,
+            presentation: "stepper",
             defaultValue: providerRetryCount,
             min: 0,
             max: 5,
@@ -2217,22 +2316,26 @@ const AIProvidersTab = () => {
           setProviderRetryCount(nextValue);
         },
       }),
-      renderCulturalAnnotationGroup(),
-      // Provider 목록
-      providers.length > 0 && react.createElement("div", { className: "lyrics-providers-list", role: "list" },
-        renderSettingsProviderItems({
-          sortedProviders, dragState, enabledProviders, expandedProviders,
-          handleDragOver, handleDrop, handleDragStart, clearDragState, moveProvider,
-          handleToggleEnabled, toggleExpanded,
-          translationKey: "settings.aiProviders", Card: AddonSettingsCard, providerProp: "addon"
-        })
+    }),
+    connectionProviders.length > 0 && renderSettingsSectionShell({
+      sectionKey: "ai-connections",
+      title: I18n.t("settingsUi.sections.aiConnections.title") || "Connections",
+      subtitle: I18n.t("settingsUi.sections.aiConnections.subtitle") || "Manage the connection details each provider needs, such as API keys and models.",
+      className: "is-bare",
+      children: react.createElement("div", { className: "settings-connections" },
+        connectionProviders.map((provider) =>
+          react.createElement(AddonSettingsCard, {
+            key: provider.id,
+            addon: provider,
+            variant: "connection",
+            isEnabled: enabledProviders[provider.id] !== false,
+            onToggle: (enabled) => handleToggleEnabled(provider.id, enabled),
+            isExpanded: expandedProviders.has(provider.id),
+            onExpandToggle: () => toggleExpanded(provider.id),
+          })
+        )
       ),
-
-      // Provider가 없을 때
-      providers.length === 0 && react.createElement("div", { className: "no-providers-message" },
-        react.createElement("p", null, I18n.t("settings.aiProviders.noProviders") || "등록된 AI 제공자가 없습니다.")
-      )
-    )
+    })
   );
 };
 
@@ -2930,14 +3033,6 @@ const DebugInfoPanel = () => {
       "div",
       {
         className: "info-card debug-info-panel debug-info-panel-loading",
-        style: {
-          padding: "20px",
-          background: "rgba(255, 255, 255, 0.03)",
-          border: "1px solid rgba(255, 255, 255, 0.08)",
-          borderRadius: "0 0 12px 12px",
-          textAlign: "center",
-          color: "rgba(255,255,255,0.5)"
-        }
       },
       I18n.t("settingsAdvanced.debugTab.loading")
     );
@@ -3154,13 +3249,8 @@ const DebugInfoPanel = () => {
         "button",
         {
           onClick: handleCopy,
-          className: "btn debug-action-btn",
-          style: {
-            background: copied ? "rgba(74, 222, 128, 0.15)" : "rgba(255, 255, 255, 0.08)",
-            border: copied ? "1px solid rgba(74, 222, 128, 0.3)" : "1px solid rgba(255, 255, 255, 0.15)",
-            color: copied ? "#4ade80" : "rgba(255, 255, 255, 0.9)",
-            transition: "all 0.2s ease"
-          }
+          type: "button",
+          className: `btn debug-action-btn${copied ? " is-copied" : ""}`,
         },
         react.createElement("svg", {
           width: 16,
@@ -3179,12 +3269,8 @@ const DebugInfoPanel = () => {
         "button",
         {
           onClick: handleSendToDiscord,
+          type: "button",
           className: "btn btn-primary debug-action-btn",
-          style: {
-            background: "#5865F2",
-            border: "none",
-            color: "#ffffff",
-          }
         },
         react.createElement("svg", {
           width: 16,
@@ -3203,15 +3289,6 @@ const DebugInfoPanel = () => {
     "div",
     {
       className: "info-card debug-info-panel",
-      style: {
-        padding: "20px",
-        background: "rgba(255, 255, 255, 0.03)",
-        border: "1px solid rgba(255, 255, 255, 0.08)",
-        borderRadius: "0 0 12px 12px",
-        backdropFilter: "blur(30px) saturate(150%)",
-        WebkitBackdropFilter: "blur(30px) saturate(150%)",
-        marginBottom: "24px"
-      }
     },
     // 헤더 (새로고침 버튼 포함)
     renderDebugHeader(),
@@ -3225,6 +3302,421 @@ const DebugInfoPanel = () => {
     renderDebugActions()
   );
 };
+
+// ---------------------------------------------------------------------------
+// Shared controls of the settings window
+// ---------------------------------------------------------------------------
+
+const getSettingsStepDecimals = (step) => {
+  const text = String(step ?? "");
+  return text.includes(".") ? text.split(".")[1].length : 0;
+};
+
+const formatSettingsNumber = (value, step) => {
+  const number = Number(value);
+  if (value === "" || value === null || value === undefined || !Number.isFinite(number)) return "";
+  const decimals = getSettingsStepDecimals(step);
+  return decimals
+    ? number.toFixed(decimals).replace(/0+$/, "").replace(/\.$/, "")
+    : String(Math.round(number));
+};
+
+const snapSettingsNumber = (value, min, max, step) => {
+  const safeStep = Number(step) > 0 ? Number(step) : 1;
+  const low = Number.isFinite(Number(min)) ? Number(min) : -Infinity;
+  const high = Number.isFinite(Number(max)) ? Number(max) : Infinity;
+  const base = Number.isFinite(low) ? low : 0;
+  const snapped = Math.round((Number(value) - base) / safeStep) * safeStep + base;
+  return Number(Math.min(high, Math.max(low, snapped)).toFixed(getSettingsStepDecimals(safeStep)));
+};
+
+const getSettingsFineKeyLabel = () =>
+  typeof navigator !== "undefined" && /Mac/i.test(navigator.platform || "") ? "⌥" : "Alt";
+
+const getSettingsWeightSample = () => {
+  const language = String(window.I18n?.getCurrentLanguage?.() || "").toLowerCase();
+  if (language.startsWith("ko")) return "가";
+  if (language.startsWith("ja")) return "あ";
+  if (language.startsWith("zh")) return "字";
+  return "Aa";
+};
+
+// Typed numbers commit on Enter or blur; the wheel never edits them because
+// they are text fields. Escape is handled by the settings window: it puts the
+// value from before the edit back and leaves the field.
+const SettingsNumberField = ({
+  value, min, max, step = 1, unit = "", label, disabled, onCommit = () => { }, className = "",
+}) => {
+  const [draft, setDraft] = useState(null);
+  const shown = draft !== null ? draft : formatSettingsNumber(value, step);
+  const commitDraft = (text) => {
+    setDraft(null);
+    const raw = String(text ?? "").replace(",", ".").trim();
+    const parsed = Number(raw);
+    if (!raw || !Number.isFinite(parsed)) return;
+    const next = snapSettingsNumber(parsed, min, max, step);
+    if (!settingValuesEqual(next, value)) onCommit(next);
+  };
+  const stepBy = (event, direction) => {
+    const base = Number(draft !== null ? draft : value);
+    const start = Number.isFinite(base) ? base : Number(min) || 0;
+    const next = snapSettingsNumber(start + direction * (Number(step) || 1) * (event.shiftKey ? 10 : 1), min, max, step);
+    const formatted = formatSettingsNumber(next, step);
+    setDraft(formatted);
+    event.currentTarget.dataset.ivBefore = formatted;
+    if (!settingValuesEqual(next, value)) onCommit(next);
+  };
+  return react.createElement(
+    "label",
+    { className: `settings-value-chip${disabled ? " is-disabled" : ""}${className ? ` ${className}` : ""}` },
+    react.createElement("input", {
+      type: "text",
+      inputMode: "decimal",
+      className: "settings-value-input",
+      value: shown,
+      disabled,
+      spellCheck: false,
+      autoComplete: "off",
+      "aria-label": label,
+      onFocus: (event) => {
+        setDraft(formatSettingsNumber(value, step));
+        event.target.select?.();
+      },
+      onChange: (event) => setDraft(event.target.value),
+      onBlur: (event) => commitDraft(event.target.value),
+      onKeyDown: (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+          event.preventDefault();
+          stepBy(event, event.key === "ArrowUp" ? 1 : -1);
+        }
+      },
+    }),
+    unit ? react.createElement("span", { className: "settings-unit", "aria-hidden": "true" }, unit) : null
+  );
+};
+
+// − value + for small whole-number ranges and numeric option lists.
+const SettingsStepper = ({ value, values, min, max, step = 1, label, disabled, onChange = () => { } }) => {
+  const list = Array.isArray(values) ? values : null;
+  const index = list ? list.findIndex((candidate) => String(candidate) === String(value)) : -1;
+  const numeric = Number(value);
+  const atMin = list ? index <= 0 : Number.isFinite(Number(min)) && numeric <= Number(min);
+  const atMax = list ? index === list.length - 1 || index < 0 : Number.isFinite(Number(max)) && numeric >= Number(max);
+  const move = (direction) => {
+    if (disabled) return;
+    if (list) {
+      const next = list[Math.min(list.length - 1, Math.max(0, (index < 0 ? 0 : index) + direction))];
+      if (next !== undefined && String(next) !== String(value)) onChange(next);
+      return;
+    }
+    const next = snapSettingsNumber((Number.isFinite(numeric) ? numeric : Number(min) || 0) + direction * (Number(step) || 1), min, max, step);
+    if (!settingValuesEqual(next, value)) onChange(next);
+  };
+  return react.createElement(
+    "div",
+    { className: "settings-stepper", role: "group", "aria-label": label },
+    react.createElement(
+      "button",
+      { type: "button", className: "settings-stepper-btn", "aria-label": `${label} −`, disabled: disabled || atMin, onClick: () => move(-1) },
+      react.createElement(SettingsUiIcon, { name: "minus", size: 15 })
+    ),
+    react.createElement("output", { className: "settings-stepper-value", "aria-live": "polite" }, String(value ?? "")),
+    react.createElement(
+      "button",
+      { type: "button", className: "settings-stepper-btn", "aria-label": `${label} +`, disabled: disabled || atMax, onClick: () => move(1) },
+      react.createElement(SettingsUiIcon, { name: "plus", size: 15 })
+    )
+  );
+};
+
+const handleSettingsRadioKeys = (event, options, index, select) => {
+  const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+  let next = null;
+  if (event.key in keys) next = (Math.max(0, index) + keys[event.key] + options.length) % options.length;
+  else if (event.key === "Home") next = 0;
+  else if (event.key === "End") next = options.length - 1;
+  if (next === null) return;
+  event.preventDefault();
+  select(options[next].value);
+  const group = event.currentTarget.closest('[role="radiogroup"]');
+  group?.querySelectorAll('[role="radio"]')?.[next]?.focus?.();
+};
+
+// Slide toggle for two to four short choices.
+const SettingsSegmented = ({ options, value, onChange = () => { }, label, disabled, compact = false, className = "" }) => {
+  const index = options.findIndex((option) => String(option.value) === String(value));
+  return react.createElement(
+    "div",
+    {
+      className: `settings-seg${compact ? " is-compact" : ""}${className ? ` ${className}` : ""}`,
+      role: "radiogroup",
+      "aria-label": label,
+      "aria-disabled": disabled ? true : undefined,
+      style: { "--count": options.length, "--index": Math.max(0, index) },
+    },
+    react.createElement("span", {
+      className: `settings-seg-thumb${index < 0 ? " is-empty" : ""}`,
+      "aria-hidden": "true",
+    }),
+    ...options.map((option, optionIndex) => {
+      const active = optionIndex === index;
+      return react.createElement(
+        "button",
+        {
+          key: String(option.value),
+          type: "button",
+          role: "radio",
+          "aria-checked": active,
+          tabIndex: active || (index < 0 && optionIndex === 0) ? 0 : -1,
+          className: `settings-seg-option${active ? " is-on" : ""}`,
+          disabled,
+          title: option.label,
+          "data-setting-key": option.anchor || undefined,
+          onClick: () => {
+            if (!active) onChange(option.value);
+          },
+          onKeyDown: (event) => handleSettingsRadioKeys(event, options, index, onChange),
+        },
+        option.color ? react.createElement("i", { className: "settings-seg-swatch", style: { "--swatch": option.color } }) : null,
+        option.icon ? react.createElement(SettingsUiIcon, { name: option.icon, size: 15 }) : null,
+        react.createElement("span", { className: "settings-seg-text" }, option.label)
+      );
+    })
+  );
+};
+
+// Radio cards for a few choices with longer labels or a description.
+const SettingsChoiceCards = ({ options, value, onChange = () => { }, label, disabled, className = "" }) => {
+  const index = options.findIndex((option) => String(option.value) === String(value));
+  return react.createElement(
+    "div",
+    { className: `settings-cards${className ? ` ${className}` : ""}`, role: "radiogroup", "aria-label": label },
+    ...options.map((option, optionIndex) => {
+      const active = optionIndex === index;
+      return react.createElement(
+        "button",
+        {
+          key: String(option.value),
+          type: "button",
+          role: "radio",
+          "aria-checked": active,
+          tabIndex: active || (index < 0 && optionIndex === 0) ? 0 : -1,
+          className: `settings-card-opt${active ? " is-on" : ""}${option.description ? "" : " is-plain"}`,
+          disabled,
+          "data-setting-key": option.anchor || undefined,
+          onClick: () => {
+            if (!active) onChange(option.value);
+          },
+          onKeyDown: (event) => handleSettingsRadioKeys(event, options, index, onChange),
+        },
+        option.visual || null,
+        react.createElement(
+          "span",
+          { className: "settings-card-title" },
+          react.createElement("span", { className: "settings-card-label" }, option.label),
+          react.createElement(
+            "span",
+            { className: "settings-card-check", "aria-hidden": "true" },
+            react.createElement(SettingsUiIcon, { name: "check", size: 10 })
+          )
+        ),
+        option.description
+          ? react.createElement("span", { className: "settings-card-desc" }, option.description)
+          : null
+      );
+    })
+  );
+};
+
+// Compact number for table cells: drag sideways to adjust (Shift faster,
+// Alt/Option finer), click to type, arrow keys step.
+const SettingsScrubField = ({
+  value, min = 0, max = 100, step = 1, unit = "", label, weight = false, disabled, onChange = () => { },
+}) => {
+  const low = Number(min);
+  const high = Number(max);
+  const toNumber = (input) => {
+    const number = Number(input);
+    return input !== "" && input !== null && input !== undefined && Number.isFinite(number) ? number : low;
+  };
+  const [current, setCurrent] = useState(() => toNumber(value));
+  const [draft, setDraft] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  const currentRef = useRef(current);
+  const dragRef = useRef(null);
+  const inputRef = useRef(null);
+  currentRef.current = current;
+
+  useEffect(() => {
+    if (!dragRef.current) setCurrent(toNumber(value));
+  }, [value]);
+
+  const emit = (next) => {
+    if (next === currentRef.current) return;
+    currentRef.current = next;
+    setCurrent(next);
+    onChange(next);
+  };
+  const span = high - low || 1;
+  const percent = Math.min(100, Math.max(0, ((current - low) / span) * 100));
+  const finishDrag = (event) => {
+    const drag = dragRef.current;
+    if (!drag || (event && event.pointerId !== drag.pointerId)) return;
+    dragRef.current = null;
+    setDragging(false);
+    if (!drag.moved && event?.type === "pointerup") {
+      inputRef.current?.focus();
+      inputRef.current?.select?.();
+    }
+  };
+  const commitDraft = (text) => {
+    setDraft(null);
+    const raw = String(text ?? "").replace(",", ".").trim();
+    const parsed = Number(raw);
+    if (!raw || !Number.isFinite(parsed)) return;
+    emit(snapSettingsNumber(parsed, low, high, step));
+  };
+  const hint = getSettingsText("settingsUi.controls.scrubHint", "Drag sideways to adjust · Shift faster · {fineKey} finer")
+    .replace("{fineKey}", getSettingsFineKeyLabel());
+  return react.createElement(
+    "div",
+    {
+      className: `settings-scrub${weight ? " is-weight" : ""}${dragging ? " is-dragging" : ""}${disabled ? " is-disabled" : ""}`,
+      style: { "--scrub-percent": `${percent}%` },
+      title: `${label} · ${hint}`,
+      onPointerDown: (event) => {
+        if (disabled || event.button !== 0 || document.activeElement === inputRef.current) return;
+        event.preventDefault();
+        event.currentTarget.setPointerCapture?.(event.pointerId);
+        dragRef.current = { x: event.clientX, last: event.clientX, value: currentRef.current, moved: false, pointerId: event.pointerId };
+        setDragging(true);
+      },
+      onPointerMove: (event) => {
+        const drag = dragRef.current;
+        if (!drag || event.pointerId !== drag.pointerId) return;
+        if (!drag.moved && Math.abs(event.clientX - drag.x) <= 2) return;
+        drag.moved = true;
+        // Apply each movement separately so changing Shift/Alt mid-drag never jumps.
+        const speed = event.shiftKey ? 4 : event.altKey ? 0.2 : 1;
+        drag.value = Math.min(high, Math.max(low, drag.value + (event.clientX - drag.last) * (span / 240) * speed));
+        drag.last = event.clientX;
+        emit(snapSettingsNumber(drag.value, low, high, step));
+      },
+      onPointerUp: finishDrag,
+      onPointerCancel: finishDrag,
+      onLostPointerCapture: finishDrag,
+    },
+    react.createElement("span", { className: "settings-scrub-bar", "aria-hidden": "true" }),
+    react.createElement("input", {
+      ref: inputRef,
+      type: "text",
+      inputMode: "decimal",
+      className: "settings-scrub-input",
+      value: draft !== null ? draft : formatSettingsNumber(current, step),
+      disabled,
+      spellCheck: false,
+      autoComplete: "off",
+      "aria-label": label,
+      onFocus: (event) => setDraft(event.target.value),
+      onChange: (event) => setDraft(event.target.value),
+      onBlur: (event) => commitDraft(event.target.value),
+      onKeyDown: (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+          event.preventDefault();
+          const next = snapSettingsNumber(currentRef.current + (event.key === "ArrowUp" ? 1 : -1) * (Number(step) || 1) * (event.shiftKey ? 10 : 1), low, high, step);
+          const formatted = formatSettingsNumber(next, step);
+          setDraft(formatted);
+          event.currentTarget.dataset.ivBefore = formatted;
+          emit(next);
+        }
+      },
+    }),
+    weight
+      ? react.createElement("span", { className: "settings-scrub-tail", "aria-hidden": "true" }, FONT_WEIGHT_NAMES[current] || "")
+      : unit
+        ? react.createElement("span", { className: "settings-scrub-tail", "aria-hidden": "true" }, String(unit).trim())
+        : null
+  );
+};
+
+const SETTINGS_CUSTOM_FONT_OPTION = "__ivlyrics_custom_font__";
+
+// Compact font choice for table cells: the font list, the current custom
+// font, and manual input (the same values ConfigFontSelector accepts).
+const SettingsFontPicker = ({ value, label, disabled, allowEmpty = false, onChange = () => { } }) => {
+  const safeValue = typeof value === "string" && value.trim() && value.trim() !== "undefined" ? value.trim() : "";
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(safeValue);
+  useEffect(() => {
+    if (!editing) setDraft(safeValue);
+  }, [safeValue, editing]);
+  const shown = safeValue || (allowEmpty ? "" : "Pretendard Variable");
+  const manualLabel = getSettingsText("settings.fontSelector.custom", "Manual input");
+  if (editing) {
+    const finish = (text) => {
+      setEditing(false);
+      const next = String(text ?? "").trim();
+      if (next && next !== safeValue) onChange(next);
+    };
+    return react.createElement("input", {
+      className: "settings-font-input config-text-input",
+      type: "text",
+      value: draft,
+      autoFocus: true,
+      disabled,
+      spellCheck: false,
+      placeholder: I18n.t("settings.fontPlaceholder") || "Enter font name (e.g., Arial, Roboto)",
+      "aria-label": `${label} ${manualLabel}`,
+      onChange: (event) => setDraft(event.target.value),
+      onBlur: (event) => finish(event.target.value),
+      onKeyDown: (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        }
+      },
+    });
+  }
+  const options = [];
+  if (allowEmpty) options.push(["", getSettingsText("misc.default", "Default")]);
+  GOOGLE_FONTS.forEach((font) => options.push([font, font]));
+  if (shown && !GOOGLE_FONTS.includes(shown)) options.push([shown, shown]);
+  options.push([SETTINGS_CUSTOM_FONT_OPTION, `${manualLabel}…`]);
+  return react.createElement(
+    "label",
+    { className: `settings-select is-compact${disabled ? " is-disabled" : ""}`, title: shown || getSettingsText("misc.default", "Default") },
+    react.createElement(
+      "select",
+      {
+        className: "config-select",
+        value: shown,
+        disabled,
+        "aria-label": label,
+        style: shown ? { fontFamily: `"${shown.split(",")[0].replace(/["']/g, "").trim()}", inherit` } : undefined,
+        onChange: (event) => {
+          const next = event.target.value;
+          if (next === SETTINGS_CUSTOM_FONT_OPTION) {
+            setDraft(safeValue);
+            setEditing(true);
+            return;
+          }
+          if (next !== shown) onChange(next);
+        },
+      },
+      ...options.map(([optionValue, optionLabel]) =>
+        react.createElement("option", { key: optionValue || "default", value: optionValue }, optionLabel)
+      )
+    ),
+    react.createElement(SettingsUiIcon, { name: "down", size: 14, className: "settings-select-chevron" })
+  );
+};
+
 
 const ConfigButton = ({ name, settingKey, info, text, onChange = () => { } }) => {
   return react.createElement(
@@ -3293,6 +3785,7 @@ const ConfigSlider = react.memo(
 
 const ConfigSliderRange = ({
   name,
+  settingKey,
   defaultValue,
   min = 0,
   max = 100,
@@ -3300,13 +3793,19 @@ const ConfigSliderRange = ({
   unit = "",
   disabled,
   className = "",
-  showStepMarkers = false,
   ariaValueFormatter,
+  variant = "range",
   onChange = () => { },
 }) => {
-  const [value, setValue] = useState(defaultValue);
+  const toNumber = (input) => {
+    const number = Number(input);
+    return input !== "" && input !== null && input !== undefined && Number.isFinite(number)
+      ? number
+      : Number(min) || 0;
+  };
+  const [value, setValue] = useState(() => toNumber(defaultValue));
   useEffect(() => {
-    setValue(defaultValue);
+    setValue(toNumber(defaultValue));
   }, [defaultValue]);
 
   const updateValue = useCallback(
@@ -3320,55 +3819,118 @@ const ConfigSliderRange = ({
 
   const handleInput = useCallback(
     (event) => {
-      const newValue = Number(event.target.value);
-      updateValue(newValue);
+      updateValue(Number(event.target.value));
     },
     [updateValue]
   );
 
-  const sliderStyle = {
-    "--progress-percent": `${((value - min) / (max - min)) * 100}%`,
-  };
-  const stepValues = showStepMarkers
-    ? Array.from(
-      { length: Math.floor((max - min) / step) + 1 },
-      (_, index) => min + index * step
-    )
-    : [];
+  const span = max - min || 1;
+  const progress = Math.min(100, Math.max(0, ((value - min) / span) * 100));
+  const unitText = String(unit || "").trim();
+  const defaultNumber = settingKey && hasSettingDefault(settingKey) && getSettingDefaultValue(settingKey) !== ""
+    ? Number(getSettingDefaultValue(settingKey))
+    : NaN;
+  const showDefault = Number.isFinite(defaultNumber) && defaultNumber >= min && defaultNumber <= max;
+  const isWeight = variant === "weight";
 
-  return react.createElement(
-    "div",
-    {
-      className: `slider-container${showStepMarkers ? " has-step-markers" : ""}${className ? ` ${className}` : ""}${disabled ? " disabled" : ""}`,
-    },
-    react.createElement("input", {
-      type: "range",
+  if (variant === "stepper") {
+    return react.createElement(SettingsStepper, {
+      value,
       min,
       max,
       step,
-      value,
+      label: name,
       disabled,
-      onInput: handleInput,
-      "aria-label": name,
-      "aria-valuetext": ariaValueFormatter
-        ? ariaValueFormatter(Number(value))
-        : `${value}${unit}`,
-      className: "config-slider",
-      style: sliderStyle,
-    }),
+      onChange: updateValue,
+    });
+  }
+
+  const slider = react.createElement(
+    "div",
+    {
+      className: `slider-container settings-range${isWeight ? " settings-weight" : ""}${className ? ` ${className}` : ""}${disabled ? " disabled" : ""}`,
+    },
+    isWeight
+      ? react.createElement("span", {
+        className: "settings-weight-sample",
+        style: { fontWeight: value },
+        "aria-hidden": "true",
+      }, getSettingsWeightSample())
+      : null,
     react.createElement(
-      "output",
-      { className: "slider-value" },
-      `${value}${unit}`
-    ),
-    showStepMarkers && react.createElement(
       "div",
-      { className: "slider-step-markers", "aria-hidden": "true" },
-      stepValues.map((stepValue) =>
-        react.createElement("span", {
-          key: stepValue,
-          className: `slider-step-marker${Number(value) === stepValue ? " active" : ""}`,
+      { className: "settings-range-track" },
+      react.createElement("input", {
+        type: "range",
+        min,
+        max,
+        step,
+        value,
+        disabled,
+        onChange: handleInput,
+        "aria-label": name,
+        "aria-valuetext": ariaValueFormatter
+          ? ariaValueFormatter(Number(value))
+          : `${value}${unit}`,
+        className: "config-slider",
+        style: { "--progress-percent": `${progress}%` },
+      }),
+      showDefault
+        ? react.createElement("span", {
+          className: "settings-range-default",
+          style: { "--default-percent": ((defaultNumber - min) / span) * 100 },
+          "aria-hidden": "true",
         })
+        : null
+    ),
+    isWeight
+      ? react.createElement("span", { className: "settings-weight-name" }, FONT_WEIGHT_NAMES[value] || String(value))
+      : react.createElement(SettingsNumberField, {
+        value,
+        min,
+        max,
+        step,
+        unit: unitText,
+        label: name,
+        disabled,
+        onCommit: updateValue,
+      })
+  );
+
+  if (variant !== "fps") return slider;
+
+  // Frame cap: a large readout, the slider and the common refresh rates.
+  const presets = [30, 60, 90, 120, 144, 165, 240].filter((mark) => mark >= min && mark <= max);
+  return react.createElement(
+    "div",
+    { className: "settings-fps" },
+    react.createElement(
+      "div",
+      { className: "settings-fps-top" },
+      react.createElement(
+        "div",
+        { className: "settings-fps-value", "aria-hidden": "true" },
+        String(value),
+        react.createElement("small", null, unitText)
+      ),
+      slider
+    ),
+    react.createElement(
+      "div",
+      { className: "settings-presets", role: "group", "aria-label": name },
+      ...presets.map((mark) =>
+        react.createElement(
+          "button",
+          {
+            key: mark,
+            type: "button",
+            className: `settings-preset-btn${Number(value) === mark ? " is-on" : ""}`,
+            "aria-pressed": Number(value) === mark,
+            disabled,
+            onClick: () => updateValue(mark),
+          },
+          String(mark)
+        )
       )
     )
   );
@@ -3393,7 +3955,7 @@ const ConfigFontWeightSlider = (props) =>
     max: 900,
     step: 100,
     unit: "",
-    showStepMarkers: true,
+    variant: "weight",
     className: `font-weight-slider${props.className ? ` ${props.className}` : ""}`,
     ariaValueFormatter: (value) => `${value} ${FONT_WEIGHT_NAMES[value] || ""}`.trim(),
   });
@@ -3419,18 +3981,22 @@ const ConfigColorControl = ({
   return react.createElement(
     "div",
     { className: `config-color-control${isValid ? "" : " invalid"}` },
-    react.createElement("input", {
-      type: "color",
-      value: normalizedColor || "#000000",
-      onChange: (event) => {
-        const nextColor = event.target.value.toLowerCase();
-        onDraftChange(nextColor);
-        onCommit(nextColor);
-      },
-      className: "config-color-picker",
-      "aria-label": `${label || "Color"} 색상 선택`,
-      title: `${label || "Color"} 색상 선택`,
-    }),
+    react.createElement(
+      "span",
+      { className: "config-color-swatch", style: { "--swatch-color": normalizedColor || "transparent" } },
+      react.createElement("input", {
+        type: "color",
+        value: normalizedColor || "#000000",
+        onChange: (event) => {
+          const nextColor = event.target.value.toLowerCase();
+          onDraftChange(nextColor);
+          onCommit(nextColor);
+        },
+        className: "config-color-picker",
+        "aria-label": `${label || "Color"} 색상 선택`,
+        title: `${label || "Color"} 색상 선택`,
+      })
+    ),
     react.createElement("input", {
       type: "text",
       value: value || "",
@@ -3467,9 +4033,10 @@ const ConfigColorPicker = ({ name, defaultValue, onChange = () => { } }) => {
         setValue(committedValueRef.current);
         return;
       }
+      const changed = normalizedColor !== committedValueRef.current;
       committedValueRef.current = normalizedColor;
       setValue(normalizedColor);
-      onChange(normalizedColor);
+      if (changed) onChange(normalizedColor);
     },
     [onChange]
   );
@@ -3803,34 +4370,19 @@ const ConfigWarning = ({ message, settingKey }) => {
   return react.createElement(
     "div",
     {
-      className: "setting-row",
+      className: "setting-row settings-note-row",
       "data-setting-key": settingKey,
-      style: {
-        backgroundColor: "rgba(var(--spice-rgb-warning), 0.25)",
-      },
+      "data-control": "note",
     },
     react.createElement(
       "div",
-      { className: "setting-row-content" },
+      { className: "settings-note is-warn" },
+      react.createElement(SettingsUiIcon, { name: "warn", size: 16 }),
       react.createElement(
         "div",
-        { className: "setting-row-left" },
-        react.createElement(
-          "div",
-          {
-            className: "setting-name",
-            style: { color: "var(--spice-text)", fontWeight: "600" },
-          },
-          I18n.t("settings.solidBackgroundInUse")
-        ),
-        react.createElement(
-          "div",
-          {
-            className: "setting-description",
-            style: { color: "var(--spice-subtext)" },
-          },
-          message
-        )
+        { className: "settings-note-body" },
+        react.createElement("div", { className: "setting-name" }, I18n.t("settings.solidBackgroundInUse")),
+        react.createElement("div", { className: "setting-description" }, message)
       )
     )
   );
@@ -3841,35 +4393,26 @@ const ConfigInfo = ({ message, buttonText, onButtonClick, settingKey }) => {
   return react.createElement(
     "div",
     {
-      className: "setting-row config-info-row",
+      className: "setting-row config-info-row settings-note-row",
       "data-setting-key": settingKey,
+      "data-control": "note",
     },
     react.createElement(
       "div",
-      { className: "setting-row-content" },
+      { className: "settings-note is-info" },
+      react.createElement(SettingsUiIcon, { name: "info", size: 16 }),
       react.createElement(
         "div",
-        { className: "setting-row-left" },
-        react.createElement(
+        { className: "settings-note-body" },
+        react.createElement("div", { className: "setting-description config-info-message" }, message),
+        buttonText && onButtonClick && react.createElement(
           "div",
-          {
-            className: "setting-description config-info-message",
-          },
-          message
-        )
-      ),
-      // 버튼이 있으면 표시
-      buttonText && onButtonClick && react.createElement(
-        "div",
-        { className: "setting-row-right" },
-        react.createElement(
-          "button",
-          {
-            className: "btn",
-            onClick: onButtonClick,
-            style: { fontSize: "12px" },
-          },
-          buttonText
+          { className: "settings-note-actions" },
+          react.createElement(
+            "button",
+            { type: "button", className: "btn btn-sm", onClick: onButtonClick },
+            buttonText
+          )
         )
       )
     )
@@ -4127,8 +4670,8 @@ const ConfigSettingsPresets = () => {
                     gap: "12px",
                     alignItems: "center",
                     padding: "12px",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    background: "rgba(255, 255, 255, 0.04)",
+                    border: "1px solid var(--settings-line-2)",
+                    background: "var(--settings-surface-2)",
                     borderRadius: "8px",
                   },
                 },
@@ -4484,11 +5027,6 @@ const ConfigCloudSync = () => {
     {
       className: "setting-row",
       "data-setting-key": "cloud-sync",
-      style: {
-        borderColor: "rgba(167, 139, 250, 0.42)",
-        background: "linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(236, 72, 153, 0.06))",
-        boxShadow: "inset 0 0 0 1px rgba(255, 255, 255, 0.025)",
-      },
     },
     react.createElement(
       "div",
@@ -4511,15 +5049,7 @@ const ConfigCloudSync = () => {
         {
           role: messageType === "warning" || messageType === "error" ? "alert" : "status",
           "aria-live": messageType === "warning" || messageType === "error" ? "assertive" : "polite",
-          className: "setting-description",
-          style: {
-            padding: "10px 12px",
-            borderRadius: "8px",
-            border: `1px solid ${messageType === "error" ? "rgba(248,113,113,.42)" : messageType === "warning" ? "rgba(251,191,36,.42)" : messageType === "success" ? "rgba(74,222,128,.3)" : "rgba(255,255,255,.1)"}`,
-            background: messageType === "error" ? "rgba(127,29,29,.24)" : messageType === "warning" ? "rgba(120,53,15,.22)" : messageType === "success" ? "rgba(20,83,45,.18)" : "rgba(255,255,255,.04)",
-            color: messageType === "error" ? "#fecaca" : messageType === "warning" ? "#fde68a" : undefined,
-            fontWeight: messageType === "warning" || messageType === "error" ? "600" : undefined,
-          },
+          className: `setting-description settings-status-box is-${messageType || "info"}`,
         },
         messageType === "warning" || messageType === "error"
           ? react.createElement(
@@ -4808,48 +5338,122 @@ const ConfigSelection = ({
   defaultValue,
   options,
   disabled,
+  presentation,
+  iconMap,
+  swatchMap,
+  compact = false,
   onChange = () => { },
 }) => {
   const [value, setValue] = useState(defaultValue);
 
   const setValueCallback = useCallback(
-    (event) => {
+    (rawValue) => {
       if (disabled) return;
-      let value = event.target.value;
+      let value = rawValue;
       if (!Number.isNaN(Number(value))) {
         value = Number.parseInt(value);
       }
       setValue(value);
       onChange(value);
     },
-    [value, options, disabled]
+    [disabled, onChange]
   );
 
   useEffect(() => {
     setValue(defaultValue);
   }, [defaultValue]);
 
-  if (!Object.keys(options).length) return null;
+  const entries = getSettingsSelectionEntries(options);
+  if (!entries.length) return null;
 
-  return react.createElement(
-    "select",
-    {
-      className: "config-select",
-      value,
+  const kind = compact ? "select" : resolveSettingsSelectionPresentation(entries, presentation);
+  const choices = entries.map(([optionKey, optionLabel]) => ({
+    value: optionKey,
+    label: optionLabel,
+    icon: iconMap?.[optionKey],
+    color: swatchMap?.[optionKey],
+  }));
+
+  if (kind === "seg") {
+    return react.createElement(SettingsSegmented, {
+      options: choices,
+      value: value === undefined || value === null ? "" : String(value),
+      label: name,
       disabled,
       onChange: setValueCallback,
-    },
-    ...Object.keys(options).map((item) =>
-      react.createElement(
-        "option",
-        {
-          key: item,
-          value: item,
-        },
-        options[item]
+    });
+  }
+  if (kind === "cards") {
+    return react.createElement(SettingsChoiceCards, {
+      options: choices,
+      value: value === undefined || value === null ? "" : String(value),
+      label: name,
+      disabled,
+      onChange: setValueCallback,
+    });
+  }
+  if (kind === "stepper") {
+    return react.createElement(SettingsStepper, {
+      value: value === undefined || value === null ? "" : String(value),
+      values: entries.map(([optionKey]) => optionKey),
+      label: name,
+      disabled,
+      onChange: setValueCallback,
+    });
+  }
+
+  return react.createElement(
+    "label",
+    { className: `settings-select${compact ? " is-compact" : ""}${disabled ? " is-disabled" : ""}` },
+    react.createElement(
+      "select",
+      {
+        className: "config-select",
+        value,
+        disabled,
+        "aria-label": name,
+        onChange: (event) => setValueCallback(event.target.value),
+      },
+      ...entries.map(([optionKey, optionLabel]) =>
+        react.createElement(
+          "option",
+          {
+            key: optionKey,
+            value: optionKey,
+          },
+          optionLabel
+        )
       )
-    )
+    ),
+    react.createElement(SettingsUiIcon, { name: "down", size: 14, className: "settings-select-chevron" })
   );
+};
+
+const getSettingsSelectionEntries = (options) =>
+  Object.keys(options || {}).map((optionKey) => [optionKey, String(options[optionKey])]);
+
+const SETTINGS_WIDE_GLYPH_PATTERN = /[ᄀ-ᇿ⺀-鿿가-힯豈-﫿＀-￯]/;
+const measureSettingsLabelUnits = (text) =>
+  Array.from(String(text || "")).reduce(
+    (sum, character) => sum + (SETTINGS_WIDE_GLYPH_PATTERN.test(character) ? 1 : 0.58),
+    0
+  );
+
+// One place decides how a choice is shown, so rows can lay out the control
+// inline (slide toggle, list) or under the label (cards).
+const resolveSettingsSelectionPresentation = (entries, presentation) => {
+  if (presentation) return presentation;
+  if (!entries.length) return "select";
+  if (entries.length > 5) {
+    return entries.every(([optionKey]) => /^-?d+$/.test(optionKey)) ? "stepper" : "select";
+  }
+  if (entries.length <= 4) {
+    const budget = (360 / entries.length / 14 - 1) * 1.75;
+    return entries.every(([, optionLabel]) => measureSettingsLabelUnits(optionLabel) <= budget)
+      ? "seg"
+      : "cards";
+  }
+  return "select";
 };
 
 const getInstrumentalBreakPreviewStyle = () => {
@@ -5360,42 +5964,108 @@ const createLyricsTypographyItems = (section, vinyl) => {
   return items;
 };
 
-// Return the existing elements directly; a new component wrapper would change
-// the settings subtree's identity and can reset a control's local state.
-const renderLyricsTypographySections = ({ vinyl = false, onChange }) =>
-  LYRICS_TYPOGRAPHY_SECTIONS.flatMap((section) => {
+const getLyricsTypographyColumnLabel = (role) => {
+  if (role === "original") return getSettingsText("lyricsCacheEditor.original", "Original");
+  if (role === "phonetic") return getSettingsText("menu.pronunciation", "Pronunciation");
+  if (role === "translation") return getSettingsText("translationMenu.translation", "Translation");
+  return getSettingsText("translationMenu.furigana", "Furigana");
+};
+
+// Columns of the lyric-layer table: one per layer with the items (and save
+// handlers) of the former per-layer sections. Labels and current values are
+// resolved when rendering, so language and config changes apply.
+const buildLyricsTypographyColumns = ({ vinyl = false, onChange, furiganaOnChange } = {}) => {
+  const columns = LYRICS_TYPOGRAPHY_SECTIONS.map((section) => {
     const styleKey = `settingsAdvanced.${section.style}`;
     const fontKey = `${section.role}-font-family`;
-    const children = [react.createElement(SettingsSectionTitle, {
-      title: I18n.t(`${styleKey}.title`),
-      subtitle: I18n.t(`${styleKey}.subtitle`),
-      sectionKey: `${vinyl ? "vinyl-" : ""}${section.section}`,
-    })];
+    const items = createLyricsTypographyItems(section, vinyl);
     if (!vinyl) {
-      children.push(react.createElement("div", { className: "setting-row" },
-        react.createElement("div", { className: "setting-row-content" },
-          react.createElement("div", { className: "setting-row-left" },
-            react.createElement("div", { className: "setting-name" },
-              I18n.t("settingsAdvanced.originalStyle.fontFamily")),
-            react.createElement("div", { className: "setting-description" },
-              I18n.t(`${styleKey}.fontFamilyDesc`)),
-          ),
-          react.createElement("div", { className: "setting-row-right font-selector-container" },
-            react.createElement(ConfigFontSelector, {
-              name: "",
-              defaultValue: CONFIG.visual[fontKey] || "Pretendard Variable",
-              onChange: (_, value) => onChange(fontKey, value),
-            }),
-          ),
-        ),
-      ));
+      items.unshift({
+        desc: I18n.t("settingsAdvanced.originalStyle.fontFamily"),
+        info: I18n.t(`${styleKey}.fontFamilyDesc`),
+        key: fontKey,
+        type: ConfigFontSelector,
+        defaultValue: CONFIG.visual[fontKey] || "Pretendard Variable",
+      });
     }
-    children.push(react.createElement(OptionList, {
-      items: createLyricsTypographyItems(section, vinyl),
+    return {
+      id: section.role,
+      anchor: `${vinyl ? "vinyl-" : ""}${section.section}`,
+      label: getLyricsTypographyColumnLabel(section.role),
+      subtitle: I18n.t(`${styleKey}.subtitle`),
+      color: `var(--settings-layer-${section.role})`,
+      items,
       onChange,
-    }));
-    return children;
+    };
   });
+  if (!vinyl) {
+    columns.push({
+      id: "furigana",
+      anchor: "furigana-style",
+      label: getLyricsTypographyColumnLabel("furigana"),
+      subtitle: I18n.t("settingsAdvanced.furiganaStyle.subtitle"),
+      color: "var(--settings-layer-furigana)",
+      toggle: {
+        key: "furigana-enabled",
+        desc: I18n.t("settingsAdvanced.languageDetection.furigana.label"),
+        info: I18n.t("settingsAdvanced.languageDetection.furigana.desc"),
+      },
+      onChange: furiganaOnChange || onChange,
+      items: [
+        {
+          desc: I18n.t("settingsAdvanced.furiganaStyle.fontSize.label"),
+          info: I18n.t("settingsAdvanced.furiganaStyle.fontSize.desc"),
+          key: "furigana-font-size",
+          type: ConfigSliderRange,
+          min: 8,
+          max: 48,
+          step: 1,
+          unit: "px",
+        },
+        {
+          desc: I18n.t("settingsAdvanced.furiganaStyle.fontWeight.label"),
+          info: I18n.t("settingsAdvanced.furiganaStyle.fontWeight.desc"),
+          key: "furigana-font-weight",
+          type: ConfigFontWeightSlider,
+        },
+        {
+          desc: I18n.t("settingsAdvanced.furiganaStyle.opacity.label"),
+          info: I18n.t("settingsAdvanced.furiganaStyle.opacity.desc"),
+          key: "furigana-opacity",
+          type: ConfigSliderRange,
+          min: 0,
+          max: 100,
+          step: 5,
+          unit: "%",
+        },
+        {
+          desc: I18n.t("settingsAdvanced.furiganaStyle.spacing.label"),
+          info: I18n.t("settingsAdvanced.furiganaStyle.spacing.desc"),
+          key: "furigana-spacing",
+          type: ConfigSliderRange,
+          min: -5,
+          max: 20,
+          step: 1,
+          unit: "px",
+        },
+        ...createTextOutlineSettingItems("furigana"),
+      ],
+    });
+  }
+  return columns;
+};
+
+const getLyricsTypographyRows = () => [
+  { id: "font", label: I18n.t("settingsAdvanced.originalStyle.fontFamily") },
+  { id: "size", label: I18n.t("settingsAdvanced.originalStyle.fontSize.label") },
+  { id: "weight", label: I18n.t("settingsAdvanced.originalStyle.fontWeight.label") },
+  { id: "opacity", label: I18n.t("settingsAdvanced.originalStyle.opacity.label") },
+  { id: "spacing", label: I18n.t("settingsAdvanced.pronunciationStyle.gap.label") },
+  { id: "letterSpacing", label: I18n.t("settingsAdvanced.originalStyle.letterSpacing.label") },
+  { id: "outlineWidth", label: I18n.t("settingsAdvanced.textOutline.width.label") || "Text Outline Thickness" },
+  { id: "outlineColor", label: I18n.t("settingsAdvanced.textOutline.color.label") || "Text Outline Color" },
+  { id: "hyphen", label: I18n.t("settingsAdvanced.pronunciationStyle.hyphenReplace.label") },
+];
 
 const SETTINGS_LYRICS_PREVIEW_TEXT = "此処に歌詞があります";
 const SETTINGS_LYRICS_PREVIEW_LINE = Object.freeze({
@@ -5658,10 +6328,10 @@ const NowPlayingPanelPreview = () => {
       "div",
       {
         style: {
-          padding: "16px",
+          padding: "40px 16px 16px",
           position: "relative",
           overflow: "hidden",
-          aspectRatio: "1 / 1",
+          minHeight: "280px",
            boxSizing: "border-box",
            display: "flex",
            flexDirection: "column",
@@ -5672,23 +6342,8 @@ const NowPlayingPanelPreview = () => {
       },
       // 미리보기 헤더
       react.createElement(
-        "div",
-        {
-          style: {
-            display: "flex",
-            alignItems: "center",
-            position: "absolute",
-            top: "16px",
-            left: "16px",
-            right: "16px",
-            zIndex: 2,
-            marginBottom: 0,
-            fontSize: "11px",
-            fontWeight: "700",
-            color: "rgba(255, 255, 255, 0.85)",
-            letterSpacing: "0.02em",
-          }
-        },
+        "span",
+        { className: "settings-preview-tag" },
         I18n.t("settingsAdvanced.nowPlayingPanel.preview") || "Preview"
       ),
       // 가사 미리보기 (원어 → 발음 → 번역 순서)
@@ -6268,6 +6923,72 @@ const ConfigKeyList = ({ name, settingKey, defaultValue, onChange = () => { } })
 };
 
 
+const getSettingsRowKind = (item) => {
+  if (item.type === ConfigSlider) return "toggle";
+  if (item.type === ConfigFontWeightSlider) return "weight";
+  if (item.type === ConfigSliderRange) {
+    if (item.presentation === "stepper") return "stepper";
+    if (item.presentation === "fps") return "fps";
+    return "range";
+  }
+  if (item.type === ConfigSelection) {
+    return resolveSettingsSelectionPresentation(getSettingsSelectionEntries(item.options), item.presentation);
+  }
+  if (item.type === ConfigColorPicker) return "color";
+  if (item.type === ColorPresetSelector) return "color-presets";
+  return "custom";
+};
+
+// Controls that need the full row width sit under their label.
+const SETTINGS_STACKED_ROW_KINDS = new Set(["cards", "color-presets", "fps", "custom"]);
+
+const settingsToggleRowPointers = new WeakMap();
+
+const handleSettingsToggleRowPointerDown = (event) => {
+  settingsToggleRowPointers.set(event.currentTarget, { x: event.clientX, y: event.clientY });
+};
+
+// On/off rows toggle from their label and description too. A press that
+// wandered (drag, text selection) is not a click.
+const handleSettingsToggleRowClick = (event) => {
+  const area = event.currentTarget;
+  if (event.target?.closest?.("a, button, input, select, textarea, label, [role='switch']")) return;
+  const down = settingsToggleRowPointers.get(area);
+  if (down && Math.hypot(event.clientX - down.x, event.clientY - down.y) > 6) return;
+  const selection = window.getSelection?.();
+  if (selection && String(selection)) return;
+  const row = area.closest(".setting-row");
+  if (!row || row.classList.contains("is-disabled")) return;
+  const toggle = row.querySelector(".setting-row-right .switch-checkbox");
+  if (toggle && !toggle.disabled) toggle.click();
+};
+
+const SETTINGS_SELF_RENDERED_ITEM_TYPES = () => [
+  ConfigButton,
+  ConfigInput,
+  ConfigHotkey,
+  ConfigWarning,
+  ConfigInfo,
+  ConfigKeyList,
+  ConfigFontSelector,
+  ConfigInstrumentalBreakIconPicker,
+  ConfigKaraokeFillCurveEditor,
+  VideoHelperToggle,
+  LyricsHelperToggle,
+];
+
+const renderSettingsJumpLink = (jump) =>
+  jump && react.createElement(
+    "button",
+    {
+      type: "button",
+      className: "settings-jump-link",
+      onClick: jump.onClick,
+    },
+    react.createElement("span", null, jump.label),
+    react.createElement(SettingsUiIcon, { name: "right", size: 13 })
+  );
+
 const OptionList = ({ type, items, onChange }) => {
   const [itemList, setItemList] = useState(items);
   const [, forceUpdate] = useState();
@@ -6298,6 +7019,9 @@ const OptionList = ({ type, items, onChange }) => {
     return () => window.removeEventListener("ivLyrics", configListener);
   }, []);
 
+  const selfRenderedTypes = SETTINGS_SELF_RENDERED_ITEM_TYPES();
+  const resetLabel = getSettingsText("creatorProfile.resetDecoration", "Reset to default");
+
   const renderedItems = (itemList || []).map((item, index) => {
     if (!item || (item.when && !item.when())) {
       return;
@@ -6315,7 +7039,7 @@ const OptionList = ({ type, items, onChange }) => {
         "div",
         {
           key: index,
-          className: "setting-row",
+          className: "setting-row is-inline",
           "data-setting-key": item.key,
         },
         react.createElement(
@@ -6331,19 +7055,7 @@ const OptionList = ({ type, items, onChange }) => {
     }
 
     // ConfigButton, ConfigInput, ConfigHotkey, ConfigFontSelector는 자체적으로 setting-row를 만들므로 wrapper 불필요
-    if (
-      item.type === ConfigButton ||
-      item.type === ConfigInput ||
-      item.type === ConfigHotkey ||
-      item.type === ConfigWarning ||
-      item.type === ConfigInfo ||
-      item.type === ConfigKeyList ||
-      item.type === ConfigFontSelector ||
-      item.type === ConfigInstrumentalBreakIconPicker ||
-      item.type === ConfigKaraokeFillCurveEditor ||
-      item.type === VideoHelperToggle ||
-      item.type === LyricsHelperToggle
-    ) {
+    if (selfRenderedTypes.includes(item.type)) {
       // item.onChange가 있으면 그것을 우선 사용 (업데이트 확인, 내보내기 등 커스텀 핸들러)
       const itemOnChange = item.onChange || ((name, value, event) => {
         if (!isDisabled) {
@@ -6352,7 +7064,7 @@ const OptionList = ({ type, items, onChange }) => {
         }
       });
 
-      return react.createElement(item.type, {
+      const selfRenderedRow = react.createElement(item.type, {
         ...item,
         key: index,
         name: item.desc || item.key,
@@ -6365,50 +7077,104 @@ const OptionList = ({ type, items, onChange }) => {
             : CONFIG.visual[item.key],
         onChange: itemOnChange,
       });
+      if (!item.jump) return selfRenderedRow;
+      return react.createElement(
+        react.Fragment,
+        { key: index },
+        selfRenderedRow,
+        react.createElement("div", { className: "settings-jump-row" }, renderSettingsJumpLink(item.jump))
+      );
     }
 
-    // 나머지 타입들은 wrapper로 감싸기
+    const kind = getSettingsRowKind(item);
+    const stacked = SETTINGS_STACKED_ROW_KINDS.has(kind) || item.layout === "stack";
+    const changed = isSettingChanged(item.key);
+    const canReset = kind !== "toggle" && !item.noReset && hasSettingDefault(item.key);
+    const controlProps = {
+      ...item,
+      name: item.desc,
+      settingKey: item.key,
+      disabled: isDisabled,
+      presentation: kind === "custom" ? item.presentation : kind,
+      variant: kind === "stepper" || kind === "fps" ? kind : item.variant,
+      defaultValue:
+        item.defaultValue !== undefined
+          ? item.defaultValue
+          : CONFIG.visual[item.key],
+      onChange: (value) => {
+        if (!isDisabled) {
+          onChangeItem(item.key, value);
+          forceUpdate({});
+        }
+      },
+    };
+    delete controlProps.key;
+
     return react.createElement(
       "div",
       {
         key: index,
-        className: "setting-row",
+        className: [
+          "setting-row",
+          stacked ? "is-stack" : "is-inline",
+          kind === "toggle" ? "is-toggle-row" : "",
+          changed ? "is-changed" : "",
+          isDisabled ? "is-disabled" : "",
+        ].filter(Boolean).join(" "),
         "data-setting-key": item.key,
-        style: isDisabled ? { opacity: 0.5, pointerEvents: "none" } : {},
+        "data-control": kind,
       },
       react.createElement(
         "div",
         { className: "setting-row-content" },
         react.createElement(
           "div",
-          { className: "setting-row-left" },
-          react.createElement("div", { className: "setting-name" }, item.desc),
+          {
+            className: "setting-row-left",
+            onPointerDown: kind === "toggle" ? handleSettingsToggleRowPointerDown : undefined,
+            onClick: kind === "toggle" ? handleSettingsToggleRowClick : undefined,
+          },
+          react.createElement(
+            "div",
+            { className: "setting-name-row" },
+            react.createElement("span", { className: "settings-changed-dot", "aria-hidden": "true" }),
+            react.createElement("div", { className: "setting-name" }, item.desc),
+            item.cost && react.createElement("span", { className: "settings-cost-tag" }, "GPU")
+          ),
           item.info &&
           react.createElement("div", {
             className: "setting-description",
             dangerouslySetInnerHTML: {
               __html: item.info,
             },
-          })
+          }),
+          renderSettingsJumpLink(item.jump)
         ),
         react.createElement(
           "div",
           { className: "setting-row-right" },
-          react.createElement(item.type, {
-            ...item,
-            name: item.desc,
-            disabled: isDisabled,
-            defaultValue:
-              item.defaultValue !== undefined
-                ? item.defaultValue
-                : CONFIG.visual[item.key],
-            onChange: (value) => {
-              if (!isDisabled) {
-                onChangeItem(item.key, value);
+          react.createElement(item.type, controlProps),
+          canReset && react.createElement(
+            "button",
+            {
+              type: "button",
+              className: "settings-reset-btn",
+              title: resetLabel,
+              "aria-label": `${item.desc} · ${resetLabel}`,
+              "aria-hidden": changed ? undefined : "true",
+              tabIndex: changed ? 0 : -1,
+              disabled: isDisabled,
+              onClick: () => {
+                if (isDisabled) return;
+                onChangeItem(item.key, getSettingDefaultValue(item.key));
                 forceUpdate({});
-              }
+                window.dispatchEvent(new CustomEvent("ivLyrics:settings-refresh", {
+                  detail: { key: item.key },
+                }));
+              },
             },
-          })
+            react.createElement(SettingsUiIcon, { name: "reset", size: 14 })
+          )
         )
       )
     );
@@ -6433,16 +7199,1180 @@ const getSettingsText = (key, fallback) => {
   return !value || value === key ? fallback : value;
 };
 
+// ---------------------------------------------------------------------------
+// Settings window design system
+// ---------------------------------------------------------------------------
+
+// Defaults of the CONFIG.visual settings, read from the CONFIG literal in
+// index.js with empty storage. They drive the changed-settings counter, the
+// per-row reset button and the default marker on sliders. The background
+// presets are one choice (see SETTINGS_DEFAULT_BACKGROUND_MODE) and the
+// interface language depends on the environment, so neither is listed.
+// tests/settings_defaults_parity.test.mjs keeps this table in sync with index.js.
+const SETTINGS_DEFAULT_VALUES = Object.freeze({
+  "playbar-button": false, "fullscreen-button": false, "panel-lyrics-enabled": true,
+  "panel-font-scale": "100", "panel-lyrics-font-family": "Pretendard Variable",
+  "panel-lyrics-original-font": "", "panel-lyrics-phonetic-font": "", "panel-lyrics-translation-font": "",
+  "panel-lyrics-original-size": "26", "panel-lyrics-phonetic-size": "13",
+  "panel-lyrics-translation-size": "13", "panel-lyrics-original-outline-width": "0",
+  "panel-lyrics-original-outline-color": "#000000", "panel-lyrics-phonetic-outline-width": "0",
+  "panel-lyrics-phonetic-outline-color": "#000000", "panel-lyrics-translation-outline-width": "0",
+  "panel-lyrics-translation-outline-color": "#000000", "panel-bg-type": "album",
+  "panel-bg-color": "#6366f1", "panel-bg-gradient-1": "#6366f1", "panel-bg-gradient-2": "#a855f7",
+  "panel-bg-opacity": "30", "panel-border-enabled": false, "panel-border-color": "#ffffff",
+  "panel-border-opacity": "10", "multi-vocal-speaker-color-male-1": "#a8ccff",
+  "multi-vocal-speaker-color-male-2": "#9ae8d4", "multi-vocal-speaker-color-male-3": "#bfe8ff",
+  "multi-vocal-speaker-color-male-4": "#7fb5e6", "multi-vocal-speaker-color-male-5": "#6cb8b8",
+  "multi-vocal-speaker-color-female-1": "#ffb8c7", "multi-vocal-speaker-color-female-2": "#ffd6b3",
+  "multi-vocal-speaker-color-female-3": "#f6c8ff", "multi-vocal-speaker-color-female-4": "#e6b4d4",
+  "multi-vocal-speaker-color-female-5": "#f6e5a5", "multi-vocal-speaker-color-duet-1": "#e4d8ff",
+  "multi-vocal-speaker-color-duet-2": "#d6e4ff", "multi-vocal-speaker-color-duet-3": "#ffddf2",
+  "multi-vocal-speaker-color-duet-4": "#bfaeff", "multi-vocal-speaker-color-duet-5": "#9d8cf2",
+  "sync-data-custom-speaker-colors-enabled": true, "album-bg-blur": "20", "reduce-motion": false,
+  "performance-frame-rate": 60, "instrumental-break-icon": "equalizer",
+  "instrumental-break-show-label": false, "instrumental-break-auto-detect": true,
+  "instrumental-break-label-font-family": "", "instrumental-break-label-font-size": "",
+  "instrumental-break-label-font-weight": "", "instrumental-break-label-opacity": "",
+  "instrumental-break-label-outline-width": "0", "instrumental-break-label-outline-color": "#000000",
+  "instrumental-break-animation-speed": 100, "background-brightness": 30, "video-helper-enabled": false,
+  "lyrics-helper-enabled": false, "video-blur": "5", "video-cover": false, "video-scale": 105,
+  "video-fallback-background": "album-cover", "solid-background-color": "#1e3a8a", "noise": true,
+  "alignment": "center", "lines-before": 0, "lines-after": 2,
+  "original-font-family": "Pretendard Variable", "phonetic-font-family": "Pretendard Variable",
+  "translation-font-family": "Pretendard Variable",
+  "cultural-annotations-font-family": "Pretendard Variable",
+  "cultural-annotations-vinyl-font-family": "Pretendard Variable", "original-outline-width": "0",
+  "original-outline-color": "#000000", "phonetic-outline-width": "0", "phonetic-outline-color": "#000000",
+  "translation-outline-width": "0", "translation-outline-color": "#000000", "furigana-outline-width": "0",
+  "furigana-outline-color": "#000000", "cultural-annotations-outline-width": "0",
+  "cultural-annotations-outline-color": "#000000", "cultural-annotations-vinyl-outline-width": "0",
+  "cultural-annotations-vinyl-outline-color": "#000000", "original-font-weight": 600,
+  "original-font-size": 44, "translation-font-weight": 300, "translation-font-size": 22,
+  "cultural-annotations-font-weight": 300, "cultural-annotations-font-size": 14,
+  "cultural-annotations-vinyl-font-weight": 300, "cultural-annotations-vinyl-font-size": 12,
+  "translation-spacing": "0", "phonetic-font-weight": "100", "phonetic-font-size": "16",
+  "phonetic-opacity": "70", "phonetic-spacing": "-1", "phonetic-hyphen-replace": "keep",
+  "original-letter-spacing": "0", "phonetic-letter-spacing": "0", "translation-letter-spacing": "0",
+  "furigana-font-weight": "300", "furigana-font-size": "14", "furigana-opacity": "80",
+  "furigana-spacing": "2", "text-shadow-enabled": true, "text-shadow-color": "#000000",
+  "text-shadow-opacity": 50, "text-shadow-blur": 2, "original-opacity": 95, "translation-opacity": 85,
+  "cultural-annotations-opacity": 60, "cultural-annotations-vinyl-opacity": 60,
+  "translate:target-language": "auto", "cultural-annotations-enabled": false, "furigana-enabled": false,
+  "ja-detect-threshold": 40, "hans-detect-threshold": 40, "fade-blur": true, "highlight-mode": false,
+  "highlight-intensity": 70, "karaoke-bounce": true, "karaoke-line-transition": true,
+  "karaoke-text-effects": true, "karaoke-mode-enabled": true, "sync-creator-auto-boundary-chars": true,
+  "karaoke-fill-correction-curve": "[[0,0],[0.25,0.25],[0.5,0.5],[0.75,0.75],[1,1]]",
+  "spotify-fake-karaoke-enabled": false, "pseudo-karaoke-render-advance": 250,
+  "prefer-sync-data-provider": true, "prefer-lyrics-type-over-provider-order": true,
+  "prefetch-enabled": true, "prefetch-video-enabled": true, "prefetch-word-details-enabled": true,
+  "quick-sync-controls-enabled": true, "fullscreen-key": "f12", "translate-metadata": false,
+  "translate-metadata-mode": "translated", "fullscreen-two-column": true,
+  "fullscreen-layout-reverse": false, "fullscreen-show-album": true, "fullscreen-show-info": true,
+  "fullscreen-center-when-no-lyrics": true, "fullscreen-album-size": "400",
+  "fullscreen-album-radius": "12", "fullscreen-vinyl-album-size": 100,
+  "fullscreen-vinyl-record-size": 100, "fullscreen-vinyl-background-blur": 0,
+  "fullscreen-vinyl-animations": true, "fullscreen-vinyl-track-change-animation": true,
+  "fullscreen-vinyl-rotation-speed": 100, "fullscreen-vinyl-center-rotation": true,
+  "fullscreen-vinyl-lyrics-enabled": true, "fullscreen-focus-presentation": "vinyl",
+  "fullscreen-vinyl-tonearm-style": "s", "fullscreen-vinyl-tonearm-finish": "white",
+  "fullscreen-vinyl-tonearm-size": 100, "fullscreen-vinyl-original-font-family": "Pretendard Variable",
+  "fullscreen-vinyl-original-font-size": 31, "fullscreen-vinyl-original-font-weight": 600,
+  "fullscreen-vinyl-original-opacity": 95, "fullscreen-vinyl-original-letter-spacing": 0,
+  "fullscreen-vinyl-original-outline-width": "0", "fullscreen-vinyl-original-outline-color": "#000000",
+  "fullscreen-vinyl-phonetic-font-family": "Pretendard Variable",
+  "fullscreen-vinyl-phonetic-font-size": 11, "fullscreen-vinyl-phonetic-font-weight": 100,
+  "fullscreen-vinyl-phonetic-opacity": 70, "fullscreen-vinyl-phonetic-spacing": -1,
+  "fullscreen-vinyl-phonetic-letter-spacing": 0, "fullscreen-vinyl-phonetic-outline-width": "0",
+  "fullscreen-vinyl-phonetic-outline-color": "#000000",
+  "fullscreen-vinyl-translation-font-family": "Pretendard Variable",
+  "fullscreen-vinyl-translation-font-size": 15, "fullscreen-vinyl-translation-font-weight": 300,
+  "fullscreen-vinyl-translation-opacity": 85, "fullscreen-vinyl-translation-spacing": 0,
+  "fullscreen-vinyl-translation-letter-spacing": 0, "fullscreen-vinyl-translation-outline-width": "0",
+  "fullscreen-vinyl-translation-outline-color": "#000000",
+  "fullscreen-video-stage-original-font-family": "Pretendard Variable",
+  "fullscreen-video-stage-phonetic-font-family": "Pretendard Variable",
+  "fullscreen-video-stage-translation-font-family": "Pretendard Variable",
+  "fullscreen-video-stage-cultural-font-family": "Pretendard Variable",
+  "fullscreen-video-stage-lyric-background-color": "#000000",
+  "fullscreen-video-stage-lyric-background-opacity": 46, "fullscreen-title-size": "48",
+  "fullscreen-title-outline-width": "0", "fullscreen-title-outline-color": "#000000",
+  "fullscreen-artist-size": "24", "fullscreen-artist-outline-width": "0",
+  "fullscreen-artist-outline-color": "#000000", "fullscreen-show-clock": true,
+  "fullscreen-clock-size": 48, "fullscreen-clock-outline-width": "0",
+  "fullscreen-clock-outline-color": "#000000", "fullscreen-show-context": true,
+  "fullscreen-show-next-track": true, "fullscreen-next-track-seconds": 15,
+  "fullscreen-show-controls": true, "fullscreen-show-volume": true, "fullscreen-show-progress": true,
+  "fullscreen-show-lyrics-progress": false, "fullscreen-control-button-size": 36,
+  "fullscreen-controls-background": false, "fullscreen-auto-hide-ui": true,
+  "fullscreen-auto-hide-delay": 3, "fullscreen-browser-fullscreen": false,
+  "fullscreen-page-ui-only": false, "fullscreen-hide-overlay": true, "fullscreen-tmi-font-size": 100,
+  "fullscreen-tmi-outline-width": "0", "fullscreen-tmi-outline-color": "#000000",
+  "fullscreen-tv-mode": false, "fullscreen-tv-album-size": 140, "fullscreen-tv-show-album-name": true,
+  "fullscreen-tv-show-controls": false, "fullscreen-tv-show-progress": false,
+  "fullscreen-show-album-name": false, "fullscreen-trim-title": false,
+  "fullscreen-show-context-image": true, "fullscreen-info-gap": 24, "fullscreen-show-queue": true,
+});
+
+// Keys index.js does not seed; the settings controls fall back to these values.
+const SETTINGS_FALLBACK_DEFAULT_VALUES = Object.freeze({
+  "toggle-tv-mode-key": "t", "sync-creator-char-forward-key": "right",
+  "sync-creator-char-forward-alt-key": "", "sync-creator-char-back-key": "left",
+  "sync-creator-char-back-alt-key": "", "sync-creator-word-forward-key": ".",
+  "sync-creator-word-forward-alt-key": "", "sync-creator-word-back-key": ",",
+  "sync-creator-word-back-alt-key": "", "sync-creator-syllable-key": ";",
+  "sync-creator-syllable-alt-key": "", "sync-creator-drag-key": "/",
+  "sync-creator-drag-alt-key": "numpaddivide",
+});
+
+const SETTINGS_DEFAULT_BACKGROUND_MODE = "gradient-background";
+const SETTINGS_BACKGROUND_MODE_KEY = "__background-mode";
+
+const hasSettingDefault = (key) =>
+  typeof key === "string" && (
+    Object.prototype.hasOwnProperty.call(SETTINGS_DEFAULT_VALUES, key)
+    || Object.prototype.hasOwnProperty.call(SETTINGS_FALLBACK_DEFAULT_VALUES, key)
+  );
+
+const getSettingDefaultValue = (key) =>
+  Object.prototype.hasOwnProperty.call(SETTINGS_DEFAULT_VALUES, key)
+    ? SETTINGS_DEFAULT_VALUES[key]
+    : SETTINGS_FALLBACK_DEFAULT_VALUES[key];
+
+// Stored values mix numbers and numeric strings ("100" / 100), booleans and
+// "true"/"false", and upper/lower case colors; compare what the user sees.
+const normalizeSettingComparable = (value) => {
+  if (value === undefined || value === null) return "";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : "";
+  const text = String(value).trim();
+  if (/^#[0-9a-f]{3,8}$/i.test(text)) return text.toLowerCase();
+  if (/^-?(?:\d+\.?\d*|\.\d+)$/.test(text)) return String(Number(text));
+  return text;
+};
+
+const settingValuesEqual = (first, second) =>
+  normalizeSettingComparable(first) === normalizeSettingComparable(second);
+
+const getCurrentSettingValue = (key) => {
+  if (key === SETTINGS_BACKGROUND_MODE_KEY) return getCurrentSettingsBackgroundMode();
+  const value = CONFIG?.visual?.[key];
+  return value === undefined ? getSettingDefaultValue(key) : value;
+};
+
+const isSettingChanged = (key) => {
+  if (key === SETTINGS_BACKGROUND_MODE_KEY) {
+    return getCurrentSettingsBackgroundMode() !== SETTINGS_DEFAULT_BACKGROUND_MODE;
+  }
+  if (!hasSettingDefault(key)) return false;
+  return !settingValuesEqual(getCurrentSettingValue(key), getSettingDefaultValue(key));
+};
+
+const SETTINGS_UI_ICON_PATHS = Object.freeze({
+  search: "M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm9 16-4.35-4.35",
+  close: "M6 6l12 12M18 6 6 18",
+  right: "m9 6 6 6-6 6",
+  left: "m15 6-6 6 6 6",
+  down: "m6 9 6 6 6-6",
+  up: "m6 15 6-6 6 6",
+  reset: "M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4",
+  check: "m5 12.5 4.5 4.5L19 7.5",
+  grip: "M9 6.5h.01M15 6.5h.01M9 12h.01M15 12h.01M9 17.5h.01M15 17.5h.01",
+  info: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 5v.01M11 11.5h1v5h1",
+  warn: "M12 9v4m0 3.5v.01M10.3 3.9 1.9 18a2 2 0 0 0 1.7 3h16.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z",
+  sun: "M12 3v1.5M12 19.5V21M4.6 4.6l1.1 1.1M18.3 18.3l1.1 1.1M3 12h1.5M19.5 12H21M4.6 19.4l1.1-1.1M18.3 5.7l1.1-1.1M12 7.5a4.5 4.5 0 1 0 0 9 4.5 4.5 0 0 0 0-9Z",
+  moon: "M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7Z",
+  dot: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 6a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z",
+  dock: "M4 5h16v14H4zM15 5v14",
+  plus: "M12 5v14M5 12h14",
+  minus: "M5 12h14",
+  external: "M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5",
+  alignLeft: "M4 6h16M4 10h10M4 14h16M4 18h10",
+  alignCenter: "M4 6h16M7 10h10M4 14h16M7 18h10",
+  alignRight: "M4 6h16M10 10h10M4 14h16M10 18h10",
+  layers: "M12 3 2.5 8 12 13l9.5-5L12 3ZM2.5 13 12 18l9.5-5",
+  clock: "M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18Zm0 4.5V12l3 2",
+  context: "M4 6.5h16v11H4zM8 10.5h8M8 13.5h5",
+  next: "M5 6v12l9-6-9-6ZM18 6v12",
+  controls: "M6.5 9v6M17.5 9v6M10 8.5v7l5-3.5-5-3.5Z",
+  lprogress: "M7 4v16M11 8h7M11 12h5M11 16h7",
+  queue: "M4 6h11M4 11h11M4 16h7M17 13v7l4-2.5",
+  github: "M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21",
+  discord: "M8.5 11.5h.01M15.5 11.5h.01M7 6.5c1.5-.7 3-1 5-1s3.5.3 5 1c1.6 2.7 2.3 5.5 2 9-1.4 1.1-2.8 1.8-4.2 2.1l-.9-1.6c-.7.2-1.3.3-1.9.3s-1.2-.1-1.9-.3l-.9 1.6C7.8 17.3 6.4 16.6 5 15.5c-.3-3.5.4-6.3 2-9Z",
+  coffee: "M5 9h11v5a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V9Zm11 1h1.5a2.5 2.5 0 0 1 0 5H16M8 3v3M11 3v3",
+});
+
+const SettingsUiIcon = ({ name, className = "", size = 16 }) =>
+  react.createElement("svg", {
+    className: `settings-ui-icon${className ? ` ${className}` : ""}`,
+    width: size,
+    height: size,
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.6,
+    strokeLinecap: "round",
+    strokeLinejoin: "round",
+    "aria-hidden": "true",
+    focusable: "false",
+  }, react.createElement("path", { d: SETTINGS_UI_ICON_PATHS[name] || SETTINGS_UI_ICON_PATHS.dot }));
+
+// A tiny observable for values that change while scrolling (active section,
+// current menu). Components subscribe to it so the settings tree itself does
+// not re-render on every scroll-spy update.
+const createSettingsSignal = (initialValue) => {
+  let currentValue = initialValue;
+  const listeners = new Set();
+  return {
+    get: () => currentValue,
+    set: (nextValue) => {
+      if (Object.is(nextValue, currentValue)) return;
+      currentValue = nextValue;
+      listeners.forEach((listener) => {
+        try {
+          listener(currentValue);
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    },
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+  };
+};
+
+const useSettingsSignal = (signal) => {
+  const [value, setValue] = react.useState(() => (signal ? signal.get() : undefined));
+  react.useEffect(() => {
+    if (!signal) return undefined;
+    setValue(signal.get());
+    return signal.subscribe(setValue);
+  }, [signal]);
+  return value;
+};
+
+// Re-render on "ivLyrics" config events, at most once per frame.
+const useSettingsConfigRevision = () => {
+  const [revision, setRevision] = react.useState(0);
+  react.useEffect(() => {
+    let frameId = null;
+    const handleConfig = (event) => {
+      if (event?.detail?.type !== "config" || frameId != null) return;
+      frameId = requestAnimationFrame(() => {
+        frameId = null;
+        setRevision((value) => value + 1);
+      });
+    };
+    window.addEventListener("ivLyrics", handleConfig);
+    return () => {
+      window.removeEventListener("ivLyrics", handleConfig);
+      if (frameId != null) cancelAnimationFrame(frameId);
+    };
+  }, []);
+  return revision;
+};
+
+const SettingsSection = ({ sectionKey, title, subtitle, view, hidden, className = "", children }) =>
+  renderSettingsSectionShell({
+    sectionKey,
+    title,
+    subtitle,
+    view,
+    hidden,
+    className,
+    children,
+  });
+const isSettingsEditableField = (element) => {
+  if (!element || element.disabled || element.readOnly) return false;
+  if (element.tagName === "TEXTAREA") return true;
+  if (element.tagName !== "INPUT") return false;
+  if (element.classList?.contains("settings-search-input")) return false;
+  return ["text", "number", "search", "url", "email", "password", "tel", ""].includes(element.type || "");
+};
+
+// The preview opens by default only where it shows what is being edited.
+const SETTINGS_PREVIEW_MENUS = new Set(["appearance", "fullscreen", "nowplaying"]);
+const SETTINGS_DOCK_STORAGE_KEY = "ivLyrics:settings-dock";
+
+const readSettingsDockPreferences = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SETTINGS_DOCK_STORAGE_KEY) || "{}");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    return {};
+  }
+};
+
+const writeSettingsDockPreferences = (preferences) => {
+  try {
+    localStorage.setItem(SETTINGS_DOCK_STORAGE_KEY, JSON.stringify(preferences));
+  } catch (error) {
+    // Storage may be unavailable; the choice then lasts for this window only.
+  }
+};
+
+const SettingsCrumbs = ({ menuLabel, sections, signal }) => {
+  const activeKey = useSettingsSignal(signal);
+  const section = (sections || []).find((candidate) => candidate.key === activeKey);
+  return react.createElement(
+    "div",
+    { className: "settings-crumbs" },
+    react.createElement("span", null, menuLabel),
+    section ? react.createElement(SettingsUiIcon, { name: "right", size: 12 }) : null,
+    section ? react.createElement("span", null, section.label) : null
+  );
+};
+
+// Section tabs of a menu. A plain mouse wheel over the strip scrolls it
+// sideways (eased for wheel notches, 1:1 for trackpads). A wheel gesture that
+// was already scrolling the page keeps doing so, and one that scrolled the
+// strip does not spill into the page when it reaches an end.
+const SettingsToc = ({ sections, signal, onSelect, pageWheelRef, label }) => {
+  const activeKey = useSettingsSignal(signal);
+  const tocRef = useRef(null);
+
+  const syncEdges = useCallback(() => {
+    const toc = tocRef.current;
+    if (!toc) return;
+    const overflow = toc.scrollWidth > toc.clientWidth + 1;
+    toc.classList.toggle("is-overflow", overflow);
+    toc.classList.toggle("at-start", overflow && toc.scrollLeft <= 1);
+    toc.classList.toggle("at-end", overflow && toc.scrollLeft + toc.clientWidth >= toc.scrollWidth - 1);
+  }, []);
+
+  useEffect(() => {
+    const toc = tocRef.current;
+    if (!toc) return undefined;
+    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    let wheelTarget = null;
+    let wheelFrame = 0;
+    let stripWheelAt = -1e9;
+    const settle = () => {
+      const difference = wheelTarget - toc.scrollLeft;
+      if (Math.abs(difference) < 1) {
+        toc.scrollLeft = wheelTarget;
+        wheelTarget = null;
+        wheelFrame = 0;
+        return;
+      }
+      toc.scrollLeft += Math.sign(difference) * Math.max(1, Math.abs(difference) * 0.24);
+      wheelFrame = requestAnimationFrame(settle);
+    };
+    const handleWheel = (event) => {
+      if (event.ctrlKey) return;
+      const max = toc.scrollWidth - toc.clientWidth;
+      if (max <= 1 || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+      const now = performance.now();
+      if (now - (pageWheelRef?.current?.at ?? -1e9) < 320 && now - stripWheelAt > 320) return;
+      const unit = event.deltaMode === 1 ? 32 : event.deltaMode === 2 ? toc.clientWidth : 1;
+      const delta = event.deltaY * unit;
+      const from = wheelTarget === null ? toc.scrollLeft : wheelTarget;
+      // At an end, a gesture that is still moving the strip stays on it.
+      if ((delta < 0 && from <= 0) || (delta > 0 && from >= max - 1)) {
+        if (now - stripWheelAt < 320) {
+          event.preventDefault();
+          stripWheelAt = now;
+        }
+        return;
+      }
+      event.preventDefault();
+      stripWheelAt = now;
+      if (Math.abs(delta) < 40 || reducedMotion?.matches) {
+        if (wheelFrame) cancelAnimationFrame(wheelFrame);
+        wheelFrame = 0;
+        wheelTarget = null;
+        toc.scrollLeft = Math.max(0, Math.min(max, toc.scrollLeft + delta));
+        return;
+      }
+      wheelTarget = Math.max(0, Math.min(max, from + delta));
+      if (!wheelFrame) wheelFrame = requestAnimationFrame(settle);
+    };
+    toc.addEventListener("scroll", syncEdges, { passive: true });
+    toc.addEventListener("wheel", handleWheel, { passive: false });
+    const resizeObserver = typeof ResizeObserver === "function" ? new ResizeObserver(syncEdges) : null;
+    resizeObserver?.observe(toc);
+    syncEdges();
+    return () => {
+      toc.removeEventListener("scroll", syncEdges);
+      toc.removeEventListener("wheel", handleWheel);
+      resizeObserver?.disconnect();
+      if (wheelFrame) cancelAnimationFrame(wheelFrame);
+    };
+  }, [syncEdges, pageWheelRef]);
+
+  // Keep the current tab in view when the strip scrolls sideways.
+  useEffect(() => {
+    const toc = tocRef.current;
+    if (!toc) return;
+    syncEdges();
+    const link = toc.querySelector(".settings-toc-item.is-active");
+    if (!link || toc.scrollWidth <= toc.clientWidth + 1) return;
+    const left = link.offsetLeft - toc.offsetLeft;
+    const pad = 28;
+    if (left - pad < toc.scrollLeft) {
+      toc.scrollTo({ left: Math.max(0, left - pad), behavior: "smooth" });
+    } else if (left + link.offsetWidth + pad > toc.scrollLeft + toc.clientWidth) {
+      toc.scrollTo({ left: left + link.offsetWidth + pad - toc.clientWidth, behavior: "smooth" });
+    }
+  }, [activeKey, sections, syncEdges]);
+
+  return react.createElement(
+    "nav",
+    { className: "settings-toc", ref: tocRef, "aria-label": label },
+    ...(sections || []).map((section) =>
+      react.createElement(
+        "button",
+        {
+          key: section.key,
+          type: "button",
+          className: `settings-toc-item${section.key === activeKey ? " is-active" : ""}`,
+          "aria-current": section.key === activeKey ? "location" : undefined,
+          onClick: () => onSelect(section.key),
+        },
+        section.label
+      )
+    )
+  );
+};
+
+const getSettingsPreviewKind = (menu, section) => {
+  if (menu === "fullscreen") return "fullscreen";
+  if (menu === "nowplaying") return "panel";
+  if (section === "instrumental-break") return "interlude";
+  if (section === "cultural-annotations") return "annotation";
+  return "lyrics";
+};
+
+const getSettingsLayerLegend = () => [
+  ["original", getSettingsText("lyricsCacheEditor.original", "Original")],
+  ["phonetic", getSettingsText("menu.pronunciation", "Pronunciation")],
+  ["translation", getSettingsText("translationMenu.translation", "Translation")],
+  ["furigana", getSettingsText("translationMenu.furigana", "Furigana")],
+];
+
+const renderSettingsPreviewLine = (active, extra = null, key = undefined) =>
+  react.createElement(
+    "div",
+    {
+      key,
+      className: `lyrics-lyricsContainer-LyricsLine${active ? " lyrics-lyricsContainer-LyricsLine-active" : ""}`,
+      style: { "--position-index": 0, "--offset": "0px", "--animation-index": 0 },
+    },
+    react.createElement(
+      "p",
+      null,
+      active
+        ? react.createElement(KaraokeLine, {
+          line: SETTINGS_LYRICS_PREVIEW_LINE,
+          position: SETTINGS_LYRICS_PREVIEW_LINE.endTime,
+          isActive: true,
+          furiganaMapOverride: SETTINGS_LYRICS_PREVIEW_FURIGANA,
+        })
+        : SETTINGS_LYRICS_PREVIEW_TEXT
+    ),
+    react.createElement(
+      "p",
+      { className: "lyrics-lyricsContainer-LyricsLine-phonetic" },
+      I18n.t("settingsAdvanced.livePreview.sampleTextPhonetic")
+    ),
+    react.createElement(
+      "p",
+      { className: "lyrics-lyricsContainer-LyricsLine-translation" },
+      I18n.t("settingsAdvanced.livePreview.sampleText")
+    ),
+    extra
+  );
+
+// The live preview renders the app's own lyric markup and CSS: KaraokeLine,
+// the interlude indicator from Pages.js and the cultural-note paragraph.
+const SettingsLyricsPreview = ({ kind = "lyrics" }) => {
+  const revision = useSettingsConfigRevision();
+  const visual = CONFIG.visual || {};
+  const mode = getCurrentSettingsBackgroundMode();
+  const preset = SETTINGS_BACKGROUND_PRESETS.find((candidate) => candidate.id === mode);
+  const brightness = Number(visual["background-brightness"]);
+  const dim = mode === "solid-background" || mode === "none"
+    ? 0
+    : ((100 - (Number.isFinite(brightness) ? brightness : 30)) / 100) * 0.72;
+  let tag = preset ? getSettingsText(preset.labelKey, preset.fallbackLabel) : "";
+  let lines;
+  if (kind === "interlude") {
+    const icon = visual["instrumental-break-icon"] || "equalizer";
+    tag = getSettingsText(`settingsAdvanced.instrumentalBreak.icon.options.${icon}`, tag);
+    lines = [
+      renderSettingsPreviewLine(false, null, "before"),
+      react.createElement(
+        "div",
+        {
+          key: "interlude",
+          className: "lyrics-lyricsContainer-LyricsLine lyrics-lyricsContainer-LyricsLine-active",
+          style: { "--position-index": 0, "--offset": "0px", "--animation-index": 0 },
+        },
+        react.createElement(
+          "p",
+          { className: "lyrics-lyricsContainer-LyricsLine-interludeMain" },
+          react.createElement(InterludeIndicator, { durationMs: 6000, kind: "break", settingsRevision: revision })
+        )
+      ),
+      renderSettingsPreviewLine(false, null, "after"),
+    ];
+  } else if (kind === "annotation") {
+    tag = getSettingsText("settings.culturalAnnotations.label", tag);
+    lines = [renderSettingsPreviewLine(true, react.createElement(
+      "p",
+      { className: "lyrics-lyricsContainer-LyricsLine-culturalNote" },
+      getSettingsText("settingsUi.preview.annotationSample", "")
+    ), "active")];
+  } else {
+    lines = [renderSettingsPreviewLine(true, null, "active")];
+  }
+  return react.createElement(
+    "div",
+    {
+      className: `settings-preview-stage bg-${mode}${visual.noise ? " has-noise" : ""}`,
+      style: {
+        "--preview-solid": normalizeSettingsHexColor(visual["solid-background-color"]) || "#1e3a8a",
+        "--preview-dim": dim,
+      },
+    },
+    react.createElement("span", { className: "settings-preview-bg", "aria-hidden": "true" }),
+    react.createElement("span", { className: "settings-preview-dim", "aria-hidden": "true" }),
+    react.createElement("span", { className: "settings-preview-noise", "aria-hidden": "true" }),
+    tag ? react.createElement("span", { className: "settings-preview-tag" }, tag) : null,
+    react.createElement(
+      "div",
+      {
+        className: "font-preview settings-live-preview-lyrics lyrics-lyricsContainer-LyricsContainer",
+        id: "settings-live-lyrics-preview",
+        style: getSettingsLyricsPreviewStyle(),
+        "data-furigana-enabled": visual["furigana-enabled"] === true ? "true" : "false",
+      },
+      react.createElement(
+        "div",
+        {
+          className: `settings-live-preview-stage lyrics-lyricsContainer-SyncedLyricsPage is-karaoke${visual["karaoke-line-transition"] ? " karaoke-line-transition-enabled" : ""}`,
+        },
+        react.createElement(
+          "div",
+          { className: "settings-live-preview-line lyrics-lyricsContainer-SyncedLyrics" },
+          ...lines
+        )
+      )
+    )
+  );
+};
+
+const getSettingsPreviewNumber = (key, fallback) => {
+  const value = Number(CONFIG.visual?.[key]);
+  return Number.isFinite(value) && CONFIG.visual?.[key] !== "" ? value : fallback;
+};
+
+const getSettingsPreviewFlag = (key, fallback) => {
+  const value = CONFIG.visual?.[key];
+  return value === undefined || value === null ? fallback : value !== false && value !== "false";
+};
+
+// Schematic fullscreen layout that follows the fullscreen settings.
+const SettingsFullscreenPreview = ({ view = "basic" }) => {
+  useSettingsConfigRevision();
+  const visual = CONFIG.visual || {};
+  const flag = getSettingsPreviewFlag;
+  const number = getSettingsPreviewNumber;
+  const bars = (count, prefix) => react.createElement(
+    "div",
+    { className: "settings-fs-lyrics" },
+    ...Array.from({ length: count }, (_, index) =>
+      react.createElement("i", {
+        key: `${prefix}-${index}`,
+        className: index === 1 ? "is-on" : "",
+        style: { width: `${[62, 84, 70, 54, 66][index % 5]}%` },
+      })
+    )
+  );
+  const info = react.createElement(
+    "div",
+    { className: "settings-fs-info" },
+    react.createElement("b", null),
+    react.createElement("small", null),
+    flag("fullscreen-show-album-name", false) ? react.createElement("em", null) : null
+  );
+  const nodes = [];
+  const tvMode = view === "tv" || (view !== "vinyl" && flag("fullscreen-tv-mode", false));
+  if (view === "vinyl") {
+    const presentation = visual["fullscreen-focus-presentation"] || "vinyl";
+    const armStyle = visual["fullscreen-vinyl-tonearm-style"] || "s";
+    const finish = { white: "#f2f2f2", silver: "#b9bec7", black: "#1d1f24" }[visual["fullscreen-vinyl-tonearm-finish"] || "white"] || "#f2f2f2";
+    nodes.push(react.createElement(
+      "div",
+      {
+        key: "record",
+        className: `settings-fs-record${flag("fullscreen-vinyl-animations", true) ? " is-spin" : ""}${presentation === "compact-vinyl" ? " is-compact" : ""}`,
+        style: {
+          "--record": number("fullscreen-vinyl-record-size", 100) * (presentation === "compact-vinyl" ? 0.7 : 1),
+          "--rpm": number("fullscreen-vinyl-rotation-speed", 100),
+        },
+      },
+      react.createElement("span", { className: "settings-fs-record-label", style: { "--label": number("fullscreen-vinyl-album-size", 100) } })
+    ));
+    nodes.push(react.createElement("span", {
+      key: "arm",
+      className: `settings-fs-arm is-${armStyle}`,
+      style: { "--arm": number("fullscreen-vinyl-tonearm-size", 100), "--arm-color": finish },
+    }));
+    if (flag("fullscreen-vinyl-lyrics-enabled", true)) {
+      nodes.push(react.createElement("div", { key: "vinyl-lyrics", className: "settings-fs-el settings-fs-vinyl-lyrics" }, bars(2, "vinyl")));
+    }
+  } else if (tvMode) {
+    nodes.push(react.createElement("div", { key: "tv-lyrics", className: "settings-fs-el settings-fs-tv-lyrics" }, bars(4, "tv")));
+    nodes.push(react.createElement(
+      "div",
+      { key: "tv-info", className: "settings-fs-el settings-fs-tv-info" },
+      react.createElement("span", { className: "settings-fs-album", style: { "--album": number("fullscreen-tv-album-size", 140) * 1.4 } }),
+      info
+    ));
+  } else {
+    const twoColumn = flag("fullscreen-two-column", true);
+    const reverse = flag("fullscreen-layout-reverse", false);
+    nodes.push(react.createElement(
+      "div",
+      { key: "art", className: `settings-fs-el settings-fs-col settings-fs-col-art${twoColumn ? "" : " is-single"}${reverse && twoColumn ? " is-right" : ""}` },
+      flag("fullscreen-show-album", true) ? react.createElement("span", { className: "settings-fs-album" }) : null,
+      flag("fullscreen-show-info", true) ? info : null
+    ));
+    nodes.push(react.createElement(
+      "div",
+      { key: "lyrics", className: `settings-fs-el settings-fs-col settings-fs-col-lyrics${twoColumn ? "" : " is-single"}${reverse && twoColumn ? " is-left" : ""}` },
+      bars(5, "main")
+    ));
+  }
+  if (flag("fullscreen-show-clock", true)) {
+    nodes.push(react.createElement("span", { key: "clock", className: "settings-fs-el settings-fs-clock" }, "21:47"));
+  }
+  if (flag("fullscreen-show-context", true)) {
+    nodes.push(react.createElement(
+      "span",
+      { key: "context", className: "settings-fs-el settings-fs-context" },
+      flag("fullscreen-show-context-image", true) ? react.createElement("i") : null,
+      react.createElement("b")
+    ));
+  }
+  if (flag("fullscreen-show-lyrics-progress", false)) nodes.push(react.createElement("span", { key: "lprog", className: "settings-fs-el settings-fs-lprog" }));
+  if (flag("fullscreen-show-queue", true)) {
+    nodes.push(react.createElement("span", { key: "queue", className: "settings-fs-el settings-fs-queue" }, react.createElement("i"), react.createElement("i"), react.createElement("i"), react.createElement("i")));
+  }
+  if (flag("fullscreen-show-next-track", true)) {
+    nodes.push(react.createElement("span", { key: "next", className: "settings-fs-el settings-fs-next" }, react.createElement("i"), react.createElement("b")));
+  }
+  if (flag("fullscreen-show-controls", true)) {
+    nodes.push(react.createElement(
+      "span",
+      { key: "controls", className: `settings-fs-el settings-fs-controls${flag("fullscreen-controls-background", false) ? " has-bg" : ""}` },
+      react.createElement("i"),
+      react.createElement("i", { className: "is-play" }),
+      react.createElement("i")
+    ));
+    if (flag("fullscreen-show-progress", true)) nodes.push(react.createElement("span", { key: "progress", className: "settings-fs-el settings-fs-progress" }));
+    if (flag("fullscreen-show-volume", true)) nodes.push(react.createElement("span", { key: "volume", className: "settings-fs-el settings-fs-volume" }));
+  }
+  return react.createElement(
+    "div",
+    {
+      className: "settings-preview-stage settings-fs-stage",
+      style: {
+        "--clock": number("fullscreen-clock-size", 48),
+        "--album": number("fullscreen-album-size", 400),
+        "--radius": number("fullscreen-album-radius", 12),
+        "--title": number("fullscreen-title-size", 48),
+        "--artist": number("fullscreen-artist-size", 24),
+        "--btn": number("fullscreen-control-button-size", 36),
+      },
+    },
+    react.createElement("span", { className: "settings-preview-bg is-fullscreen", "aria-hidden": "true" }),
+    ...nodes
+  );
+};
+
+const getSettingsMatrixRowId = (key) => {
+  const text = String(key || "");
+  if (/-hyphen-replace$/.test(text)) return "hyphen";
+  if (/-letter-spacing$/.test(text)) return "letterSpacing";
+  if (/-outline-width$/.test(text)) return "outlineWidth";
+  if (/-outline-color$/.test(text)) return "outlineColor";
+  if (/-font-family$|-font$/.test(text)) return "font";
+  if (/-font-weight$/.test(text)) return "weight";
+  if (/-opacity$/.test(text)) return "opacity";
+  if (/-spacing$/.test(text)) return "spacing";
+  if (/-font-size$|-size$|-font-scale$/.test(text)) return "size";
+  return text;
+};
+
+const getSettingsMatrixValue = (item) => {
+  const current = CONFIG.visual?.[item.key];
+  if (current !== undefined && current !== null && current !== "") return current;
+  return item.defaultValue !== undefined ? item.defaultValue : current;
+};
+
+const isSettingsMatrixToggleOn = (toggle) => {
+  if (!toggle) return true;
+  const value = CONFIG.visual?.[toggle.key];
+  return value === true || value === "true";
+};
+
+// Layers × properties table (lyric layers, panel lyrics, cultural notes, LP).
+// It follows its own width: a table, a table with labels above the cells,
+// or one layer at a time behind layer tabs in narrow windows.
+const SettingsLayerMatrix = ({ columns, rows, onChange, label, muted = false, masterKey }) => {
+  useSettingsConfigRevision();
+  const isMuted = muted || (masterKey ? !isSettingsMatrixToggleOn({ key: masterKey }) : false);
+  const rootRef = useRef(null);
+  const columnsRef = useRef(columns);
+  columnsRef.current = columns;
+  const [mode, setMode] = useState("table");
+  const [activeColumn, setActiveColumn] = useState(columns[0]?.id);
+
+  useEffect(() => {
+    const root = rootRef.current;
+    if (!root || typeof ResizeObserver !== "function") return undefined;
+    const observer = new ResizeObserver((entries) => {
+      const width = entries[0]?.contentRect?.width || root.clientWidth;
+      const next = width <= 520 ? "tabs" : width < 780 ? "stacked" : "table";
+      setMode((previous) => (previous === next ? previous : next));
+    });
+    observer.observe(root);
+    return () => observer.disconnect();
+  }, []);
+
+  // Search and the changed view open the layer that holds the setting.
+  useEffect(() => {
+    const handleReveal = (event) => {
+      const key = event.detail?.key;
+      const column = columnsRef.current.find((candidate) =>
+        candidate.anchor === key
+        || candidate.toggle?.key === key
+        || candidate.items.some((item) => item.key === key));
+      if (column) setActiveColumn(column.id);
+    };
+    window.addEventListener("ivLyrics:settings-reveal", handleReveal);
+    return () => window.removeEventListener("ivLyrics:settings-reveal", handleReveal);
+  }, []);
+
+  const resetLabel = getSettingsText("creatorProfile.resetDecoration", "Reset to default");
+  const handlerFor = (column) => column.onChange || onChange;
+  const rowLabels = new Map(rows.map((row) => [row.id, row.label]));
+  const cellFor = (column, rowId) => column.items.find((item) => (item.row || getSettingsMatrixRowId(item.key)) === rowId);
+
+  const renderControl = (column, item, ariaLabel, disabled) => {
+    const commit = (value) => handlerFor(column)(item.key, value);
+    const value = getSettingsMatrixValue(item);
+    if (item.type === ConfigFontSelector) {
+      return react.createElement(SettingsFontPicker, {
+        value, label: ariaLabel, disabled, allowEmpty: getSettingDefaultValue(item.key) === "", onChange: commit,
+      });
+    }
+    if (item.type === ConfigFontWeightSlider) {
+      return react.createElement(SettingsScrubField, {
+        value, min: 100, max: 900, step: 100, label: ariaLabel, weight: true, disabled, onChange: commit,
+      });
+    }
+    if (item.type === ConfigSliderRange) {
+      return react.createElement(SettingsScrubField, {
+        value, min: item.min, max: item.max, step: item.step, unit: item.unit, label: ariaLabel, disabled, onChange: commit,
+      });
+    }
+    if (item.type === ConfigColorPicker) {
+      return react.createElement(ConfigColorPicker, { name: ariaLabel, defaultValue: value, onChange: commit });
+    }
+    if (item.type === ConfigSelection) {
+      return react.createElement(ConfigSelection, {
+        name: ariaLabel, defaultValue: value, options: item.options, compact: true, disabled, onChange: commit,
+      });
+    }
+    return null;
+  };
+
+  const renderHead = (column, last) =>
+    react.createElement(
+      "div",
+      {
+        key: `head-${column.id}`,
+        className: `settings-matrix-head${last ? " is-last" : ""}`,
+        role: "columnheader",
+        "data-setting-key": column.anchor || undefined,
+        style: { "--layer-color": column.color },
+      },
+      react.createElement(
+        "div",
+        { className: "settings-matrix-layer" },
+        react.createElement(
+          "span",
+          { className: "settings-matrix-layer-name" },
+          react.createElement("i", { "aria-hidden": "true" }),
+          column.label
+        ),
+        column.toggle
+          ? react.createElement(ConfigSlider, {
+            name: column.toggle.desc,
+            defaultValue: isSettingsMatrixToggleOn(column.toggle),
+            onChange: (value) => handlerFor(column)(column.toggle.key, value),
+          })
+          : null
+      ),
+      column.subtitle ? react.createElement("div", { className: "settings-matrix-layer-sub" }, column.subtitle) : null
+    );
+
+  if (mode === "tabs") {
+    const column = columns.find((candidate) => candidate.id === activeColumn) || columns[0];
+    const listItems = [
+      ...(column.toggle ? [{ ...column.toggle, type: ConfigSlider, defaultValue: isSettingsMatrixToggleOn(column.toggle) }] : []),
+      ...column.items.map((item) => ({
+        ...item,
+        when: column.toggle ? () => isSettingsMatrixToggleOn(column.toggle) : item.when,
+      })),
+    ];
+    return react.createElement(
+      "div",
+      { ref: rootRef, className: `settings-matrix is-tabs${isMuted ? " is-muted" : ""}`, "data-section-content": "true" },
+      react.createElement(
+        "div",
+        { className: "settings-matrix-switcher" },
+        react.createElement(SettingsSegmented, {
+          options: columns.map((candidate) => ({
+            value: candidate.id,
+            label: candidate.label,
+            color: candidate.color,
+            anchor: candidate.anchor,
+          })),
+          value: column.id,
+          label,
+          onChange: setActiveColumn,
+        })
+      ),
+      react.createElement(OptionList, {
+        key: column.id,
+        items: listItems,
+        onChange: handlerFor(column),
+      })
+    );
+  }
+
+  const cells = [react.createElement("div", { key: "corner", className: "settings-matrix-head is-corner", role: "columnheader" })];
+  columns.forEach((column, index) => cells.push(renderHead(column, index === columns.length - 1)));
+  rows.forEach((row) => {
+    if (!columns.some((column) => cellFor(column, row.id))) return;
+    cells.push(react.createElement("div", { key: `label-${row.id}`, className: "settings-matrix-label", role: "rowheader" }, row.label));
+    columns.forEach((column, index) => {
+      const item = cellFor(column, row.id);
+      const last = index === columns.length - 1;
+      if (!item) {
+        cells.push(react.createElement("div", {
+          key: `${row.id}-${column.id}`,
+          className: `settings-matrix-cell is-empty${last ? " is-last" : ""}`,
+          role: "cell",
+          "aria-hidden": "true",
+        }));
+        return;
+      }
+      const off = column.toggle ? !isSettingsMatrixToggleOn(column.toggle) : false;
+      const changed = isSettingChanged(item.key);
+      const ariaLabel = `${column.label} · ${rowLabels.get(row.id) || item.desc}`;
+      cells.push(react.createElement(
+        "div",
+        {
+          key: `${row.id}-${column.id}`,
+          className: `settings-matrix-cell${changed ? " is-changed" : ""}${off ? " is-off" : ""}${last ? " is-last" : ""}`,
+          role: "cell",
+          "data-setting-key": item.key,
+          style: { "--layer-color": column.color },
+        },
+        react.createElement("span", { className: "settings-visually-hidden setting-name" }, ariaLabel),
+        react.createElement("span", { className: "settings-changed-dot is-cell", "aria-hidden": "true" }),
+        renderControl(column, item, ariaLabel, off),
+        hasSettingDefault(item.key)
+          ? react.createElement(
+            "button",
+            {
+              type: "button",
+              className: "settings-reset-btn is-cell",
+              title: resetLabel,
+              "aria-label": `${ariaLabel} · ${resetLabel}`,
+              "aria-hidden": changed ? undefined : "true",
+              tabIndex: changed ? 0 : -1,
+              onClick: () => {
+                handlerFor(column)(item.key, getSettingDefaultValue(item.key));
+                window.dispatchEvent(new CustomEvent("ivLyrics:settings-refresh", { detail: { key: item.key } }));
+              },
+            },
+            react.createElement(SettingsUiIcon, { name: "reset", size: 12 })
+          )
+          : null
+      ));
+    });
+  });
+
+  return react.createElement(
+    "div",
+    {
+      ref: rootRef,
+      className: `settings-matrix is-${mode}${isMuted ? " is-muted" : ""}`,
+      role: "table",
+      "aria-label": label,
+      "data-section-content": "true",
+      style: { "--columns": columns.length },
+    },
+    ...cells
+  );
+};
+
+// Lines shown before and after the current line in synced mode.
+const SettingsLineWindow = ({ items, onChange }) => {
+  useSettingsConfigRevision();
+  const [beforeItem, afterItem] = items;
+  const before = Number(CONFIG.visual?.[beforeItem.key]) || 0;
+  const after = Number(CONFIG.visual?.[afterItem.key]) || 0;
+  const lines = [];
+  for (let index = 3; index >= 1; index -= 1) {
+    lines.push(react.createElement("span", {
+      key: `before-${index}`,
+      className: `settings-linewin-line${index > before ? " is-hidden" : ""}`,
+      style: { "--line-width": `${50 + ((index * 13) % 30)}%`, "--line-opacity": 0.25 + 0.12 * (3 - index) },
+    }));
+  }
+  lines.push(react.createElement("span", { key: "active", className: "settings-linewin-line is-active", style: { "--line-width": "82%" } }));
+  for (let index = 1; index <= 3; index += 1) {
+    lines.push(react.createElement("span", {
+      key: `after-${index}`,
+      className: `settings-linewin-line${index > after ? " is-hidden" : ""}`,
+      style: { "--line-width": `${45 + ((index * 17) % 35)}%`, "--line-opacity": 0.55 - 0.12 * index },
+    }));
+  }
+  const values = Array.from({ length: 11 }, (_, index) => String(index));
+  return react.createElement(
+    "div",
+    { className: "settings-linewin", "data-section-content": "true" },
+    react.createElement("div", { className: "settings-linewin-visual", "aria-hidden": "true" }, ...lines),
+    react.createElement(
+      "div",
+      { className: "settings-linewin-controls" },
+      ...[beforeItem, afterItem].map((item) =>
+        react.createElement(
+          "div",
+          {
+            key: item.key,
+            className: `settings-linewin-control${isSettingChanged(item.key) ? " is-changed" : ""}`,
+            "data-setting-key": item.key,
+            title: item.info || undefined,
+          },
+          react.createElement("span", { className: "setting-name" }, item.desc),
+          react.createElement(SettingsStepper, {
+            value: String(Number(CONFIG.visual?.[item.key]) || 0),
+            values,
+            label: item.desc,
+            onChange: (value) => onChange(item.key, Number.parseInt(value, 10)),
+          })
+        )
+      )
+    )
+  );
+};
+
+// Sync Creator shortcuts: one row per action, primary and secondary keys.
+const SettingsHotkeyTable = ({ rows, columns, onChange }) =>
+  react.createElement(
+    "div",
+    { className: "settings-hotkey-table", role: "table", "data-section-content": "true" },
+    react.createElement("div", { className: "settings-hotkey-head", role: "columnheader" }),
+    ...columns.map((column) =>
+      react.createElement("div", { key: column, className: "settings-hotkey-head", role: "columnheader" }, column)
+    ),
+    ...rows.flatMap((row) => [
+      react.createElement("div", { key: `${row.id}-label`, className: "settings-hotkey-label", role: "rowheader" }, row.label),
+      ...row.items.map((item, index) =>
+        react.createElement(
+          "div",
+          {
+            key: item.key,
+            className: `settings-hotkey-cell${isSettingChanged(item.key) ? " is-changed" : ""}`,
+            role: "cell",
+          },
+          react.createElement(ConfigHotkey, {
+            name: `${row.label} (${columns[index]})`,
+            settingKey: item.key,
+            defaultValue: item.defaultValue,
+            onChange: (key, value) => onChange(key || item.key, value),
+          })
+        )
+      ),
+    ])
+  );
+
+// Fullscreen UI elements as on/off tiles; a tile's own settings show below it.
+const SettingsTiles = ({ chips, onChange }) => {
+  useSettingsConfigRevision();
+  const enabledLabel = getSettingsText("misc.enabled", "Enabled");
+  const disabledLabel = getSettingsText("misc.disabled", "Disabled");
+  return react.createElement(
+    "div",
+    { className: "settings-tiles-stack", "data-section-content": "true" },
+    react.createElement(
+      "div",
+      { className: "settings-tiles" },
+      ...chips.map((chip) => {
+        const on = getSettingsPreviewFlag(chip.item.key, chip.item.defaultValue !== false);
+        return react.createElement(
+          "button",
+          {
+            key: chip.item.key,
+            type: "button",
+            role: "switch",
+            "aria-checked": on,
+            className: `settings-tile${on ? " is-on" : ""}${isSettingChanged(chip.item.key) ? " is-changed" : ""}`,
+            "data-setting-key": chip.item.key,
+            title: chip.item.info || undefined,
+            onClick: () => onChange(chip.item.key, !on),
+          },
+          react.createElement("span", { className: "settings-changed-dot", "aria-hidden": "true" }),
+          react.createElement(
+            "span",
+            { className: "settings-tile-top" },
+            react.createElement("span", { className: "settings-tile-icon", "aria-hidden": "true" }, react.createElement(SettingsUiIcon, { name: chip.icon, size: 16 })),
+            react.createElement("span", { className: "settings-tile-state" }, on ? enabledLabel : disabledLabel)
+          ),
+          react.createElement("span", { className: "setting-name settings-tile-label" }, chip.item.desc)
+        );
+      })
+    ),
+    ...chips
+      .filter((chip) => chip.children.length && getSettingsPreviewFlag(chip.item.key, chip.item.defaultValue !== false))
+      .map((chip) =>
+        react.createElement(
+          "div",
+          { key: `${chip.item.key}-details`, className: "settings-group settings-tile-details" },
+          react.createElement("div", { className: "settings-group-title" }, chip.item.desc),
+          react.createElement(OptionList, { items: chip.children, onChange })
+        )
+      )
+  );
+};
+
+// How many GPU-heavy display effects are on, plus the frame cap.
+const SettingsLoadMeter = ({ costKeys, frameKey }) => {
+  useSettingsConfigRevision();
+  const on = costKeys.filter((key) => getSettingsPreviewFlag(key, false)).length;
+  const fps = getSettingsPreviewNumber(frameKey, 60);
+  const score = (on + (fps > 120 ? 2 : fps > 60 ? 1 : 0)) / (costKeys.length + 2);
+  const lit = Math.max(1, Math.round(score * 8));
+  const level = score < 0.34 ? " is-low" : score > 0.67 ? " is-high" : "";
+  return react.createElement(
+    "div",
+    { className: "settings-group settings-load-group", "data-section-content": "true" },
+    react.createElement(
+      "div",
+      { className: "settings-load-meter" },
+      react.createElement(
+        "div",
+        { className: `settings-load-bars${level}`, "aria-hidden": "true" },
+        ...Array.from({ length: 8 }, (_, index) =>
+          react.createElement("i", { key: index, className: index < lit ? "is-on" : "" })
+        )
+      ),
+      react.createElement(
+        "div",
+        { className: "settings-load-text" },
+        react.createElement("b", null, getSettingsText("settingsAdvanced.performance.visualCost.title", "Visual cost")),
+        react.createElement(
+          "small",
+          null,
+          getSettingsText("settingsUi.performance.loadSummary", "GPU-heavy effects on: {on}/{total} · {fps} FPS")
+            .replace("{on}", String(on))
+            .replace("{total}", String(costKeys.length))
+            .replace("{fps}", String(fps))
+        )
+      )
+    )
+  );
+};
+
+
+const SettingsDock = ({ open, onToggle, menu, signal, fullscreenView }) => {
+  const section = useSettingsSignal(signal);
+  const kind = getSettingsPreviewKind(menu, section);
+  const title = getSettingsText("settingsAdvanced.livePreview.title", "Live Preview");
+  let preview;
+  if (kind === "panel") preview = react.createElement(NowPlayingPanelPreview);
+  else if (kind === "fullscreen") preview = react.createElement(SettingsFullscreenPreview, { view: fullscreenView });
+  else preview = react.createElement(SettingsLyricsPreview, { kind });
+  return react.createElement(
+    "aside",
+    { className: `settings-dock${open ? "" : " is-collapsed"}`, "aria-label": title },
+    react.createElement(
+      "div",
+      { className: "settings-dock-head" },
+      open
+        ? react.createElement(
+          "div",
+          { className: "settings-dock-copy" },
+          react.createElement("h2", null, title),
+          react.createElement("p", null, getSettingsText("settingsAdvanced.livePreview.subtitle", "Instantly see your style changes"))
+        )
+        : null,
+      react.createElement(
+        "button",
+        {
+          type: "button",
+          className: "settings-icon-btn settings-dock-toggle",
+          "aria-expanded": open,
+          "aria-label": title,
+          title,
+          onClick: onToggle,
+        },
+        react.createElement(SettingsUiIcon, { name: "dock", size: 16 })
+      )
+    ),
+    open
+      ? react.createElement(
+        "div",
+        { className: "settings-dock-body" },
+        preview,
+        kind === "lyrics" || kind === "annotation"
+          ? react.createElement(
+            "div",
+            { className: "settings-preview-legend" },
+            ...getSettingsLayerLegend().map(([role, legendLabel]) =>
+              react.createElement(
+                "span",
+                { key: role, style: { "--layer-color": `var(--settings-layer-${role})` } },
+                react.createElement("i", { "aria-hidden": "true" }),
+                legendLabel
+              )
+            )
+          )
+          : null,
+        react.createElement(
+          "p",
+          { className: "settings-dock-foot" },
+          getSettingsText("settingsUi.preview.sampleNote", "Shown with sample data; not your current track.")
+        )
+      )
+      : null
+  );
+};
+
+
+
 const SETTINGS_UI_THEME_STORAGE_KEY = "ivLyrics:settings-ui-theme";
 
 const getSettingsUiTheme = () => {
   const storedTheme = window.ivLyricsStoragePersistence?.getItem(SETTINGS_UI_THEME_STORAGE_KEY)
     ?? localStorage.getItem(SETTINGS_UI_THEME_STORAGE_KEY);
-  if (storedTheme === "light" || storedTheme === "dark" || storedTheme === "auto") {
+  if (storedTheme === "light" || storedTheme === "dark") {
     return storedTheme;
   }
 
-  return "auto";
+  // The settings window offers light and dark only. An older "auto" choice
+  // (or no choice) is settled from the system/Spotify theme; ConfigModal then
+  // stores the result.
+  return getSystemSettingsUiTheme();
 };
 
 const querySystemThemeMatchMedia = (query) => {
@@ -6941,53 +8871,10 @@ const applySettingsMotionClasses = () => {
     ?.classList.toggle("motion-reduced", reduceMotion);
 };
 
-const SettingsSidebarShell = ({ sidebarRef, children }) =>
-  react.createElement(
-    "aside",
-    {
-      className: "settings-sidebar",
-      ref: sidebarRef,
-      "aria-label": "Settings navigation",
-    },
-    children
-  );
 
-const SettingsMainPanelShell = ({
-  contentRef,
-  badge,
-  label,
-  description,
-  children,
-}) =>
-  react.createElement(
-    "section",
-    {
-      className: "settings-main-panel",
-      "aria-label": label || "Settings content",
-    },
-    react.createElement(
-      "div",
-      {
-        className: "settings-content",
-        ref: contentRef,
-      },
-      react.createElement(
-        "div",
-        { className: "settings-panel-hero" },
-        react.createElement("span", { className: "settings-panel-badge" }, badge),
-        react.createElement(
-          "div",
-          { className: "settings-panel-copy" },
-          react.createElement("h2", null, label),
-          react.createElement("p", null, description)
-        )
-      ),
-      children
-    )
-  );
-
-const SETTINGS_RELEASE_LINK_STYLE = "color: rgba(248, 250, 252, 0.92); text-decoration: none; border-bottom: 1px solid rgba(255, 255, 255, 0.24); transition: border-color 0.2s;";
-const SETTINGS_RELEASE_CODE_STYLE = "background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.9em; color: #fbbf24;";
+// Release notes follow the settings theme through its CSS variables.
+const SETTINGS_RELEASE_LINK_STYLE = "color: var(--settings-accent-text, #7aadff); text-decoration: none; border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.24));";
+const SETTINGS_RELEASE_CODE_STYLE = "background: var(--settings-surface-3, rgba(255,255,255,0.1)); padding: 2px 6px; border-radius: 4px; font-family: var(--settings-mono, monospace); font-size: 0.9em; color: var(--settings-text, #ededef);";
 const SETTINGS_RELEASE_PARAGRAPH_STYLE = "margin: 12px 0; line-height: 1.7;";
 
 function escapeSettingsReleaseHtml(value) {
@@ -7008,103 +8895,19 @@ function renderSettingsReleaseMarkdown(markdown) {
     codeStyle: SETTINGS_RELEASE_CODE_STYLE,
     paragraphStyle: SETTINGS_RELEASE_PARAGRAPH_STYLE,
     imageStyle: "max-width: 100%; height: auto; border-radius: 8px; margin: 12px 0; display: block;",
-    preStyle: "background: rgba(0,0,0,0.3); padding: 12px; border-radius: 6px; overflow-x: auto; margin: 12px 0;",
-    blockCodeStyle: "font-family: monospace; font-size: 13px; color: rgba(255,255,255,0.9);",
-    blockquoteStyle: "margin: 12px 0; padding-left: 16px; border-left: 3px solid rgba(255, 255, 255, 0.24); color: rgba(255,255,255,0.7); font-style: italic;",
-    hrStyle: "border: none; border-top: 1px solid rgba(255,255,255,0.1); margin: 20px 0;",
+    preStyle: "background: var(--settings-bg, rgba(0,0,0,0.3)); border: 1px solid var(--settings-line, rgba(255,255,255,0.08)); padding: 12px; border-radius: 6px; overflow-x: auto; margin: 12px 0;",
+    blockCodeStyle: "font-family: var(--settings-mono, monospace); font-size: 12.5px; color: var(--settings-text-2, rgba(255,255,255,0.9));",
+    blockquoteStyle: "margin: 12px 0; padding-left: 16px; border-left: 2px solid var(--settings-line-3, rgba(255, 255, 255, 0.24)); color: var(--settings-text-3, rgba(255,255,255,0.7));",
+    hrStyle: "border: none; border-top: 1px solid var(--settings-line, rgba(255,255,255,0.1)); margin: 20px 0;",
     headingStyles: {
-      1: { tag: "h2", style: "margin: 24px 0 12px; color: #ffffff; font-size: 20px; font-weight: 700;" },
-      2: { tag: "h3", style: "margin: 20px 0 10px; color: #ffffff; font-size: 18px; font-weight: 700;" },
-      3: { tag: "h4", style: "margin: 16px 0 8px; color: #ffffff; font-size: 16px; font-weight: 600;" },
-      4: { tag: "h5", style: "margin: 14px 0 6px; color: #ffffff; font-size: 15px; font-weight: 600;" },
+      1: { tag: "h2", style: "margin: 22px 0 10px; color: var(--settings-text, #fff); font-size: 17px; font-weight: 600;" },
+      2: { tag: "h3", style: "margin: 18px 0 8px; color: var(--settings-text, #fff); font-size: 15px; font-weight: 600;" },
+      3: { tag: "h4", style: "margin: 14px 0 6px; color: var(--settings-text, #fff); font-size: 14px; font-weight: 600;" },
+      4: { tag: "h5", style: "margin: 12px 0 6px; color: var(--settings-text, #fff); font-size: 13.5px; font-weight: 600;" },
     },
   });
 }
 
-// Keep navigation ownership separate from the content order. A section only
-// appears here when it genuinely belongs to another settings section; every
-// unlisted section remains a direct child of its top-level tab.
-const SETTINGS_SECTION_PARENT_BY_KEY = Object.freeze({
-  "performance-visual-cost": "performance-rendering",
-  "performance-background-work": "performance-rendering",
-  "settings-presets": "export-import",
-  "db-export-import": "export-import",
-  "vinyl-tonearm": "vinyl-mode",
-  "vinyl-typography": "vinyl-mode",
-  "vinyl-original-style": "vinyl-typography",
-  "vinyl-pronunciation-style": "vinyl-typography",
-  "vinyl-translation-style": "vinyl-typography",
-  "fullscreen-ui": "fullscreen-style",
-  "controller-style": "fullscreen-style",
-  "auto-hide": "fullscreen-style",
-  "tmi-style": "fullscreen-style",
-  "panel-background": "panel-lyrics-general",
-  "panel-border": "panel-lyrics-general",
-  "about-client-info": "about-app-info",
-  "about-update": "about-app-info",
-  "about-patch-notes": "about-app-info",
-});
-
-const buildSettingsNavigationTree = (items = []) => {
-  const nodes = items.map((item) => ({ ...item, children: [] }));
-  const nodesByKey = new Map(nodes.map((node) => [node.settingKey, node]));
-  const roots = [];
-
-  nodes.forEach((node) => {
-    const parentKey =
-      node.parentSettingKey || SETTINGS_SECTION_PARENT_BY_KEY[node.settingKey];
-    const parent = parentKey ? nodesByKey.get(parentKey) : null;
-    if (!parent || parent === node || parent.tabId !== node.tabId) {
-      roots.push(node);
-      return;
-    }
-    parent.children.push(node);
-  });
-
-  const annotate = (node, ancestors = []) => {
-    const breadcrumbLabels = [...ancestors, node.label].filter(Boolean);
-    return {
-      ...node,
-      depth: Math.max(0, breadcrumbLabels.length - 1),
-      breadcrumb: breadcrumbLabels.join(" › "),
-      children: node.children.map((child) => annotate(child, breadcrumbLabels)),
-    };
-  };
-
-  return roots.map((root) => annotate(root));
-};
-
-const settingsNavigationNodeContains = (node, settingKey) =>
-  node.settingKey === settingKey ||
-  node.children.some((child) => settingsNavigationNodeContains(child, settingKey));
-
-// Keep headings mounted when scroll-spy updates the selected sidebar item.
-// Replacing their component type also needlessly invalidates the search index.
-const SettingsSectionTitle = ({ title, subtitle, sectionKey }) => {
-  const parentSectionKey = sectionKey
-    ? SETTINGS_SECTION_PARENT_BY_KEY[sectionKey]
-    : null;
-  return react.createElement(
-    "div",
-    {
-      className: "section-title",
-      ...(sectionKey ? { "data-setting-key": sectionKey } : {}),
-      ...(parentSectionKey
-        ? { "data-parent-setting-key": parentSectionKey }
-        : {}),
-    },
-    react.createElement(
-      "div",
-      { className: "section-title-content" },
-      react.createElement(
-        "div",
-        { className: "section-text" },
-        react.createElement("h3", null, title),
-        subtitle && react.createElement("p", null, subtitle)
-      )
-    )
-  );
-};
 
 // Reuse only the result immediately after this setting row, preserving its position.
 const getSettingsResultContainer = (button, id, rowClass) => {
@@ -7120,6 +8923,11 @@ const getSettingsResultContainer = (button, id, rowClass) => {
   return resultContainer;
 };
 
+// Menus the search index reads. The changed-settings view repeats rows from
+// other menus, so indexing it would duplicate every result.
+const SETTINGS_SEARCHABLE_TAB_SELECTOR =
+  '.tab-content[data-tab-id]:not([data-tab-id="search"]):not([data-tab-id="changed"])';
+
 const ConfigModal = ({
   onRequestClose = () => {},
   initialTab = "general",
@@ -7127,38 +8935,32 @@ const ConfigModal = ({
 }) => {
   const [activeTab, setActiveTab] = react.useState(initialTab || "general");
   const [searchQuery, setSearchQuery] = react.useState("");
-  const searchOriginTabRef = react.useRef(initialTab || "general");
+  const [searchPanelOpen, setSearchPanelOpen] = react.useState(true);
+  const [searchActiveIndex, setSearchActiveIndex] = react.useState(0);
+  const [changedView, setChangedView] = react.useState(false);
   const shouldReduceMotion = getEffectiveReducedMotionPreference();
-  const [uiThemePreference, setUiThemePreference] = react.useState(getSettingsUiTheme);
-  const [systemUiTheme, setSystemUiTheme] = react.useState(getSystemSettingsUiTheme);
-  const uiTheme = getEffectiveSettingsUiTheme(uiThemePreference, systemUiTheme);
+  // Light or dark only. getSettingsUiTheme settles an older "auto" choice
+  // from the system/Spotify theme once; the effect below stores the result.
+  const [uiTheme, setUiTheme] = react.useState(getSettingsUiTheme);
+  const uiThemePreference = uiTheme;
 
-  // 검색어 변경 시 검색 결과 탭으로 자동 전환
+  // 검색어는 머리글 아래 결과 목록으로 보여 주고, 지금 보던 메뉴는 그대로 둔다.
   const handleSearchChange = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
-
-    if (query.trim()) {
-      if (activeTab !== "search") {
-        searchOriginTabRef.current = activeTab;
-      }
-      setActiveTab("search");
-    } else if (activeTab === "search") {
-      setActiveTab(searchOriginTabRef.current || "general");
-    }
+    setSearchPanelOpen(true);
+    setSearchActiveIndex(0);
   };
 
   // 검색 지우기
   const handleClearSearch = () => {
     setSearchQuery("");
-    if (activeTab === "search") {
-      setActiveTab(searchOriginTabRef.current || "general");
-    }
+    setSearchActiveIndex(0);
   };
 
   react.useEffect(() => {
-    persistSettingsUiTheme(uiThemePreference);
-  }, [uiThemePreference]);
+    persistSettingsUiTheme(uiTheme);
+  }, [uiTheme]);
 
   react.useEffect(() => {
     const overlay = document.getElementById("ivLyrics-settings-overlay");
@@ -7166,21 +8968,8 @@ const ConfigModal = ({
     overlay?.setAttribute("data-ui-theme-preference", uiThemePreference);
   }, [uiTheme, uiThemePreference]);
 
-  react.useEffect(() => {
-    if (uiThemePreference !== "auto") {
-      return undefined;
-    }
-
-    setSystemUiTheme(getSystemSettingsUiTheme());
-    return subscribeSystemSettingsUiTheme((nextSystemTheme) => {
-      setSystemUiTheme(nextSystemTheme);
-    });
-  }, [uiThemePreference]);
-
   const settingsContentRef = react.useRef(null);
-  const settingsSidebarRef = react.useRef(null);
-  const pendingSidebarScrollRef = react.useRef(null);
-  const shouldRestoreSidebarScrollRef = react.useRef(false);
+  const pageHeadRef = react.useRef(null);
   const isProgrammaticScrollRef = react.useRef(false);
   const programmaticScrollTimerRef = react.useRef(null);
   const programmaticScrollEndCleanupRef = react.useRef(null);
@@ -7207,7 +8996,7 @@ const ConfigModal = ({
 
   /**
    * Scroll the settings-content container so that the element with
-   * the given data-setting-key appears at the top of the visible area.
+   * the given data-setting-key appears right below the sticky page head.
    * Uses container.scrollTo() instead of scrollIntoView() to avoid
    * accidentally scrolling parent containers (Spotify shell, etc.).
    */
@@ -7226,6 +9015,8 @@ const ConfigModal = ({
         activePanel.querySelectorAll("[data-setting-key]")
       ).find((element) => element.getAttribute("data-setting-key") === String(settingKey));
       if (!targetElement) return false;
+      // A target in a hidden view (fullscreen modes) is revealed by the caller first.
+      if (targetElement.closest?.("[hidden]")) return false;
 
       // Keep scroll-spy locked while the smooth scroll is in flight. The
       // browser's scrollend event releases it; the timer is only a fallback.
@@ -7250,23 +9041,15 @@ const ConfigModal = ({
         container.addEventListener("scrollend", handleScrollEnd, { once: true });
       }
 
-      // Calculate target position relative to the scroll container
+      // Calculate target position relative to the scroll container; the
+      // sticky page head (title + section tabs) covers the top of it.
       const containerRect = container.getBoundingClientRect();
       const targetRect = targetElement.getBoundingClientRect();
-      const stickyPreview = activePanel.querySelector(".settings-live-preview-sticky");
-      const targetFollowsPreview = stickyPreview
-        && typeof Node !== "undefined"
-        && Boolean(
-          stickyPreview.compareDocumentPosition(targetElement)
-          & Node.DOCUMENT_POSITION_FOLLOWING
-        );
-      const stickyPreviewOffset = targetFollowsPreview
-        ? stickyPreview.getBoundingClientRect().height + 12
-        : 0;
+      const stickyHeadOffset = pageHeadRef.current?.getBoundingClientRect?.().height || 0;
       const scrollTop =
         container.scrollTop
         + (targetRect.top - containerRect.top)
-        - stickyPreviewOffset
+        - stickyHeadOffset
         - 12;
 
       container.scrollTo({
@@ -8023,6 +9806,9 @@ const ConfigModal = ({
         if (candidate.preferVisibleText && candidate.desc) {
           existing.desc = candidate.desc;
         }
+        if (!existing.sectionLabel && candidate.sectionLabel) {
+          existing.sectionLabel = candidate.sectionLabel;
+        }
         existing.i18nKeys = [...new Set([
           ...(existing.i18nKeys || []),
           ...(candidate.i18nKeys || []),
@@ -8061,7 +9847,7 @@ const ConfigModal = ({
       });
 
       container
-        .querySelectorAll('.tab-content[data-tab-id]:not([data-tab-id="search"])')
+        .querySelectorAll(SETTINGS_SEARCHABLE_TAB_SELECTOR)
         .forEach((tabNode) => {
           const tabId = tabNode.getAttribute("data-tab-id");
           if (!tabId) return;
@@ -8155,6 +9941,7 @@ const ConfigModal = ({
                 : currentSectionKey || tabId,
               name,
               desc: description,
+              sectionLabel: isSectionTitle ? "" : currentSectionLabel,
               i18nKeys: manualSetting?.i18nKeys || [],
               directKeywords: [
                 ...(manualSetting?.keywords || []),
@@ -8202,7 +9989,7 @@ const ConfigModal = ({
 
     const observer = new MutationObserver(scheduleScan);
     container
-      .querySelectorAll('.tab-content[data-tab-id]:not([data-tab-id="search"])')
+      .querySelectorAll(SETTINGS_SEARCHABLE_TAB_SELECTOR)
       .forEach((tabNode) => {
         observer.observe(tabNode, {
           childList: true,
@@ -8216,7 +10003,7 @@ const ConfigModal = ({
       observer.disconnect();
       if (frameId != null) cancelAnimationFrame(frameId);
     };
-  }, [activeTab, searchableSettings]);
+  }, [activeTab, changedView, searchableSettings]);
 
   const normalizeSettingsSearchText = (value) =>
     String(value || "")
@@ -8296,148 +10083,128 @@ const ConfigModal = ({
       .map(({ entry }) => entry.setting);
   }, [searchQuery, searchableSettingEntries]);
 
-  // 검색 결과 컴포넌트
-  const renderSearchResults = () => {
-    if (!searchQuery.trim()) {
+  // 검색 결과 패널 (머리글 검색 상자 아래)
+  const getVisibleSearchResults = () => searchResults.slice(0, 60);
+
+  const pickSearchResult = (item) => {
+    if (!item) return;
+    setSearchPanelOpen(false);
+    if (typeof document !== "undefined") {
+      document.activeElement?.blur?.();
+    }
+    navigateToDestination(item.sectionKey, item.settingKey);
+  };
+
+  const handleSearchKeyDown = (event) => {
+    const results = getVisibleSearchResults();
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      if (!results.length) return;
+      event.preventDefault();
+      setSearchPanelOpen(true);
+      const direction = event.key === "ArrowDown" ? 1 : -1;
+      setSearchActiveIndex((index) =>
+        Math.min(results.length - 1, Math.max(0, index + direction))
+      );
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      const activeIndex = Math.min(searchActiveIndex, results.length - 1);
+      if (activeIndex >= 0) pickSearchResult(results[activeIndex]);
+    }
+  };
+
+  const renderSearchPanel = () => {
+    if (!searchQuery.trim() || !searchPanelOpen) {
       return null;
     }
 
-    if (searchResults.length === 0) {
+    const results = getVisibleSearchResults();
+    const activeIndex = Math.min(searchActiveIndex, Math.max(0, results.length - 1));
+    const meta = react.createElement(
+      "div",
+      { className: "settings-search-meta" },
+      react.createElement(
+        "span",
+        { className: "search-results-count" },
+        I18n.t("search.resultCount").replace("{count}", searchResults.length)
+      ),
+      react.createElement("span", { "aria-hidden": "true" }, "↑↓ · Enter · Esc")
+    );
+
+    if (results.length === 0) {
       return react.createElement(
         "div",
-        { className: "search-no-results" },
+        { className: "settings-search-panel", role: "listbox", "aria-label": I18n.t("search.placeholder") },
+        meta,
         react.createElement(
-          "svg",
-          {
-            className: "search-no-results-icon",
-            viewBox: "0 0 24 24",
-            fill: "none",
-            stroke: "currentColor",
-            strokeWidth: "2",
-          },
-          react.createElement("circle", { cx: "11", cy: "11", r: "8" }),
-          react.createElement("path", { d: "m21 21-4.35-4.35" })
-        ),
-        react.createElement("h3", { className: "search-no-results-title" }, I18n.t("search.noResults")),
-        react.createElement("p", { className: "search-no-results-desc" }, I18n.t("search.noResultsDesc"))
+          "div",
+          { className: "search-no-results" },
+          react.createElement(SettingsUiIcon, { name: "search", size: 20, className: "search-no-results-icon" }),
+          react.createElement("h3", { className: "search-no-results-title" }, I18n.t("search.noResults")),
+          react.createElement("p", { className: "search-no-results-desc" }, I18n.t("search.noResultsDesc"))
+        )
       );
     }
 
     // 번역명이 같아도 섞이지 않도록 실제 탭 ID 기준으로 그룹화한다.
-    const groupedResults = new Map();
-    searchResults.forEach(result => {
+    const groups = [];
+    const groupByKey = new Map();
+    results.forEach((result, index) => {
       const groupKey = result.sectionKey || result.section;
-      if (!groupedResults.has(groupKey)) {
-        groupedResults.set(groupKey, {
-          section: result.section,
-          items: [],
-        });
+      if (!groupByKey.has(groupKey)) {
+        const group = { key: groupKey, section: result.section, items: [] };
+        groupByKey.set(groupKey, group);
+        groups.push(group);
       }
-      groupedResults.get(groupKey).items.push(result);
+      groupByKey.get(groupKey).items.push({ result, index });
     });
 
     return react.createElement(
-      react.Fragment,
-      null,
+      "div",
+      {
+        className: "settings-search-panel",
+        role: "listbox",
+        "aria-label": I18n.t("search.placeholder"),
+      },
+      meta,
       react.createElement(
         "div",
-        { className: "search-results-header" },
-        react.createElement(
-          "span",
-          { className: "search-results-count" },
-          I18n.t("search.resultCount").replace("{count}", searchResults.length)
-        )
-      ),
-      Array.from(groupedResults.entries()).map(([groupKey, group]) =>
-        react.createElement(
-          "div",
-          { key: groupKey, className: "search-result-group" },
+        { className: "settings-search-list" },
+        ...groups.map((group) =>
           react.createElement(
             "div",
-            { className: "section-title" },
-            react.createElement(
-              "div",
-              { className: "section-title-content" },
-              react.createElement(
-                "div",
-                { className: "section-text" },
-                react.createElement("h3", null, group.section)
-              )
-            )
-          ),
-          react.createElement(
-            "div",
-            { className: "option-list-wrapper" },
-            group.items.map((item) =>
-              react.createElement(
-                "div",
+            { key: group.key, className: "search-result-group", role: "group", "aria-label": group.section },
+            react.createElement("div", { className: "settings-search-group-label" }, group.section),
+            ...group.items.map(({ result, index }) => {
+              const context = result.sectionLabel || result.desc || "";
+              return react.createElement(
+                "button",
                 {
-                  key: item.resultKey,
-                  className: "setting-row search-result-item",
-                  role: "button",
-                  tabIndex: 0,
-                  onMouseDown: (e) => {
-                    // blur 이벤트가 발생하기 전에 클릭을 처리하기 위해 preventDefault
-                    e.preventDefault();
+                  key: result.resultKey,
+                  type: "button",
+                  role: "option",
+                  "aria-selected": index === activeIndex,
+                  className: `settings-search-result search-result-item${index === activeIndex ? " is-active" : ""}`,
+                  onMouseDown: (event) => event.preventDefault(),
+                  onMouseMove: () => {
+                    if (index !== activeIndex) setSearchActiveIndex(index);
                   },
-                  onClick: (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    navigateToDestination(
-                      item.sectionKey,
-                      item.settingKey,
-                      item.navItemId || resolveNavItemId(item.sectionKey, item.settingKey),
-                      true
-                    );
-                  },
-                  onKeyDown: (e) => {
-                    if (e.key !== "Enter" && e.key !== " ") return;
-                    e.preventDefault();
-                    navigateToDestination(
-                      item.sectionKey,
-                      item.settingKey,
-                      item.navItemId || resolveNavItemId(item.sectionKey, item.settingKey),
-                      true
-                    );
-                  },
-                  style: { cursor: "pointer" }
+                  onClick: () => pickSearchResult(result),
                 },
                 react.createElement(
-                  "div",
-                  { className: "setting-row-content" },
-                  react.createElement(
-                    "div",
-                    { className: "setting-row-left" },
-                    react.createElement(
-                      "div",
-                      { className: "setting-name" },
-                      highlightText(item.name, searchQuery)
-                    ),
-                    react.createElement(
-                      "div",
-                      { className: "setting-description" },
-                      highlightText(item.desc, searchQuery)
-                    )
-                  ),
-                  react.createElement(
-                    "div",
-                    { className: "setting-row-right" },
-                    react.createElement(
-                      "svg",
-                      {
-                        width: "16",
-                        height: "16",
-                        viewBox: "0 0 24 24",
-                        fill: "none",
-                        stroke: "#8e8e93",
-                        strokeWidth: "2",
-                      },
-                      react.createElement("path", { d: "m9 18 6-6-6-6" })
-                    )
-                  )
+                  "span",
+                  { className: "settings-search-result-icon", "aria-hidden": "true" },
+                  react.createElement(SettingsOutlineIcon, { name: result.sectionKey, size: 15 })
+                ),
+                react.createElement(
+                  "span",
+                  { className: "settings-search-result-main" },
+                  react.createElement("b", null, highlightText(result.name, searchQuery)),
+                  context
+                    ? react.createElement("small", null, highlightText(context, searchQuery))
+                    : null
                 )
-              )
-            )
+              );
+            })
           )
         )
       )
@@ -8454,12 +10221,16 @@ const ConfigModal = ({
     return !!document.getElementById("fad-ivLyrics-container");
   }, []);
 
-  // Pending scroll target when switching tabs
+  // Pending scroll target when switching menus. Each menu keeps its own
+  // scroll position while the settings window stays open.
   const pendingTabScrollRef = react.useRef(initialSettingKey || null);
-  const shouldResetContentScrollRef = react.useRef(false);
+  const pendingScrollTopRef = react.useRef(null);
+  const scrollMemoryRef = react.useRef(new Map());
+  const [fullscreenView, setFullscreenView] = react.useState("basic");
+  const [navigationRevision, setNavigationRevision] = react.useState(0);
 
   react.useEffect(() => {
-    if (!activeTab || activeTab === "search") return;
+    if (!activeTab || changedView) return;
 
     let cancelled = false;
     let attempt = 0;
@@ -8471,6 +10242,23 @@ const ConfigModal = ({
 
       const targetKey = pendingTabScrollRef.current;
       if (targetKey) {
+        // Open whatever hides the target first: a fullscreen view or a
+        // lyric-layer column that is shown as a tab in narrow windows.
+        const container = settingsContentRef.current;
+        const target = container && Array.from(
+          container.querySelectorAll(".tab-content.active [data-setting-key]")
+        ).find((element) => element.getAttribute("data-setting-key") === String(targetKey));
+        const hiddenView = target?.closest?.("[data-view][hidden]");
+        if (hiddenView) {
+          setFullscreenView(hiddenView.getAttribute("data-view"));
+          frameId = requestAnimationFrame(tryScroll);
+          return;
+        }
+        if (!target && attempt === 1) {
+          window.dispatchEvent(new CustomEvent("ivLyrics:settings-reveal", {
+            detail: { key: targetKey },
+          }));
+        }
         const ok = scrollToSetting(targetKey, {
           behavior: attempt <= 1 ? "smooth" : "auto",
         });
@@ -8486,10 +10274,11 @@ const ConfigModal = ({
         return;
       }
 
-      if (shouldResetContentScrollRef.current) {
+      const scrollTop = pendingScrollTopRef.current;
+      if (scrollTop !== null) {
         const c = settingsContentRef.current;
-        if (c) c.scrollTo({ top: 0, behavior: "auto" });
-        shouldResetContentScrollRef.current = false;
+        if (c) c.scrollTo({ top: scrollTop, behavior: "auto" });
+        pendingScrollTopRef.current = null;
       }
     };
 
@@ -8499,7 +10288,7 @@ const ConfigModal = ({
       cancelled = true;
       if (frameId != null) cancelAnimationFrame(frameId);
     };
-  }, [activeTab, scrollToSetting]);
+  }, [activeTab, changedView, navigationRevision, scrollToSetting]);
 
   react.useEffect(() => {
     return () => {
@@ -8632,53 +10421,36 @@ const ConfigModal = ({
           const viewOnGithubLabel = escapeSettingsReleaseHtml(
             I18n.t("settingsAdvanced.aboutTab.viewOnGithub")
           );
-          const releaseLinkStyle = `
-                  display: inline-flex;
-                  align-items: center;
-                  gap: 6px;
-                  padding: 6px 12px;
-                  background: rgba(255,255,255,0.05);
-                  border: 1px solid rgba(255,255,255,0.1);
-                  border-radius: 8px;
-                  color: rgba(248, 250, 252, 0.92);
-                  text-decoration: none;
-                  font-size: 13px;
-                  font-weight: 600;
-                  transition: all 0.2s;
-                `;
           const releaseLink = releaseUrl
-            ? `<a href="${escapeSettingsReleaseAttribute(releaseUrl)}" target="_blank" rel="noopener noreferrer" style="${releaseLinkStyle}" onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+            ? `<a class="btn btn-sm settings-release-link" href="${escapeSettingsReleaseAttribute(releaseUrl)}" target="_blank" rel="noopener noreferrer">
                   ${viewOnGithubLabel}
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                     <path d="M3.75 2A1.75 1.75 0 002 3.75v8.5c0 .966.784 1.75 1.75 1.75h8.5A1.75 1.75 0 0014 12.25v-3.5a.75.75 0 00-1.5 0v3.5a.25.25 0 01-.25.25h-8.5a.25.25 0 01-.25-.25v-8.5a.25.25 0 01.25-.25h3.5a.75.75 0 000-1.5h-3.5z"/>
                     <path d="M10.75 1a.75.75 0 000 1.5h1.69L8.22 6.72a.75.75 0 001.06 1.06l4.22-4.22v1.69a.75.75 0 001.5 0V1h-4.25z"/>
                   </svg>
                 </a>`
-            : `<span style="${releaseLinkStyle}; opacity: 0.55; cursor: default;">
+            : `<span class="btn btn-sm settings-release-link is-disabled">
                   ${viewOnGithubLabel}
                 </span>`;
-          container.style.display = "block";
-          container.style.alignItems = "flex-start";
-          container.style.justifyContent = "flex-start";
+          container.classList.remove("is-loading", "is-error");
           container.innerHTML = `
-            <div style="width: 100%;">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div class="settings-release">
+              <div class="settings-release-head">
                 <div>
-                  <h3 style="margin: 0; font-size: 18px; color: #ffffff; font-weight: 700;">${version}</h3>
-                  <p style="margin: 4px 0 0; font-size: 13px; color: rgba(255,255,255,0.5);">${publishedDate}</p>
+                  <h3>${version}</h3>
+                  <p>${publishedDate}</p>
                 </div>
                 ${releaseLink}
               </div>
-              <div style="line-height: 1.7; color: rgba(255,255,255,0.85); font-size: 14px;">
+              <div class="settings-release-body">
                 ${body}
               </div>
             </div>
           `;
         } catch (error) {
           console.error("Failed to load patch notes:", error);
-          container.style.display = "flex";
-          container.style.alignItems = "center";
-          container.style.justifyContent = "center";
+          container.classList.remove("is-loading");
+          container.classList.add("is-error");
           const patchNotesLoadFailed = escapeSettingsReleaseHtml(
             I18n.t("settingsAdvanced.aboutTab.patchNotesLoadFailed")
           );
@@ -8687,14 +10459,14 @@ const ConfigModal = ({
           );
 
           container.innerHTML = `
-            <div style="text-align: center; color: rgba(255,255,255,0.5);">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" style="margin-bottom: 12px; opacity: 0.3;">
+            <div class="settings-release-error">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
                 <circle cx="12" cy="12" r="10" stroke-width="2"/>
                 <line x1="12" y1="8" x2="12" y2="12" stroke-width="2" stroke-linecap="round"/>
                 <line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2" stroke-linecap="round"/>
               </svg>
-              <p style="margin: 0; font-size: 14px;">${patchNotesLoadFailed}</p>
-              <p style="margin: 4px 0 0; font-size: 12px; opacity: 0.7;">${checkGithubReleases}</p>
+              <p>${patchNotesLoadFailed}</p>
+              <p class="settings-release-error-hint">${checkGithubReleases}</p>
             </div>
           `;
         }
@@ -8705,177 +10477,9 @@ const ConfigModal = ({
     }
 	  }, [activeTab, uiTheme]);
 
-  const renderHeaderSection = () => {
-    const themeOptions = [
-      {
-        id: "light",
-        label: getSettingsText("settingsUi.theme.lightShort", "Light"),
-        title: getSettingsText("settingsUi.theme.light", "Switch to light mode"),
-        icon: '<circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2.5 12h2M19.5 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"></path>',
-      },
-      {
-        id: "dark",
-        label: getSettingsText("settingsUi.theme.darkShort", "Dark"),
-        title: getSettingsText("settingsUi.theme.dark", "Switch to dark mode"),
-        icon: '<path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5 8.5 8.5 0 1 0 20.5 14.3z"></path>',
-      },
-      {
-        id: "auto",
-        label: getSettingsText("settingsUi.theme.autoShort", "Auto"),
-        title: getSettingsText("settingsUi.theme.auto", "Use system theme"),
-        icon: '<rect x="3" y="4" width="18" height="13" rx="2"></rect><path d="M8 21h8M12 17v4"></path>',
-      },
-    ];
-
-    return react.createElement(
-      "div",
-      { className: "settings-header" },
-      react.createElement(
-        "div",
-        { className: "settings-header-content" },
-        react.createElement(
-          "div",
-          { className: "settings-title-section" },
-          react.createElement("h1", null, "ivLyrics"),
-          react.createElement(
-            "span",
-            { className: "settings-version" },
-            `v${Utils.currentVersion}`
-          )
-        ),
-        react.createElement(
-          "div",
-          { className: "settings-buttons" },
-          react.createElement(
-            "div",
-            {
-              className: "settings-theme-control",
-              role: "group",
-              "aria-label": getSettingsText("settingsUi.theme.selector", "Settings theme"),
-            },
-            themeOptions.map((themeOption) =>
-              react.createElement(
-                "button",
-                {
-                  key: themeOption.id,
-                  className: `settings-theme-option${uiThemePreference === themeOption.id ? " active" : ""}`,
-                  type: "button",
-                  title: themeOption.title,
-                  "aria-label": themeOption.label,
-                  "aria-pressed": uiThemePreference === themeOption.id,
-                  onClick: () => setUiThemePreference(themeOption.id),
-                },
-                react.createElement("svg", {
-                  width: 14,
-                  height: 14,
-                  viewBox: "0 0 24 24",
-                  fill: "none",
-                  stroke: "currentColor",
-                  strokeWidth: 1.8,
-                  strokeLinecap: "round",
-                  strokeLinejoin: "round",
-                  "aria-hidden": "true",
-                  dangerouslySetInnerHTML: { __html: themeOption.icon },
-                }),
-                react.createElement("span", null, themeOption.label)
-              )
-            )
-          ),
-          react.createElement(
-            "button",
-            {
-              className: "settings-github-btn",
-              type: "button",
-              onClick: () =>
-                window.open(
-                  "https://github.com/ivLis-Studio/ivLyrics",
-                  "_blank"
-                ),
-              title: I18n.t("settingsAdvanced.aboutTab.visitGithub"),
-              "aria-label": I18n.t("settingsAdvanced.aboutTab.visitGithub"),
-            },
-            react.createElement("svg", {
-              width: 16,
-              height: 16,
-              viewBox: "0 0 16 16",
-              fill: "currentColor",
-              dangerouslySetInnerHTML: {
-                __html:
-                  '<path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>',
-              },
-            }),
-            react.createElement("span", null, "GitHub")
-          ),
-          react.createElement(
-            "button",
-            {
-              className: "settings-discord-btn",
-              type: "button",
-              onClick: () =>
-                window.open(
-                  "https://ivlis.kr/ivLyrics/discord.php",
-                  "_blank"
-                ),
-              title: I18n.t("settingsAdvanced.aboutTab.joinDiscord"),
-              "aria-label": I18n.t("settingsAdvanced.aboutTab.joinDiscord"),
-            },
-            react.createElement("svg", {
-              width: 16,
-              height: 16,
-              viewBox: "0 0 24 24",
-              fill: "currentColor",
-              dangerouslySetInnerHTML: {
-                __html:
-                  '<path d="M19.27 5.33C17.94 4.71 16.5 4.26 15 4a.09.09 0 0 0-.07.03c-.18.33-.39.76-.53 1.09a16.09 16.09 0 0 0-4.8 0c-.14-.34-.35-.76-.54-1.09c-.01-.02-.04-.03-.07-.03c-1.5.26-2.93.71-4.27 1.33c-.01 0-.02.01-.03.02c-2.72 4.07-3.47 8.03-3.1 11.95c0 .02.01.04.03.05c1.8 1.32 3.53 2.12 5.2 2.65c.03.01.06 0 .07-.02c.4-.55.76-1.13 1.07-1.74c.02-.04 0-.08-.04-.09c-.57-.22-1.11-.48-1.64-.78c-.04-.02-.04-.08-.01-.11c.11-.08.22-.17.33-.25c.02-.02.05-.02.07-.01c3.44 1.57 7.15 1.57 10.55 0c.02-.01.05-.01.07.01c.11.09.22.17.33.26c.04.03.04.09-.01.11c-.52.31-1.07.56-1.64.78c-.04.01-.05.05-.04.09c.32.61.68 1.19 1.07 1.74c.03.01.06.02.09.01c1.72-.53 3.45-1.33 5.25-2.65c.02-.01.03-.03.03-.05c.44-4.53-.73-8.46-3.1-11.95c-.01-.01-.02-.02-.04-.02zM8.52 14.91c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.84 2.12-1.89 2.12zm6.97 0c-1.03 0-1.89-.95-1.89-2.12s.84-2.12 1.89-2.12c1.06 0 1.9.96 1.89 2.12c0 1.17-.83 2.12-1.89 2.12z"/>',
-              },
-            }),
-            react.createElement("span", null, "Discord")
-          ),
-          react.createElement(
-            "button",
-            {
-              className: "settings-coffee-btn",
-              type: "button",
-              onClick: () =>
-                window.open(
-                  "https://buymeacoffee.com/ivlis",
-                  "_blank"
-                ),
-              title: I18n.t("settingsAdvanced.donate.title"),
-              "aria-label": I18n.t("settingsAdvanced.donate.title"),
-            },
-            react.createElement("svg", {
-              width: 16,
-              height: 16,
-              viewBox: "0 0 24 24",
-              fill: "currentColor",
-              dangerouslySetInnerHTML: {
-                __html:
-                  '<path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.89 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z"/>',
-              },
-            }),
-            react.createElement("span", null, I18n.t("settingsAdvanced.donate.button"))
-          ),
-          react.createElement(
-            "button",
-            {
-              className: "settings-close-btn",
-              type: "button",
-              onClick: onRequestClose,
-              title: getSettingsText("settingsUi.close", "Close settings"),
-              "aria-label": getSettingsText("settingsUi.close", "Close settings"),
-            },
-            react.createElement("span", null, "×")
-          )
-        )
-      )
-    );
-  };
-
   const tabMeta = {
     general: {
       label: I18n.t("tabs.general"),
-      badge: getSettingsText("settingsUi.nav.badges.workspace", "Workspace"),
       description: getSettingsText(
         "settingsUi.nav.generalDesc",
         "Language, translation target, and desktop overlay behavior"
@@ -8883,7 +10487,6 @@ const ConfigModal = ({
     },
     appearance: {
       label: I18n.t("tabs.appearance"),
-      badge: getSettingsText("settingsUi.nav.badges.typography", "Typography"),
       description: getSettingsText(
         "settingsUi.nav.appearanceDesc",
         "Background, sync presentation, motion, and text styles"
@@ -8891,7 +10494,6 @@ const ConfigModal = ({
     },
     performance: {
       label: I18n.t("tabs.performance"),
-      badge: getSettingsText("settingsUi.nav.badges.performance", "FPS"),
       description: getSettingsText(
         "settingsUi.nav.performanceDesc",
         "Frame rate, motion, and visual cost controls"
@@ -8899,7 +10501,6 @@ const ConfigModal = ({
     },
     lyrics: {
       label: I18n.t("tabs.behavior"),
-      badge: getSettingsText("settingsUi.nav.badges.behavior", "Playback"),
       description: getSettingsText(
         "settingsUi.nav.lyricsDesc",
         "Playback buttons, karaoke behavior, prefetch, sync sharing, and helper integrations"
@@ -8907,7 +10508,6 @@ const ConfigModal = ({
     },
     fullscreen: {
       label: I18n.t("tabs.fullscreen"),
-      badge: getSettingsText("settingsUi.nav.badges.surface", "Surface"),
       description: getSettingsText(
         "settingsUi.nav.fullscreenDesc",
         "Fullscreen layout, metadata display, controller UI, and TV mode presentation"
@@ -8915,7 +10515,6 @@ const ConfigModal = ({
     },
     nowplaying: {
       label: I18n.t("tabs.nowplaying"),
-      badge: getSettingsText("settingsUi.nav.badges.surface", "Surface"),
       description: getSettingsText(
         "settingsUi.nav.nowplayingDesc",
         "Panel lyrics typography, background, border, and preview behavior"
@@ -8923,7 +10522,6 @@ const ConfigModal = ({
     },
     "lyrics-providers": {
       label: I18n.t("tabs.lyricsProviders") || "Lyrics Providers",
-      badge: getSettingsText("settingsUi.nav.badges.providers", "Providers"),
       description: getSettingsText(
         "settingsUi.nav.lyricsProvidersDesc",
         "Choose, order, and scope each lyrics source"
@@ -8931,7 +10529,6 @@ const ConfigModal = ({
     },
     "ai-providers": {
       label: I18n.t("tabs.aiProviders"),
-      badge: getSettingsText("settingsUi.nav.badges.providers", "Providers"),
       description: getSettingsText(
         "settingsUi.nav.aiProvidersDesc",
         "Configure AI translation providers, models, and keys"
@@ -8939,7 +10536,6 @@ const ConfigModal = ({
     },
     advanced: {
       label: I18n.t("tabs.advanced"),
-      badge: getSettingsText("settingsUi.nav.badges.system", "System"),
       description: getSettingsText(
         "settingsUi.nav.advancedDesc",
         "Language detection, import/export, database tools, and reset operations"
@@ -8947,7 +10543,6 @@ const ConfigModal = ({
     },
     debug: {
       label: I18n.t("tabs.debug"),
-      badge: getSettingsText("settingsUi.nav.badges.system", "System"),
       description: getSettingsText(
         "settingsUi.nav.debugDesc",
         "Inspect track, lyrics, and runtime state for troubleshooting"
@@ -8955,7 +10550,6 @@ const ConfigModal = ({
     },
     about: {
       label: I18n.t("tabs.about"),
-      badge: getSettingsText("settingsUi.nav.badges.system", "System"),
       description: getSettingsText(
         "settingsUi.nav.aboutDesc",
         "Account, update status, client info, and release notes"
@@ -8966,97 +10560,18 @@ const ConfigModal = ({
   const activeTabMeta = tabMeta[activeTab] || tabMeta.general;
 
   const sidebarTabs = [
-    {
-      id: "general",
-      icon: "general",
-      group: "general",
-      label: I18n.t("tabs.general"),
-      badge: tabMeta.general.badge,
-      description: tabMeta.general.description,
-    },
-    {
-      id: "lyrics-providers",
-      icon: "lyrics-providers",
-      group: "sources",
-      label: I18n.t("tabs.lyricsProviders"),
-      badge: tabMeta["lyrics-providers"].badge,
-      description: tabMeta["lyrics-providers"].description,
-      standalone: true,
-    },
-    {
-      id: "ai-providers",
-      icon: "ai-providers",
-      group: "sources",
-      label: I18n.t("tabs.aiProviders"),
-      badge: tabMeta["ai-providers"].badge,
-      description: tabMeta["ai-providers"].description,
-      standalone: true,
-    },
-    {
-      id: "appearance",
-      icon: "appearance",
-      group: "screen",
-      label: I18n.t("tabs.appearance"),
-      badge: tabMeta.appearance.badge,
-      description: tabMeta.appearance.description,
-    },
-    {
-      id: "performance",
-      icon: "performance",
-      group: "screen",
-      label: I18n.t("tabs.performance"),
-      badge: tabMeta.performance.badge,
-      description: tabMeta.performance.description,
-    },
-    {
-      id: "lyrics",
-      icon: "lyrics",
-      group: "screen",
-      label: I18n.t("tabs.behavior"),
-      badge: tabMeta.lyrics.badge,
-      description: tabMeta.lyrics.description,
-    },
-    {
-      id: "fullscreen",
-      icon: "fullscreen",
-      group: "screen",
-      label: I18n.t("tabs.fullscreen"),
-      badge: tabMeta.fullscreen.badge,
-      description: tabMeta.fullscreen.description,
-    },
-    {
-      id: "nowplaying",
-      icon: "nowplaying",
-      group: "screen",
-      label: I18n.t("tabs.nowplaying"),
-      badge: tabMeta.nowplaying.badge,
-      description: tabMeta.nowplaying.description,
-    },
-    {
-      id: "advanced",
-      icon: "advanced",
-      group: "system",
-      label: I18n.t("tabs.advanced"),
-      badge: tabMeta.advanced.badge,
-      description: tabMeta.advanced.description,
-    },
-    {
-      id: "debug",
-      icon: "debug",
-      group: "system",
-      label: I18n.t("tabs.debug"),
-      badge: tabMeta.debug.badge,
-      description: tabMeta.debug.description,
-    },
-    {
-      id: "about",
-      icon: "about",
-      group: "system",
-      label: I18n.t("tabs.about"),
-      badge: tabMeta.about.badge,
-      description: tabMeta.about.description,
-    },
-  ];
+    { id: "general", icon: "general", group: "general" },
+    { id: "lyrics-providers", icon: "lyrics-providers", group: "sources" },
+    { id: "ai-providers", icon: "ai-providers", group: "sources" },
+    { id: "appearance", icon: "appearance", group: "screen" },
+    { id: "performance", icon: "performance", group: "screen" },
+    { id: "lyrics", icon: "lyrics", group: "screen" },
+    { id: "fullscreen", icon: "fullscreen", group: "screen" },
+    { id: "nowplaying", icon: "nowplaying", group: "screen" },
+    { id: "advanced", icon: "advanced", group: "system" },
+    { id: "debug", icon: "debug", group: "system" },
+    { id: "about", icon: "about", group: "system" },
+  ].map((tab) => ({ ...tab, ...tabMeta[tab.id] }));
   const sidebarGroups = [
     {
       id: "general",
@@ -9075,363 +10590,610 @@ const ConfigModal = ({
       label: getSettingsText("settingsUi.nav.badges.system", "System"),
     },
   ];
-  const [sidebarSectionsByTab, setSidebarSectionsByTab] = react.useState({});
-  const [expandedGroupIds, setExpandedGroupIds] = react.useState(() => {
-    const initialGroup = sidebarTabs.find(
-      (tab) => tab.id === (initialTab || "general") && !tab.standalone
-    );
-    return initialGroup ? [initialGroup.id] : [];
-  });
-  const resolveNavItemId = (tabId, settingKey) => settingKey || tabId;
-  const [activeNavItemId, setActiveNavItemId] = react.useState(() =>
-    resolveNavItemId(initialTab || "general", initialSettingKey || (initialTab || "general"))
-  );
-  const activeNavItemIdRef = react.useRef(activeNavItemId);
 
+  const rootRef = react.useRef(null);
+  const searchInputRef = react.useRef(null);
+  const searchBoxRef = react.useRef(null);
+  const pinnedSectionRef = react.useRef(null);
+  const pageWheelRef = react.useRef({ at: -1e9 });
+  const activeSectionSignal = react.useMemo(() => createSettingsSignal(null), []);
+  const [sectionsByTab, setSectionsByTab] = react.useState({});
+  const [dockPreferences, setDockPreferences] = react.useState(readSettingsDockPreferences);
+  const [settingsRegistry, setSettingsRegistry] = react.useState(null);
+  const [changedCounts, setChangedCounts] = react.useState(() => ({ total: 0, byTab: {} }));
+  const [, setConfigRevision] = react.useState(0);
+
+  // ---- Section tabs: discovered from the rendered sections, so provider
+  // components and sections emptied by their conditions stay in step. ----
   react.useEffect(() => {
-    activeNavItemIdRef.current = activeNavItemId;
-  }, [activeNavItemId]);
+    const container = settingsContentRef.current;
+    if (!container || changedView) return undefined;
 
-  /* ==========================================================
-   *  Sidebar ↔ Content Synchronisation  (complete rewrite)
-   * ========================================================== */
+    let frameId = null;
+    const discover = () => {
+      frameId = null;
+      const tabNode = container.querySelector(".tab-content.active");
+      if (!tabNode) return;
+      const seen = new Set();
+      const sections = Array.from(tabNode.querySelectorAll(".settings-section"))
+        .map((sectionElement) => {
+          if (sectionElement.closest("[hidden]") || sectionElement.getClientRects().length === 0) return null;
+          const key = sectionElement.getAttribute("data-section-key");
+          const label = sectionElement.querySelector(":scope > .section-title h3")?.textContent?.trim();
+          if (!key || !label || seen.has(key)) return null;
+          seen.add(key);
+          return { key, label };
+        })
+        .filter(Boolean);
+      setSectionsByTab((previous) => {
+        const before = previous[activeTab];
+        if (
+          before
+          && before.length === sections.length
+          && before.every((section, index) =>
+            section.key === sections[index].key && section.label === sections[index].label)
+        ) {
+          return previous;
+        }
+        return { ...previous, [activeTab]: sections };
+      });
+    };
+    const schedule = () => {
+      if (frameId == null) frameId = requestAnimationFrame(discover);
+    };
+    const observer = new MutationObserver(schedule);
+    observer.observe(container, { childList: true, subtree: true });
+    schedule();
+    return () => {
+      observer.disconnect();
+      if (frameId != null) cancelAnimationFrame(frameId);
+    };
+  }, [activeTab, changedView, fullscreenView]);
 
-  // ---- 1. Section discovery (build sidebarSectionsByTab) ----
-  react.useEffect(() => {
+  const activeSections = changedView ? [] : sectionsByTab[activeTab] || [];
+
+  // ---- Navigation (rail, search, changed view, section links) ----
+  const rememberScroll = () => {
     const container = settingsContentRef.current;
     if (!container) return;
+    scrollMemoryRef.current.set(changedView ? "changed" : activeTab, container.scrollTop);
+  };
 
-    // Wait one frame so the DOM for the new activeTab is rendered
-    const frameId = requestAnimationFrame(() => {
-      const tabNodes = Array.from(
-        container.querySelectorAll(".tab-content[data-tab-id]")
-      );
-      if (tabNodes.length === 0) return;
-
-      const next = {};
-      tabNodes.forEach((tabNode) => {
-        const tabId = tabNode.getAttribute("data-tab-id");
-        if (!tabId || tabId === "search") return;
-
-        const seen = new Set();
-        next[tabId] = Array.from(
-          tabNode.querySelectorAll(".section-title[data-setting-key]")
-        )
-          .map((el) => {
-            const key = el.getAttribute("data-setting-key");
-            if (!key || seen.has(key)) return null;
-            const h3 = el.querySelector("h3");
-            const p = el.querySelector("p");
-            const label = h3?.textContent?.trim();
-            if (!label) return null;
-            seen.add(key);
-            return {
-              id: key,
-              settingKey: key,
-              label,
-              description: p?.textContent?.trim() || "",
-              tabId,
-              parentSettingKey:
-                el.getAttribute("data-parent-setting-key") || null,
-            };
-          })
-          .filter(Boolean);
-      });
-
-      setSidebarSectionsByTab((previous) => ({ ...previous, ...next }));
-    });
-
-    return () => cancelAnimationFrame(frameId);
-  }, [activeTab]);
-
-  // Derived helpers (remain the same)
-  const activeSidebarTab =
-    sidebarTabs.find((tab) => tab.id === activeTab) ||
-    sidebarTabs.find((tab) => tab.id === "general") ||
-    sidebarTabs[0];
-  const activeSectionItems =
-    activeTab === "search" ? [] : sidebarSectionsByTab[activeTab] || [];
-
-  const activeNavItem =
-    activeTab === "search"
-      ? {
-          label: I18n.t("search.placeholder"),
-          description: I18n.t("search.noResultsDesc"),
-          badge: I18n.t("search.resultCount")
-            .replace("{count}", searchResults.length || 0),
-        }
-      : activeSectionItems.find((item) => item.settingKey === activeNavItemId) ||
-        activeSidebarTab || {
-          label: activeTabMeta?.label,
-          description: activeTabMeta?.description,
-          badge: activeTabMeta?.badge,
-        };
-
-  const activeNavigationGroup =
-    activeTab === "search"
-      ? activeNavItem
-      : activeSidebarTab || {
-          label: activeTabMeta?.label,
-          description: activeTabMeta?.description,
-          badge: activeTabMeta?.badge,
-        };
-
-  // ---- 2. navigateToDestination (click handler) ----
   const navigateToDestination = react.useCallback(
-    (tabId, settingKey, navItemId, clearSearch = false) => {
-      // preserve sidebar scroll position
-      if (settingsSidebarRef.current) {
-        pendingSidebarScrollRef.current = settingsSidebarRef.current.scrollTop;
-        shouldRestoreSidebarScrollRef.current = true;
-      }
-
-      if (navItemId) {
-        setActiveNavItemId(navItemId);
-      }
-      if (clearSearch || (activeTab === "search" && tabId !== "search")) {
-        setSearchQuery("");
-      }
-
-      // Different tab → switch tab and schedule scroll
-      if (tabId !== activeTab) {
-        if (settingKey) {
-          holdProgrammaticScroll();
-          pendingTabScrollRef.current = settingKey;
-          shouldResetContentScrollRef.current = false;
-        } else {
-          pendingTabScrollRef.current = null;
-          shouldResetContentScrollRef.current = true;
-        }
+    (tabId, settingKey) => {
+      rememberScroll();
+      pinnedSectionRef.current = null;
+      setChangedView(false);
+      pendingTabScrollRef.current = settingKey || null;
+      if (tabId !== activeTab || changedView) {
+        pendingScrollTopRef.current = settingKey ? null : (scrollMemoryRef.current.get(tabId) ?? 0);
         setActiveTab(tabId);
-        return;
       }
-
-      // Same tab → scroll directly
-      if (settingKey) {
-        holdProgrammaticScroll();
-        requestAnimationFrame(() => {
-          scrollToSetting(settingKey);
-        });
-      } else if (settingsContentRef.current) {
-        holdProgrammaticScroll();
-        settingsContentRef.current.scrollTo({ top: 0, behavior: "smooth" });
-      }
+      setNavigationRevision((revision) => revision + 1);
     },
-    [activeTab, holdProgrammaticScroll, scrollToSetting]
+    [activeTab, changedView]
   );
 
-  // ---- 3. Keep activeNavItemId valid for the current tab ----
-  react.useEffect(() => {
-    if (activeTab === "search") return;
+  const openMenu = (tabId) => {
+    if (tabId === activeTab && !changedView) return;
+    navigateToDestination(tabId, null);
+  };
 
-    const items = sidebarSectionsByTab[activeTab] || [];
-    if (items.length === 0) {
-      if (activeNavItemId !== activeTab) setActiveNavItemId(activeTab);
+  const toggleChangedView = () => {
+    rememberScroll();
+    pinnedSectionRef.current = null;
+    if (changedView) {
+      pendingScrollTopRef.current = scrollMemoryRef.current.get(activeTab) ?? 0;
+      setChangedView(false);
+      setNavigationRevision((revision) => revision + 1);
       return;
     }
+    setChangedView(true);
+    requestAnimationFrame(() => {
+      settingsContentRef.current?.scrollTo({ top: scrollMemoryRef.current.get("changed") ?? 0, behavior: "auto" });
+    });
+  };
 
-    const valid = items.some((i) => i.settingKey === activeNavItemId);
-    if (!valid) {
-      setActiveNavItemId(items[0].settingKey);
-    }
-  }, [activeNavItemId, activeTab, sidebarSectionsByTab]);
+  const selectSection = (sectionKey) => {
+    pinnedSectionRef.current = sectionKey;
+    activeSectionSignal.set(sectionKey);
+    scrollToSetting(sectionKey, { highlight: false });
+  };
 
-  // ---- 4. Auto-expand the sidebar group for the active tab ----
+  const selectFullscreenView = (view) => {
+    if (view === fullscreenView) return;
+    pinnedSectionRef.current = null;
+    setFullscreenView(view);
+    settingsContentRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  };
+
+  // ---- Scroll-spy: highlights the section tab and the breadcrumb ----
   react.useEffect(() => {
-    const currentTab = sidebarTabs.find((tab) => tab.id === activeTab);
-    if (activeTab === "search" || !currentTab?.id) {
-      return;
-    }
-    if (currentTab.standalone) {
-      setExpandedGroupIds([]);
-      return;
-    }
-    setExpandedGroupIds([currentTab.id]);
-  }, [activeTab]);
-
-  // ---- 5. Scroll-spy: update sidebar highlight on user scroll ----
-  react.useEffect(() => {
-    if (activeTab === "search") return;
+    const container = settingsContentRef.current;
+    if (!container || changedView) return undefined;
 
     let frameId = null;
-    const container = settingsContentRef.current;
-
-    const updateActiveSection = () => {
-      const currentContainer = settingsContentRef.current;
-      if (!currentContainer || isProgrammaticScrollRef.current) return;
-
-      const nodes = Array.from(
-        currentContainer.querySelectorAll(
-          ".tab-content.active .section-title[data-setting-key]"
-        )
-      );
-      if (nodes.length === 0) return;
-
-      const containerTop = currentContainer.getBoundingClientRect().top;
-      const defaultAnchorLine =
-        containerTop + Math.min(120, Math.max(72, currentContainer.clientHeight * 0.2));
-      const stickyPreview = currentContainer.querySelector(
-        ".tab-content.active .settings-live-preview-sticky"
-      );
-      const stickyPreviewRect = stickyPreview?.getBoundingClientRect();
-      const stickyPreviewIsPinned = stickyPreviewRect
-        && stickyPreviewRect.top <= containerTop + 1
-        && stickyPreviewRect.bottom > containerTop;
-      const anchorLine = stickyPreviewIsPinned
-        ? Math.max(defaultAnchorLine, stickyPreviewRect.bottom + 12)
-        : defaultAnchorLine;
-
-      let bestNode = nodes[0];
-      for (const node of nodes) {
-        if (node.getBoundingClientRect().top <= anchorLine) {
-          bestNode = node;
-        } else {
-          break;
-        }
-      }
-
-      const key = bestNode?.getAttribute("data-setting-key");
-      if (key && key !== activeNavItemIdRef.current) {
-        setActiveNavItemId(key);
-      }
-    };
-
-    const scheduleUpdate = () => {
-      if (isProgrammaticScrollRef.current) {
-        // `scrollend` (with the safety timer in scrollToSetting) owns the
-        // unlock. Intermediate section positions must never update selection.
+    let settleTimer = null;
+    const update = () => {
+      frameId = null;
+      const head = pageHeadRef.current;
+      head?.classList.toggle("is-stuck", container.scrollTop > 4);
+      if (isProgrammaticScrollRef.current) return;
+      const sections = Array.from(container.querySelectorAll(".tab-content.active .settings-section"))
+        .filter((element) => !element.closest("[hidden]") && element.getClientRects().length > 0);
+      if (!sections.length) {
+        activeSectionSignal.set(null);
         return;
       }
-      if (frameId != null) return;
-      frameId = requestAnimationFrame(() => {
-        frameId = null;
-        updateActiveSection();
-      });
+      const containerTop = container.getBoundingClientRect().top;
+      const anchorLine = containerTop + (head ? head.getBoundingClientRect().height : 0) + 56;
+      let active = sections[0];
+      for (const element of sections) {
+        if (element.getBoundingClientRect().top <= anchorLine) active = element;
+        else break;
+      }
+      if (
+        container.scrollTop > 4
+        && container.scrollTop + container.clientHeight >= container.scrollHeight - 4
+      ) {
+        active = sections[sections.length - 1];
+      }
+      const pinned = pinnedSectionRef.current;
+      if (pinned) {
+        active = sections.find((element) => element.getAttribute("data-section-key") === pinned) || active;
+      }
+      activeSectionSignal.set(active.getAttribute("data-section-key"));
     };
-
-    container?.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-    scheduleUpdate();
+    const schedule = () => {
+      if (frameId == null) frameId = requestAnimationFrame(update);
+    };
+    const handleScrollEnd = () => {
+      clearTimeout(settleTimer);
+      settleTimer = setTimeout(schedule, 320);
+    };
+    // A tab click pins its section (short pages cannot scroll it to the top)
+    // until the reader scrolls by hand.
+    const unpin = (event) => {
+      if (event?.type === "wheel" && !event.target?.closest?.(".settings-toc")) {
+        pageWheelRef.current.at = performance.now();
+      }
+      if (event?.target?.closest?.(".settings-toc")) return;
+      if (!pinnedSectionRef.current) return;
+      if (event?.type === "keydown" && !/^(Arrow|Page|Home|End| )/.test(event.key)) return;
+      pinnedSectionRef.current = null;
+      schedule();
+    };
+    container.addEventListener("scroll", schedule, { passive: true });
+    container.addEventListener("scrollend", handleScrollEnd, { passive: true });
+    container.addEventListener("wheel", unpin, { passive: true });
+    container.addEventListener("touchstart", unpin, { passive: true });
+    container.addEventListener("keydown", unpin);
+    window.addEventListener("resize", schedule);
+    schedule();
 
     return () => {
-      container?.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-      if (frameId != null) {
-        cancelAnimationFrame(frameId);
+      container.removeEventListener("scroll", schedule);
+      container.removeEventListener("scrollend", handleScrollEnd);
+      container.removeEventListener("wheel", unpin);
+      container.removeEventListener("touchstart", unpin);
+      container.removeEventListener("keydown", unpin);
+      window.removeEventListener("resize", schedule);
+      clearTimeout(settleTimer);
+      if (frameId != null) cancelAnimationFrame(frameId);
+    };
+  }, [activeTab, changedView, fullscreenView, sectionsByTab]);
+
+  // ---- Keyboard: ⌘K / Ctrl K and "/" focus the search ----
+  react.useEffect(() => {
+    const handleShortcut = (event) => {
+      const input = searchInputRef.current;
+      if (!input) return;
+      const key = String(event.key || "").toLowerCase();
+      if ((event.metaKey || event.ctrlKey) && !event.altKey && key === "k") {
+        event.preventDefault();
+        event.stopPropagation();
+        input.focus();
+        input.select();
+        setSearchPanelOpen(true);
+        return;
+      }
+      const activeElement = document.activeElement;
+      const typing = activeElement && (
+        /^(input|textarea|select)$/i.test(activeElement.tagName) || activeElement.isContentEditable
+      );
+      if (key === "/" && !event.metaKey && !event.ctrlKey && !event.altKey && !typing) {
+        event.preventDefault();
+        event.stopPropagation();
+        input.focus();
       }
     };
-  }, [activeTab, holdProgrammaticScroll, searchQuery, sidebarSectionsByTab]);
+    window.addEventListener("keydown", handleShortcut, true);
+    return () => window.removeEventListener("keydown", handleShortcut, true);
+  }, []);
 
-  // ---- 6. Restore sidebar scroll position after tab / group changes ----
-  react.useLayoutEffect(() => {
-    if (
-      !shouldRestoreSidebarScrollRef.current ||
-      pendingSidebarScrollRef.current == null ||
-      !settingsSidebarRef.current
-    ) {
-      return;
-    }
-    settingsSidebarRef.current.scrollTop = pendingSidebarScrollRef.current;
-    pendingSidebarScrollRef.current = null;
-    shouldRestoreSidebarScrollRef.current = false;
-  }, [activeTab, expandedGroupIds]);
-
-  // Keep the selected branch visible when a compact settings window turns the
-  // sidebar into a short, independently scrolling region.
+  // ---- Small manners shared by every field in the window ----
   react.useEffect(() => {
-    let frameId = null;
-    const revealActiveNavigationItem = () => {
-      if (frameId != null) cancelAnimationFrame(frameId);
-      frameId = requestAnimationFrame(() => {
-        frameId = null;
-        const sidebar = settingsSidebarRef.current;
-        const activeControl =
-          sidebar?.querySelector(".settings-nav-subitem.active") ||
-          sidebar?.querySelector(".settings-nav-card.active") ||
-          sidebar?.querySelector(".settings-nav-group-toggle.active");
-        if (!sidebar || !activeControl) return;
+    const root = rootRef.current;
+    if (!root) return undefined;
+    // A focused number field must not swallow the page scroll; the wheel
+    // would otherwise change its value without the reader noticing.
+    const handleWheel = (event) => {
+      const field = document.activeElement;
+      if (field && field.tagName === "INPUT" && field.type === "number" && field.contains(event.target)) {
+        field.blur();
+      }
+    };
+    // Escape (handled by openConfig) restores the value from before the edit.
+    const handleFocusIn = (event) => {
+      if (isSettingsEditableField(event.target)) {
+        event.target.dataset.ivBefore = event.target.value;
+      }
+    };
+    // Text cut off with an ellipsis shows its full wording on hover.
+    const handlePointerOver = (event) => {
+      if (event.pointerType && event.pointerType !== "mouse") return;
+      let node = event.target instanceof Element ? event.target : null;
+      for (let depth = 0; node && depth < 3 && node !== root; depth += 1, node = node.parentElement) {
+        if (node.hasAttribute("title") && !node.hasAttribute("data-auto-title")) return;
+        if (getComputedStyle(node).textOverflow !== "ellipsis") continue;
+        if (node.scrollWidth > node.clientWidth + 1) {
+          node.title = node.textContent.trim();
+          node.setAttribute("data-auto-title", "");
+        } else if (node.hasAttribute("data-auto-title")) {
+          node.removeAttribute("title");
+          node.removeAttribute("data-auto-title");
+        }
+        return;
+      }
+    };
+    const handlePointerDown = (event) => {
+      if (!searchBoxRef.current?.contains(event.target)) setSearchPanelOpen(false);
+    };
+    root.addEventListener("wheel", handleWheel, { capture: true, passive: true });
+    root.addEventListener("focusin", handleFocusIn, true);
+    root.addEventListener("pointerover", handlePointerOver, { passive: true });
+    root.addEventListener("pointerdown", handlePointerDown, true);
+    return () => {
+      root.removeEventListener("wheel", handleWheel, { capture: true });
+      root.removeEventListener("focusin", handleFocusIn, true);
+      root.removeEventListener("pointerover", handlePointerOver);
+      root.removeEventListener("pointerdown", handlePointerDown, true);
+    };
+  }, []);
 
-        const sidebarRect = sidebar.getBoundingClientRect();
-        const activeRect = activeControl.getBoundingClientRect();
-        const inset = 8;
-        let scrollDelta = 0;
-        if (activeRect.top < sidebarRect.top + inset) {
-          scrollDelta = activeRect.top - sidebarRect.top - inset;
-        } else if (activeRect.bottom > sidebarRect.bottom - inset) {
-          scrollDelta = activeRect.bottom - sidebarRect.bottom + inset;
-        }
-        if (Math.abs(scrollDelta) > 0.5) {
-          sidebar.scrollTo({
-            top: Math.max(0, sidebar.scrollTop + scrollDelta),
-            behavior: "auto",
-          });
-        }
+  // ---- Changed settings: counted against the index.js defaults ----
+  react.useEffect(() => {
+    const handleRefresh = () => setConfigRevision((revision) => revision + 1);
+    window.addEventListener("ivLyrics:settings-refresh", handleRefresh);
+    return () => window.removeEventListener("ivLyrics:settings-refresh", handleRefresh);
+  }, []);
+
+  react.useEffect(() => {
+    setSettingsRegistry(buildSettingsRegistry());
+  }, []);
+
+  react.useEffect(() => {
+    if (!settingsRegistry) return undefined;
+    let frameId = null;
+    const recount = () => {
+      frameId = null;
+      const byTab = {};
+      let total = 0;
+      settingsRegistry.forEach((entry) => {
+        if (!isSettingChanged(entry.key)) return;
+        total += 1;
+        byTab[entry.tabId] = (byTab[entry.tabId] || 0) + 1;
+      });
+      setChangedCounts((previous) => {
+        const same = previous.total === total
+          && Object.keys(byTab).length === Object.keys(previous.byTab).length
+          && Object.keys(byTab).every((tabId) => previous.byTab[tabId] === byTab[tabId]);
+        return same ? previous : { total, byTab };
       });
     };
-
-    revealActiveNavigationItem();
-    window.addEventListener("resize", revealActiveNavigationItem);
+    const schedule = (event) => {
+      if (event?.detail?.type !== "config" || frameId != null) return;
+      frameId = requestAnimationFrame(recount);
+    };
+    window.addEventListener("ivLyrics", schedule);
+    recount();
     return () => {
-      window.removeEventListener("resize", revealActiveNavigationItem);
+      window.removeEventListener("ivLyrics", schedule);
       if (frameId != null) cancelAnimationFrame(frameId);
     };
-  }, [activeNavItemId, activeTab, expandedGroupIds]);
+  }, [settingsRegistry]);
 
-  // This component owns stateful helper controls. Keep its type stable across
-  // ConfigModal renders so their mount effects cannot trigger a remount loop.
-  const BackgroundExperienceSection = react.useMemo(() => function BackgroundExperienceSectionContent() {
-    const [selectedMode, setSelectedMode] = react.useState(
-      getCurrentSettingsBackgroundMode()
+  const dockOpen = !changedView && (
+    dockPreferences[activeTab] ?? SETTINGS_PREVIEW_MENUS.has(activeTab)
+  );
+  const toggleDock = () => {
+    setDockPreferences((previous) => {
+      const next = { ...previous, [activeTab]: !dockOpen };
+      writeSettingsDockPreferences(next);
+      return next;
+    });
+  };
+
+  const changedViewTitle = getSettingsText("settingsUi.changed.title", "Changed settings");
+
+  const renderHeaderSection = () => {
+    const isMac = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform || "");
+    const themeOptions = [
+      {
+        id: "light",
+        label: getSettingsText("settingsUi.theme.lightShort", "Light"),
+        title: getSettingsText("settingsUi.theme.light", "Switch to light mode"),
+        icon: "sun",
+      },
+      {
+        id: "dark",
+        label: getSettingsText("settingsUi.theme.darkShort", "Dark"),
+        title: getSettingsText("settingsUi.theme.dark", "Switch to dark mode"),
+        icon: "moon",
+      },
+    ];
+    const themeIndex = Math.max(0, themeOptions.findIndex((option) => option.id === uiTheme));
+    const searchLabel = I18n.t("search.placeholder");
+    const searchExpanded = Boolean(searchQuery.trim() && searchPanelOpen);
+
+    return react.createElement(
+      "header",
+      { className: "settings-topbar" },
+      react.createElement(
+        "div",
+        { className: "settings-topbar-title" },
+        react.createElement("h1", null, getSettingsText("menu.settings", "Settings")),
+        react.createElement(SettingsCrumbs, {
+          menuLabel: changedView ? getSettingsText("settingsUi.changed.button", "Changed") : activeTabMeta.label,
+          sections: activeSections,
+          signal: activeSectionSignal,
+        })
+      ),
+      react.createElement(
+        "div",
+        {
+          className: `settings-search settings-search-wrapper${searchQuery ? " has-query" : ""}`,
+          role: "search",
+          ref: searchBoxRef,
+        },
+        react.createElement(SettingsUiIcon, { name: "search", size: 16, className: "settings-search-icon" }),
+        react.createElement("input", {
+          ref: searchInputRef,
+          type: "search",
+          className: "settings-search-input",
+          placeholder: searchLabel,
+          "aria-label": searchLabel,
+          "aria-expanded": searchExpanded,
+          autoComplete: "off",
+          spellCheck: false,
+          value: searchQuery,
+          onChange: handleSearchChange,
+          onFocus: () => setSearchPanelOpen(true),
+          onKeyDown: handleSearchKeyDown,
+        }),
+        searchQuery && react.createElement(
+          "button",
+          {
+            className: "settings-search-clear",
+            type: "button",
+            onClick: () => {
+              handleClearSearch();
+              searchInputRef.current?.focus();
+            },
+            title: I18n.t("search.clear"),
+            "aria-label": I18n.t("search.clear"),
+          },
+          react.createElement(SettingsUiIcon, { name: "close", size: 14 })
+        ),
+        react.createElement("kbd", { className: "settings-kbd", "aria-hidden": "true" }, isMac ? "⌘K" : "Ctrl K"),
+        renderSearchPanel()
+      ),
+      react.createElement(
+        "div",
+        { className: "settings-topbar-tools" },
+        react.createElement(
+          "button",
+          {
+            type: "button",
+            className: `settings-changed-chip${changedCounts.total ? "" : " is-zero"}`,
+            "aria-pressed": changedView,
+            onClick: toggleChangedView,
+          },
+          react.createElement(SettingsUiIcon, { name: "dot", size: 14 }),
+          react.createElement("span", null, getSettingsText("settingsUi.changed.button", "Changed")),
+          react.createElement("b", null, String(changedCounts.total))
+        ),
+        react.createElement(
+          "div",
+          {
+            className: "settings-seg settings-theme-control",
+            role: "radiogroup",
+            "aria-label": getSettingsText("settingsUi.theme.selector", "Settings theme"),
+            style: { "--count": themeOptions.length, "--index": themeIndex },
+          },
+          react.createElement("span", { className: "settings-seg-thumb", "aria-hidden": "true" }),
+          ...themeOptions.map((themeOption, optionIndex) =>
+            react.createElement(
+              "button",
+              {
+                key: themeOption.id,
+                className: `settings-seg-option settings-theme-option${uiTheme === themeOption.id ? " is-on active" : ""}`,
+                type: "button",
+                role: "radio",
+                title: themeOption.title,
+                "aria-label": themeOption.label,
+                "aria-checked": uiTheme === themeOption.id,
+                tabIndex: optionIndex === themeIndex ? 0 : -1,
+                onClick: () => setUiTheme(themeOption.id),
+                onKeyDown: (event) =>
+                  handleSettingsRadioKeys(
+                    event,
+                    themeOptions.map((option) => ({ value: option.id })),
+                    themeIndex,
+                    (value) => setUiTheme(value)
+                  ),
+              },
+              react.createElement(SettingsUiIcon, { name: themeOption.icon, size: 15 }),
+              react.createElement("span", { className: "settings-seg-text" }, themeOption.label)
+            )
+          )
+        ),
+        react.createElement(
+          "button",
+          {
+            className: "settings-close-btn",
+            type: "button",
+            onClick: onRequestClose,
+            title: getSettingsText("settingsUi.close", "Close settings"),
+            "aria-label": getSettingsText("settingsUi.close", "Close settings"),
+          },
+          react.createElement(SettingsUiIcon, { name: "close", size: 16 })
+        )
+      )
+    );
+  };
+
+  const renderRail = () => {
+    const spicetifyVersion = window.Spicetify?.Config?.version;
+    const spotifyVersion = window.Spicetify?.Platform?.version;
+    return react.createElement(
+      "nav",
+      {
+        className: "settings-rail",
+        "aria-label": getSettingsText("menu.settings", "Settings"),
+      },
+      ...sidebarGroups.map((group) => {
+        const groupTabs = sidebarTabs.filter((tab) => tab.group === group.id);
+        if (!groupTabs.length) return null;
+        const labelId = `${APP_NAME}-settings-rail-${group.id}`;
+        return react.createElement(
+          "section",
+          { key: group.id, className: "settings-rail-group", "aria-labelledby": labelId },
+          react.createElement("div", { id: labelId, className: "settings-rail-group-label" }, group.label),
+          ...groupTabs.map((tab) => {
+            const current = activeTab === tab.id && !changedView;
+            const count = changedCounts.byTab[tab.id] || 0;
+            return react.createElement(
+              "button",
+              {
+                key: tab.id,
+                type: "button",
+                className: `settings-rail-item${current ? " is-active" : ""}`,
+                "aria-current": current ? "page" : undefined,
+                onClick: () => openMenu(tab.id),
+              },
+              react.createElement(SettingsOutlineIcon, { name: tab.icon, className: "settings-rail-icon", size: 16 }),
+              react.createElement("span", { className: "settings-rail-label" }, tab.label),
+              count
+                ? react.createElement("span", { className: "settings-rail-count" }, String(count))
+                : null
+            );
+          })
+        );
+      }),
+      react.createElement(
+        "div",
+        { className: "settings-rail-foot" },
+        react.createElement("b", null, `ivLyrics v${Utils.currentVersion}`),
+        react.createElement(
+          "span",
+          null,
+          [
+            spotifyVersion ? `Spotify ${spotifyVersion}` : "Spotify",
+            spicetifyVersion ? `Spicetify ${spicetifyVersion}` : "Spicetify",
+          ].join(" · ")
+        ),
+        settingsRegistry
+          ? react.createElement(
+            "span",
+            null,
+            getSettingsText("settingsUi.footer.counts", "{settings} settings · {menus} menus")
+              .replace("{settings}", String(settingsRegistry.length))
+              .replace("{menus}", String(sidebarTabs.length))
+          )
+          : null
+      )
+    );
+  };
+
+  const fullscreenViews = [
+    { value: "basic", label: getSettingsText("settingsUi.fullscreenViews.basic", "Basics") },
+    { value: "normal", label: getSettingsText("settingsUi.fullscreenViews.normal", "Normal mode") },
+    { value: "tv", label: getSettingsText("settingsUi.fullscreenViews.tv", "TV mode") },
+    { value: "vinyl", label: I18n.t("vinyl.mode") || "LP" },
+  ];
+
+  const renderPageHead = () =>
+    react.createElement(
+      "div",
+      { className: "settings-page-head", ref: pageHeadRef },
+      react.createElement(
+        "div",
+        { className: "settings-page-title-row" },
+        react.createElement(
+          "h2",
+          { className: "settings-page-title" },
+          changedView ? changedViewTitle : activeTabMeta.label
+        )
+      ),
+      react.createElement(
+        "p",
+        { className: "settings-page-desc" },
+        changedView
+          ? getSettingsText("settingsUi.changed.desc", "Only the settings that differ from their defaults.")
+          : activeTabMeta.description
+      ),
+      !changedView && activeTab === "fullscreen"
+        ? react.createElement(SettingsSegmented, {
+          className: "settings-view-switch",
+          options: fullscreenViews,
+          value: fullscreenView,
+          label: activeTabMeta.label,
+          onChange: selectFullscreenView,
+        })
+        : null,
+      !changedView
+        ? react.createElement(SettingsToc, {
+          sections: activeSections,
+          signal: activeSectionSignal,
+          onSelect: selectSection,
+          pageWheelRef,
+          label: activeTabMeta.label,
+        })
+        : null
     );
 
-    const dispatchVisualUpdate = (name, value) => {
-      lyricContainerUpdate?.();
-      window.dispatchEvent(
-        new CustomEvent("ivLyrics", {
-          detail: { type: "config", name, value },
-        })
-      );
-    };
+  // ---- Background (visual effects) ----
+  const handleBackgroundVisualChange = (name, value) => {
+    CONFIG.visual[name] = value;
+    StorageManager.saveConfig(name, value);
+    if (name === "alignment") syncSettingsLyricsPreviewStyles();
+    lyricContainerUpdate?.();
+    window.dispatchEvent(
+      new CustomEvent("ivLyrics", {
+        detail: { type: "config", name, value },
+      })
+    );
+  };
 
-    const applyMode = (modeId) => {
-      setSelectedMode(modeId);
-      const optionKeys = SETTINGS_BACKGROUND_PRESETS
-        .map((preset) => preset.id)
-        .filter((id) => id !== "none");
-
-      optionKeys.forEach((optionId) => {
+  const applyBackgroundMode = (modeId) => {
+    SETTINGS_BACKGROUND_PRESETS
+      .map((preset) => preset.id)
+      .filter((id) => id !== "none")
+      .forEach((optionId) => {
         const isEnabled = optionId === modeId;
         CONFIG.visual[optionId] = isEnabled;
         StorageManager.saveConfig(optionId, isEnabled);
       });
+    lyricContainerUpdate?.();
+    window.dispatchEvent(
+      new CustomEvent("ivLyrics", {
+        detail: { type: "config", name: "background-mode", value: modeId },
+      })
+    );
+  };
 
-      dispatchVisualUpdate("background-mode", modeId);
-    };
-
-    const handleVisualChange = (name, value) => {
-      CONFIG.visual[name] = value;
-      StorageManager.saveConfig(name, value);
-      if (name === "alignment") syncSettingsLyricsPreviewStyles();
-      dispatchVisualUpdate(name, value);
-    };
-
-    react.useEffect(() => {
-      const handleConfigChange = (event) => {
-        if (event.detail?.type !== "config") return;
-        const changedName = event.detail?.name;
-        const isBackgroundModeChange =
-          changedName === "background-mode" ||
-          SETTINGS_BACKGROUND_PRESETS.some((preset) => preset.id === changedName);
-        if (isBackgroundModeChange) {
-          setSelectedMode(getCurrentSettingsBackgroundMode());
-        }
-      };
-
-      window.addEventListener("ivLyrics", handleConfigChange);
-      return () => window.removeEventListener("ivLyrics", handleConfigChange);
-    }, []);
-
-    const buildModeSpecificItems = () => {
+  const buildBackgroundModeItems = (selectedMode) => {
     const modeSpecificItems = [];
 
     if (
@@ -9546,101 +11308,150 @@ const ConfigModal = ({
         unit: "%",
       });
     }
-      return modeSpecificItems;
+    return modeSpecificItems;
+  };
+
+  const buildBackgroundLayoutItems = () => [
+    {
+      desc: I18n.t("settings.alignment.label"),
+      key: "alignment",
+      info: I18n.t("settings.alignment.desc"),
+      type: ConfigSelection,
+      disabled: isFadActive,
+      presentation: "seg",
+      iconMap: { left: "alignLeft", center: "alignCenter", right: "alignRight" },
+      options: {
+        left: I18n.t("settings.alignment.options.left"),
+        center: I18n.t("settings.alignment.options.center"),
+        right: I18n.t("settings.alignment.options.right"),
+      },
+    },
+    {
+      desc: I18n.t("settings.noise.label"),
+      key: "noise",
+      info: I18n.t("settings.noise.desc"),
+      type: ConfigSlider,
+      disabled: isFadActive,
+    },
+  ];
+
+  const getBackgroundPresetOptions = () =>
+    Object.fromEntries(
+      SETTINGS_BACKGROUND_PRESETS.map((preset) => [
+        preset.id,
+        getSettingsText(preset.labelKey, preset.fallbackLabel),
+      ])
+    );
+
+  // Every background setting, for the changed-settings registry.
+  const getBackgroundRegistryItems = () => {
+    const items = [{
+      item: {
+        desc: I18n.t("sections.visualEffects"),
+        key: SETTINGS_BACKGROUND_MODE_KEY,
+        type: ConfigSelection,
+        presentation: "select",
+        options: getBackgroundPresetOptions(),
+        defaultValue: getCurrentSettingsBackgroundMode(),
+      },
+      onChange: (_name, value) => applyBackgroundMode(value),
+    }];
+    const seen = new Set();
+    ["gradient-background", "solid-background", "video-background"].forEach((mode) => {
+      buildBackgroundModeItems(mode).forEach((item) => {
+        if (seen.has(item.key)) return;
+        seen.add(item.key);
+        items.push({ item, onChange: handleBackgroundVisualChange });
+      });
+    });
+    buildBackgroundLayoutItems().forEach((item) => items.push({ item, onChange: handleBackgroundVisualChange }));
+    return items;
+  };
+
+  // This component owns stateful helper controls. Keep its type stable across
+  // ConfigModal renders so their mount effects cannot trigger a remount loop.
+  const BackgroundExperienceSection = react.useMemo(() => function BackgroundExperienceSectionContent() {
+    const [selectedMode, setSelectedMode] = react.useState(
+      getCurrentSettingsBackgroundMode()
+    );
+    useSettingsConfigRevision();
+
+    const applyMode = (modeId) => {
+      setSelectedMode(modeId);
+      applyBackgroundMode(modeId);
     };
-    const modeSpecificItems = buildModeSpecificItems();
+
+    react.useEffect(() => {
+      const handleConfigChange = (event) => {
+        if (event.detail?.type !== "config") return;
+        const changedName = event.detail?.name;
+        const isBackgroundModeChange =
+          changedName === "background-mode" ||
+          SETTINGS_BACKGROUND_PRESETS.some((preset) => preset.id === changedName);
+        if (isBackgroundModeChange) {
+          setSelectedMode(getCurrentSettingsBackgroundMode());
+        }
+      };
+
+      window.addEventListener("ivLyrics", handleConfigChange);
+      return () => window.removeEventListener("ivLyrics", handleConfigChange);
+    }, []);
+
+    const modeSpecificItems = buildBackgroundModeItems(selectedMode);
+    const solidColor = normalizeSettingsHexColor(CONFIG.visual["solid-background-color"]) || "#1e3a8a";
 
     return react.createElement(
       react.Fragment,
       null,
       react.createElement(
         "div",
-        { className: "settings-card-grid background-mode-grid" },
-        SETTINGS_BACKGROUND_PRESETS.map((preset) =>
-          react.createElement(
-            "button",
-            {
-              key: preset.id,
-              className: `settings-choice-card ${
-                selectedMode === preset.id ? "active" : ""
-              }`,
-              onClick: () => applyMode(preset.id),
-              type: "button",
-            },
-            react.createElement(
-              "div",
-              { className: "settings-choice-icon" },
-              react.createElement("svg", {
-                width: 20,
-                height: 20,
-                viewBox: "0 0 24 24",
-                fill: "none",
-                stroke: "currentColor",
-                strokeLinecap: "round",
-                strokeLinejoin: "round",
-                dangerouslySetInnerHTML: { __html: preset.icon },
-              })
-            ),
-            react.createElement(
-              "div",
-              { className: "settings-choice-content" },
-              react.createElement(
-                "strong",
-                null,
-                getSettingsText(preset.labelKey, preset.fallbackLabel)
-              ),
-              react.createElement(
-                "span",
-                null,
-                getSettingsText(preset.descriptionKey, preset.fallbackDescription)
-              )
-            )
-          )
-        )
+        { className: "settings-panel settings-modes-panel", "data-setting-key": SETTINGS_BACKGROUND_MODE_KEY },
+        react.createElement(SettingsChoiceCards, {
+          className: "settings-mode-grid",
+          label: I18n.t("sections.visualEffects"),
+          value: selectedMode,
+          disabled: isFadActive,
+          onChange: applyMode,
+          options: SETTINGS_BACKGROUND_PRESETS.map((preset) => ({
+            value: preset.id,
+            anchor: preset.id === "none" ? undefined : preset.id,
+            label: getSettingsText(preset.labelKey, preset.fallbackLabel),
+            description: getSettingsText(preset.descriptionKey, preset.fallbackDescription),
+            visual: react.createElement("span", {
+              className: `settings-mode-visual vis-${preset.id}`,
+              style: preset.id === "solid-background" ? { "--solid": solidColor } : undefined,
+              "aria-hidden": "true",
+            }),
+          })),
+        })
       ),
-      react.createElement(
-        "div",
-        { className: "settings-subsection-label" },
-        getSettingsText("settingsUi.background.layout", "Layout & Motion")
-      ),
-      react.createElement(OptionList, {
-        items: [
-          {
-            desc: I18n.t("settings.alignment.label"),
-            key: "alignment",
-            info: I18n.t("settings.alignment.desc"),
-            type: ConfigSelection,
-            disabled: isFadActive,
-            options: {
-              left: I18n.t("settings.alignment.options.left"),
-              center: I18n.t("settings.alignment.options.center"),
-              right: I18n.t("settings.alignment.options.right"),
-            },
-          },
-          {
-            desc: I18n.t("settings.noise.label"),
-            key: "noise",
-            info: I18n.t("settings.noise.desc"),
-            type: ConfigSlider,
-            disabled: isFadActive,
-          },
-        ],
-        onChange: handleVisualChange,
-      }),
       modeSpecificItems.length > 0 &&
         react.createElement(
-          react.Fragment,
-          null,
+          "div",
+          { className: "settings-group" },
           react.createElement(
             "div",
-            { className: "settings-subsection-label" },
+            { className: "settings-group-title" },
             getSettingsText("settingsUi.background.finetune", "Background Details")
           ),
           react.createElement(OptionList, {
             items: modeSpecificItems,
-            onChange: handleVisualChange,
+            onChange: handleBackgroundVisualChange,
           })
-        )
+        ),
+      react.createElement(
+        "div",
+        { className: "settings-group" },
+        react.createElement(
+          "div",
+          { className: "settings-group-title" },
+          getSettingsText("settingsUi.background.layout", "Layout & Motion")
+        ),
+        react.createElement(OptionList, {
+          items: buildBackgroundLayoutItems(),
+          onChange: handleBackgroundVisualChange,
+        })
+      )
     );
   }, [isFadActive]);
 
@@ -9676,212 +11487,6 @@ const ConfigModal = ({
     window.dispatchEvent(
       new CustomEvent("ivLyrics", {
         detail: { type: "config", name, value },
-      })
-    );
-  };
-
-  const toggleNavigationGroup = react.useCallback((groupId) => {
-    setExpandedGroupIds((prevGroupIds) =>
-      prevGroupIds.includes(groupId)
-        ? prevGroupIds.filter((id) => id !== groupId)
-        : [...prevGroupIds, groupId]
-    );
-  }, []);
-
-  const renderSidebarNavigation = () => {
-    const renderSectionNodes = (nodes) =>
-      nodes.map((item) => {
-        const isItemActive =
-          activeTab === item.tabId && activeNavItemId === item.settingKey;
-        const hasChildren = item.children.length > 0;
-        const containsActiveItem = settingsNavigationNodeContains(
-          item,
-          activeNavItemId
-        );
-
-        return react.createElement(
-          "div",
-          {
-            key: `${item.tabId}:${item.settingKey}`,
-            className: `settings-nav-tree-node${
-              containsActiveItem ? " has-active-path" : ""
-            }`,
-            role: "treeitem",
-            "aria-level": item.depth + 1,
-            ...(hasChildren ? { "aria-expanded": true } : {}),
-            "data-nav-depth": item.depth,
-            "data-setting-key": item.settingKey,
-          },
-          react.createElement(
-            "button",
-            {
-              className: `settings-nav-subitem${
-                hasChildren ? " has-children" : ""
-              }${containsActiveItem && !isItemActive ? " in-active-path" : ""}${
-                isItemActive ? " active" : ""
-              }`,
-              type: "button",
-              "aria-current": isItemActive ? "location" : undefined,
-              "aria-label": item.breadcrumb || item.label,
-              onClick: () =>
-                navigateToDestination(
-                  item.tabId,
-                  item.settingKey,
-                  resolveNavItemId(item.tabId, item.settingKey)
-                ),
-              title: [item.breadcrumb, item.description].filter(Boolean).join(" — "),
-            },
-            react.createElement(
-              "span",
-              { className: "settings-nav-subitem-label" },
-              item.label
-            )
-          ),
-          hasChildren &&
-            react.createElement(
-              "div",
-              {
-                className: "settings-nav-tree-children",
-                role: "group",
-                "aria-label": item.label,
-              },
-              renderSectionNodes(item.children)
-            )
-        );
-      });
-
-    const renderSidebarTab = (tab) => {
-      const sectionItems = sidebarSectionsByTab[tab.id] || [];
-      // Section items are discovered from each tab's DOM after that tab is
-      // rendered. Keep non-standalone tabs as groups before discovery so their
-      // disclosure indicator is present on the initial sidebar render too.
-      const hasSubmenu = !tab.standalone;
-      const isExpanded = expandedGroupIds.includes(tab.id);
-      const isTabActive = activeTab === tab.id;
-      const submenuId = `${APP_NAME}-settings-nav-${tab.id}`;
-      const navIcon = react.createElement(SettingsOutlineIcon, {
-        name: tab.icon || tab.id,
-        className: "settings-nav-icon",
-        size: 16,
-      });
-
-      if (!hasSubmenu) {
-        return react.createElement(
-          "button",
-          {
-            key: tab.id,
-            className: `settings-nav-card ${isTabActive ? "active" : ""}`,
-            type: "button",
-            "aria-current": isTabActive ? "page" : undefined,
-            onClick: () =>
-              navigateToDestination(tab.id, null, resolveNavItemId(tab.id)),
-          },
-          navIcon,
-          react.createElement(
-            "strong",
-            { className: "settings-nav-card-title" },
-            tab.label
-          ),
-          react.createElement(
-            "span",
-            { className: "settings-nav-card-badge", "aria-hidden": "true" },
-            tab.badge || ""
-          )
-        );
-      }
-
-      return react.createElement(
-        "div",
-        {
-          key: tab.id,
-          className: "settings-nav-group",
-        },
-        react.createElement(
-          "button",
-          {
-            className: `settings-nav-group-toggle ${
-              isExpanded ? "expanded" : ""
-            } ${isTabActive ? "active" : ""}`,
-            type: "button",
-            onClick: () => {
-              if (activeTab !== tab.id) {
-                navigateToDestination(tab.id, null, resolveNavItemId(tab.id));
-                setExpandedGroupIds([tab.id]);
-                return;
-              }
-
-              toggleNavigationGroup(tab.id);
-            },
-            "aria-expanded": isExpanded,
-            "aria-controls": isExpanded ? submenuId : undefined,
-          },
-          navIcon,
-          react.createElement(
-            "span",
-            { className: "settings-nav-group-title" },
-            tab.label
-          ),
-          react.createElement(
-            "span",
-            { className: "settings-nav-group-indicator", "aria-hidden": "true" },
-            react.createElement(
-              "svg",
-              {
-                viewBox: "0 0 16 16",
-                fill: "none",
-                stroke: "currentColor",
-                strokeWidth: 1.5,
-                strokeLinecap: "round",
-                strokeLinejoin: "round",
-              },
-              react.createElement("path", {
-                d: isExpanded ? "M4 6l4 4 4-4" : "M6 4l4 4-4 4",
-              })
-            )
-          )
-        ),
-        isExpanded &&
-          react.createElement(
-            "div",
-            {
-              id: submenuId,
-              className: "settings-nav-group-items",
-              role: "tree",
-              "aria-label": tab.label,
-            },
-            renderSectionNodes(buildSettingsNavigationTree(sectionItems))
-          )
-      );
-    };
-
-    return react.createElement(
-      "div",
-      { className: "settings-sidebar-nav", role: "navigation" },
-      sidebarGroups.map((group) => {
-        const groupTabs = sidebarTabs.filter((tab) => tab.group === group.id);
-        if (groupTabs.length === 0) return null;
-        const labelId = `${APP_NAME}-settings-nav-category-${group.id}`;
-        return react.createElement(
-          "section",
-          {
-            key: group.id,
-            className: "settings-nav-category",
-            "aria-labelledby": labelId,
-          },
-          react.createElement(
-            "div",
-            {
-              id: labelId,
-              className: "settings-nav-category-label",
-            },
-            group.label
-          ),
-          react.createElement(
-            "div",
-            { className: "settings-nav-category-items" },
-            groupTabs.map(renderSidebarTab)
-          )
-        );
       })
     );
   };
@@ -9955,18 +11560,20 @@ const ConfigModal = ({
   };
 
   const renderGeneralTab = () =>
-react.createElement(
-          "div",
-          {
-            className: `tab-content ${activeTab === "general" ? "active" : ""}`,
-            "data-tab-id": "general",
-          },
-        // 언어 설정 섹션
-        react.createElement(SettingsSectionTitle, {
+    react.createElement(
+      "div",
+      {
+        className: `tab-content ${activeTab === "general" ? "active" : ""}`,
+        "data-tab-id": "general",
+      },
+      // 언어 설정 섹션
+      react.createElement(
+        SettingsSection,
+        {
+          sectionKey: "language",
           title: I18n.t("sections.language"),
           subtitle: I18n.t("settings.language.desc"),
-          sectionKey: "language",
-        }),
+        },
         react.createElement(OptionList, {
           items: [
             {
@@ -9974,69 +11581,86 @@ react.createElement(
               key: "language",
               info: I18n.t("settings.language.desc"),
               type: ConfigSelection,
+              presentation: "select",
               options: Object.fromEntries(
                 I18n.getAvailableLanguages().map(language => [language.code, language.name])
               ),
+              onChange: (name, value) => {
+                CONFIG.visual[name] = value;
+                StorageManager.saveConfig(name, value);
+                // I18n 시스템에도 언어 변경 알림
+                if (window.I18n && window.I18n.setLanguage) {
+                  window.I18n.setLanguage(value);
+                }
+                queueReloadIntoIvLyrics({
+                  reopenSettings: true,
+                  initialTab: "general",
+                });
+              },
             },
-          ],
-          onChange: (name, value) => {
-            CONFIG.visual[name] = value;
-            StorageManager.saveConfig(name, value);
-            // I18n 시스템에도 언어 변경 알림
-            if (window.I18n && window.I18n.setLanguage) {
-              window.I18n.setLanguage(value);
-            }
-            queueReloadIntoIvLyrics({
-              reopenSettings: true,
-              initialTab: "general",
-            });
-          },
-        }),
-        react.createElement(OptionList, {
-          items: [
             {
               desc: I18n.t("settings.translationTargetLanguage.label"),
               key: "translate:target-language",
               info: I18n.t("settings.translationTargetLanguage.desc"),
               type: ConfigSelection,
+              presentation: "select",
               options: {
                 auto: I18n.t("settings.translationTargetLanguage.options.auto"),
                 ...Object.fromEntries(
                   I18n.getAvailableLanguages().map(language => [language.code, language.name])
                 ),
               },
+              onChange: (name, value) => {
+                CONFIG.visual[name] = value;
+                StorageManager.saveConfig(name, value);
+                queueReloadIntoIvLyrics({
+                  reopenSettings: true,
+                  initialTab: "general",
+                });
+              },
             },
           ],
-          onChange: (name, value) => {
-            CONFIG.visual[name] = value;
-            StorageManager.saveConfig(name, value);
-            queueReloadIntoIvLyrics({
-              reopenSettings: true,
-              initialTab: "general",
-            });
-          },
-        }),
-        // 데스크탑 오버레이 섹션
-        react.createElement(SettingsSectionTitle, {
+        })
+      ),
+      // 데스크탑 오버레이 섹션
+      react.createElement(
+        SettingsSection,
+        {
+          sectionKey: "overlay-enabled",
           title: I18n.t("sections.desktopOverlay"),
           subtitle: I18n.t("sections.desktopOverlaySubtitle"),
-          sectionKey: "overlay-enabled",
-        }),
+        },
         react.createElement(OverlaySettings)
-      );
+      )
+    );
 
   const renderPerformanceTab = () =>
-react.createElement(
-        "div",
+    react.createElement(
+      "div",
+      {
+        className: `tab-content ${activeTab === "performance" ? "active" : ""}`,
+        "data-tab-id": "performance",
+      },
+      react.createElement(SettingsLoadMeter, {
+        costKeys: [
+          "karaoke-bounce",
+          "karaoke-line-transition",
+          "karaoke-text-effects",
+          "fade-blur",
+          "highlight-mode",
+          "text-shadow-enabled",
+          "blur-gradient-background",
+          "video-background",
+        ],
+        frameKey: "performance-frame-rate",
+      }),
+      react.createElement(
+        SettingsSection,
         {
-          className: `tab-content ${activeTab === "performance" ? "active" : ""}`,
-          "data-tab-id": "performance",
-        },
-        react.createElement(SettingsSectionTitle, {
+          sectionKey: "performance-rendering",
           title: I18n.t("settingsAdvanced.performance.rendering.title"),
           subtitle: I18n.t("settingsAdvanced.performance.rendering.subtitle"),
-          sectionKey: "performance-rendering",
-        }),
+        },
         react.createElement(OptionList, {
           items: [
             {
@@ -10044,6 +11668,7 @@ react.createElement(
               info: I18n.t("settingsAdvanced.performance.frameRate.desc"),
               key: "performance-frame-rate",
               type: ConfigSliderRange,
+              presentation: "fps",
               defaultValue: Number(CONFIG.visual["performance-frame-rate"] ?? 60),
               min: 10,
               max: 240,
@@ -10062,12 +11687,14 @@ react.createElement(
               info: I18n.t("settingsAdvanced.karaokeMode.bounce.desc"),
               key: "karaoke-bounce",
               type: ConfigSlider,
+              cost: true,
             },
             {
               desc: I18n.t("settingsAdvanced.karaokeMode.lineTransition.label"),
               info: I18n.t("settingsAdvanced.karaokeMode.lineTransition.desc"),
               key: "karaoke-line-transition",
               type: ConfigSlider,
+              cost: true,
             },
             {
               desc: I18n.t("settingsAdvanced.performance.textEffects.label"),
@@ -10075,15 +11702,19 @@ react.createElement(
               key: "karaoke-text-effects",
               defaultValue: CONFIG.visual["karaoke-text-effects"] ?? true,
               type: ConfigSlider,
+              cost: true,
             },
           ],
           onChange: handlePerformanceSettingChange,
-        }),
-        react.createElement(SettingsSectionTitle, {
+        })
+      ),
+      react.createElement(
+        SettingsSection,
+        {
+          sectionKey: "performance-visual-cost",
           title: I18n.t("settingsAdvanced.performance.visualCost.title"),
           subtitle: I18n.t("settingsAdvanced.performance.visualCost.subtitle"),
-          sectionKey: "performance-visual-cost",
-        }),
+        },
         react.createElement(OptionList, {
           items: [
             {
@@ -10091,39 +11722,47 @@ react.createElement(
               key: "fade-blur",
               info: I18n.t("settingsAdvanced.syncMode.fadeoutBlur.desc"),
               type: ConfigSlider,
+              cost: true,
             },
             {
               desc: I18n.t("settingsAdvanced.syncMode.highlightMode.label"),
               key: "highlight-mode",
               info: I18n.t("settingsAdvanced.syncMode.highlightMode.desc"),
               type: ConfigSlider,
+              cost: true,
             },
             {
               desc: I18n.t("settingsAdvanced.textShadow.enabled.label"),
               info: I18n.t("settingsAdvanced.textShadow.enabled.desc"),
               key: "text-shadow-enabled",
               type: ConfigSlider,
+              cost: true,
             },
             {
               desc: I18n.t("settings.blurGradientBackground.label"),
               key: "blur-gradient-background",
               info: I18n.t("settings.blurGradientBackground.desc"),
               type: ConfigSlider,
+              cost: true,
             },
             {
               desc: I18n.t("settings.videoBackground.label"),
               key: "video-background",
               info: I18n.t("settings.videoBackground.desc"),
               type: ConfigSlider,
+              cost: true,
             },
           ],
           onChange: handlePerformanceSettingChange,
-        }),
-        react.createElement(SettingsSectionTitle, {
+        })
+      ),
+      react.createElement(
+        SettingsSection,
+        {
+          sectionKey: "performance-background-work",
           title: I18n.t("settingsAdvanced.performance.backgroundWork.title"),
           subtitle: I18n.t("settingsAdvanced.performance.backgroundWork.subtitle"),
-          sectionKey: "performance-background-work",
-        }),
+        },
         react.createElement(OptionList, {
           items: [
             {
@@ -10147,276 +11786,299 @@ react.createElement(
           ],
           onChange: handlePerformanceSettingChange,
         })
-      );
+      )
+    );
 
   const renderLyricsTab = () => {
     const renderLyricsPlaybackSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.playback.title"),
-            subtitle: I18n.t("settingsAdvanced.playback.subtitle"),
-            sectionKey: "playback",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: I18n.t("settingsAdvanced.playback.replaceButton.label"),
-                key: "playbar-button",
-                info: I18n.t("settingsAdvanced.playback.replaceButton.info") || "Replaces Spotify's default lyrics button with ivLyrics",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.playback.replaceFullscreenButton.label"),
-                key: "fullscreen-button",
-                info: I18n.t("settingsAdvanced.playback.replaceFullscreenButton.info") || "Replaces Spotify's default fullscreen button with ivLyrics fullscreen",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.playback.quickSyncControls.label"),
-                key: "quick-sync-controls-enabled",
-                info: I18n.t("settingsAdvanced.playback.quickSyncControls.info"),
-                type: ConfigSlider,
-                defaultValue: CONFIG.visual["quick-sync-controls-enabled"] ?? true,
-              },
-            ],
-            onChange: handleVisualConfigChange,
-          }),
+      react.createElement(
+        SettingsSection,
+        {
+          key: "playback",
+          sectionKey: "playback",
+          title: I18n.t("settingsAdvanced.playback.title"),
+          subtitle: I18n.t("settingsAdvanced.playback.subtitle"),
+        },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settingsAdvanced.playback.replaceButton.label"),
+              key: "playbar-button",
+              info: I18n.t("settingsAdvanced.playback.replaceButton.info") || "Replaces Spotify's default lyrics button with ivLyrics",
+              type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.playback.replaceFullscreenButton.label"),
+              key: "fullscreen-button",
+              info: I18n.t("settingsAdvanced.playback.replaceFullscreenButton.info") || "Replaces Spotify's default fullscreen button with ivLyrics fullscreen",
+              type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.playback.quickSyncControls.label"),
+              key: "quick-sync-controls-enabled",
+              info: I18n.t("settingsAdvanced.playback.quickSyncControls.info"),
+              type: ConfigSlider,
+              defaultValue: CONFIG.visual["quick-sync-controls-enabled"] ?? true,
+            },
+          ],
+          onChange: handleVisualConfigChange,
+        })
+      ),
+    ];
+    const syncCreatorHotkeyRows = [
+      {
+        id: "char-forward",
+        label: getSettingsText("syncCreator.shortcuts.charForward", "Advance one character"),
+        items: [
+          { key: "sync-creator-char-forward-key", defaultValue: CONFIG.visual["sync-creator-char-forward-key"] ?? "right" },
+          { key: "sync-creator-char-forward-alt-key", defaultValue: CONFIG.visual["sync-creator-char-forward-alt-key"] ?? "" },
+        ],
+      },
+      {
+        id: "char-back",
+        label: getSettingsText("syncCreator.shortcuts.charBack", "Revert one character"),
+        items: [
+          { key: "sync-creator-char-back-key", defaultValue: CONFIG.visual["sync-creator-char-back-key"] ?? "left" },
+          { key: "sync-creator-char-back-alt-key", defaultValue: CONFIG.visual["sync-creator-char-back-alt-key"] ?? "" },
+        ],
+      },
+      {
+        id: "word-forward",
+        label: getSettingsText("syncCreator.shortcuts.wordForward", "Advance one word"),
+        items: [
+          { key: "sync-creator-word-forward-key", defaultValue: CONFIG.visual["sync-creator-word-forward-key"] ?? "." },
+          { key: "sync-creator-word-forward-alt-key", defaultValue: CONFIG.visual["sync-creator-word-forward-alt-key"] ?? "" },
+        ],
+      },
+      {
+        id: "word-back",
+        label: getSettingsText("syncCreator.shortcuts.wordBack", "Revert one word"),
+        items: [
+          { key: "sync-creator-word-back-key", defaultValue: CONFIG.visual["sync-creator-word-back-key"] ?? "," },
+          { key: "sync-creator-word-back-alt-key", defaultValue: CONFIG.visual["sync-creator-word-back-alt-key"] ?? "" },
+        ],
+      },
+      {
+        id: "syllable",
+        label: getSettingsText("syncCreator.shortcuts.syllable", "Advance one syllable"),
+        items: [
+          { key: "sync-creator-syllable-key", defaultValue: CONFIG.visual["sync-creator-syllable-key"] ?? ";" },
+          { key: "sync-creator-syllable-alt-key", defaultValue: CONFIG.visual["sync-creator-syllable-alt-key"] ?? "" },
+        ],
+      },
+      {
+        id: "drag",
+        label: getSettingsText("syncCreator.shortcuts.drag", "Hold to drag"),
+        items: [
+          { key: "sync-creator-drag-key", defaultValue: CONFIG.visual["sync-creator-drag-key"] ?? "/" },
+          { key: "sync-creator-drag-alt-key", defaultValue: CONFIG.visual["sync-creator-drag-alt-key"] ?? "numpaddivide" },
+        ],
+      },
+    ];
+    const syncCreatorHotkeyColumns = [
+      getSettingsText("settings.shortcuts.primary", "Primary"),
+      getSettingsText("settings.shortcuts.secondary", "Secondary"),
     ];
     const renderLyricsSyncControlsSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: getSettingsText("settings.syncCreatorSettings.title", "Sync Creator Settings"),
-            subtitle: getSettingsText("settings.syncCreatorSettings.subtitle", "Configure Sync Creator keyboard behavior and recording shortcuts."),
-            sectionKey: "sync-creator-settings",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: getSettingsText("settings.syncCreatorSettings.autoBoundaryChars.label", "Auto-handle spaces and punctuation"),
-                info: getSettingsText("settings.syncCreatorSettings.autoBoundaryChars.desc", "When using keyboard sync, automatically include nearby spaces and punctuation. Turn this off to time those characters manually."),
-                key: "sync-creator-auto-boundary-chars",
-                type: ConfigSlider,
-                defaultValue: CONFIG.visual["sync-creator-auto-boundary-chars"] ?? true,
-              },
-              {
-                desc: getSettingsText("settings.syncCreatorSettings.fillCurve.label", "Karaoke fill correction curve"),
-                info: getSettingsText("settings.syncCreatorSettings.fillCurve.desc", "Drag the three middle points to adjust how word and character fill progresses during karaoke playback. The default diagonal line keeps the current timing."),
-                key: "karaoke-fill-correction-curve",
-                type: ConfigKaraokeFillCurveEditor,
-                defaultValue: CONFIG.visual["karaoke-fill-correction-curve"],
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.charForward", "Advance one character")} (${getSettingsText("settings.shortcuts.primary", "Primary")})`,
-                key: "sync-creator-char-forward-key",
+      react.createElement(
+        SettingsSection,
+        {
+          key: "sync-creator-settings",
+          sectionKey: "sync-creator-settings",
+          title: getSettingsText("settings.syncCreatorSettings.title", "Sync Creator Settings"),
+          subtitle: getSettingsText("settings.syncCreatorSettings.subtitle", "Configure Sync Creator keyboard behavior and recording shortcuts."),
+        },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: getSettingsText("settings.syncCreatorSettings.autoBoundaryChars.label", "Auto-handle spaces and punctuation"),
+              info: getSettingsText("settings.syncCreatorSettings.autoBoundaryChars.desc", "When using keyboard sync, automatically include nearby spaces and punctuation. Turn this off to time those characters manually."),
+              key: "sync-creator-auto-boundary-chars",
+              type: ConfigSlider,
+              defaultValue: CONFIG.visual["sync-creator-auto-boundary-chars"] ?? true,
+            },
+            {
+              desc: getSettingsText("settings.syncCreatorSettings.fillCurve.label", "Karaoke fill correction curve"),
+              info: getSettingsText("settings.syncCreatorSettings.fillCurve.desc", "Drag the three middle points to adjust how word and character fill progresses during karaoke playback. The default diagonal line keeps the current timing."),
+              key: "karaoke-fill-correction-curve",
+              type: ConfigKaraokeFillCurveEditor,
+              defaultValue: CONFIG.visual["karaoke-fill-correction-curve"],
+            },
+          ],
+          onChange: handleVisualConfigChange,
+        }),
+        react.createElement(SettingsHotkeyTable, {
+          rows: syncCreatorHotkeyRows,
+          columns: syncCreatorHotkeyColumns,
+          onChange: handleVisualConfigChange,
+          settingsRegistryItems: syncCreatorHotkeyRows.flatMap((row) =>
+            row.items.map((item, index) => ({
+              item: {
+                ...item,
+                desc: `${row.label} (${syncCreatorHotkeyColumns[index]})`,
                 type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-char-forward-key"] ?? "right",
               },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.charForward", "Advance one character")} (${getSettingsText("settings.shortcuts.secondary", "Secondary")})`,
-                key: "sync-creator-char-forward-alt-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-char-forward-alt-key"] ?? "",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.charBack", "Revert one character")} (${getSettingsText("settings.shortcuts.primary", "Primary")})`,
-                key: "sync-creator-char-back-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-char-back-key"] ?? "left",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.charBack", "Revert one character")} (${getSettingsText("settings.shortcuts.secondary", "Secondary")})`,
-                key: "sync-creator-char-back-alt-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-char-back-alt-key"] ?? "",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.wordForward", "Advance one word")} (${getSettingsText("settings.shortcuts.primary", "Primary")})`,
-                key: "sync-creator-word-forward-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-word-forward-key"] ?? ".",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.wordForward", "Advance one word")} (${getSettingsText("settings.shortcuts.secondary", "Secondary")})`,
-                key: "sync-creator-word-forward-alt-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-word-forward-alt-key"] ?? "",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.wordBack", "Revert one word")} (${getSettingsText("settings.shortcuts.primary", "Primary")})`,
-                key: "sync-creator-word-back-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-word-back-key"] ?? ",",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.wordBack", "Revert one word")} (${getSettingsText("settings.shortcuts.secondary", "Secondary")})`,
-                key: "sync-creator-word-back-alt-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-word-back-alt-key"] ?? "",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.syllable", "Advance one syllable")} (${getSettingsText("settings.shortcuts.primary", "Primary")})`,
-                key: "sync-creator-syllable-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-syllable-key"] ?? ";",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.syllable", "Advance one syllable")} (${getSettingsText("settings.shortcuts.secondary", "Secondary")})`,
-                key: "sync-creator-syllable-alt-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-syllable-alt-key"] ?? "",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.drag", "Hold to drag")} (${getSettingsText("settings.shortcuts.primary", "Primary")})`,
-                key: "sync-creator-drag-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-drag-key"] ?? "/",
-              },
-              {
-                desc: `${getSettingsText("syncCreator.shortcuts.drag", "Hold to drag")} (${getSettingsText("settings.shortcuts.secondary", "Secondary")})`,
-                key: "sync-creator-drag-alt-key",
-                type: ConfigHotkey,
-                defaultValue: CONFIG.visual["sync-creator-drag-alt-key"] ?? "numpaddivide",
-              },
-            ],
-            onChange: handleVisualConfigChange,
-          }),
+              onChange: handleVisualConfigChange,
+            }))
+          ),
+        })
+      ),
     ];
     const renderLyricsLanguageSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.karaokeMode.title"),
-            subtitle: I18n.t("settingsAdvanced.karaokeMode.subtitle"),
-            sectionKey: "karaoke-mode",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: I18n.t("settingsAdvanced.karaokeMode.enabled.label"),
-                info: I18n.t("settingsAdvanced.karaokeMode.enabled.desc"),
-                key: "karaoke-mode-enabled",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.karaokeMode.bounce.label"),
-                info: I18n.t("settingsAdvanced.karaokeMode.bounce.desc"),
-                key: "karaoke-bounce",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.karaokeMode.lineTransition.label"),
-                info: I18n.t("settingsAdvanced.karaokeMode.lineTransition.desc"),
-                key: "karaoke-line-transition",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.karaokeMode.spotifyFakeKaraoke.label"),
-                info: I18n.t("settingsAdvanced.karaokeMode.spotifyFakeKaraoke.desc"),
-                key: "spotify-fake-karaoke-enabled",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.karaokeMode.pseudoKaraokeRenderAdvance.label"),
-                info: I18n.t("settingsAdvanced.karaokeMode.pseudoKaraokeRenderAdvance.desc"),
-                key: "pseudo-karaoke-render-advance",
-                type: ConfigSliderRange,
-                min: 0,
-                max: 500,
-                step: 10,
-                unit: "ms",
-              },
-            ],
-            onChange: handleVisualConfigChange,
-          }),
+      react.createElement(
+        SettingsSection,
+        {
+          key: "karaoke-mode",
+          sectionKey: "karaoke-mode",
+          title: I18n.t("settingsAdvanced.karaokeMode.title"),
+          subtitle: I18n.t("settingsAdvanced.karaokeMode.subtitle"),
+        },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settingsAdvanced.karaokeMode.enabled.label"),
+              info: I18n.t("settingsAdvanced.karaokeMode.enabled.desc"),
+              key: "karaoke-mode-enabled",
+              type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.karaokeMode.bounce.label"),
+              info: I18n.t("settingsAdvanced.karaokeMode.bounce.desc"),
+              key: "karaoke-bounce",
+              type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.karaokeMode.lineTransition.label"),
+              info: I18n.t("settingsAdvanced.karaokeMode.lineTransition.desc"),
+              key: "karaoke-line-transition",
+              type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.karaokeMode.spotifyFakeKaraoke.label"),
+              info: I18n.t("settingsAdvanced.karaokeMode.spotifyFakeKaraoke.desc"),
+              key: "spotify-fake-karaoke-enabled",
+              type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.karaokeMode.pseudoKaraokeRenderAdvance.label"),
+              info: I18n.t("settingsAdvanced.karaokeMode.pseudoKaraokeRenderAdvance.desc"),
+              key: "pseudo-karaoke-render-advance",
+              type: ConfigSliderRange,
+              min: 0,
+              max: 500,
+              step: 10,
+              unit: "ms",
+              when: () => CONFIG.visual["spotify-fake-karaoke-enabled"] === true,
+            },
+          ],
+          onChange: handleVisualConfigChange,
+        })
+      ),
     ];
     const renderLyricsProviderPrioritySection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.prefetch.title"),
-            subtitle: I18n.t("settingsAdvanced.prefetch.subtitle"),
-            sectionKey: "prefetch",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: I18n.t("settingsAdvanced.prefetch.enabled.label"),
-                info: I18n.t("settingsAdvanced.prefetch.enabled.desc"),
-                key: "prefetch-enabled",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.prefetch.videoEnabled.label"),
-                info: I18n.t("settingsAdvanced.prefetch.videoEnabled.desc"),
-                key: "prefetch-video-enabled",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.prefetch.wordDetailsEnabled.label") || "Word details",
-                info: I18n.t("settingsAdvanced.prefetch.wordDetailsEnabled.desc") || "Preload per-word readings and translations for word-level karaoke",
-                key: "prefetch-word-details-enabled",
-                type: ConfigSlider,
-              },
-            ],
-            onChange: (name, value) => {
-              CONFIG.visual[name] = value;
-              StorageManager.saveConfig(name, value);
+      react.createElement(
+        SettingsSection,
+        {
+          key: "prefetch",
+          sectionKey: "prefetch",
+          title: I18n.t("settingsAdvanced.prefetch.title"),
+          subtitle: I18n.t("settingsAdvanced.prefetch.subtitle"),
+        },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settingsAdvanced.prefetch.enabled.label"),
+              info: I18n.t("settingsAdvanced.prefetch.enabled.desc"),
+              key: "prefetch-enabled",
+              type: ConfigSlider,
             },
-          }),
+            {
+              desc: I18n.t("settingsAdvanced.prefetch.videoEnabled.label"),
+              info: I18n.t("settingsAdvanced.prefetch.videoEnabled.desc"),
+              key: "prefetch-video-enabled",
+              type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.prefetch.wordDetailsEnabled.label") || "Word details",
+              info: I18n.t("settingsAdvanced.prefetch.wordDetailsEnabled.desc") || "Preload per-word readings and translations for word-level karaoke",
+              key: "prefetch-word-details-enabled",
+              type: ConfigSlider,
+            },
+          ],
+          onChange: (name, value) => {
+            CONFIG.visual[name] = value;
+            StorageManager.saveConfig(name, value);
+          },
+        })
+      ),
     ];
     const renderLyricsCacheSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.cacheManagement.title"),
-            subtitle: I18n.t("settingsAdvanced.cacheManagement.subtitle"),
-            sectionKey: "cache-management",
-          }),
-          // 로컬 캐시 관리 (IndexedDB) - 메모리 캐시와 통합됨
-          react.createElement(LocalCacheManager),
+      react.createElement(
+        SettingsSection,
+        {
+          key: "cache-management",
+          sectionKey: "cache-management",
+          title: I18n.t("settingsAdvanced.cacheManagement.title"),
+          subtitle: I18n.t("settingsAdvanced.cacheManagement.subtitle"),
+        },
+        // 로컬 캐시 관리 (IndexedDB) - 메모리 캐시와 통합됨
+        react.createElement(LocalCacheManager)
+      ),
     ];
     const renderLyricsHelperSection = () => [
-          // 헬퍼 연동 섹션
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settings.lyricsHelper.sectionTitle") || "Helper Integration",
-            subtitle: I18n.t("settings.lyricsHelper.sectionSubtitle") || "Send lyrics to external helper applications",
-            sectionKey: "lyrics-helper",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: I18n.t("settings.lyricsHelper.label"),
-                info: I18n.t("settings.lyricsHelper.desc"),
-                key: "lyrics-helper-enabled",
-                type: LyricsHelperToggle,
-                disabled: isFadActive,
-              },
-              {
-                desc: "",
-                key: "lyrics-helper-info",
-                type: ConfigInfo,
-                message: I18n.t("settings.lyricsHelper.info") || "Helper app allows external applications to display synced lyrics",
-                buttonText: I18n.t("settings.lyricsHelper.download") || "Download Helper",
-                onButtonClick: () => {
-                  window.open("https://ivlis.kr/ivLyrics/extensions/#helper", "_blank");
-                },
-                when: () => !CONFIG.visual["lyrics-helper-enabled"],
-              },
-            ],
-            onChange: (name, value) => {
-              CONFIG.visual[name] = value;
-              StorageManager.saveConfig(name, value);
-              // lyricsHelperSender 활성/비활성
-              if (name === "lyrics-helper-enabled") {
-                if (window.lyricsHelperSender) {
-                  window.lyricsHelperSender.enabled = value;
-                }
-              }
+      // 헬퍼 연동 섹션
+      react.createElement(
+        SettingsSection,
+        {
+          key: "lyrics-helper",
+          sectionKey: "lyrics-helper",
+          title: I18n.t("settings.lyricsHelper.sectionTitle") || "Helper Integration",
+          subtitle: I18n.t("settings.lyricsHelper.sectionSubtitle") || "Send lyrics to external helper applications",
+        },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settings.lyricsHelper.label"),
+              info: I18n.t("settings.lyricsHelper.desc"),
+              key: "lyrics-helper-enabled",
+              type: LyricsHelperToggle,
+              disabled: isFadActive,
             },
-          })
+            {
+              desc: "",
+              key: "lyrics-helper-info",
+              type: ConfigInfo,
+              message: I18n.t("settings.lyricsHelper.info") || "Helper app allows external applications to display synced lyrics",
+              buttonText: I18n.t("settings.lyricsHelper.download") || "Download Helper",
+              onButtonClick: () => {
+                window.open("https://ivlis.kr/ivLyrics/extensions/#helper", "_blank");
+              },
+              when: () => !CONFIG.visual["lyrics-helper-enabled"],
+            },
+          ],
+          onChange: (name, value) => {
+            CONFIG.visual[name] = value;
+            StorageManager.saveConfig(name, value);
+            // lyricsHelperSender 활성/비활성
+            if (name === "lyrics-helper-enabled") {
+              if (window.lyricsHelperSender) {
+                window.lyricsHelperSender.enabled = value;
+              }
+            }
+          },
+        })
+      ),
     ];
 
     return react.createElement(
       "div",
-        {
-          className: `tab-content ${activeTab === "lyrics" ? "active" : ""}`,
-          "data-tab-id": "lyrics",
-        },
+      {
+        className: `tab-content ${activeTab === "lyrics" ? "active" : ""}`,
+        "data-tab-id": "lyrics",
+      },
       ...renderLyricsPlaybackSection(),
-      ...renderLyricsSyncControlsSection(),
       ...renderLyricsLanguageSection(),
+      ...renderLyricsSyncControlsSection(),
       ...renderLyricsProviderPrioritySection(),
       ...renderLyricsCacheSection(),
       ...renderLyricsHelperSection(),
@@ -10424,68 +12086,255 @@ react.createElement(
   };
 
   const renderLyricsProvidersTab = () =>
-react.createElement(
+    react.createElement(
+      "div",
+      {
+        className: `tab-content ${activeTab === "lyrics-providers" ? "active" : ""}`,
+        "data-tab-id": "lyrics-providers",
+      },
+      react.createElement(LyricsProvidersTab)
+    );
+
+  const handleCulturalSettingChange = (name, value) => {
+    CONFIG.visual[name] = value;
+    StorageManager.saveConfig(name, value);
+    if (name.endsWith("font-family")) loadGoogleFontFamily(value);
+    lyricContainerUpdate?.();
+    window.dispatchEvent(new CustomEvent("ivLyrics", {
+      detail: { type: "config", name, value },
+    }));
+  };
+
+  const renderCulturalAnnotationsSection = () => {
+    const vinylModeLabel = I18n.t("vinyl.mode") || "LP";
+    const columns = [
+      {
+        id: "normal",
+        label: getSettingsText("settingsUi.fullscreenViews.normal", "Normal mode"),
+        color: "var(--settings-layer-translation)",
+        items: [
+          {
+            desc: I18n.t("settings.culturalAnnotations.fontFamily.label"),
+            key: "cultural-annotations-font-family",
+            info: I18n.t("settings.culturalAnnotations.fontFamily.desc"),
+            type: ConfigFontSelector,
+            defaultValue: CONFIG.visual["cultural-annotations-font-family"] || "Pretendard Variable",
+          },
+          {
+            desc: I18n.t("settings.culturalAnnotations.fontSize.label"),
+            key: "cultural-annotations-font-size",
+            info: I18n.t("settings.culturalAnnotations.fontSize.desc"),
+            type: ConfigSliderRange,
+            min: 12,
+            max: 48,
+            step: 1,
+            unit: "px",
+          },
+          {
+            desc: I18n.t("settings.culturalAnnotations.fontWeight.label"),
+            key: "cultural-annotations-font-weight",
+            info: I18n.t("settings.culturalAnnotations.fontWeight.desc"),
+            type: ConfigFontWeightSlider,
+          },
+          {
+            desc: I18n.t("settings.culturalAnnotations.opacity.label"),
+            key: "cultural-annotations-opacity",
+            info: I18n.t("settings.culturalAnnotations.opacity.desc"),
+            type: ConfigSliderRange,
+            min: 20,
+            max: 100,
+            step: 1,
+            unit: "%",
+          },
+          ...createTextOutlineSettingItems("cultural-annotations"),
+        ],
+      },
+      {
+        id: "vinyl",
+        label: vinylModeLabel,
+        color: "var(--settings-layer-base)",
+        items: [
+          {
+            desc: `${vinylModeLabel} · ${I18n.t("settings.culturalAnnotations.fontFamily.label")}`,
+            key: "cultural-annotations-vinyl-font-family",
+            info: `${vinylModeLabel}: ${I18n.t("settings.culturalAnnotations.fontFamily.desc")}`,
+            type: ConfigFontSelector,
+            defaultValue: CONFIG.visual["cultural-annotations-vinyl-font-family"] || "Pretendard Variable",
+          },
+          {
+            desc: `${vinylModeLabel} · ${I18n.t("settings.culturalAnnotations.fontSize.label")}`,
+            key: "cultural-annotations-vinyl-font-size",
+            info: `${vinylModeLabel}: ${I18n.t("settings.culturalAnnotations.fontSize.desc")}`,
+            type: ConfigSliderRange,
+            min: 10,
+            max: 32,
+            step: 1,
+            unit: "px",
+          },
+          {
+            desc: `${vinylModeLabel} · ${I18n.t("settings.culturalAnnotations.fontWeight.label")}`,
+            key: "cultural-annotations-vinyl-font-weight",
+            info: `${vinylModeLabel}: ${I18n.t("settings.culturalAnnotations.fontWeight.desc")}`,
+            type: ConfigFontWeightSlider,
+          },
+          {
+            desc: `${vinylModeLabel} · ${I18n.t("settings.culturalAnnotations.opacity.label")}`,
+            key: "cultural-annotations-vinyl-opacity",
+            info: `${vinylModeLabel}: ${I18n.t("settings.culturalAnnotations.opacity.desc")}`,
+            type: ConfigSliderRange,
+            min: 20,
+            max: 100,
+            step: 1,
+            unit: "%",
+          },
+          ...createTextOutlineSettingItems("cultural-annotations-vinyl", {
+            labelPrefix: `${vinylModeLabel} · `,
+            infoPrefix: `${vinylModeLabel}: `,
+          }),
+        ],
+      },
+    ];
+    return react.createElement(
+      SettingsSection,
+      {
+        key: "cultural-annotations",
+        sectionKey: "cultural-annotations",
+        title: I18n.t("settings.culturalAnnotations.label"),
+        subtitle: I18n.t("settings.culturalAnnotations.desc"),
+      },
+      react.createElement(
         "div",
-        {
-          className: `tab-content ${activeTab === "lyrics-providers" ? "active" : ""}`,
-          "data-tab-id": "lyrics-providers",
-        },
-        react.createElement(
-          "div",
-          { "data-setting-key": "lyrics-providers" },
-          react.createElement(LyricsProvidersTab)
-        )
-      );
+        { className: "settings-group settings-matrix-group", "data-setting-key": "cultural-annotations-group" },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settings.culturalAnnotations.label"),
+              key: "cultural-annotations-enabled",
+              type: ConfigSlider,
+              defaultValue: CONFIG.visual["cultural-annotations-enabled"] ?? false,
+            },
+          ],
+          onChange: handleCulturalSettingChange,
+        }),
+        react.createElement(SettingsLayerMatrix, {
+          columns,
+          rows: [
+            { id: "font", label: I18n.t("settings.culturalAnnotations.fontFamily.label") },
+            { id: "size", label: I18n.t("settings.culturalAnnotations.fontSize.label") },
+            { id: "weight", label: I18n.t("settings.culturalAnnotations.fontWeight.label") },
+            { id: "opacity", label: I18n.t("settings.culturalAnnotations.opacity.label") },
+            { id: "outlineWidth", label: I18n.t("settingsAdvanced.textOutline.width.label") || "Text Outline Thickness" },
+            { id: "outlineColor", label: I18n.t("settingsAdvanced.textOutline.color.label") || "Text Outline Color" },
+          ],
+          onChange: handleCulturalSettingChange,
+          label: I18n.t("settings.culturalAnnotations.label"),
+          masterKey: "cultural-annotations-enabled",
+        })
+      )
+    );
+  };
 
   const renderAiProvidersTab = () =>
-react.createElement(
-        "div",
+    react.createElement(
+      "div",
+      {
+        className: `tab-content ${activeTab === "ai-providers" ? "active" : ""}`,
+        "data-tab-id": "ai-providers",
+      },
+      react.createElement(AIProvidersTab, null, renderCulturalAnnotationsSection()),
+      react.createElement(
+        "p",
+        { className: "settings-footnote" },
+        react.createElement(SettingsUiIcon, { name: "info", size: 15 }),
+        react.createElement("span", null, I18n.t("settingsUi.aiAutosave"))
+      )
+    );
+
+  const renderDebugTab = () =>
+    react.createElement(
+      "div",
+      {
+        className: `tab-content ${activeTab === "debug" ? "active" : ""}`,
+        "data-tab-id": "debug",
+      },
+      react.createElement(
+        SettingsSection,
         {
-          className: `tab-content ${activeTab === "ai-providers" ? "active" : ""}`,
-          "data-tab-id": "ai-providers",
+          sectionKey: "debug-overview",
+          title: I18n.t("settingsAdvanced.debugTab.title"),
+          subtitle: I18n.t("settingsAdvanced.debugTab.subtitle"),
+        },
+        react.createElement(DebugInfoPanel)
+      )
+    );
+
+  const renderNowPlayingTab = () => {
+    const panelLayer = (role, labelKey, fallbackLabel, fontKey, fontFallbackLabel, sizeKey, sizeFallback, sizeMin, sizeMax) => ({
+      id: role,
+      label: getSettingsText(labelKey, fallbackLabel),
+      color: `var(--settings-layer-${role})`,
+      items: [
+        {
+          desc: I18n.t(`settingsAdvanced.nowPlayingPanel.${fontKey}.label`) || fontFallbackLabel,
+          key: `panel-lyrics-${role}-font`,
+          info: I18n.t(`settingsAdvanced.nowPlayingPanel.${fontKey}.desc`) || "",
+          type: ConfigFontSelector,
+        },
+        {
+          desc: I18n.t(`settingsAdvanced.nowPlayingPanel.${sizeKey}.label`) || sizeFallback,
+          key: `panel-lyrics-${role}-size`,
+          info: I18n.t(`settingsAdvanced.nowPlayingPanel.${sizeKey}.desc`) || "",
+          type: ConfigSliderRange,
+          min: sizeMin,
+          max: sizeMax,
+          step: 1,
+          unit: "px",
+        },
+        ...createTextOutlineSettingItems(`panel-lyrics-${role}`, {
+          labelPrefix: `${I18n.t(`settingsAdvanced.nowPlayingPanel.${fontKey}.label`) || fontFallbackLabel} · `,
+        }),
+      ],
+    });
+    const panelColumns = [
+      {
+        id: "base",
+        label: getSettingsText("misc.default", "Default"),
+        color: "var(--settings-layer-base)",
+        items: [
+          {
+            desc: I18n.t("settingsAdvanced.nowPlayingPanel.fontFamily.label") || "Font Family",
+            key: "panel-lyrics-font-family",
+            info: I18n.t("settingsAdvanced.nowPlayingPanel.fontFamily.desc") || "Font for panel lyrics",
+            type: ConfigFontSelector,
+          },
+          {
+            desc: I18n.t("settingsAdvanced.nowPlayingPanel.fontScale.label") || "Overall Font Scale",
+            key: "panel-font-scale",
+            info: I18n.t("settingsAdvanced.nowPlayingPanel.fontScale.desc") || "Overall font scale for panel lyrics (50%-200%)",
+            type: ConfigSliderRange,
+            min: 50,
+            max: 200,
+            step: 5,
+            unit: "%",
+          },
+        ],
+      },
+      panelLayer("original", "lyricsCacheEditor.original", "Original", "originalFont", "Original Text Font", "originalSize", "Original Text Size", 10, 30),
+      panelLayer("phonetic", "menu.pronunciation", "Pronunciation", "phoneticFont", "Phonetic Text Font", "phoneticSize", "Phonetic Text Size", 8, 24),
+      panelLayer("translation", "translationMenu.translation", "Translation", "translationFont", "Translation Text Font", "translationSize", "Translation Text Size", 8, 24),
+    ];
+    const renderNowPlayingPanelSection = () => [
+      react.createElement(
+        SettingsSection,
+        {
+          key: "panel-lyrics-general",
+          sectionKey: "panel-lyrics-general",
+          title: I18n.t("settingsAdvanced.nowPlayingPanel.title") || "NowPlaying Panel Lyrics",
+          subtitle: I18n.t("settingsAdvanced.nowPlayingPanel.subtitle") || "Lyrics display settings for the Now Playing panel",
         },
         react.createElement(
           "div",
-          { "data-setting-key": "ai-providers" },
-          react.createElement("p", { className: "setting-description" }, I18n.t("settingsUi.aiAutosave")),
-          react.createElement(AIProvidersTab)
-        )
-      );
-
-  const renderDebugTab = () =>
-react.createElement(
-        "div",
-        {
-          className: `tab-content ${activeTab === "debug" ? "active" : ""}`,
-          "data-tab-id": "debug",
-        },
-        react.createElement(SettingsSectionTitle, {
-          title: I18n.t("settingsAdvanced.debugTab.title"),
-          subtitle: I18n.t("settingsAdvanced.debugTab.subtitle"),
-          sectionKey: "debug-overview",
-        }),
-        react.createElement(DebugInfoPanel)
-      );
-
-  const renderSearchTab = () =>
-react.createElement(
-          "div",
-          {
-            className: `tab-content ${activeTab === "search" ? "active" : ""}`,
-            "data-tab-id": "search",
-          },
-        renderSearchResults()
-      );
-
-  const renderNowPlayingTab = () => {
-    const renderNowPlayingPanelSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.nowPlayingPanel.title") || "NowPlaying Panel Lyrics",
-            subtitle: I18n.t("settingsAdvanced.nowPlayingPanel.subtitle") || "Lyrics display settings for the Now Playing panel",
-            sectionKey: "panel-lyrics-general",
-          }),
-          // 미리보기 컴포넌트
-          react.createElement(NowPlayingPanelPreview),
+          { className: "settings-group settings-matrix-group" },
           react.createElement(OptionList, {
             items: [
               {
@@ -10494,184 +12343,132 @@ react.createElement(
                 info: I18n.t("settingsAdvanced.nowPlayingPanel.enabled.desc") || "Display current lyrics in the Now Playing panel",
                 type: ConfigSlider,
               },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.fontFamily.label") || "Font Family",
-                key: "panel-lyrics-font-family",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.fontFamily.desc") || "Font for panel lyrics",
-                type: ConfigFontSelector,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.originalFont.label") || "Original Text Font",
-                key: "panel-lyrics-original-font",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.originalFont.desc") || "Font for original lyrics (empty = use default, comma-separated for multiple fonts)",
-                type: ConfigFontSelector,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.phoneticFont.label") || "Phonetic Text Font",
-                key: "panel-lyrics-phonetic-font",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.phoneticFont.desc") || "Font for phonetic text (empty = use default, comma-separated for multiple fonts)",
-                type: ConfigFontSelector,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.translationFont.label") || "Translation Text Font",
-                key: "panel-lyrics-translation-font",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.translationFont.desc") || "Font for translation text (empty = use default, comma-separated for multiple fonts)",
-                type: ConfigFontSelector,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.fontScale.label") || "Overall Font Scale",
-                key: "panel-font-scale",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.fontScale.desc") || "Overall font scale for panel lyrics (50%-200%)",
-                type: ConfigSliderRange,
-                min: 50,
-                max: 200,
-                step: 5,
-                unit: "%",
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.originalSize.label") || "Original Text Size",
-                key: "panel-lyrics-original-size",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.originalSize.desc") || "Font size for original lyrics (px)",
-                type: ConfigSliderRange,
-                min: 10,
-                max: 30,
-                step: 1,
-                unit: "px",
-              },
-              ...createTextOutlineSettingItems("panel-lyrics-original", {
-                labelPrefix: `${I18n.t("settingsAdvanced.nowPlayingPanel.originalFont.label") || "Original Text"} · `,
-              }),
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.phoneticSize.label") || "Phonetic Text Size",
-                key: "panel-lyrics-phonetic-size",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.phoneticSize.desc") || "Font size for phonetic text (px)",
-                type: ConfigSliderRange,
-                min: 8,
-                max: 24,
-                step: 1,
-                unit: "px",
-              },
-              ...createTextOutlineSettingItems("panel-lyrics-phonetic", {
-                labelPrefix: `${I18n.t("settingsAdvanced.nowPlayingPanel.phoneticFont.label") || "Phonetic Text"} · `,
-              }),
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.translationSize.label") || "Translation Text Size",
-                key: "panel-lyrics-translation-size",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.translationSize.desc") || "Font size for translation text (px)",
-                type: ConfigSliderRange,
-                min: 8,
-                max: 24,
-                step: 1,
-                unit: "px",
-              },
-              ...createTextOutlineSettingItems("panel-lyrics-translation", {
-                labelPrefix: `${I18n.t("settingsAdvanced.nowPlayingPanel.translationFont.label") || "Translation Text"} · `,
-              }),
             ],
             onChange: handleNowPlayingPanelChange,
           }),
+          react.createElement(SettingsLayerMatrix, {
+            columns: panelColumns,
+            rows: [
+              { id: "font", label: I18n.t("settingsAdvanced.originalStyle.fontFamily") },
+              { id: "size", label: I18n.t("settingsAdvanced.originalStyle.fontSize.label") },
+              { id: "outlineWidth", label: I18n.t("settingsAdvanced.textOutline.width.label") || "Text Outline Thickness" },
+              { id: "outlineColor", label: I18n.t("settingsAdvanced.textOutline.color.label") || "Text Outline Color" },
+            ],
+            onChange: handleNowPlayingPanelChange,
+            label: I18n.t("settingsAdvanced.nowPlayingPanel.title") || "NowPlaying Panel Lyrics",
+          })
+        )
+      ),
     ];
     const renderNowPlayingBackgroundSection = () => [
-          // 배경 설정 섹션
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.nowPlayingPanel.background.title") || "Background",
-            subtitle: I18n.t("settingsAdvanced.nowPlayingPanel.background.subtitle") || "Customize the panel background",
-            sectionKey: "panel-background",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.type.label") || "Background Type",
-                key: "panel-bg-type",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.background.type.desc") || "Choose background style",
-                type: ConfigSelection,
-                options: {
-                  "album": I18n.t("settingsAdvanced.nowPlayingPanel.background.type.album") || "Album Color",
-                  "gradient": I18n.t("settingsAdvanced.nowPlayingPanel.background.type.gradient") || "Custom Gradient",
-                  "custom": I18n.t("settingsAdvanced.nowPlayingPanel.background.type.custom") || "Solid Color",
-                  "transparent": I18n.t("settingsAdvanced.nowPlayingPanel.background.type.transparent") || "Transparent",
-                },
+      // 배경 설정 섹션
+      react.createElement(
+        SettingsSection,
+        {
+          key: "panel-background",
+          sectionKey: "panel-background",
+          title: I18n.t("settingsAdvanced.nowPlayingPanel.background.title") || "Background",
+          subtitle: I18n.t("settingsAdvanced.nowPlayingPanel.background.subtitle") || "Customize the panel background",
+        },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.type.label") || "Background Type",
+              key: "panel-bg-type",
+              info: I18n.t("settingsAdvanced.nowPlayingPanel.background.type.desc") || "Choose background style",
+              type: ConfigSelection,
+              options: {
+                "album": I18n.t("settingsAdvanced.nowPlayingPanel.background.type.album") || "Album Color",
+                "gradient": I18n.t("settingsAdvanced.nowPlayingPanel.background.type.gradient") || "Custom Gradient",
+                "custom": I18n.t("settingsAdvanced.nowPlayingPanel.background.type.custom") || "Solid Color",
+                "transparent": I18n.t("settingsAdvanced.nowPlayingPanel.background.type.transparent") || "Transparent",
               },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.color.label") || "Background Color",
-                key: "panel-bg-color",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.background.color.desc") || "Custom background color",
-                type: ConfigColorPicker,
-                when: () => CONFIG.visual["panel-bg-type"] === "custom",
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.gradient1.label") || "Gradient Color 1",
-                key: "panel-bg-gradient-1",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.background.gradient1.desc") || "First gradient color",
-                type: ConfigColorPicker,
-                when: () => CONFIG.visual["panel-bg-type"] === "gradient",
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.gradient2.label") || "Gradient Color 2",
-                key: "panel-bg-gradient-2",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.background.gradient2.desc") || "Second gradient color",
-                type: ConfigColorPicker,
-                when: () => CONFIG.visual["panel-bg-type"] === "gradient",
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.opacity.label") || "Background Opacity",
-                key: "panel-bg-opacity",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.background.opacity.desc") || "Background transparency (0-100%)",
-                type: ConfigSliderRange,
-                min: 0,
-                max: 100,
-                step: 5,
-                unit: "%",
-                when: () => CONFIG.visual["panel-bg-type"] !== "transparent",
-              },
-            ],
-            onChange: handleNowPlayingPanelChange,
-          }),
+            },
+            {
+              desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.color.label") || "Background Color",
+              key: "panel-bg-color",
+              info: I18n.t("settingsAdvanced.nowPlayingPanel.background.color.desc") || "Custom background color",
+              type: ConfigColorPicker,
+              when: () => CONFIG.visual["panel-bg-type"] === "custom",
+            },
+            {
+              desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.gradient1.label") || "Gradient Color 1",
+              key: "panel-bg-gradient-1",
+              info: I18n.t("settingsAdvanced.nowPlayingPanel.background.gradient1.desc") || "First gradient color",
+              type: ConfigColorPicker,
+              when: () => CONFIG.visual["panel-bg-type"] === "gradient",
+            },
+            {
+              desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.gradient2.label") || "Gradient Color 2",
+              key: "panel-bg-gradient-2",
+              info: I18n.t("settingsAdvanced.nowPlayingPanel.background.gradient2.desc") || "Second gradient color",
+              type: ConfigColorPicker,
+              when: () => CONFIG.visual["panel-bg-type"] === "gradient",
+            },
+            {
+              desc: I18n.t("settingsAdvanced.nowPlayingPanel.background.opacity.label") || "Background Opacity",
+              key: "panel-bg-opacity",
+              info: I18n.t("settingsAdvanced.nowPlayingPanel.background.opacity.desc") || "Background transparency (0-100%)",
+              type: ConfigSliderRange,
+              min: 0,
+              max: 100,
+              step: 5,
+              unit: "%",
+              when: () => CONFIG.visual["panel-bg-type"] !== "transparent",
+            },
+          ],
+          onChange: handleNowPlayingPanelChange,
+        })
+      ),
     ];
     const renderNowPlayingBorderSection = () => [
-          // Border 설정 섹션
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.nowPlayingPanel.border.title") || "Border",
-            subtitle: I18n.t("settingsAdvanced.nowPlayingPanel.border.subtitle") || "Customize the panel border",
-            sectionKey: "panel-border",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.border.enabled.label") || "Enable Border",
-                key: "panel-border-enabled",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.border.enabled.desc") || "Show border around the panel",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.border.color.label") || "Border Color",
-                key: "panel-border-color",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.border.color.desc") || "Border color",
-                type: ConfigColorPicker,
-                when: () => CONFIG.visual["panel-border-enabled"] === true,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.nowPlayingPanel.border.opacity.label") || "Border Opacity",
-                key: "panel-border-opacity",
-                info: I18n.t("settingsAdvanced.nowPlayingPanel.border.opacity.desc") || "Border transparency (0-100%)",
-                type: ConfigSliderRange,
-                min: 0,
-                max: 100,
-                step: 5,
-                unit: "%",
-                when: () => CONFIG.visual["panel-border-enabled"] === true,
-              },
-            ],
-            onChange: handleNowPlayingPanelChange,
-          })
+      // Border 설정 섹션
+      react.createElement(
+        SettingsSection,
+        {
+          key: "panel-border",
+          sectionKey: "panel-border",
+          title: I18n.t("settingsAdvanced.nowPlayingPanel.border.title") || "Border",
+          subtitle: I18n.t("settingsAdvanced.nowPlayingPanel.border.subtitle") || "Customize the panel border",
+        },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settingsAdvanced.nowPlayingPanel.border.enabled.label") || "Enable Border",
+              key: "panel-border-enabled",
+              info: I18n.t("settingsAdvanced.nowPlayingPanel.border.enabled.desc") || "Show border around the panel",
+              type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.nowPlayingPanel.border.color.label") || "Border Color",
+              key: "panel-border-color",
+              info: I18n.t("settingsAdvanced.nowPlayingPanel.border.color.desc") || "Border color",
+              type: ConfigColorPicker,
+              when: () => CONFIG.visual["panel-border-enabled"] === true,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.nowPlayingPanel.border.opacity.label") || "Border Opacity",
+              key: "panel-border-opacity",
+              info: I18n.t("settingsAdvanced.nowPlayingPanel.border.opacity.desc") || "Border transparency (0-100%)",
+              type: ConfigSliderRange,
+              min: 0,
+              max: 100,
+              step: 5,
+              unit: "%",
+              when: () => CONFIG.visual["panel-border-enabled"] === true,
+            },
+          ],
+          onChange: handleNowPlayingPanelChange,
+        })
+      ),
     ];
 
     return react.createElement(
       "div",
-        {
-          className: `tab-content ${activeTab === "nowplaying" ? "active" : ""}`,
-          "data-tab-id": "nowplaying",
-        },
+      {
+        className: `tab-content ${activeTab === "nowplaying" ? "active" : ""}`,
+        "data-tab-id": "nowplaying",
+      },
       ...renderNowPlayingPanelSection(),
       ...renderNowPlayingBackgroundSection(),
       ...renderNowPlayingBorderSection(),
@@ -10731,7 +12528,7 @@ react.createElement(OptionList, {
               info: I18n.t("settingsAdvanced.instrumentalBreak.labelStyle.fontFamily.desc") || "Select the font for the Intro, Break, or Outro label",
               type: ConfigFontSelector,
               defaultValue: getInstrumentalBreakLabelStyleDefault("font-family", "original-font-family", "Pretendard Variable"),
-              disabled: () => CONFIG.visual["instrumental-break-show-label"] !== true,
+              when: () => CONFIG.visual["instrumental-break-show-label"] === true,
             },
             {
               desc: I18n.t("settingsAdvanced.instrumentalBreak.labelStyle.fontSize.label") || "Text Label Size",
@@ -10743,7 +12540,7 @@ react.createElement(OptionList, {
               step: 2,
               unit: "px",
               defaultValue: getInstrumentalBreakLabelStyleDefault("font-size", null, 20),
-              disabled: () => CONFIG.visual["instrumental-break-show-label"] !== true,
+              when: () => CONFIG.visual["instrumental-break-show-label"] === true,
             },
             {
               desc: I18n.t("settingsAdvanced.instrumentalBreak.labelStyle.fontWeight.label") || "Text Label Weight",
@@ -10751,7 +12548,7 @@ react.createElement(OptionList, {
               info: I18n.t("settingsAdvanced.instrumentalBreak.labelStyle.fontWeight.desc") || "Font weight for the text label",
               type: ConfigFontWeightSlider,
               defaultValue: getInstrumentalBreakLabelStyleDefault("font-weight", null, 200),
-              disabled: () => CONFIG.visual["instrumental-break-show-label"] !== true,
+              when: () => CONFIG.visual["instrumental-break-show-label"] === true,
             },
             {
               desc: I18n.t("settingsAdvanced.instrumentalBreak.labelStyle.opacity.label") || "Text Label Opacity",
@@ -10763,10 +12560,10 @@ react.createElement(OptionList, {
               step: 5,
               unit: "%",
               defaultValue: getInstrumentalBreakLabelStyleDefault("opacity", null, 65),
-              disabled: () => CONFIG.visual["instrumental-break-show-label"] !== true,
+              when: () => CONFIG.visual["instrumental-break-show-label"] === true,
             },
             ...createTextOutlineSettingItems("instrumental-break-label", {
-              disabled: () => CONFIG.visual["instrumental-break-show-label"] !== true,
+              when: () => CONFIG.visual["instrumental-break-show-label"] === true,
             }),
             {
               desc: I18n.t("settingsAdvanced.instrumentalBreak.speed.label") || "Animation Speed",
@@ -10793,143 +12590,127 @@ react.createElement(OptionList, {
             );
           },
         });
-  const renderAppearanceLivePreviewSection = () =>
-react.createElement(
-          "div",
-          {
-            className: "settings-live-preview-sticky",
+
+  const getMultiVocalRegistryItems = () => {
+    const helper = getMultiVocalColorHelper();
+    return MULTI_VOCAL_COLOR_GROUPS.flatMap((group) =>
+      group.speakers.map((speaker) => {
+        const key = helper.getSettingKey?.(speaker) || `multi-vocal-speaker-color-${speaker.toLowerCase().replace(/\s+/g, "-")}`;
+        return {
+          item: {
+            desc: `${I18n.t(group.labelKey) || group.fallbackLabel} · ${speaker}`,
+            key,
+            type: ConfigColorPicker,
+            defaultValue: helper.getTextColor?.(speaker) || CONFIG.visual[key],
           },
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.livePreview.title"),
-            subtitle: I18n.t("settingsAdvanced.livePreview.subtitle"),
-            sectionKey: "live-preview",
-          }),
-          react.createElement(
-            "div",
-            {
-              className: "font-preview-container",
-            },
-            react.createElement(
-              "div",
-              {
-                className: "font-preview settings-live-preview-lyrics lyrics-lyricsContainer-LyricsContainer",
-                id: "settings-live-lyrics-preview",
-                style: getSettingsLyricsPreviewStyle(),
-                "data-furigana-enabled": CONFIG.visual["furigana-enabled"] === true
-                  ? "true"
-                  : "false",
-              },
-              react.createElement(
-                "div",
-                {
-                  className: `settings-live-preview-stage lyrics-lyricsContainer-SyncedLyricsPage is-karaoke${CONFIG.visual["karaoke-line-transition"] ? " karaoke-line-transition-enabled" : ""}`,
-                },
-                react.createElement(
-                  "div",
-                  { className: "settings-live-preview-line lyrics-lyricsContainer-SyncedLyrics" },
-                  react.createElement(
-                    "div",
-                    {
-                      className: "lyrics-lyricsContainer-LyricsLine lyrics-lyricsContainer-LyricsLine-active",
-                      style: {
-                        "--position-index": 0,
-                        "--offset": "0px",
-                        "--animation-index": 0,
-                      },
-                    },
-                    react.createElement(
-                      "p",
-                      null,
-                      react.createElement(KaraokeLine, {
-                        line: SETTINGS_LYRICS_PREVIEW_LINE,
-                        position: SETTINGS_LYRICS_PREVIEW_LINE.endTime,
-                        isActive: true,
-                        furiganaMapOverride: SETTINGS_LYRICS_PREVIEW_FURIGANA,
-                      })
-                    ),
-                    react.createElement(
-                      "p",
-                      { className: "lyrics-lyricsContainer-LyricsLine-phonetic" },
-                      I18n.t("settingsAdvanced.livePreview.sampleTextPhonetic")
-                    ),
-                    react.createElement(
-                      "p",
-                      { className: "lyrics-lyricsContainer-LyricsLine-translation" },
-                      I18n.t("settingsAdvanced.livePreview.sampleText")
-                    )
-                  )
-                )
-              )
-            )
-          )
-        );
+          onChange: (_name, value) => {
+            const saved = helper.setTextColor?.(speaker, value) || value;
+            helper.applyCssVariables?.();
+            lyricContainerUpdate?.();
+            window.dispatchEvent(new CustomEvent("ivLyrics", {
+              detail: { type: "config", name: key, value: saved },
+            }));
+          },
+        };
+      })
+    );
+  };
+
   const renderAppearanceTab = () => {
     const renderAppearanceVisualEffectsSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("sections.visualEffects"),
-            subtitle: I18n.t("sections.visualEffectsSubtitle"),
-            sectionKey: "background-experience",
-          }),
-          isFadActive &&
+      react.createElement(
+        SettingsSection,
+        {
+          key: "background-experience",
+          sectionKey: "background-experience",
+          title: I18n.t("sections.visualEffects"),
+          subtitle: I18n.t("sections.visualEffectsSubtitle"),
+        },
+        isFadActive &&
           react.createElement(
             "div",
-            {
-              className: "setting-row",
-              style: {
-                backgroundColor: "rgba(var(--spice-rgb-warning), 0.1)",
-              },
-            },
+            { className: "settings-note is-info", "data-section-content": "true" },
+            react.createElement(SettingsUiIcon, { name: "info", size: 16 }),
             react.createElement(
               "div",
-              { className: "setting-row-content" },
-              react.createElement(
-                "div",
-                { className: "setting-row-left" },
-                react.createElement(
-                  "div",
-                  {
-                    className: "setting-name",
-                    style: { color: "var(--spice-text)", fontWeight: "600" },
-                  },
-                  I18n.t("sections.fadWarningTitle")
-                ),
-                react.createElement(
-                  "div",
-                  {
-                    className: "setting-description",
-                    style: { color: "var(--spice-subtext)" },
-                  },
-                  I18n.t("sections.fadWarningDesc"),
-                  react.createElement("br"),
-                  I18n.t("sections.fadWarningTip")
-                )
-              )
+              { className: "settings-note-body" },
+              react.createElement("b", null, I18n.t("sections.fadWarningTitle")),
+              " ",
+              I18n.t("sections.fadWarningDesc"),
+              react.createElement("br"),
+              I18n.t("sections.fadWarningTip")
             )
           ),
-          react.createElement(BackgroundExperienceSection, { isFadActive }),
+        react.createElement(BackgroundExperienceSection, {
+          isFadActive,
+          settingsRegistryItems: getBackgroundRegistryItems,
+        })
+      ),
     ];
-    const renderAppearanceSyncModeSection = () => [
-          react.createElement(SettingsSectionTitle, {
+    const renderAppearanceLyricLayersSection = () => [
+      react.createElement(
+        SettingsSection,
+        {
+          key: "lyric-layers",
+          sectionKey: "lyric-layers",
+          title: getSettingsText("settingsUi.sections.lyricLayers.title", "Lyric layers"),
+          subtitle: getSettingsText(
+            "settingsUi.sections.lyricLayers.subtitle",
+            "Compare and adjust the original, pronunciation, translation and furigana fonts in one place."
+          ),
+        },
+        react.createElement(
+          "div",
+          { className: "settings-group settings-matrix-group" },
+          react.createElement(SettingsLayerMatrix, {
+            columns: buildLyricsTypographyColumns({
+              onChange: saveLyricsTypographySetting,
+              furiganaOnChange: handleAppearancePreviewChange,
+            }),
+            rows: getLyricsTypographyRows(),
+            onChange: saveLyricsTypographySetting,
+            label: getSettingsText("settingsUi.sections.lyricLayers.title", "Lyric layers"),
+          })
+        )
+      ),
+    ];
+    const renderAppearanceSyncModeSection = () => {
+      const lineWindowItems = [
+        {
+          desc: I18n.t("settingsAdvanced.syncMode.linesBefore.label"),
+          key: "lines-before",
+          info: I18n.t("settingsAdvanced.syncMode.linesBefore.desc"),
+          type: ConfigSelection,
+          options: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        },
+        {
+          desc: I18n.t("settingsAdvanced.syncMode.linesAfter.label"),
+          key: "lines-after",
+          info: I18n.t("settingsAdvanced.syncMode.linesAfter.desc"),
+          type: ConfigSelection,
+          options: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+        },
+      ];
+      return [
+        react.createElement(
+          SettingsSection,
+          {
+            key: "sync-mode",
+            sectionKey: "sync-mode",
             title: I18n.t("settingsAdvanced.syncMode.title"),
             subtitle: I18n.t("settingsAdvanced.syncMode.subtitle"),
-            sectionKey: "sync-mode",
-          }),
+          },
+          react.createElement(
+            "div",
+            { className: "settings-group" },
+            react.createElement(SettingsLineWindow, {
+              items: lineWindowItems,
+              onChange: handleVisualConfigChange,
+              settingsRegistryItems: lineWindowItems.map((item) => ({ item, onChange: handleVisualConfigChange })),
+            })
+          ),
           react.createElement(OptionList, {
             items: [
-              {
-                desc: I18n.t("settingsAdvanced.syncMode.linesBefore.label"),
-                key: "lines-before",
-                info: I18n.t("settingsAdvanced.syncMode.linesBefore.desc"),
-                type: ConfigSelection,
-                options: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-              },
-              {
-                desc: I18n.t("settingsAdvanced.syncMode.linesAfter.label"),
-                key: "lines-after",
-                info: I18n.t("settingsAdvanced.syncMode.linesAfter.desc"),
-                type: ConfigSelection,
-                options: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-              },
               {
                 desc: I18n.t("settingsAdvanced.syncMode.fadeoutBlur.label"),
                 key: "fade-blur",
@@ -10951,17 +12732,26 @@ react.createElement(
                 max: 90,
                 step: 5,
                 unit: "%",
+                when: () => CONFIG.visual["highlight-mode"] === true,
               },
             ],
             onChange: handleVisualConfigChange,
-          }),
-    ];
+          })
+        ),
+      ];
+    };
     const renderAppearanceMultiVocalSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.multiVocalColors.title") || "Multi-vocal Colors",
-            subtitle: I18n.t("settingsAdvanced.multiVocalColors.subtitle") || "Customize male, female, and duet speaker colors.",
-            sectionKey: "multi-vocal-colors",
-          }),
+      react.createElement(
+        SettingsSection,
+        {
+          key: "multi-vocal-colors",
+          sectionKey: "multi-vocal-colors",
+          title: I18n.t("settingsAdvanced.multiVocalColors.title") || "Multi-vocal Colors",
+          subtitle: I18n.t("settingsAdvanced.multiVocalColors.subtitle") || "Customize male, female, and duet speaker colors.",
+        },
+        react.createElement(
+          "div",
+          { className: "settings-group" },
           react.createElement(OptionList, {
             items: [
               {
@@ -10974,165 +12764,118 @@ react.createElement(
             ],
             onChange: handleVisualConfigChange,
           }),
-          react.createElement(ConfigMultiVocalColorSettings),
+          react.createElement(ConfigMultiVocalColorSettings, {
+            settingsRegistryItems: getMultiVocalRegistryItems,
+          })
+        )
+      ),
     ];
     const renderAppearanceInstrumentalSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.instrumentalBreak.title") || "Instrumental Marker",
-            subtitle: I18n.t("settingsAdvanced.instrumentalBreak.subtitle") || "Replace long blank or note-only lyric gaps with an icon",
-            sectionKey: "instrumental-break",
-          }),
-          renderAppearanceInstrumentalBreakSection(),
-          react.createElement("div", {
-            className: "settings-live-preview-spacer",
-            "aria-hidden": "true",
-          }),
-          renderAppearanceLivePreviewSection(),
+      react.createElement(
+        SettingsSection,
+        {
+          key: "instrumental-break",
+          sectionKey: "instrumental-break",
+          title: I18n.t("settingsAdvanced.instrumentalBreak.title") || "Instrumental Marker",
+          subtitle: I18n.t("settingsAdvanced.instrumentalBreak.subtitle") || "Replace long blank or note-only lyric gaps with an icon",
+        },
+        renderAppearanceInstrumentalBreakSection()
+      ),
     ];
     const renderAppearanceMotionSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("sections.motion"),
-            subtitle: I18n.t("settings.reduceMotion.desc"),
-            sectionKey: "reduce-motion",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: I18n.t("settings.reduceMotion.label"),
-                info: I18n.t("settings.reduceMotion.desc"),
-                key: "reduce-motion",
-                defaultValue: CONFIG.visual["reduce-motion"] ?? false,
-                type: ConfigSlider,
-              },
-            ],
-            onChange: (name, value) => {
-              CONFIG.visual[name] = value;
-              StorageManager.setItem(`${APP_NAME}:visual:${name}`, value);
-              applySettingsMotionClasses();
-              lyricContainerUpdate?.();
-              window.dispatchEvent(
-                new CustomEvent("ivLyrics", {
-                  detail: { type: "config", name, value },
-                })
-              );
+      react.createElement(
+        SettingsSection,
+        {
+          key: "reduce-motion",
+          sectionKey: "reduce-motion",
+          title: I18n.t("sections.motion"),
+          subtitle: I18n.t("settings.reduceMotion.desc"),
+        },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settings.reduceMotion.label"),
+              key: "reduce-motion",
+              defaultValue: CONFIG.visual["reduce-motion"] ?? false,
+              type: ConfigSlider,
             },
-          }),
-    ];
-    const renderAppearanceFuriganaSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.furiganaStyle.title"),
-            subtitle: I18n.t("settingsAdvanced.furiganaStyle.subtitle"),
-            sectionKey: "furigana-style",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: I18n.t("settingsAdvanced.languageDetection.furigana.label"),
-                info: I18n.t("settingsAdvanced.languageDetection.furigana.desc"),
-                key: "furigana-enabled",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.furiganaStyle.fontSize.label"),
-                info: I18n.t("settingsAdvanced.furiganaStyle.fontSize.desc"),
-                key: "furigana-font-size",
-                type: ConfigSliderRange,
-                min: 8,
-                max: 48,
-                step: 1,
-                unit: "px",
-              },
-              {
-                desc: I18n.t("settingsAdvanced.furiganaStyle.fontWeight.label"),
-                info: I18n.t("settingsAdvanced.furiganaStyle.fontWeight.desc"),
-                key: "furigana-font-weight",
-                type: ConfigFontWeightSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.furiganaStyle.opacity.label"),
-                info: I18n.t("settingsAdvanced.furiganaStyle.opacity.desc"),
-                key: "furigana-opacity",
-                type: ConfigSliderRange,
-                min: 0,
-                max: 100,
-                step: 5,
-                unit: "%",
-              },
-              {
-                desc: I18n.t("settingsAdvanced.furiganaStyle.spacing.label"),
-                info: I18n.t("settingsAdvanced.furiganaStyle.spacing.desc"),
-                key: "furigana-spacing",
-                type: ConfigSliderRange,
-                min: -5,
-                max: 20,
-                step: 1,
-                unit: "px",
-              },
-              ...createTextOutlineSettingItems("furigana"),
-            ],
-            onChange: handleAppearancePreviewChange,
-          }),
+          ],
+          onChange: (name, value) => {
+            CONFIG.visual[name] = value;
+            StorageManager.setItem(`${APP_NAME}:visual:${name}`, value);
+            applySettingsMotionClasses();
+            lyricContainerUpdate?.();
+            window.dispatchEvent(
+              new CustomEvent("ivLyrics", {
+                detail: { type: "config", name, value },
+              })
+            );
+          },
+        })
+      ),
     ];
     const renderAppearanceTextShadowSection = () => [
-          react.createElement(SettingsSectionTitle, {
-            title: I18n.t("settingsAdvanced.textShadow.title"),
-            subtitle: I18n.t("settingsAdvanced.textShadow.subtitle"),
-            sectionKey: "text-shadow",
-          }),
-          react.createElement(OptionList, {
-            items: [
-              {
-                desc: I18n.t("settingsAdvanced.textShadow.enabled.label"),
-                info: I18n.t("settingsAdvanced.textShadow.enabled.desc"),
-                key: "text-shadow-enabled",
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.textShadow.color.label"),
-                info: I18n.t("settingsAdvanced.textShadow.color.desc"),
-                key: "text-shadow-color",
-                type: ConfigColorPicker,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.textShadow.opacity.label"),
-                info: I18n.t("settingsAdvanced.textShadow.opacity.desc"),
-                key: "text-shadow-opacity",
-                type: ConfigSliderRange,
-                min: 0,
-                max: 100,
-                step: 5,
-                unit: "%",
-              },
-              {
-                desc: I18n.t("settingsAdvanced.textShadow.blur.label"),
-                info: I18n.t("settingsAdvanced.textShadow.blur.desc"),
-                key: "text-shadow-blur",
-                type: ConfigSliderRange,
-                min: 0,
-                max: 10,
-                step: 1,
-                unit: "px",
-              },
-            ],
-            onChange: handleAppearancePreviewChange,
-          })
+      react.createElement(
+        SettingsSection,
+        {
+          key: "text-shadow",
+          sectionKey: "text-shadow",
+          title: I18n.t("settingsAdvanced.textShadow.title"),
+          subtitle: I18n.t("settingsAdvanced.textShadow.subtitle"),
+        },
+        react.createElement(OptionList, {
+          items: [
+            {
+              desc: I18n.t("settingsAdvanced.textShadow.enabled.label"),
+              info: I18n.t("settingsAdvanced.textShadow.enabled.desc"),
+              key: "text-shadow-enabled",
+              type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.textShadow.color.label"),
+              info: I18n.t("settingsAdvanced.textShadow.color.desc"),
+              key: "text-shadow-color",
+              type: ConfigColorPicker,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.textShadow.opacity.label"),
+              info: I18n.t("settingsAdvanced.textShadow.opacity.desc"),
+              key: "text-shadow-opacity",
+              type: ConfigSliderRange,
+              min: 0,
+              max: 100,
+              step: 5,
+              unit: "%",
+            },
+            {
+              desc: I18n.t("settingsAdvanced.textShadow.blur.label"),
+              info: I18n.t("settingsAdvanced.textShadow.blur.desc"),
+              key: "text-shadow-blur",
+              type: ConfigSliderRange,
+              min: 0,
+              max: 10,
+              step: 1,
+              unit: "px",
+            },
+          ],
+          onChange: handleAppearancePreviewChange,
+        })
+      ),
     ];
 
     return react.createElement(
       "div",
-        {
-          className: `tab-content ${activeTab === "appearance" ? "active" : ""
-            }`,
-          "data-tab-id": "appearance",
-        },
+      {
+        className: `tab-content ${activeTab === "appearance" ? "active" : ""}`,
+        "data-tab-id": "appearance",
+      },
       ...renderAppearanceVisualEffectsSection(),
+      ...renderAppearanceLyricLayersSection(),
+      ...renderAppearanceTextShadowSection(),
       ...renderAppearanceSyncModeSection(),
       ...renderAppearanceMultiVocalSection(),
       ...renderAppearanceInstrumentalSection(),
       ...renderAppearanceMotionSection(),
-        ...renderLyricsTypographySections({ onChange: saveLyricsTypographySetting }),
-      ...renderAppearanceFuriganaSection(),
-      ...renderAppearanceTextShadowSection(),
     );
   };
 
@@ -11172,19 +12915,17 @@ react.createElement(OptionList, {
 
                   resultContainer.innerHTML = `<div style="
 													padding: 16px 20px;
-													background: rgba(255, 255, 255, 0.03);
-													border: 1px solid rgba(255, 255, 255, 0.12);
-													border-left: 1px solid rgba(255, 255, 255, 0.08);
-													border-right: 1px solid rgba(255, 255, 255, 0.08);
-													border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-													backdrop-filter: blur(30px) saturate(150%);
-													-webkit-backdrop-filter: blur(30px) saturate(150%);
+													background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
+													border: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.12));
+													border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 												">
 													<div style="
 														display: flex;
 														align-items: center;
 														gap: 12px;
-														color: rgba(248, 250, 252, 0.9);
+														color: var(--settings-text, rgba(248, 250, 252, 0.9));
 														font-size: 13px;
 													">
 														<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -11201,19 +12942,17 @@ react.createElement(OptionList, {
                   resultContainer.innerHTML = `
 											<div style="
 												padding: 16px 20px;
-												background: rgba(255, 255, 255, 0.03);
+												background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
 												border: 1px solid rgba(255, 107, 107, 0.2);
-												border-left: 1px solid rgba(255, 255, 255, 0.08);
-												border-right: 1px solid rgba(255, 255, 255, 0.08);
-												border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-												backdrop-filter: blur(30px) saturate(150%);
-												-webkit-backdrop-filter: blur(30px) saturate(150%);
+												border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+												border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+												border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 											">
 												<div style="
 													display: flex;
 													align-items: center;
 													gap: 12px;
-													color: rgba(255, 107, 107, 0.9);
+													color: var(--danger, rgba(255, 107, 107, 0.9));
 													font-size: 13px;
 													font-weight: 500;
 												">
@@ -11293,21 +13032,19 @@ react.createElement(OptionList, {
 
                         resultContainer.innerHTML = `<div style="
 													padding: 16px 20px;
-													background: rgba(255, 255, 255, 0.03);
-													border: 1px solid rgba(255, 255, 255, 0.12);
-													border-left: 1px solid rgba(255, 255, 255, 0.08);
-													border-right: 1px solid rgba(255, 255, 255, 0.08);
-													border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+													background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
+													border: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.12));
+													border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 													border-bottom-left-radius: 0;
 													border-bottom-right-radius: 0;
-													backdrop-filter: blur(30px) saturate(150%);
-													-webkit-backdrop-filter: blur(30px) saturate(150%);
 												">
 													<div style="
 														display: flex;
 														align-items: center;
 														gap: 12px;
-														color: rgba(248, 250, 252, 0.9);
+														color: var(--settings-text, rgba(248, 250, 252, 0.9));
 														font-size: 13px;
 													">
 														<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -11331,21 +13068,19 @@ react.createElement(OptionList, {
                         resultContainer.innerHTML = `
 											<div style="
 												padding: 16px 20px;
-												background: rgba(255, 255, 255, 0.03);
+												background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
 												border: 1px solid rgba(255, 107, 107, 0.2);
-												border-left: 1px solid rgba(255, 255, 255, 0.08);
-												border-right: 1px solid rgba(255, 255, 255, 0.08);
-												border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+												border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+												border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+												border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 												border-bottom-left-radius: 0;
 												border-bottom-right-radius: 0;
-												backdrop-filter: blur(30px) saturate(150%);
-												-webkit-backdrop-filter: blur(30px) saturate(150%);
 											">
 												<div style="
 													display: flex;
 													align-items: center;
 													gap: 12px;
-													color: rgba(255, 107, 107, 0.9);
+													color: var(--danger, rgba(255, 107, 107, 0.9));
 													font-size: 13px;
 													font-weight: 500;
 												">
@@ -11413,19 +13148,17 @@ react.createElement(OptionList, {
 
                   resultContainer.innerHTML = `<div style="
                     padding: 16px 20px;
-                    background: rgba(255, 255, 255, 0.03);
-                    border: 1px solid rgba(255, 255, 255, 0.12);
-                    border-left: 1px solid rgba(255, 255, 255, 0.08);
-                    border-right: 1px solid rgba(255, 255, 255, 0.08);
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                    backdrop-filter: blur(30px) saturate(150%);
-                    -webkit-backdrop-filter: blur(30px) saturate(150%);
+                    background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
+                    border: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.12));
+                    border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+                    border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+                    border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
                   ">
                     <div style="
                       display: flex;
                       align-items: center;
                       gap: 12px;
-                      color: rgba(248, 250, 252, 0.9);
+                      color: var(--settings-text, rgba(248, 250, 252, 0.9));
                       font-size: 13px;
                     ">
                       <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -11442,19 +13175,17 @@ react.createElement(OptionList, {
                   resultContainer.innerHTML = `
                     <div style="
                       padding: 16px 20px;
-                      background: rgba(255, 255, 255, 0.03);
+                      background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
                       border: 1px solid rgba(255, 107, 107, 0.2);
-                      border-left: 1px solid rgba(255, 255, 255, 0.08);
-                      border-right: 1px solid rgba(255, 255, 255, 0.08);
-                      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                      backdrop-filter: blur(30px) saturate(150%);
-                      -webkit-backdrop-filter: blur(30px) saturate(150%);
+                      border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+                      border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+                      border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
                     ">
                       <div style="
                         display: flex;
                         align-items: center;
                         gap: 12px;
-                        color: rgba(255, 107, 107, 0.9);
+                        color: var(--danger, rgba(255, 107, 107, 0.9));
                         font-size: 13px;
                         font-weight: 500;
                       ">
@@ -11522,21 +13253,19 @@ react.createElement(OptionList, {
 
                         resultContainer.innerHTML = `<div style="
                           padding: 16px 20px;
-                          background: rgba(255, 255, 255, 0.03);
-                          border: 1px solid rgba(255, 255, 255, 0.12);
-                          border-left: 1px solid rgba(255, 255, 255, 0.08);
-                          border-right: 1px solid rgba(255, 255, 255, 0.08);
-                          border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                          background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
+                          border: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.12));
+                          border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+                          border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+                          border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
                           border-bottom-left-radius: 0;
                           border-bottom-right-radius: 0;
-                          backdrop-filter: blur(30px) saturate(150%);
-                          -webkit-backdrop-filter: blur(30px) saturate(150%);
                         ">
                           <div style="
                             display: flex;
                             align-items: center;
                             gap: 12px;
-                            color: rgba(248, 250, 252, 0.9);
+                            color: var(--settings-text, rgba(248, 250, 252, 0.9));
                             font-size: 13px;
                           ">
                             <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -11559,19 +13288,17 @@ react.createElement(OptionList, {
                         resultContainer.innerHTML = `
                           <div style="
                             padding: 16px 20px;
-                            background: rgba(255, 255, 255, 0.03);
+                            background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
                             border: 1px solid rgba(255, 107, 107, 0.2);
-                            border-left: 1px solid rgba(255, 255, 255, 0.08);
-                            border-right: 1px solid rgba(255, 255, 255, 0.08);
-                            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-                            backdrop-filter: blur(30px) saturate(150%);
-                            -webkit-backdrop-filter: blur(30px) saturate(150%);
+                            border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+                            border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+                            border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
                           ">
                             <div style="
                               display: flex;
                               align-items: center;
                               gap: 12px;
-                              color: rgba(255, 107, 107, 0.9);
+                              color: var(--danger, rgba(255, 107, 107, 0.9));
                               font-size: 13px;
                               font-weight: 500;
                             ">
@@ -11605,11 +13332,12 @@ react.createElement(OptionList, {
         });
   const renderAdvancedTab = () => {
     const renderAdvancedLanguageDetectionSection = () => [
-        react.createElement(SettingsSectionTitle, {
+        react.createElement(SettingsSection, {
+          key: "language-detection",
+          sectionKey: "language-detection",
           title: I18n.t("settingsAdvanced.languageDetection.title"),
           subtitle: I18n.t("settingsAdvanced.languageDetection.subtitle"),
-          sectionKey: "language-detection",
-        }),
+        },
         react.createElement(OptionList, {
           items: [
             {
@@ -11634,51 +13362,56 @@ react.createElement(OptionList, {
             },
           ],
           onChange: handleVisualConfigChange,
-        }),
-
+        })
+        ),
     ];
     const renderAdvancedCloudSyncSection = () => [
-        react.createElement(SettingsSectionTitle, {
+        react.createElement(SettingsSection, {
+          key: "cloud-sync",
+          sectionKey: "cloud-sync",
           title: I18n.t("settingsAdvanced.cloudSync.title"),
           subtitle: I18n.t("settingsAdvanced.cloudSync.monthlyRequired"),
-          sectionKey: "cloud-sync",
-        }),
-        react.createElement(ConfigCloudSync),
-
+        },
+        react.createElement(ConfigCloudSync)
+        ),
     ];
     const renderAdvancedExportImportGroup = () => [
-        react.createElement(SettingsSectionTitle, {
+        react.createElement(SettingsSection, {
+          key: "export-import",
+          sectionKey: "export-import",
           title: I18n.t("settingsAdvanced.exportImport.title"),
           subtitle: I18n.t("settingsAdvanced.exportImport.subtitle"),
-          sectionKey: "export-import",
-        }),
-        renderAdvancedExportImportSection(),
-
+        },
+        renderAdvancedExportImportSection()
+        ),
     ];
     const renderAdvancedSettingsPresetsSection = () => [
-        react.createElement(SettingsSectionTitle, {
+        react.createElement(SettingsSection, {
+          key: "settings-presets",
+          sectionKey: "settings-presets",
           title: I18n.t("settingsAdvanced.settingsPresets.title"),
           subtitle: I18n.t("settingsAdvanced.settingsPresets.subtitle"),
-          sectionKey: "settings-presets",
-        }),
-        react.createElement(ConfigSettingsPresets),
-
+        },
+        react.createElement(ConfigSettingsPresets)
+        ),
     ];
     const renderAdvancedDbExportImportGroup = () => [
-        react.createElement(SettingsSectionTitle, {
+        react.createElement(SettingsSection, {
+          key: "db-export-import",
+          sectionKey: "db-export-import",
           title: I18n.t("settingsAdvanced.dbExportImport.title"),
           subtitle: I18n.t("settingsAdvanced.dbExportImport.subtitle"),
-          sectionKey: "db-export-import",
-        }),
-        renderAdvancedDbExportImportSection(),
-
+        },
+        renderAdvancedDbExportImportSection()
+        ),
     ];
     const renderAdvancedResetSection = () => [
-        react.createElement(SettingsSectionTitle, {
+        react.createElement(SettingsSection, {
+          key: "reset-settings",
+          sectionKey: "reset-settings",
           title: I18n.t("settingsAdvanced.resetSettings.title"),
           subtitle: I18n.t("settingsAdvanced.resetSettings.subtitle"),
-          sectionKey: "reset-settings",
-        }),
+        },
         react.createElement(OptionList, {
           items: [
             {
@@ -11722,21 +13455,19 @@ react.createElement(OptionList, {
 
                   resultContainer.innerHTML = `<div style="
 													padding: 16px 20px;
-													background: rgba(255, 255, 255, 0.03);
-													border: 1px solid rgba(255, 255, 255, 0.12);
-													border-left: 1px solid rgba(255, 255, 255, 0.08);
-													border-right: 1px solid rgba(255, 255, 255, 0.08);
-													border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+													background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
+													border: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.12));
+													border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 													border-bottom-left-radius: 0;
 													border-bottom-right-radius: 0;
-													backdrop-filter: blur(30px) saturate(150%);
-													-webkit-backdrop-filter: blur(30px) saturate(150%);
 												">
 													<div style="
 														display: flex;
 														align-items: center;
 														gap: 12px;
-														color: rgba(248, 250, 252, 0.9);
+														color: var(--settings-text, rgba(248, 250, 252, 0.9));
 														font-size: 13px;
 													">
 														<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -11759,21 +13490,19 @@ react.createElement(OptionList, {
                   resultContainer.innerHTML = `
 											<div style="
 												padding: 16px 20px;
-												background: rgba(255, 255, 255, 0.03);
+												background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
 												border: 1px solid rgba(255, 107, 107, 0.2);
-												border-left: 1px solid rgba(255, 255, 255, 0.08);
-												border-right: 1px solid rgba(255, 255, 255, 0.08);
-												border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+												border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+												border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+												border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 												border-bottom-left-radius: 0;
 												border-bottom-right-radius: 0;
-												backdrop-filter: blur(30px) saturate(150%);
-												-webkit-backdrop-filter: blur(30px) saturate(150%);
 											">
 												<div style="
 													display: flex;
 													align-items: center;
 													gap: 12px;
-													color: rgba(255, 107, 107, 0.9);
+													color: var(--danger, rgba(255, 107, 107, 0.9));
 													font-size: 13px;
 													font-weight: 500;
 												">
@@ -11797,6 +13526,7 @@ react.createElement(OptionList, {
           ],
           onChange: () => { },
         })
+        ),
     ];
 
     return react.createElement(
@@ -11806,17 +13536,16 @@ react.createElement(OptionList, {
           "data-tab-id": "advanced",
         },
       ...renderAdvancedLanguageDetectionSection(),
+      ...renderAdvancedSettingsPresetsSection(),
       ...renderAdvancedCloudSyncSection(),
       ...renderAdvancedExportImportGroup(),
-      ...renderAdvancedSettingsPresetsSection(),
       ...renderAdvancedDbExportImportGroup(),
       ...renderAdvancedResetSection(),
     );
   };
 
-  const renderFullscreenUiSection = () =>
-react.createElement(OptionList, {
-          items: [
+  const renderFullscreenUiSection = () => {
+    const items = [
             {
               desc: I18n.t("settingsAdvanced.fullscreenUI.showClock.desc"),
               info: I18n.t("settingsAdvanced.fullscreenUI.showClock.info"),
@@ -11910,9 +13639,26 @@ react.createElement(OptionList, {
               type: ConfigSlider,
               defaultValue: CONFIG.visual["fullscreen-show-queue"] ?? true,
             },
-          ],
-          onChange: handleVisualConfigChange,
-        });
+          ];
+    const itemsByKey = new Map(items.map((item) => [item.key, item]));
+    const chip = (key, icon, children) => ({
+      item: itemsByKey.get(key),
+      icon,
+      children: children.map((childKey) => itemsByKey.get(childKey)).filter(Boolean),
+    });
+    return react.createElement(SettingsTiles, {
+      chips: [
+        chip("fullscreen-show-clock", "clock", ["fullscreen-clock-size", "fullscreen-clock-outline-width", "fullscreen-clock-outline-color"]),
+        chip("fullscreen-show-context", "context", ["fullscreen-show-context-image"]),
+        chip("fullscreen-show-next-track", "next", ["fullscreen-next-track-seconds"]),
+        chip("fullscreen-show-controls", "controls", ["fullscreen-show-volume", "fullscreen-show-progress"]),
+        chip("fullscreen-show-lyrics-progress", "lprogress", []),
+        chip("fullscreen-show-queue", "queue", []),
+      ],
+      onChange: handleVisualConfigChange,
+      settingsRegistryItems: items.map((item) => ({ item, onChange: handleVisualConfigChange })),
+    });
+  };
   const renderFullscreenStyleSection = () =>
 react.createElement(OptionList, {
           items: [
@@ -11979,11 +13725,14 @@ react.createElement(OptionList, {
   const renderFullscreenTab = () => {
     // ===== 기본 설정 섹션 =====
     const renderFullscreenBasicSection = () => [
-          react.createElement(SettingsSectionTitle, {
+          react.createElement(SettingsSection, {
+            key: "fullscreen-mode",
+            sectionKey: "fullscreen-mode",
             title: I18n.t("settingsAdvanced.fullscreenMode.title"),
             subtitle: I18n.t("settingsAdvanced.fullscreenMode.subtitle"),
-            sectionKey: "fullscreen-mode",
-          }),
+            view: "basic",
+            hidden: fullscreenView !== "basic",
+          },
           react.createElement(OptionList, {
             items: [
               {
@@ -12029,16 +13778,19 @@ react.createElement(OptionList, {
               },
             ],
             onChange: handleVisualConfigChange,
-          }),
-
+          })
+          ),
     ];
     // ===== LP 모드 섹션 =====
     const renderFullscreenVinylSection = () => [
-          react.createElement(SettingsSectionTitle, {
+          react.createElement(SettingsSection, {
+            key: "vinyl-mode",
+            sectionKey: "vinyl-mode",
             title: I18n.t("vinyl.mode"),
             subtitle: I18n.t("vinyl.settings.subtitle"),
-            sectionKey: "vinyl-mode",
-          }),
+            view: "vinyl",
+            hidden: fullscreenView !== "vinyl",
+          },
           react.createElement(FullscreenPresentationPicker, {
             defaultValue:
               CONFIG.visual["fullscreen-focus-presentation"] || "vinyl",
@@ -12122,11 +13874,15 @@ react.createElement(OptionList, {
             onChange: saveVinylSetting,
           }),
 
-          react.createElement(SettingsSectionTitle, {
+          ),
+          react.createElement(SettingsSection, {
+            key: "vinyl-tonearm",
+            sectionKey: "vinyl-tonearm",
             title: I18n.t("vinyl.settings.tonearmTitle"),
             subtitle: I18n.t("vinyl.settings.tonearmSubtitle"),
-            sectionKey: "vinyl-tonearm",
-          }),
+            view: "vinyl",
+            hidden: fullscreenView !== "vinyl",
+          },
           react.createElement(OptionList, {
             items: [
               {
@@ -12147,6 +13903,8 @@ react.createElement(OptionList, {
                 info: I18n.t("vinyl.settings.tonearmFinishDesc"),
                 key: "fullscreen-vinyl-tonearm-finish",
                 type: ConfigSelection,
+                presentation: "seg",
+                swatchMap: { white: "#f2f2f2", silver: "#b9bec7", black: "#1d1f24" },
                 options: {
                   white: I18n.t("vinyl.settings.tonearmFinishWhite"),
                   silver: I18n.t("vinyl.settings.tonearmFinishSilver"),
@@ -12169,18 +13927,35 @@ react.createElement(OptionList, {
             onChange: saveVinylSetting,
           }),
 
-          react.createElement(SettingsSectionTitle, {
+          ),
+          react.createElement(SettingsSection, {
+            key: "vinyl-typography",
+            sectionKey: "vinyl-typography",
             title: I18n.t("sections.typography"),
             subtitle: I18n.t("vinyl.settings.typographySubtitle"),
-            sectionKey: "vinyl-typography",
-          }),
-          ...renderLyricsTypographySections({ vinyl: true, onChange: saveVinylSetting }),
+            view: "vinyl",
+            hidden: fullscreenView !== "vinyl",
+          },
+          react.createElement(
+            "div",
+            { className: "settings-group settings-matrix-group" },
+            react.createElement(SettingsLayerMatrix, {
+              columns: buildLyricsTypographyColumns({ vinyl: true, onChange: saveVinylSetting }),
+              rows: getLyricsTypographyRows(),
+              onChange: saveVinylSetting,
+              label: I18n.t("sections.typography"),
+            })
+          ),
 
-          react.createElement(SettingsSectionTitle, {
+          ),
+          react.createElement(SettingsSection, {
+            key: "video-stage-typography",
+            sectionKey: "video-stage-typography",
             title: I18n.t("vinyl.settings.videoStageTypographyTitle"),
             subtitle: I18n.t("vinyl.settings.videoStageTypographySubtitle"),
-            sectionKey: "video-stage-typography",
-          }),
+            view: "vinyl",
+            hidden: fullscreenView !== "vinyl",
+          },
           react.createElement(OptionList, {
             items: [
               {
@@ -12247,16 +14022,19 @@ react.createElement(OptionList, {
               },
             ],
             onChange: saveVinylSetting,
-          }),
-
+          })
+          ),
     ];
     // ===== 일반 모드 레이아웃 섹션 =====
     const renderFullscreenNormalLayoutSection = () => [
-          react.createElement(SettingsSectionTitle, {
+          react.createElement(SettingsSection, {
+            key: "normal-mode",
+            sectionKey: "normal-mode",
             title: I18n.t("settingsAdvanced.normalMode.title"),
             subtitle: I18n.t("settingsAdvanced.normalMode.subtitle"),
-            sectionKey: "normal-mode",
-          }),
+            view: "normal",
+            hidden: fullscreenView !== "normal",
+          },
           react.createElement(OptionList, {
             items: [
               {
@@ -12307,16 +14085,19 @@ react.createElement(OptionList, {
               },
             ],
             onChange: handleVisualConfigChange,
-          }),
-
+          })
+          ),
     ];
     // ===== TV 모드 섹션 =====
     const renderFullscreenTvModeSection = () => [
-          react.createElement(SettingsSectionTitle, {
+          react.createElement(SettingsSection, {
+            key: "tv-mode",
+            sectionKey: "tv-mode",
             title: I18n.t("settingsAdvanced.tvMode.title"),
             subtitle: I18n.t("settingsAdvanced.tvMode.subtitle"),
-            sectionKey: "tv-mode",
-          }),
+            view: "tv",
+            hidden: fullscreenView !== "tv",
+          },
           react.createElement(OptionList, {
             items: [
               {
@@ -12353,16 +14134,19 @@ react.createElement(OptionList, {
               },
             ],
             onChange: handleVisualConfigChange,
-          }),
-
+          })
+          ),
     ];
     // ===== 제목/아티스트 설정 섹션 =====
     const renderFullscreenTitleArtistSection = () => [
-          react.createElement(SettingsSectionTitle, {
+          react.createElement(SettingsSection, {
+            key: "metadata-display",
+            sectionKey: "metadata-display",
             title: I18n.t("settingsAdvanced.metadataDisplay.title"),
             subtitle: I18n.t("settingsAdvanced.metadataDisplay.subtitle"),
-            sectionKey: "metadata-display",
-          }),
+            view: "basic",
+            hidden: fullscreenView !== "basic",
+          },
           react.createElement(OptionList, {
             items: [
               {
@@ -12397,23 +14181,35 @@ react.createElement(OptionList, {
             ],
             onChange: handleVisualConfigChange,
           }),
-          react.createElement(SettingsSectionTitle, {
+          ),
+          react.createElement(SettingsSection, {
+            key: "fullscreen-style",
+            sectionKey: "fullscreen-style",
             title: I18n.t("settingsAdvanced.fullscreenStyle.title"),
             subtitle: I18n.t("settingsAdvanced.fullscreenStyle.subtitle"),
-            sectionKey: "fullscreen-style",
-          }),
+            view: "basic",
+            hidden: fullscreenView !== "basic",
+          },
           renderFullscreenStyleSection(),
-          react.createElement(SettingsSectionTitle, {
+          ),
+          react.createElement(SettingsSection, {
+            key: "fullscreen-ui",
+            sectionKey: "fullscreen-ui",
             title: I18n.t("settingsAdvanced.fullscreenUI.title"),
             subtitle: I18n.t("settingsAdvanced.fullscreenUI.subtitle"),
-            sectionKey: "fullscreen-ui",
-          }),
+            view: "basic",
+            hidden: fullscreenView !== "basic",
+          },
           renderFullscreenUiSection(),
-          react.createElement(SettingsSectionTitle, {
+          ),
+          react.createElement(SettingsSection, {
+            key: "controller-style",
+            sectionKey: "controller-style",
             title: I18n.t("settingsAdvanced.controllerStyle.title"),
             subtitle: I18n.t("settingsAdvanced.controllerStyle.subtitle"),
-            sectionKey: "controller-style",
-          }),
+            view: "basic",
+            hidden: fullscreenView !== "basic",
+          },
           react.createElement(OptionList, {
             items: [
               {
@@ -12437,11 +14233,15 @@ react.createElement(OptionList, {
             ],
             onChange: handleVisualConfigChange,
           }),
-          react.createElement(SettingsSectionTitle, {
+          ),
+          react.createElement(SettingsSection, {
+            key: "auto-hide",
+            sectionKey: "auto-hide",
             title: I18n.t("settingsAdvanced.autoHide.title"),
             subtitle: I18n.t("settingsAdvanced.autoHide.subtitle"),
-            sectionKey: "auto-hide",
-          }),
+            view: "basic",
+            hidden: fullscreenView !== "basic",
+          },
           react.createElement(OptionList, {
             items: [
               {
@@ -12466,11 +14266,15 @@ react.createElement(OptionList, {
             ],
             onChange: handleVisualConfigChange,
           }),
-          react.createElement(SettingsSectionTitle, {
+          ),
+          react.createElement(SettingsSection, {
+            key: "tmi-style",
+            sectionKey: "tmi-style",
             title: I18n.t("settingsAdvanced.tmiStyle.title"),
             subtitle: I18n.t("settingsAdvanced.tmiStyle.subtitle"),
-            sectionKey: "tmi-style",
-          }),
+            view: "basic",
+            hidden: fullscreenView !== "basic",
+          },
           react.createElement(OptionList, {
             items: [
               {
@@ -12488,6 +14292,7 @@ react.createElement(OptionList, {
             ],
             onChange: handleVisualConfigChange,
           })
+          ),
     ];
 
     return react.createElement(
@@ -12497,10 +14302,10 @@ react.createElement(OptionList, {
           "data-tab-id": "fullscreen",
         },
       ...renderFullscreenBasicSection(),
-      ...renderFullscreenVinylSection(),
+      ...renderFullscreenTitleArtistSection(),
       ...renderFullscreenNormalLayoutSection(),
       ...renderFullscreenTvModeSection(),
-      ...renderFullscreenTitleArtistSection(),
+      ...renderFullscreenVinylSection(),
     );
   };
 
@@ -12533,21 +14338,19 @@ react.createElement(OptionList, {
                       resultContainer.innerHTML = `
 												<div style="
 													padding: 16px 20px;
-													background: rgba(255, 255, 255, 0.03);
+													background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
 													border: 1px solid rgba(255, 107, 107, 0.2);
-													border-left: 1px solid rgba(255, 255, 255, 0.08);
-													border-right: 1px solid rgba(255, 255, 255, 0.08);
-													border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+													border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 													border-bottom-left-radius: 0;
 													border-bottom-right-radius: 0;
-													backdrop-filter: blur(30px) saturate(150%);
-													-webkit-backdrop-filter: blur(30px) saturate(150%);
 												">
 													<div style="
 														display: flex;
 														align-items: center;
 														gap: 12px;
-														color: rgba(255, 107, 107, 0.9);
+														color: var(--danger, rgba(255, 107, 107, 0.9));
 														font-size: 13px;
 														font-weight: 500;
 													">
@@ -12594,15 +14397,13 @@ react.createElement(OptionList, {
                       resultContainer.innerHTML = `
 												<div style="
 													padding: 20px;
-													background: rgba(255, 255, 255, 0.04);
+													background: var(--settings-surface-2, rgba(255, 255, 255, 0.04));
 													border: 1px solid rgba(74, 222, 128, 0.15);
-													border-left: 1px solid rgba(255, 255, 255, 0.08);
-													border-right: 1px solid rgba(255, 255, 255, 0.08);
-													border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+													border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 													border-bottom-left-radius: 0;
 													border-bottom-right-radius: 0;
-													backdrop-filter: blur(30px) saturate(150%);
-													-webkit-backdrop-filter: blur(30px) saturate(150%);
 												">
 													<div style="margin-bottom: 16px;">
 														<div style="
@@ -12619,28 +14420,28 @@ react.createElement(OptionList, {
 																<div style="
 																	font-size: 14px;
 																	font-weight: 600;
-																	color: rgba(255, 255, 255, 0.95);
+																	color: var(--settings-text, rgba(255, 255, 255, 0.95));
 																	margin-bottom: 2px;
 																	letter-spacing: -0.01em;
 																">${safeUpdateAvailable}</div>
 																<div style="
 																	font-size: 12px;
-																	color: rgba(255, 255, 255, 0.5);
+																	color: var(--settings-text-3, rgba(255, 255, 255, 0.5));
 																">${safeVersionChange} ${safeCurrentVersion} → ${safeLatestVersion}</div>
 															</div>
 														</div>
 													</div>
 													
 													<div style="
-														background: rgba(0, 0, 0, 0.25);
-														border: 1px solid rgba(255, 255, 255, 0.08);
+														background: var(--settings-bg, rgba(0, 0, 0, 0.25));
+														border: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 														border-radius: 8px;
 														padding: 12px 14px;
 														margin-bottom: 12px;
 													">
 														<div style="
 															font-size: 12px;
-															color: rgba(255, 255, 255, 0.6);
+															color: var(--settings-text-3, rgba(255, 255, 255, 0.6));
 															margin-bottom: 8px;
 															font-weight: 500;
 														">${safeUpdatePageInfo}</div>
@@ -12652,9 +14453,9 @@ react.createElement(OptionList, {
 														   rel="noopener noreferrer"
 														   style="
 															flex: 1;
-															background: rgba(255, 255, 255, 0.1);
-															border: 1px solid rgba(255, 255, 255, 0.15);
-															color: rgba(255, 255, 255, 0.9);
+															background: var(--settings-surface-3, rgba(255, 255, 255, 0.1));
+															border: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.15));
+															color: var(--settings-text, rgba(255, 255, 255, 0.9));
 															padding: 10px 16px;
 															border-radius: 8px;
 															cursor: pointer;
@@ -12668,9 +14469,9 @@ react.createElement(OptionList, {
 														   rel="noopener noreferrer"
 														   style="
 															flex: 1;
-															background: rgba(255, 255, 255, 0.08);
-															border: 1px solid rgba(255, 255, 255, 0.15);
-															color: rgba(255, 255, 255, 0.9);
+															background: var(--settings-surface-3, rgba(255, 255, 255, 0.08));
+															border: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.15));
+															color: var(--settings-text, rgba(255, 255, 255, 0.9));
 															padding: 10px 16px;
 															border-radius: 8px;
 															text-decoration: none;
@@ -12699,21 +14500,19 @@ react.createElement(OptionList, {
                       resultContainer.innerHTML = `
 												<div style="
 													padding: 16px 20px;
-													background: rgba(255, 255, 255, 0.03);
-													border: 1px solid rgba(255, 255, 255, 0.12);
-													border-left: 1px solid rgba(255, 255, 255, 0.08);
-													border-right: 1px solid rgba(255, 255, 255, 0.08);
-													border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+													background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
+													border: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.12));
+													border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+													border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 													border-bottom-left-radius: 0;
 													border-bottom-right-radius: 0;
-													backdrop-filter: blur(30px) saturate(150%);
-													-webkit-backdrop-filter: blur(30px) saturate(150%);
 												">
 													<div style="
 														display: flex;
 														align-items: center;
 														gap: 12px;
-														color: rgba(248, 250, 252, 0.9);
+														color: var(--settings-text, rgba(248, 250, 252, 0.9));
 														font-size: 13px;
 													">
 														<svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
@@ -12733,21 +14532,19 @@ react.createElement(OptionList, {
                     resultContainer.innerHTML = `
 											<div style="
 												padding: 16px 20px;
-												background: rgba(255, 255, 255, 0.03);
+												background: var(--settings-surface-2, rgba(255, 255, 255, 0.03));
 												border: 1px solid rgba(255, 107, 107, 0.2);
-												border-left: 1px solid rgba(255, 255, 255, 0.08);
-												border-right: 1px solid rgba(255, 255, 255, 0.08);
-												border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+												border-left: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+												border-right: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
+												border-bottom: 1px solid var(--settings-line-2, rgba(255, 255, 255, 0.08));
 												border-bottom-left-radius: 0;
 												border-bottom-right-radius: 0;
-												backdrop-filter: blur(30px) saturate(150%);
-												-webkit-backdrop-filter: blur(30px) saturate(150%);
 											">
 												<div style="
 													display: flex;
 													align-items: center;
 													gap: 12px;
-													color: rgba(255, 107, 107, 0.9);
+													color: var(--danger, rgba(255, 107, 107, 0.9));
 													font-size: 13px;
 													font-weight: 500;
 												">
@@ -12787,246 +14584,343 @@ react.createElement(OptionList, {
           onChange: () => { },
         });
   const renderAboutClientInfoSection = () =>
-react.createElement(
-          "div",
-          {
-            className: "info-card about-info-card about-client-card",
-            style: {
-              padding: "20px",
-              background: "rgba(255, 255, 255, 0.03)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "0 0 12px 12px",
-              backdropFilter: "blur(30px) saturate(150%)",
-              WebkitBackdropFilter: "blur(30px) saturate(150%)",
-              marginBottom: "24px",
-            },
-          },
-          react.createElement(
-            "p",
-            {
-              className: "about-info-description about-info-description-compact",
-              style: {
-                margin: "0 0 8px",
-                fontSize: "13px",
-                lineHeight: "1.6",
-              },
-            },
-            I18n.t("settingsAdvanced.aboutTab.clientInfo.description"),
-          ),
-          react.createElement(
-            "div",
-            {
-              className: "about-client-id-row",
-              style: {
-                marginTop: "12px",
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-              },
-            },
-            react.createElement(
-              "div",
-              {
-                className: "about-client-id-box",
-                style: {
-                  flex: 1,
-                  borderRadius: "8px",
-                  padding: "10px 14px",
-                  fontFamily: 'Consolas, Monaco, "Courier New", monospace',
-                  fontSize: "13px",
-                  userSelect: "all",
-                  wordBreak: "break-all",
-                  lineHeight: "1.5",
-                },
-              },
-              Spicetify.LocalStorage.get("ivLyrics:user-hash")
-            ),
-            react.createElement(
-              "button",
-              {
-                className: "btn about-client-copy-btn",
-                onClick: () => {
-                  const clientId = Spicetify.LocalStorage.get("ivLyrics:user-hash");
-                  navigator.clipboard.writeText(clientId).then(() => {
-                    Toast.success(I18n.t("settingsAdvanced.aboutTab.clientInfo.copied"));
-                  }).catch(() => {
-                    Toast.error(I18n.t("settingsAdvanced.aboutTab.clientInfo.copyFailed"));
-                  });
-                },
-                style: {
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  letterSpacing: "-0.01em",
-                  whiteSpace: "nowrap",
-                },
-              },
-              I18n.t("settingsAdvanced.aboutTab.clientInfo.copy")
-            )
-          )
-        );
-  const renderAboutAppInfoSection = () =>
-react.createElement(
-          "div",
-          {
-            className: "info-card about-info-card",
-            style: {
-              padding: "20px",
-              background: "rgba(255, 255, 255, 0.03)",
-              border: "1px solid rgba(255, 255, 255, 0.08)",
-              borderRadius: "0 0 12px 12px",
-              backdropFilter: "blur(30px) saturate(150%)",
-              WebkitBackdropFilter: "blur(30px) saturate(150%)",
-              marginBottom: "24px",
-            },
-          },
-          react.createElement(
-            "h3",
-            {
-              className: "about-info-title",
-              style: {
-                margin: "0 0 12px",
-                fontSize: "18px",
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
-              },
-            },
-            "ivLyrics"
-          ),
-          react.createElement(
-            "p",
-            {
-              className: "about-info-description",
-              style: {
-                margin: "0 0 16px",
-                lineHeight: "1.6",
-              },
-            },
-            I18n.t("settingsAdvanced.aboutTab.appDescription")
-          ),
-          react.createElement(
-            "p",
-            {
-              className: "about-info-meta",
-              style: {
-                margin: "0 0 8px",
-                fontSize: "14px",
-              },
-            },
-            `${I18n.t("settingsAdvanced.aboutTab.versionPrefix")}: ${Utils.currentVersion}`
-          ),
-          react.createElement("div", {
-            className: "about-info-divider",
-            style: {
-              height: "1px",
-              margin: "16px 0",
-            },
-          }),
-          react.createElement(
-            "p",
-            {
-              className: "about-info-line",
-              style: {
-                margin: "0 0 12px",
-                lineHeight: "1.6",
-              },
-            },
-            react.createElement("strong", null, I18n.t("settingsAdvanced.aboutTab.developer")),
-            " ivLis Studio"
-          ),
-          react.createElement(
-            "p",
-            {
-              className: "about-info-line",
-              style: {
-                margin: "0 0 12px",
-                lineHeight: "1.6",
-              },
-            },
-            react.createElement("strong", null, I18n.t("settingsAdvanced.aboutTab.originalProject")),
-            "lyrics-plus by khanhas"
-          ),
-          react.createElement(
-            "p",
-            {
-              className: "about-info-note",
-              style: {
-                margin: "0",
-                fontSize: "14px",
-                lineHeight: "1.6",
-              },
-            },
-            I18n.t("settingsAdvanced.aboutTab.thanks")
-          )
-        );
-  const renderAboutTab = () =>
-react.createElement(
+    react.createElement(
+      "div",
+      { className: "settings-group info-card about-info-card about-client-card", "data-section-content": "true" },
+      react.createElement(
+        "p",
+        { className: "about-info-description about-info-description-compact" },
+        I18n.t("settingsAdvanced.aboutTab.clientInfo.description"),
+      ),
+      react.createElement(
         "div",
-        {
-          className: `tab-content ${activeTab === "about" ? "active" : ""}`,
-          "data-tab-id": "about",
-        },
-        // Discord 계정 연동 섹션 (최상단)
-        react.createElement(SettingsSectionTitle, {
-          title: I18n.t("settingsAdvanced.aboutTab.account.title"),
-          subtitle: I18n.t("settingsAdvanced.aboutTab.account.subtitle"),
-          sectionKey: "about-account",
-        }),
-        react.createElement(AccountSection),
-        react.createElement(SettingsSectionTitle, {
-          title: I18n.t("settingsAdvanced.aboutTab.appInfo.title"),
-          subtitle: I18n.t("settingsAdvanced.aboutTab.subtitle"),
-          sectionKey: "about-app-info",
-        }),
-        renderAboutAppInfoSection(),
-        react.createElement(SettingsSectionTitle, {
-          title: I18n.t("settingsAdvanced.aboutTab.clientInfo.title"),
-          subtitle: I18n.t("settingsAdvanced.aboutTab.clientInfo.subtitle"),
-          sectionKey: "about-client-info",
-        }),
-        renderAboutClientInfoSection(),
-        react.createElement(SettingsSectionTitle, {
-          title: I18n.t("settingsAdvanced.aboutTab.update.title"),
-          subtitle: I18n.t("settingsAdvanced.aboutTab.update.subtitle"),
-          sectionKey: "about-update",
-        }),
-        renderAboutUpdateSection(),
+        { className: "about-client-id-row" },
+        react.createElement(
+          "code",
+          { className: "about-client-id-box" },
+          Spicetify.LocalStorage.get("ivLyrics:user-hash")
+        ),
+        react.createElement(
+          "button",
+          {
+            type: "button",
+            className: "btn about-client-copy-btn",
+            onClick: () => {
+              const clientId = Spicetify.LocalStorage.get("ivLyrics:user-hash");
+              navigator.clipboard.writeText(clientId).then(() => {
+                Toast.success(I18n.t("settingsAdvanced.aboutTab.clientInfo.copied"));
+              }).catch(() => {
+                Toast.error(I18n.t("settingsAdvanced.aboutTab.clientInfo.copyFailed"));
+              });
+            },
+          },
+          I18n.t("settingsAdvanced.aboutTab.clientInfo.copy")
+        )
+      )
+    );
 
-        react.createElement(SettingsSectionTitle, {
-          title: I18n.t("settingsAdvanced.aboutTab.patchNotes.title"),
-          subtitle: I18n.t("settingsAdvanced.aboutTab.patchNotes.subtitle"),
-          sectionKey: "about-patch-notes",
-        }),
+  const renderAboutAppInfoSection = () =>
+    react.createElement(
+      "div",
+      { className: "settings-group info-card about-info-card", "data-section-content": "true" },
+      react.createElement(
+        "div",
+        { className: "settings-app-card" },
+        react.createElement("span", { className: "settings-app-logo", "aria-hidden": "true" }, "iv"),
         react.createElement(
           "div",
-	          {
-	            id: "patch-notes-container",
-	            style: {
-	              padding: "20px",
-	              background: "var(--glass-bg)",
-	              border: "1px solid var(--glass-border)",
-	              borderRadius: "0 0 12px 12px",
-	              backdropFilter: "blur(30px) saturate(150%)",
-	              WebkitBackdropFilter: "blur(30px) saturate(150%)",
-              marginBottom: "24px",
-              minHeight: "100px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-	              color: "var(--text-secondary)",
-	            },
-	          },
+          { className: "settings-app-card-main" },
+          react.createElement("h3", { className: "about-info-title" }, "ivLyrics"),
+          react.createElement(
+            "p",
+            { className: "about-info-description" },
+            `${I18n.t("settingsAdvanced.aboutTab.versionPrefix")} ${Utils.currentVersion} · ${I18n.t("settingsAdvanced.aboutTab.appDescription")}`
+          )
+        )
+      ),
+      react.createElement(
+        "dl",
+        { className: "settings-kv about-info-meta" },
+        react.createElement("dt", null, String(I18n.t("settingsAdvanced.aboutTab.developer")).replace(/[:：]s*$/, "")),
+        react.createElement("dd", { className: "about-info-line" }, "ivLis Studio"),
+        react.createElement("dt", null, String(I18n.t("settingsAdvanced.aboutTab.originalProject")).replace(/[:：]s*$/, "")),
+        react.createElement("dd", { className: "about-info-line" }, "lyrics-plus by khanhas")
+      ),
+      react.createElement(
+        "div",
+        { className: "settings-group-foot" },
+        react.createElement("p", { className: "about-info-note" }, I18n.t("settingsAdvanced.aboutTab.thanks")),
+        react.createElement(
+          "div",
+          { className: "settings-group-foot-actions" },
+          react.createElement(
+            "button",
+            {
+              type: "button",
+              className: "btn btn-sm settings-github-btn",
+              title: I18n.t("settingsAdvanced.aboutTab.visitGithub"),
+              onClick: () => window.open("https://github.com/ivLis-Studio/ivLyrics", "_blank"),
+            },
+            react.createElement(SettingsUiIcon, { name: "github", size: 15 }),
+            react.createElement("span", null, I18n.t("settingsAdvanced.aboutTab.viewOnGithub"))
+          ),
+          react.createElement(
+            "button",
+            {
+              type: "button",
+              className: "btn btn-sm settings-discord-btn",
+              onClick: () => window.open("https://ivlis.kr/ivLyrics/discord.php", "_blank"),
+            },
+            react.createElement(SettingsUiIcon, { name: "discord", size: 15 }),
+            react.createElement("span", null, I18n.t("settingsAdvanced.aboutTab.joinDiscord"))
+          ),
+          react.createElement(
+            "button",
+            {
+              type: "button",
+              className: "btn btn-sm settings-coffee-btn",
+              title: I18n.t("settingsAdvanced.donate.title"),
+              onClick: () => window.open("https://buymeacoffee.com/ivlis", "_blank"),
+            },
+            react.createElement(SettingsUiIcon, { name: "coffee", size: 15 }),
+            react.createElement("span", null, I18n.t("settingsAdvanced.donate.button"))
+          )
+        )
+      )
+    );
+
+  const renderAboutTab = () =>
+    react.createElement(
+      "div",
+      {
+        className: `tab-content ${activeTab === "about" ? "active" : ""}`,
+        "data-tab-id": "about",
+      },
+      // Discord 계정 연동 섹션 (최상단)
+      react.createElement(
+        SettingsSection,
+        {
+          sectionKey: "about-account",
+          title: I18n.t("settingsAdvanced.aboutTab.account.title"),
+          subtitle: I18n.t("settingsAdvanced.aboutTab.account.subtitle"),
+        },
+        react.createElement(AccountSection)
+      ),
+      react.createElement(
+        SettingsSection,
+        {
+          sectionKey: "about-update",
+          title: I18n.t("settingsAdvanced.aboutTab.update.title"),
+          subtitle: I18n.t("settingsAdvanced.aboutTab.update.subtitle"),
+        },
+        renderAboutUpdateSection()
+      ),
+      react.createElement(
+        SettingsSection,
+        {
+          sectionKey: "about-app-info",
+          title: I18n.t("settingsAdvanced.aboutTab.appInfo.title"),
+          subtitle: I18n.t("settingsAdvanced.aboutTab.subtitle"),
+        },
+        renderAboutAppInfoSection()
+      ),
+      react.createElement(
+        SettingsSection,
+        {
+          sectionKey: "about-client-info",
+          title: I18n.t("settingsAdvanced.aboutTab.clientInfo.title"),
+          subtitle: I18n.t("settingsAdvanced.aboutTab.clientInfo.subtitle"),
+        },
+        renderAboutClientInfoSection()
+      ),
+      react.createElement(
+        SettingsSection,
+        {
+          sectionKey: "about-patch-notes",
+          title: I18n.t("settingsAdvanced.aboutTab.patchNotes.title"),
+          subtitle: I18n.t("settingsAdvanced.aboutTab.patchNotes.subtitle"),
+        },
+        react.createElement(
+          "div",
+          {
+            id: "patch-notes-container",
+            className: "settings-group settings-patch-notes is-loading",
+            "data-section-content": "true",
+          },
           I18n.t("settingsAdvanced.aboutTab.patchNotes.loading")
         )
+      )
+    );
+
+  const renderTabContent = (tabId) => {
+    switch (tabId) {
+      case "general": return renderGeneralTab();
+      case "lyrics-providers": return renderLyricsProvidersTab();
+      case "ai-providers": return renderAiProvidersTab();
+      case "appearance": return renderAppearanceTab();
+      case "performance": return renderPerformanceTab();
+      case "lyrics": return renderLyricsTab();
+      case "fullscreen": return renderFullscreenTab();
+      case "nowplaying": return renderNowPlayingTab();
+      case "advanced": return renderAdvancedTab();
+      case "debug": return renderDebugTab();
+      case "about": return renderAboutTab();
+      default: return renderGeneralTab();
+    }
+  };
+
+  // Every setting with an index.js default, found by walking the menus'
+  // element trees (the same item definitions and save handlers the menus use).
+  function buildSettingsRegistry() {
+    const entries = [];
+    const seen = new Set();
+    const add = (tabId, section, item, onChange, labelPrefix) => {
+      if (!item || !item.key || seen.has(item.key)) return;
+      if (item.key !== SETTINGS_BACKGROUND_MODE_KEY && !hasSettingDefault(item.key)) return;
+      seen.add(item.key);
+      entries.push({
+        key: item.key,
+        tabId,
+        sectionKey: section?.sectionKey || null,
+        sectionTitle: section?.title || "",
+        item: labelPrefix && !String(item.desc || "").startsWith(labelPrefix)
+          ? { ...item, desc: `${labelPrefix} · ${item.desc}` }
+          : item,
+        onChange: item.onChange || onChange,
+      });
+    };
+    const walk = (node, tabId, section) => {
+      if (Array.isArray(node)) {
+        node.forEach((child) => walk(child, tabId, section));
+        return;
+      }
+      if (!node || typeof node !== "object" || !node.props) return;
+      const props = node.props;
+      let nextSection = section;
+      if (node.type === SettingsSection) {
+        nextSection = { sectionKey: props.sectionKey, title: props.title };
+      }
+      if (node.type === OptionList) {
+        (props.items || []).forEach((item) => add(tabId, nextSection, item, props.onChange));
+      }
+      if (node.type === SettingsLayerMatrix) {
+        (props.columns || []).forEach((column) => {
+          const handler = column.onChange || props.onChange;
+          if (column.toggle) add(tabId, nextSection, { ...column.toggle, type: ConfigSlider }, handler);
+          (column.items || []).forEach((item) => add(tabId, nextSection, item, handler, column.label));
+        });
+      }
+      // A function is evaluated only here, when the registry is built.
+      const registryItems = typeof props.settingsRegistryItems === "function"
+        ? props.settingsRegistryItems()
+        : props.settingsRegistryItems;
+      if (Array.isArray(registryItems)) {
+        registryItems.forEach(({ item, onChange }) => add(tabId, nextSection, item, onChange));
+      }
+      walk(props.children, tabId, nextSection);
+    };
+    sidebarTabs.forEach((tab) => {
+      try {
+        walk(renderTabContent(tab.id), tab.id, null);
+      } catch (error) {
+        console.warn("[ivLyrics] settings registry skipped", tab.id, error);
+      }
+    });
+    return entries;
+  }
+
+  const resetChangedEntries = (entries) => {
+    entries.forEach((entry) => {
+      try {
+        entry.onChange(entry.key, getSettingDefaultValue(entry.key));
+      } catch (error) {
+        console.error("[ivLyrics] Failed to reset setting", entry.key, error);
+      }
+    });
+    window.dispatchEvent(new CustomEvent("ivLyrics:settings-refresh", { detail: { reset: true } }));
+  };
+
+  const renderChangedView = () => {
+    const changedEntries = buildSettingsRegistry().filter((entry) => isSettingChanged(entry.key));
+    if (!changedEntries.length) {
+      return react.createElement(
+        "div",
+        { className: "tab-content active settings-changed-view", "data-tab-id": "changed" },
+        react.createElement(
+          "div",
+          { className: "settings-empty-state" },
+          react.createElement("span", { className: "settings-empty-icon", "aria-hidden": "true" }, react.createElement(SettingsUiIcon, { name: "check", size: 22 })),
+          react.createElement("b", null, getSettingsText("settingsUi.changed.emptyTitle", "No changed settings")),
+          react.createElement("span", null, getSettingsText("settingsUi.changed.emptyDesc", "Every setting is at its default."))
+        )
       );
+    }
+    const resetLabel = getSettingsText("creatorProfile.resetDecoration", "Reset to default");
+    return react.createElement(
+      "div",
+      { className: "tab-content active settings-changed-view", "data-tab-id": "changed" },
+      react.createElement(
+        "div",
+        { className: "settings-changed-tools" },
+        react.createElement(
+          "span",
+          { className: "settings-pill is-accent" },
+          getSettingsText("settingsUi.changed.count", "{count}").replace("{count}", String(changedEntries.length))
+        ),
+        react.createElement(
+          "button",
+          {
+            type: "button",
+            className: "btn btn-sm",
+            onClick: () => {
+              const message = getSettingsText("settingsUi.changed.resetConfirm", "Reset {count} settings to their defaults?")
+                .replace("{count}", String(changedEntries.length));
+              // eslint-disable-next-line no-alert
+              if (!window.confirm(message)) return;
+              resetChangedEntries(changedEntries);
+            },
+          },
+          react.createElement(SettingsUiIcon, { name: "reset", size: 15 }),
+          react.createElement("span", null, resetLabel)
+        )
+      ),
+      ...sidebarTabs.map((tab) => {
+        const entries = changedEntries.filter((entry) => entry.tabId === tab.id);
+        if (!entries.length) return null;
+        return react.createElement(
+          "section",
+          { key: tab.id, className: "settings-changed-menu" },
+          react.createElement(
+            "h3",
+            { className: "settings-changed-menu-title" },
+            react.createElement(SettingsOutlineIcon, { name: tab.icon, size: 15 }),
+            tab.label
+          ),
+          react.createElement(OptionList, {
+            items: entries.map((entry) => ({
+              ...entry.item,
+              defaultValue: entry.key === SETTINGS_BACKGROUND_MODE_KEY
+                ? getCurrentSettingsBackgroundMode()
+                : entry.item.defaultValue,
+              when: undefined,
+              onChange: (_name, value, event) => entry.onChange(entry.key, value, event),
+              jump: {
+                label: entry.sectionTitle || tab.label,
+                onClick: () => navigateToDestination(entry.tabId, entry.key),
+              },
+            })),
+          })
+        );
+      })
+    );
+  };
 
   return react.createElement(
     "div",
     {
       id: `${APP_NAME}-config-container`,
-      className: shouldReduceMotion ? "motion-reduced" : "",
+      ref: rootRef,
+      className: `settings-app${shouldReduceMotion ? " motion-reduced" : ""}`,
       "data-ui-theme": uiTheme,
       "data-ui-theme-preference": uiThemePreference,
     },
@@ -13037,103 +14931,31 @@ react.createElement(
     }),
     renderHeaderSection(),
     react.createElement(
-      SettingsSidebarShell,
-      { sidebarRef: settingsSidebarRef },
+      "div",
+      { className: "settings-body" },
+      renderRail(),
       react.createElement(
-        "div",
-        { className: "settings-search-container" },
+        "main",
+        {
+          className: "settings-content",
+          ref: settingsContentRef,
+          tabIndex: -1,
+          "aria-label": changedView ? changedViewTitle : activeTabMeta.label,
+        },
         react.createElement(
           "div",
-          { className: `settings-search-wrapper${searchQuery ? " has-query" : ""}` },
-          react.createElement(
-            "svg",
-            {
-              className: "settings-search-icon",
-              viewBox: "0 0 20 20",
-              fill: "currentColor",
-              "aria-hidden": "true",
-            },
-            react.createElement("path", {
-              fillRule: "evenodd",
-              d: "M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z",
-              clipRule: "evenodd",
-            })
-          ),
-          react.createElement("input", {
-            type: "search",
-            className: "settings-search-input",
-            placeholder: I18n.t("search.placeholder"),
-            "aria-label": I18n.t("search.placeholder"),
-            value: searchQuery,
-            onChange: handleSearchChange,
-            onKeyDown: (event) => {
-              if (event.key === "Escape" && searchQuery) {
-                event.preventDefault();
-                event.stopPropagation();
-                handleClearSearch();
-              }
-            },
-          }),
-          searchQuery && react.createElement(
-            "button",
-            {
-              className: "settings-search-clear",
-              type: "button",
-              onClick: handleClearSearch,
-              title: I18n.t("search.clear"),
-              "aria-label": I18n.t("search.clear"),
-            },
-            "×"
-          )
+          { className: "settings-page" },
+          renderPageHead(),
+          changedView ? renderChangedView() : renderTabContent(activeTab)
         )
       ),
-      renderSidebarNavigation()
-    ),
-    react.createElement(
-      SettingsMainPanelShell,
-      {
-        contentRef: settingsContentRef,
-        badge: activeNavigationGroup?.badge || activeTabMeta?.badge,
-        label: activeNavigationGroup?.label || activeTabMeta?.label,
-        description:
-          activeNavigationGroup?.description || activeTabMeta?.description,
-      },
-      // 검색 결과 탭
-      activeTab === "search" &&
-        renderSearchTab(),
-      // 일반 탭 (동작 관련 설정)
-      activeTab === "general" &&
-        renderGeneralTab(),
-      // 외관 탭 (시각 효과 + 타이포그래피)
-      activeTab === "appearance" &&
-      renderAppearanceTab(),
-      // 성능 탭
-      activeTab === "performance" &&
-      renderPerformanceTab(),
-      // 가사 탭 (가사 동기화 및 동작)
-      activeTab === "lyrics" &&
-      renderLyricsTab(),
-      // 고급 탭
-      activeTab === "advanced" &&
-      renderAdvancedTab(),
-      // 가사 제공자 탭
-      activeTab === "lyrics-providers" &&
-      renderLyricsProvidersTab(),
-      // AI 제공자 탭
-      activeTab === "ai-providers" &&
-      renderAiProvidersTab(),
-      // 전체화면 탭
-      activeTab === "fullscreen" &&
-      renderFullscreenTab(),
-      // NowPlaying 패널 가사 탭
-      activeTab === "nowplaying" &&
-      renderNowPlayingTab(),
-      // 디버그 탭
-      activeTab === "debug" &&
-      renderDebugTab(),
-      // 정보 탭
-      activeTab === "about" &&
-      renderAboutTab()
+      react.createElement(SettingsDock, {
+        open: dockOpen,
+        onToggle: toggleDock,
+        menu: activeTab,
+        signal: activeSectionSignal,
+        fullscreenView,
+      })
     )
   );
 };
@@ -13274,6 +15096,24 @@ function openConfig(options = {}) {
           .closest(".settings-search-wrapper")
           ?.querySelector(".settings-search-clear")
           ?.click();
+        return;
+      }
+
+      // In a field, Escape first undoes the edit (back to the value it had
+      // when it was focused) and leaves the field; the next Escape closes.
+      const field = isSettingsEditableField(e.target) ? e.target : null;
+      if (field) {
+        const before = field.dataset?.ivBefore;
+        if (before !== undefined && field.value !== before) {
+          const prototype = field.tagName === "TEXTAREA"
+            ? window.HTMLTextAreaElement.prototype
+            : window.HTMLInputElement.prototype;
+          const setValue = Object.getOwnPropertyDescriptor(prototype, "value")?.set;
+          if (setValue) setValue.call(field, before);
+          else field.value = before;
+          field.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+        field.blur();
         return;
       }
 

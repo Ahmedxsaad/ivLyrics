@@ -77,7 +77,57 @@ window.LANG_TR = {
       "autoShort": "Otomatik",
       "selector": "Ayarlar teması"
     },
-    "close": "Ayarları kapat"
+    "close": "Ayarları kapat",
+    "changed": {
+      "title": "Değiştirilen ayarlar",
+      "button": "Değişenler",
+      "desc": "Yalnızca varsayılandan farklı olan ayarlar.",
+      "emptyTitle": "Değiştirilen ayar yok",
+      "emptyDesc": "Tüm ayarlar varsayılan değerinde",
+      "count": "{count} ayar",
+      "resetConfirm": "{count} ayar varsayılana sıfırlansın mı?"
+    },
+    "controls": {
+      "scrubHint": "Ayarlamak için yana sürükleyin · Shift ile hızlı · {fineKey} ile hassas"
+    },
+    "footer": {
+      "counts": "{settings} ayar · {menus} menü"
+    },
+    "fullscreenViews": {
+      "basic": "Temel",
+      "normal": "Normal mod",
+      "tv": "TV modu"
+    },
+    "performance": {
+      "loadSummary": "Açık GPU yoğun efektler: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "“此処” (koko), “burada” sözcüğünün eski usul kanji yazılışıdır; şarkı sözlerinde edebi bir hava katmak için sık kullanılır.",
+      "sampleNote": "Örnek verilerle gösterilir; çalan parçayla ilgisi yoktur."
+    },
+    "providers": {
+      "firstTried": "İlk denenen"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Bağlantılar",
+        "subtitle": "Her sağlayıcının ihtiyaç duyduğu API anahtarı ve model gibi bağlantı bilgilerini yönetin."
+      },
+      "aiRequest": {
+        "title": "İstekler"
+      },
+      "aiTasks": {
+        "title": "Göreve göre sağlayıcılar"
+      },
+      "lyricLayers": {
+        "title": "Söz katmanları",
+        "subtitle": "Orijinal, telaffuz, çeviri ve furigana yazı tiplerini tek ekranda karşılaştırıp ayarlayın."
+      },
+      "lyricsLookup": {
+        "title": "Arama sırası",
+        "subtitle": "Şarkı sözü ararken önce neye bakılacağını seçin."
+      }
+    }
   },
   "sections": {
     "language": "Dil",

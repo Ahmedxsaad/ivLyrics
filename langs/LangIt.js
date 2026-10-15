@@ -77,7 +77,57 @@ window.LANG_IT = {
       "autoShort": "Auto",
       "selector": "Tema delle impostazioni"
     },
-    "close": "Chiudi impostazioni"
+    "close": "Chiudi impostazioni",
+    "changed": {
+      "title": "Impostazioni modificate",
+      "button": "Modificate",
+      "desc": "Solo le impostazioni diverse dal valore predefinito.",
+      "emptyTitle": "Nessuna impostazione modificata",
+      "emptyDesc": "Tutte le impostazioni hanno il valore predefinito",
+      "count": "{count} impostazioni",
+      "resetConfirm": "Ripristinare {count} impostazioni ai valori predefiniti?"
+    },
+    "controls": {
+      "scrubHint": "Trascina lateralmente per regolare · Shift per passi più ampi · {fineKey} per passi più fini"
+    },
+    "footer": {
+      "counts": "{settings} impostazioni · {menus} menu"
+    },
+    "fullscreenViews": {
+      "basic": "Base",
+      "normal": "Modalità normale",
+      "tv": "Modalità TV"
+    },
+    "performance": {
+      "loadSummary": "Effetti pesanti per la GPU attivi: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "«此処» (koko) è una grafia antica in kanji di «qui», usata spesso nei testi per un tocco letterario.",
+      "sampleNote": "Mostrato con dati di esempio, non con il brano in riproduzione."
+    },
+    "providers": {
+      "firstTried": "Provato per primo"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Connessioni",
+        "subtitle": "Gestisci i dati di connessione richiesti da ogni fornitore, come chiavi API e modelli."
+      },
+      "aiRequest": {
+        "title": "Richieste"
+      },
+      "aiTasks": {
+        "title": "Fornitori per attività"
+      },
+      "lyricLayers": {
+        "title": "Livelli del testo",
+        "subtitle": "Confronta e regola i caratteri di originale, pronuncia, traduzione e furigana in un’unica vista."
+      },
+      "lyricsLookup": {
+        "title": "Ordine di ricerca",
+        "subtitle": "Scegli cosa controllare per primo quando si cerca il testo."
+      }
+    }
   },
   "sections": {
     "language": "Lingua",

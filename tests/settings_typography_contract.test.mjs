@@ -84,6 +84,8 @@ const createHarness = (source, config = {}, initialLanguage = "ko") => {
   vm.runInContext(readFileSync(new URL("../SettingsStyles.js", import.meta.url), "utf8"), context);
   vm.runInContext([
     section(source, "const createTextOutlineSettingItems =", "const MULTI_VOCAL_COLOR_GROUPS ="),
+    // Plain data the speaker-colour section reads while rendering.
+    section(source, "const MULTI_VOCAL_COLOR_GROUPS =", "const getMultiVocalColorHelper ="),
     section(source, "const loadGoogleFontFamily =", "const SETTINGS_LYRICS_PREVIEW_TEXT ="),
     section(source, "const getEffectiveReducedMotionPreference =", "function openConfig("),
     "globalThis.ConfigModalUnderTest = ConfigModal;",
@@ -123,34 +125,6 @@ const normalize = (value) => {
 };
 
 const retiredFullscreenMarginKey = "fullscreen-lyrics-right-padding";
-const normalizeReleasedTree = (tree) => {
-  const expected = normalize(tree);
-  // Account for the retired right-margin slider and the expanded surrounding
-  // lyric choices. Keep every other released item and its defaults as the oracle.
-  for (const element of elements(expected)) {
-    if (element.type === "[function:OptionList]" && Array.isArray(element.props.items)) {
-      element.props.items = element.props.items.filter(item => item.key !== retiredFullscreenMarginKey);
-      for (const item of element.props.items) {
-        if (item.key === "lines-before" || item.key === "lines-after") {
-          item.options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        }
-      }
-    }
-  }
-  // Display controls now follow providers on every platform. Normalize only
-  // this intentional navigation move; retain the independent control oracle.
-  const categories = elements(expected).filter(node => node.props.className === "settings-nav-category");
-  const items = key => elements(categories.find(node => node.props.key === key))
-    .find(node => node.props.className === "settings-nav-category-items")?.props.children[0];
-  const general = items("general");
-  const screen = items("screen");
-  if (general && screen) {
-    const moved = general.filter(node => ["appearance", "performance"].includes(node.props.key));
-    general.splice(0, general.length, ...general.filter(node => !moved.includes(node)));
-    screen.unshift(...moved);
-  }
-  return expected;
-};
 
 test("fullscreen no longer exposes the right-margin slider, including with a saved value", () => {
   for (const value of [undefined, 0, 280]) {
@@ -162,16 +136,59 @@ test("fullscreen no longer exposes the right-margin slider, including with a sav
   }
 });
 
-const typographyControls = (tree) => elements(tree).flatMap((element) => {
-  if (element.type.name === "OptionList") {
-    return (element.props.items || []).filter((item) => /^(?:fullscreen-vinyl-)?(?:original|phonetic|translation)-/.test(item.key))
-      .map((item) => ({ key: item.key, onChange: element.props.onChange, item }));
+// The redesigned window shows the lyric typography of every layer in one
+// table (SettingsLayerMatrix) instead of one section per layer. The released
+// build stays the oracle for what each control is and does: the same keys,
+// item definitions and defaults, and the same storage, preview, font, reload
+// and event side effects. Only the layout around the controls changed.
+const TYPOGRAPHY_KEY = /^(?:fullscreen-vinyl-)?(?:original|phonetic|translation)-/;
+// The released page built one font row per layer by hand (a nameless
+// ConfigFontSelector); they map, in order, to these keys.
+const RELEASED_FONT_ROW_KEYS = ["original-font-family", "phonetic-font-family", "translation-font-family"];
+
+const typographyControls = (tree) => {
+  let fontRow = 0;
+  return elements(tree).flatMap((element) => {
+    if (element.type.name === "OptionList") {
+      return (element.props.items || []).filter((item) => TYPOGRAPHY_KEY.test(item.key))
+        .map((item) => ({ key: item.key, onChange: item.onChange || element.props.onChange, item }));
+    }
+    if (element.type.name === "SettingsLayerMatrix") {
+      return element.props.columns.flatMap((column) => column.items
+        .filter((item) => TYPOGRAPHY_KEY.test(item.key))
+        .map((item) => ({ key: item.key, onChange: column.onChange || element.props.onChange, item })));
+    }
+    if (element.type.name === "ConfigFontSelector" && element.props.name === "") {
+      const key = RELEASED_FONT_ROW_KEYS[fontRow++];
+      return [{ key, onChange: element.props.onChange, item: { key, type: element.type, defaultValue: element.props.defaultValue }, fontRow: true }];
+    }
+    return [];
+  });
+};
+
+const controlMap = (controls) => {
+  const map = new Map();
+  for (const control of controls) {
+    assert.equal(map.has(control.key), false, control.key + " is rendered once");
+    map.set(control.key, control);
   }
-  if (element.type.name === "ConfigFontSelector" && element.props.name === "") {
-    return [{ key: "font-row", onChange: element.props.onChange, item: element.props }];
+  return map;
+};
+
+// What a control is, without its handlers: label, help, type, range, unit,
+// options and default. Font rows of the released page carried only a type and
+// a default, so those are what is compared for them.
+const definition = (control, fontRowShape) => {
+  const { item } = control;
+  if (fontRowShape) return normalize({ key: item.key, type: item.type, defaultValue: item.defaultValue });
+  const fields = {};
+  for (const [name, value] of Object.entries(item)) {
+    if (typeof value === "function" && name !== "type") continue;
+    if (value === undefined) continue;
+    fields[name] = value;
   }
-  return [];
-});
+  return normalize(fields);
+};
 
 test("LP transition and speed controls persist and notify the active renderer", () => {
   const h = createHarness(currentSource);
@@ -196,7 +213,7 @@ test("LP transition and speed controls persist and notify the active renderer", 
 });
 
 for (const tab of ["appearance", "fullscreen"]) {
-  test(`${tab} typography retains the released tree, defaults, and language updates`, () => {
+  test(`${tab} typography keeps the released controls, definitions, defaults, and language updates`, () => {
     for (const value of [undefined, null, false, 0, "", 27, "Roboto"]) {
       const config = {};
       for (const prefix of ["original", "phonetic", "translation", "fullscreen-vinyl-original", "fullscreen-vinyl-phonetic", "fullscreen-vinyl-translation"]) {
@@ -206,13 +223,21 @@ for (const tab of ["appearance", "fullscreen"]) {
       }
       const before = createHarness(releasedSource, config);
       const after = createHarness(currentSource, config);
+      const compare = () => {
+        const released = controlMap(typographyControls(before.render(tab)));
+        const current = controlMap(typographyControls(after.render(tab)));
+        assert.ok(released.size >= 20, "released typography controls found");
+        assert.deepEqual([...current.keys()].sort(), [...released.keys()].sort(), "same typography keys");
+        for (const [key, control] of released) {
+          assert.deepEqual(definition(current.get(key), control.fontRow), definition(control, control.fontRow), key + ": definition");
+        }
+      };
+      compare();
       const first = after.render(tab);
-      assert.deepEqual(normalize(first), normalizeReleasedTree(before.render(tab)));
-      const next = after.render(tab);
-      assert.deepEqual(elements(next).map((element) => element.type), elements(first).map((element) => element.type));
+      assert.deepEqual(elements(after.render(tab)).map((element) => element.type), elements(first).map((element) => element.type));
       before.setLanguage("zh-TW");
       after.setLanguage("zh-TW");
-      assert.deepEqual(normalize(after.render(tab)), normalizeReleasedTree(before.render(tab)));
+      compare();
     }
   });
 
@@ -220,18 +245,19 @@ for (const tab of ["appearance", "fullscreen"]) {
     const baseline = createHarness(releasedSource);
     const candidate = createHarness(currentSource);
     const oldControls = typographyControls(baseline.render(tab));
-    const newControls = typographyControls(candidate.render(tab));
+    const newControls = controlMap(typographyControls(candidate.render(tab)));
     assert.ok(oldControls.length >= 20);
-    assert.equal(newControls.length, oldControls.length);
-    for (let index = 0; index < oldControls.length; index++) {
-      assert.equal(newControls[index].key, oldControls[index].key);
-      const key = oldControls[index].key;
-      const values = key.includes("font") && (key.endsWith("family") || key === "font-row")
+    assert.equal(newControls.size, oldControls.length);
+    for (const oldControl of oldControls) {
+      const key = oldControl.key;
+      const newControl = newControls.get(key);
+      assert.ok(newControl, key + " is still rendered");
+      const values = key.endsWith("font-family")
         ? ["'Noto Sans', Pretendard Variable, unknown", "Roboto", "Roboto", ""]
         : key === "phonetic-hyphen-replace" ? ["keep", "space", "remove"] : [0, 2, false];
       for (const value of values) {
-        oldControls[index].onChange(key, value);
-        newControls[index].onChange(key, value);
+        oldControl.onChange(key, value);
+        newControl.onChange(key, value);
         assert.deepEqual(normalize(candidate.calls), normalize(baseline.calls), `${key}: calls`);
         assert.deepEqual(normalize(candidate.context.CONFIG), normalize(baseline.context.CONFIG), `${key}: config`);
         assert.deepEqual(normalize([...candidate.links]), normalize([...baseline.links]), `${key}: font links`);

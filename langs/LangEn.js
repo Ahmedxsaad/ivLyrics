@@ -77,7 +77,57 @@ window.LANG_EN = {
       "autoShort": "Auto",
       "selector": "Settings theme"
     },
-    "close": "Close settings"
+    "close": "Close settings",
+    "changed": {
+      "title": "Changed settings",
+      "button": "Changed",
+      "desc": "Only the settings that differ from their defaults.",
+      "emptyTitle": "No changed settings",
+      "emptyDesc": "Every setting is at its default",
+      "count": "{count} settings",
+      "resetConfirm": "Reset {count} settings to their defaults?"
+    },
+    "controls": {
+      "scrubHint": "Drag sideways to adjust · Shift for bigger steps · {fineKey} for finer steps"
+    },
+    "footer": {
+      "counts": "{settings} settings · {menus} menus"
+    },
+    "fullscreenViews": {
+      "basic": "Basics",
+      "normal": "Normal mode",
+      "tv": "TV mode"
+    },
+    "performance": {
+      "loadSummary": "GPU-heavy effects on: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "“此処” (koko) is an old-fashioned kanji spelling of “here”, often used in lyrics for a literary touch.",
+      "sampleNote": "Shown with sample data, not the track that is playing."
+    },
+    "providers": {
+      "firstTried": "Tried first"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Connections",
+        "subtitle": "Manage the connection details each provider needs, such as API keys and models."
+      },
+      "aiRequest": {
+        "title": "Requests"
+      },
+      "aiTasks": {
+        "title": "Providers by task"
+      },
+      "lyricLayers": {
+        "title": "Lyric layers",
+        "subtitle": "Compare and adjust the fonts of the original, pronunciation, translation and furigana in one view."
+      },
+      "lyricsLookup": {
+        "title": "Lookup order",
+        "subtitle": "Choose what to check first when looking for lyrics."
+      }
+    }
   },
   "sections": {
     "language": "Language",

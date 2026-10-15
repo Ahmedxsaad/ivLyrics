@@ -77,7 +77,57 @@ window.LANG_SV = {
       "autoShort": "Auto",
       "selector": "Inställningstema"
     },
-    "close": "Stäng inställningar"
+    "close": "Stäng inställningar",
+    "changed": {
+      "title": "Ändrade inställningar",
+      "button": "Ändrade",
+      "desc": "Endast inställningar som skiljer sig från standardvärdet.",
+      "emptyTitle": "Inga ändrade inställningar",
+      "emptyDesc": "Alla inställningar har sitt standardvärde",
+      "count": "{count} inställningar",
+      "resetConfirm": "Återställa {count} inställningar till standardvärdena?"
+    },
+    "controls": {
+      "scrubHint": "Dra i sidled för att justera · Skift för större steg · {fineKey} för finare steg"
+    },
+    "footer": {
+      "counts": "{settings} inställningar · {menus} menyer"
+    },
+    "fullscreenViews": {
+      "basic": "Grundläggande",
+      "normal": "Normalläge",
+      "tv": "TV-läge"
+    },
+    "performance": {
+      "loadSummary": "GPU-krävande effekter på: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "”此処” (koko) är en ålderdomlig kanjistavning av ”här” som ofta används i sångtexter för en litterär prägel.",
+      "sampleNote": "Visas med exempeldata, inte med låten som spelas."
+    },
+    "providers": {
+      "firstTried": "Provas först"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Anslutningar",
+        "subtitle": "Hantera anslutningsuppgifterna som varje leverantör behöver, till exempel API-nycklar och modeller."
+      },
+      "aiRequest": {
+        "title": "Förfrågningar"
+      },
+      "aiTasks": {
+        "title": "Leverantörer per uppgift"
+      },
+      "lyricLayers": {
+        "title": "Textlager",
+        "subtitle": "Jämför och justera typsnitten för original, uttal, översättning och furigana i en och samma vy."
+      },
+      "lyricsLookup": {
+        "title": "Sökordning",
+        "subtitle": "Välj vad som ska kontrolleras först när låttexten söks."
+      }
+    }
   },
   "sections": {
     "language": "Språk",

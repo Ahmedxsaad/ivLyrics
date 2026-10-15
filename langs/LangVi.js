@@ -77,7 +77,57 @@ window.LANG_VI = {
       "autoShort": "Tự động",
       "selector": "Giao diện cài đặt"
     },
-    "close": "Đóng cài đặt"
+    "close": "Đóng cài đặt",
+    "changed": {
+      "title": "Cài đặt đã thay đổi",
+      "button": "Đã thay đổi",
+      "desc": "Chỉ những cài đặt khác với mặc định.",
+      "emptyTitle": "Không có cài đặt nào thay đổi",
+      "emptyDesc": "Mọi cài đặt đều ở mặc định",
+      "count": "{count} cài đặt",
+      "resetConfirm": "Đặt lại {count} cài đặt về mặc định?"
+    },
+    "controls": {
+      "scrubHint": "Kéo sang ngang để điều chỉnh · Shift để chỉnh nhanh · {fineKey} để chỉnh tinh"
+    },
+    "footer": {
+      "counts": "{settings} cài đặt · {menus} menu"
+    },
+    "fullscreenViews": {
+      "basic": "Cơ bản",
+      "normal": "Chế độ thường",
+      "tv": "Chế độ TV"
+    },
+    "performance": {
+      "loadSummary": "Hiệu ứng nặng GPU đang bật: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "“此処” (koko) là cách viết kanji cổ của từ “ở đây”, thường được dùng trong lời bài hát để tạo nét văn chương.",
+      "sampleNote": "Hiển thị bằng dữ liệu mẫu, không phải bài đang phát."
+    },
+    "providers": {
+      "firstTried": "Thử trước"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Kết nối",
+        "subtitle": "Quản lý thông tin kết nối mà mỗi nhà cung cấp cần, như khóa API và mô hình."
+      },
+      "aiRequest": {
+        "title": "Yêu cầu"
+      },
+      "aiTasks": {
+        "title": "Nhà cung cấp theo tác vụ"
+      },
+      "lyricLayers": {
+        "title": "Các lớp lời bài hát",
+        "subtitle": "So sánh và điều chỉnh phông chữ của lời gốc, phiên âm, bản dịch và furigana trong một màn hình."
+      },
+      "lyricsLookup": {
+        "title": "Thứ tự tìm kiếm",
+        "subtitle": "Chọn điều cần kiểm tra trước khi tìm lời bài hát."
+      }
+    }
   },
   "sections": {
     "language": "Ngôn ngữ",

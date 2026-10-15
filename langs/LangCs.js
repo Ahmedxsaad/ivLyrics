@@ -77,7 +77,57 @@ window.LANG_CS = {
       "autoShort": "Automaticky",
       "selector": "Motiv nastavení"
     },
-    "close": "Zavřít nastavení"
+    "close": "Zavřít nastavení",
+    "changed": {
+      "title": "Změněná nastavení",
+      "button": "Změněno",
+      "desc": "Pouze nastavení, která se liší od výchozích hodnot.",
+      "emptyTitle": "Žádná změněná nastavení",
+      "emptyDesc": "Všechna nastavení mají výchozí hodnoty",
+      "count": "Nastavení: {count}",
+      "resetConfirm": "Obnovit výchozí hodnoty u {count} nastavení?"
+    },
+    "controls": {
+      "scrubHint": "Táhněte do stran pro úpravu · Shift pro větší kroky · {fineKey} pro jemné kroky"
+    },
+    "footer": {
+      "counts": "Nastavení: {settings} · nabídky: {menus}"
+    },
+    "fullscreenViews": {
+      "basic": "Základní",
+      "normal": "Normální režim",
+      "tv": "Režim TV"
+    },
+    "performance": {
+      "loadSummary": "Zapnuté efekty náročné na GPU: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "„此処“ (koko) je starobylý zápis slova „zde“ pomocí kanji, který se v textech písní používá pro básnický nádech.",
+      "sampleNote": "Zobrazeno na ukázkových datech, ne na právě přehrávané skladbě."
+    },
+    "providers": {
+      "firstTried": "Zkouší se první"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Připojení",
+        "subtitle": "Spravujte údaje pro připojení každého poskytovatele, například klíče API a modely."
+      },
+      "aiRequest": {
+        "title": "Požadavky"
+      },
+      "aiTasks": {
+        "title": "Poskytovatelé podle úlohy"
+      },
+      "lyricLayers": {
+        "title": "Vrstvy textu",
+        "subtitle": "Porovnejte a upravte písma originálu, výslovnosti, překladu a furigany v jednom zobrazení."
+      },
+      "lyricsLookup": {
+        "title": "Pořadí vyhledávání",
+        "subtitle": "Zvolte, co se má při hledání textu ověřit nejdřív."
+      }
+    }
   },
   "sections": {
     "language": "Jazyk",

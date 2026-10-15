@@ -77,7 +77,57 @@ window.LANG_ID = {
       "autoShort": "Otomatis",
       "selector": "Tema pengaturan"
     },
-    "close": "Tutup pengaturan"
+    "close": "Tutup pengaturan",
+    "changed": {
+      "title": "Pengaturan yang diubah",
+      "button": "Diubah",
+      "desc": "Hanya pengaturan yang berbeda dari bawaan.",
+      "emptyTitle": "Tidak ada pengaturan yang diubah",
+      "emptyDesc": "Semua pengaturan masih bawaan",
+      "count": "{count} pengaturan",
+      "resetConfirm": "Kembalikan {count} pengaturan ke bawaan?"
+    },
+    "controls": {
+      "scrubHint": "Seret ke samping untuk menyesuaikan · Shift untuk langkah besar · {fineKey} untuk langkah halus"
+    },
+    "footer": {
+      "counts": "{settings} pengaturan · {menus} menu"
+    },
+    "fullscreenViews": {
+      "basic": "Dasar",
+      "normal": "Mode normal",
+      "tv": "Mode TV"
+    },
+    "performance": {
+      "loadSummary": "Efek berat GPU yang aktif: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "“此処” (koko) adalah ejaan kanji kuno untuk “di sini”, sering dipakai dalam lirik untuk memberi kesan puitis.",
+      "sampleNote": "Ditampilkan dengan data contoh, bukan lagu yang sedang diputar."
+    },
+    "providers": {
+      "firstTried": "Dicoba pertama"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Koneksi",
+        "subtitle": "Kelola detail koneksi yang dibutuhkan tiap penyedia, seperti kunci API dan model."
+      },
+      "aiRequest": {
+        "title": "Permintaan"
+      },
+      "aiTasks": {
+        "title": "Penyedia per tugas"
+      },
+      "lyricLayers": {
+        "title": "Lapisan lirik",
+        "subtitle": "Bandingkan dan atur font teks asli, pelafalan, terjemahan, dan furigana dalam satu tampilan."
+      },
+      "lyricsLookup": {
+        "title": "Urutan pencarian",
+        "subtitle": "Pilih apa yang diperiksa lebih dulu saat mencari lirik."
+      }
+    }
   },
   "sections": {
     "language": "Bahasa",

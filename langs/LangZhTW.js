@@ -77,7 +77,57 @@ window.LANG_ZH_TW = {
       "autoShort": "自動",
       "selector": "設定主題"
     },
-    "close": "關閉設定"
+    "close": "關閉設定",
+    "changed": {
+      "title": "已變更的設定",
+      "button": "已變更",
+      "desc": "僅顯示與預設值不同的設定。",
+      "emptyTitle": "沒有已變更的設定",
+      "emptyDesc": "所有設定皆為預設值",
+      "count": "{count} 項",
+      "resetConfirm": "要將 {count} 項設定還原為預設值嗎？"
+    },
+    "controls": {
+      "scrubHint": "左右拖曳調整 · 按住 Shift 加快 · 按住 {fineKey} 微調"
+    },
+    "footer": {
+      "counts": "{settings} 項設定 · {menus} 個選單"
+    },
+    "fullscreenViews": {
+      "basic": "基本",
+      "normal": "一般模式",
+      "tv": "TV 模式"
+    },
+    "performance": {
+      "loadSummary": "已開啟 {on}/{total} 項高 GPU 負載效果 · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "「此処」（koko）是日語中「這裡」的古雅漢字寫法，常用於歌詞以增添文學氣息。",
+      "sampleNote": "以範例資料顯示，與目前播放的歌曲無關。"
+    },
+    "providers": {
+      "firstTried": "優先嘗試"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "連線",
+        "subtitle": "管理每個提供者所需的連線資訊，例如 API 金鑰與模型。"
+      },
+      "aiRequest": {
+        "title": "請求"
+      },
+      "aiTasks": {
+        "title": "依功能分配提供者"
+      },
+      "lyricLayers": {
+        "title": "歌詞圖層",
+        "subtitle": "在同一畫面中比較並調整原文、發音、翻譯與注音假名的字型。"
+      },
+      "lyricsLookup": {
+        "title": "查找順序",
+        "subtitle": "設定尋找歌詞時優先依據的條件。"
+      }
+    }
   },
   "sections": {
     "language": "語言",

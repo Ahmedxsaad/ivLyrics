@@ -77,7 +77,57 @@ window.LANG_KO = {
       "autoShort": "자동",
       "selector": "설정 테마"
     },
-    "close": "설정 닫기"
+    "close": "설정 닫기",
+    "changed": {
+      "title": "변경된 설정",
+      "button": "변경됨",
+      "desc": "기본값과 다른 설정만 모아 봅니다.",
+      "emptyTitle": "변경된 설정이 없습니다",
+      "emptyDesc": "모든 설정이 기본값입니다",
+      "count": "{count}개",
+      "resetConfirm": "{count}개 설정을 기본값으로 되돌릴까요?"
+    },
+    "controls": {
+      "scrubHint": "좌우로 드래그해 조절 · Shift 빠르게 · {fineKey} 세밀하게"
+    },
+    "footer": {
+      "counts": "{settings}개 설정 · {menus}개 메뉴"
+    },
+    "fullscreenViews": {
+      "basic": "기본",
+      "normal": "일반 모드",
+      "tv": "TV 모드"
+    },
+    "performance": {
+      "loadSummary": "GPU 부하가 큰 효과 {on}/{total}개 사용 중 · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "‘此処(ここ)’는 ‘여기’를 예스럽게 적는 한자 표기로, 가사에 운치를 더할 때 자주 쓰입니다.",
+      "sampleNote": "예제 데이터로 표시되며 실제 곡 정보와는 무관합니다."
+    },
+    "providers": {
+      "firstTried": "먼저 시도"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "연결",
+        "subtitle": "API 키와 모델처럼 제공자마다 필요한 연결 정보를 관리합니다."
+      },
+      "aiRequest": {
+        "title": "요청"
+      },
+      "aiTasks": {
+        "title": "작업별 제공자"
+      },
+      "lyricLayers": {
+        "title": "가사 레이어",
+        "subtitle": "원문, 발음, 번역, 후리가나의 글꼴을 한 화면에서 비교하며 조정합니다."
+      },
+      "lyricsLookup": {
+        "title": "조회 순서",
+        "subtitle": "가사를 찾을 때 어떤 기준을 먼저 볼지 정합니다."
+      }
+    }
   },
   "sections": {
     "language": "언어",

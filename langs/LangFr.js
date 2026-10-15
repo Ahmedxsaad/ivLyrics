@@ -77,7 +77,57 @@ window.LANG_FR = {
       "autoShort": "Auto",
       "selector": "Thème des paramètres"
     },
-    "close": "Fermer les paramètres"
+    "close": "Fermer les paramètres",
+    "changed": {
+      "title": "Paramètres modifiés",
+      "button": "Modifiés",
+      "desc": "Uniquement les paramètres qui diffèrent de leur valeur par défaut.",
+      "emptyTitle": "Aucun paramètre modifié",
+      "emptyDesc": "Tous les paramètres sont à leur valeur par défaut",
+      "count": "{count} paramètres",
+      "resetConfirm": "Rétablir {count} paramètres à leur valeur par défaut ?"
+    },
+    "controls": {
+      "scrubHint": "Faites glisser horizontalement pour ajuster · Maj pour aller plus vite · {fineKey} pour plus de précision"
+    },
+    "footer": {
+      "counts": "{settings} paramètres · {menus} menus"
+    },
+    "fullscreenViews": {
+      "basic": "Général",
+      "normal": "Mode normal",
+      "tv": "Mode TV"
+    },
+    "performance": {
+      "loadSummary": "Effets gourmands en GPU actifs : {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "« 此処 » (koko) est une graphie ancienne en kanji de « ici », souvent employée dans les paroles pour une touche littéraire.",
+      "sampleNote": "Affiché avec des données d’exemple, sans rapport avec le titre en cours."
+    },
+    "providers": {
+      "firstTried": "Essayé en premier"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Connexions",
+        "subtitle": "Gérez les informations de connexion de chaque fournisseur, comme les clés API et les modèles."
+      },
+      "aiRequest": {
+        "title": "Requêtes"
+      },
+      "aiTasks": {
+        "title": "Fournisseurs par tâche"
+      },
+      "lyricLayers": {
+        "title": "Couches des paroles",
+        "subtitle": "Comparez et ajustez les polices de l’original, de la prononciation, de la traduction et des furigana dans une seule vue."
+      },
+      "lyricsLookup": {
+        "title": "Ordre de recherche",
+        "subtitle": "Choisissez ce qui est vérifié en premier lors de la recherche des paroles."
+      }
+    }
   },
   "sections": {
     "language": "Langue",

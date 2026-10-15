@@ -77,7 +77,57 @@ window.LANG_MS = {
       "autoShort": "Auto",
       "selector": "Tema tetapan"
     },
-    "close": "Tutup tetapan"
+    "close": "Tutup tetapan",
+    "changed": {
+      "title": "Tetapan yang diubah",
+      "button": "Diubah",
+      "desc": "Hanya tetapan yang berbeza daripada lalai.",
+      "emptyTitle": "Tiada tetapan yang diubah",
+      "emptyDesc": "Semua tetapan masih lalai",
+      "count": "{count} tetapan",
+      "resetConfirm": "Set semula {count} tetapan kepada lalai?"
+    },
+    "controls": {
+      "scrubHint": "Seret ke sisi untuk melaraskan · Shift untuk langkah besar · {fineKey} untuk langkah halus"
+    },
+    "footer": {
+      "counts": "{settings} tetapan · {menus} menu"
+    },
+    "fullscreenViews": {
+      "basic": "Asas",
+      "normal": "Mod biasa",
+      "tv": "Mod TV"
+    },
+    "performance": {
+      "loadSummary": "Kesan berat GPU yang aktif: {on}/{total} · {fps} FPS"
+    },
+    "preview": {
+      "annotationSample": "“此処” (koko) ialah ejaan kanji lama bagi “di sini”, sering digunakan dalam lirik untuk memberi sentuhan puitis.",
+      "sampleNote": "Dipaparkan dengan data contoh, bukan lagu yang sedang dimainkan."
+    },
+    "providers": {
+      "firstTried": "Dicuba dahulu"
+    },
+    "sections": {
+      "aiConnections": {
+        "title": "Sambungan",
+        "subtitle": "Urus butiran sambungan yang diperlukan setiap penyedia, seperti kunci API dan model."
+      },
+      "aiRequest": {
+        "title": "Permintaan"
+      },
+      "aiTasks": {
+        "title": "Penyedia mengikut tugas"
+      },
+      "lyricLayers": {
+        "title": "Lapisan lirik",
+        "subtitle": "Bandingkan dan laraskan fon teks asal, sebutan, terjemahan dan furigana dalam satu paparan."
+      },
+      "lyricsLookup": {
+        "title": "Susunan carian",
+        "subtitle": "Pilih perkara yang disemak dahulu semasa mencari lirik."
+      }
+    }
   },
   "sections": {
     "language": "Bahasa",
