@@ -3394,6 +3394,14 @@ const isLyricsRenderCacheCurrent = (lyricsState = {}) => (
     || (lyricsState?.providerSelectionPolicy || "provider-first-v1:sync-data-first") === getLyricsProviderSelectionPolicy())
 );
 
+const getDisplayModeGenerationOptions = (mode = "") => {
+  if (!String(mode || "").startsWith("gemini_")) return "";
+  const options = mode === "gemini_romaji"
+    ? `phonetic-prompt=${LYRICS_PHONETIC_PROMPT_CACHE_VERSION}:notation=${getCurrentLyricsPronunciationNotation()}`
+    : `style=${window.AIAddonManager?.getTranslationStyle?.() || "natural"}`;
+  return `:${getCurrentTranslationTargetLanguage()}:${options}`;
+};
+
 const getDisplayModeCacheKey = (lyricsState = {}, mode = "") => {
   const providerKey = lyricsState.provider || "";
   const providerCacheVersion = lyricsState.cacheVersion || "provider-cache-legacy";
@@ -3403,10 +3411,8 @@ const getDisplayModeCacheKey = (lyricsState = {}, mode = "") => {
     || lyricsState.unsynced
     || [];
   const lyricsShape = getLyricsProcessingShapeSignature(sourceLyrics);
-  const pronunciationNotation = mode === "gemini_romaji"
-    ? `:${getCurrentLyricsPronunciationNotation()}`
-    : "";
-  return `${lyricsState.uri}:${providerKey}:${mode}${pronunciationNotation}:${getSyncDataRendererCacheVersion(lyricsState)}:${providerCacheVersion}:${lyricsShape}`;
+  const generationOptions = getDisplayModeGenerationOptions(mode);
+  return `${lyricsState.uri}:${providerKey}:${mode}${generationOptions}:${getSyncDataRendererCacheVersion(lyricsState)}:${providerCacheVersion}:${lyricsShape}`;
 };
 
 // Enhanced cache system with memory-efficient LRU and automatic cleanup
@@ -3816,10 +3822,12 @@ const Prefetcher = {
    * Gemini 번역/발음 프리페치
    */
   async _prefetchTranslations(trackInfo, lyrics) {
+    const lyricsArray = lyrics?.karaoke || lyrics?.synced || lyrics?.unsynced;
+    if (!Array.isArray(lyricsArray) || lyricsArray.length === 0) return;
     const uri = trackInfo.uri;
     const trackId = Utils.getTranslationCacheId(uri);
     const cacheKeyBase = `prefetch:translation:${uri}`;
-    const versionedCacheKeyBase = `${cacheKeyBase}:${getSyncDataRendererCacheVersion(lyrics)}:pronunciation=${getCurrentLyricsPronunciationNotation()}`;
+    const versionedCacheKeyBase = `${cacheKeyBase}:${getDisplayModeCacheKey(lyrics, "gemini_ko")}:${getDisplayModeCacheKey(lyrics, "gemini_romaji")}`;
 
     // 이미 캐시에 있으면 스킵
     if (this._prefetchCache.has(versionedCacheKeyBase)) {
@@ -3831,9 +3839,6 @@ const Prefetcher = {
     if (this._inflightRequests.has(versionedCacheKeyBase)) {
       return this._inflightRequests.get(versionedCacheKeyBase);
     }
-
-    const lyricsArray = lyrics.karaoke || lyrics.synced || lyrics.unsynced;
-    if (!lyricsArray || lyricsArray.length === 0) return;
 
     // 언어 감지
     const detectedLanguage = LyricsService.detectLanguage(lyricsArray);
@@ -3871,8 +3876,22 @@ const Prefetcher = {
     const needPhonetic = displayMode1 === "gemini_romaji" || displayMode2 === "gemini_romaji";
     const needTranslation = (displayMode1 && displayMode1 !== "none" && displayMode1 !== "gemini_romaji") ||
       (displayMode2 && displayMode2 !== "none" && displayMode2 !== "gemini_romaji");
+    const displayModeCacheKeys = new Map(
+      ["gemini_romaji", displayMode1, displayMode2].filter(Boolean)
+        .map((mode) => [mode, getDisplayModeCacheKey(lyrics, mode)])
+    );
+    const generationOptions = new Map(Array.from(displayModeCacheKeys.keys(),
+      (mode) => [mode, getDisplayModeGenerationOptions(mode)]));
+    const requestToken = {};
+    const isCurrentRequest = () =>
+      this._inflightRequests.get(versionedCacheKeyBase) === requestToken.promise &&
+      Array.from(generationOptions).every(([mode, options]) => getDisplayModeGenerationOptions(mode) === options);
+    const cacheResult = (mode, mapped) => {
+      if (isCurrentRequest()) CacheManager.set(displayModeCacheKeys.get(mode), mapped);
+    };
 
-    const prefetchPromise = (async () => {
+    // Publish ownership before any setup/provider callback can fail or reenter.
+    requestToken.promise = Promise.resolve().then(async () => {
       try {
         ivLyricsDebug(`[Prefetcher] Fetching translation for: ${trackInfo.title} (phonetic: ${needPhonetic}, translation: ${needTranslation})`);
 
@@ -3901,8 +3920,9 @@ const Prefetcher = {
         if (needPhonetic) {
           try {
             const cachedMapped = (await getSplitCachedResult(true)) || (await getLegacyCachedResult(true));
+            if (!isCurrentRequest()) return null;
             if (cachedMapped) {
-              CacheManager.set(getDisplayModeCacheKey(lyrics, "gemini_romaji"), cachedMapped);
+              cacheResult("gemini_romaji", cachedMapped);
               ivLyricsDebug(`[Prefetcher] Phonetic loaded from existing cache for: ${trackInfo.title} (provider: ${lyrics.provider})`);
             } else {
               const phoneticResponse = await window.Translator.callGemini({
@@ -3919,7 +3939,7 @@ const Prefetcher = {
               if (phoneticResponse.phonetic) {
                 const mapped = processTranslationResult(phoneticResponse.phonetic, "phonetic");
                 if (mapped) {
-                  CacheManager.set(getDisplayModeCacheKey(lyrics, "gemini_romaji"), mapped);
+                  cacheResult("gemini_romaji", mapped);
                   ivLyricsDebug(`[Prefetcher] Phonetic cached for: ${trackInfo.title} (provider: ${lyrics.provider})`);
                 }
               }
@@ -3933,12 +3953,13 @@ const Prefetcher = {
         if (needTranslation) {
           try {
             const cachedMapped = (await getSplitCachedResult(false)) || (await getLegacyCachedResult(false));
+            if (!isCurrentRequest()) return null;
             if (cachedMapped) {
               if (displayMode1 && displayMode1 !== "none" && displayMode1 !== "gemini_romaji") {
-                CacheManager.set(getDisplayModeCacheKey(lyrics, displayMode1), cachedMapped);
+                cacheResult(displayMode1, cachedMapped);
               }
               if (displayMode2 && displayMode2 !== "none" && displayMode2 !== "gemini_romaji") {
-                CacheManager.set(getDisplayModeCacheKey(lyrics, displayMode2), cachedMapped);
+                cacheResult(displayMode2, cachedMapped);
               }
               ivLyricsDebug(`[Prefetcher] Translation loaded from existing cache for: ${trackInfo.title} (provider: ${lyrics.provider})`);
             } else {
@@ -3957,10 +3978,10 @@ const Prefetcher = {
                 if (mapped) {
                   // mode1, mode2 중 번역이 필요한 것에 캐시 저장
                   if (displayMode1 && displayMode1 !== "none" && displayMode1 !== "gemini_romaji") {
-                    CacheManager.set(getDisplayModeCacheKey(lyrics, displayMode1), mapped);
+                    cacheResult(displayMode1, mapped);
                   }
                   if (displayMode2 && displayMode2 !== "none" && displayMode2 !== "gemini_romaji") {
-                    CacheManager.set(getDisplayModeCacheKey(lyrics, displayMode2), mapped);
+                    cacheResult(displayMode2, mapped);
                   }
                   ivLyricsDebug(`[Prefetcher] Translation cached for: ${trackInfo.title} (provider: ${lyrics.provider})`);
                 }
@@ -3972,6 +3993,7 @@ const Prefetcher = {
         }
 
         // 결과를 프리페치 캐시에 저장 (완료 표시용)
+        if (!isCurrentRequest()) return null;
         this._prefetchCache.set(versionedCacheKeyBase, {
           lyricsArray,
           displayMode1,
@@ -3985,12 +4007,14 @@ const Prefetcher = {
         console.warn(`[Prefetcher] Translation prefetch failed:`, error.message);
         return null;
       } finally {
-        this._inflightRequests.delete(versionedCacheKeyBase);
+        if (this._inflightRequests.get(versionedCacheKeyBase) === requestToken.promise) {
+          this._inflightRequests.delete(versionedCacheKeyBase);
+        }
       }
-    })();
+    });
 
-    this._inflightRequests.set(versionedCacheKeyBase, prefetchPromise);
-    return prefetchPromise;
+    this._inflightRequests.set(versionedCacheKeyBase, requestToken.promise);
+    return requestToken.promise;
   },
 
   /**
@@ -6962,6 +6986,14 @@ class LyricsContainer extends react.Component {
       if (!this._dmResults[currentUri]) {
         this._dmResults[currentUri] = {};
       }
+      const requestResults = this._dmResults[currentUri];
+      const targetLanguage = this.getTranslationTargetLanguage();
+      const displayModeCacheKeys = [mode1, mode2].map((mode) => getDisplayModeCacheKey(lyricsState, mode));
+      const generationOptions = [mode1, mode2].map(getDisplayModeGenerationOptions);
+      const isCurrentRequest = () =>
+        this.isCurrentLyricsState(lyricsState) &&
+        this._dmResults?.[currentUri] === requestResults &&
+        generationOptions.every((options, index) => getDisplayModeGenerationOptions([mode1, mode2][index]) === options);
 
       this._dmResults[currentUri].lastMode1 = mode1;
       this._dmResults[currentUri].lastMode2 = mode2;
@@ -7019,7 +7051,7 @@ class LyricsContainer extends react.Component {
       const streamedTranslationLines = [];
 
       const pushStreamingUpdate = () => {
-        if (!this.isCurrentLyricsUri(currentUri)) {
+        if (!isCurrentRequest()) {
           return;
         }
 
@@ -7129,7 +7161,7 @@ class LyricsContainer extends react.Component {
 
       // 번역 요청 (gemini_ko)
       if (needTranslation) {
-        if (!this.isCurrentLyricsUri(currentUri)) {
+        if (!isCurrentRequest()) {
           return;
         }
         translationResponse = await window.Translator.callGemini({
@@ -7145,7 +7177,7 @@ class LyricsContainer extends react.Component {
         });
       }
 
-      if (!this.isCurrentLyricsUri(currentUri) || requestUri !== currentUri) {
+      if (!isCurrentRequest()) {
         return;
       }
 
@@ -7174,7 +7206,7 @@ class LyricsContainer extends react.Component {
         needPhonetic && phoneticOutput
           ? setCachedTranslationForText({
             trackId,
-            lang: this.getTranslationTargetLanguage(),
+            lang: targetLanguage,
             isPhonetic: true,
             provider: lyricsState.provider,
             text,
@@ -7184,7 +7216,7 @@ class LyricsContainer extends react.Component {
         needTranslation && translationOutput
           ? setCachedTranslationForText({
             trackId,
-            lang: this.getTranslationTargetLanguage(),
+            lang: targetLanguage,
             isPhonetic: false,
             provider: lyricsState.provider,
             text,
@@ -7192,6 +7224,8 @@ class LyricsContainer extends react.Component {
           })
           : null,
       ].filter(Boolean));
+
+      if (!isCurrentRequest()) return;
 
       // mode1 처리
       if (mode1 === "gemini_romaji" && mappedPhonetic) {
@@ -7222,10 +7256,10 @@ class LyricsContainer extends react.Component {
       // CacheManager에도 새 결과 저장 (getGeminiTranslation에서 캐시 히트하도록)
       this._dmResults[currentUri].lastProvider = currentProvider;
       if (translatedLyrics1 && mode1) {
-        CacheManager.set(getDisplayModeCacheKey(lyricsState, mode1), translatedLyrics1);
+        CacheManager.set(displayModeCacheKeys[0], translatedLyrics1);
       }
       if (translatedLyrics2 && mode2) {
-        CacheManager.set(getDisplayModeCacheKey(lyricsState, mode2), translatedLyrics2);
+        CacheManager.set(displayModeCacheKeys[1], translatedLyrics2);
       }
 
       phoneticCompleted = needPhonetic && !!mappedPhonetic;
@@ -8649,6 +8683,7 @@ class LyricsContainer extends react.Component {
 
       const cacheKey = mode;
       const cacheKey2 = getDisplayModeCacheKey(lyricsState, cacheKey);
+      const generationOptions = getDisplayModeGenerationOptions(mode);
       const cached = CacheManager.get(cacheKey2);
 
       if (cached) {
@@ -8677,10 +8712,11 @@ class LyricsContainer extends react.Component {
         return resolve(cached);
       }
 
-      // De-duplicate concurrent calls per (uri, type). Share the same promise for callers
+      // Share only requests for the same source and generation options.
       const inflightKey = cacheKey2;
-      if (this._inflightGemini?.has(inflightKey)) {
-        return this._inflightGemini
+      const inflightRequests = this._inflightGemini = this._inflightGemini || new Map();
+      if (inflightRequests.has(inflightKey)) {
+        return inflightRequests
           .get(inflightKey)
           .then(resolve)
           .catch(reject);
@@ -8691,6 +8727,11 @@ class LyricsContainer extends react.Component {
       const legacyText = getLegacyNonSectionLyricsText(lyrics);
       const trackId = Utils.getTranslationCacheId(lyricsState.uri || this.state.uri);
       const userLang = this.getTranslationTargetLanguage();
+      const requestToken = {};
+      const isCurrentRequest = () =>
+        this._inflightGemini === inflightRequests &&
+        inflightRequests.get(inflightKey) === requestToken.promise &&
+        getDisplayModeGenerationOptions(mode) === generationOptions;
 
       const mapResultLinesToLyrics = (linesInput, splitVocalParts = true) => {
         return mapTranslationLinesToLyrics(lyrics, linesInput, {
@@ -8705,7 +8746,7 @@ class LyricsContainer extends react.Component {
           if (typeof lineIndex !== "number" || lineIndex < 0) return;
           streamedLines[lineIndex] = typeof lineText === "string" ? lineText : "";
           const partialMapped = mapResultLinesToLyrics(streamedLines);
-          if (partialMapped && this.isCurrentLyricsState(lyricsState)) {
+          if (partialMapped && isCurrentRequest() && this.isCurrentLyricsState(lyricsState)) {
             onProgress(partialMapped);
           }
         }
@@ -8713,7 +8754,7 @@ class LyricsContainer extends react.Component {
       const handleStreamReset = onProgress
         ? (detail = {}) => {
           streamedLines.length = 0;
-          if (this.isCurrentLyricsState(lyricsState)) {
+          if (isCurrentRequest() && this.isCurrentLyricsState(lyricsState)) {
             onProgress(null, { ...detail, reset: true });
           }
         }
@@ -8725,7 +8766,7 @@ class LyricsContainer extends react.Component {
         : this.startTranslationLoading();
       let loadingCompleted = false;
 
-      const inflightPromise = (async () => {
+      requestToken.promise = Promise.resolve().then(async () => {
         let splitVocalParts = true;
         const getCachedOutput = async (cacheText) => {
           const cachedResult = await getCachedTranslationForText({
@@ -8746,6 +8787,8 @@ class LyricsContainer extends react.Component {
             outText = legacyOutput;
           }
         }
+
+        if (!isCurrentRequest()) return null;
 
         if (!outText) {
           // Use optimized rate limiter with separate keys only when a real AI call is needed.
@@ -8816,10 +8859,11 @@ class LyricsContainer extends react.Component {
         if (!mapped) {
           throw new Error("Failed to map streamed translation lines.");
         }
+        if (!isCurrentRequest()) return null;
         CacheManager.set(cacheKey2, mapped);
         loadingCompleted = true;
         return mapped;
-      })()
+      })
         .finally(() => {
           // Clear appropriate loading indicator based on mode type
           if (wantSmartPhonetic) {
@@ -8827,13 +8871,13 @@ class LyricsContainer extends react.Component {
           } else {
             this.clearTranslationLoading(loadingToken, { completed: loadingCompleted });
           }
-          this._inflightGemini = this._inflightGemini || new Map();
-          this._inflightGemini?.delete(inflightKey);
+          if (inflightRequests.get(inflightKey) === requestToken.promise) {
+            inflightRequests.delete(inflightKey);
+          }
         });
 
-      this._inflightGemini = this._inflightGemini || new Map();
-      this._inflightGemini.set(inflightKey, inflightPromise);
-      inflightPromise.then(resolve).catch(reject);
+      inflightRequests.set(inflightKey, requestToken.promise);
+      requestToken.promise.then(resolve).catch(reject);
     });
   }
 
