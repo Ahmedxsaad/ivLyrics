@@ -2815,6 +2815,12 @@ const CONFIG = {
       StorageManager.getItem("ivLyrics:visual:karaoke-motion-style") === "expressive"
         ? "expressive"
         : "classic",
+    // Clicking a line lands slightly before it so Spotify's seek fade-in does
+    // not swallow the first syllable.
+    "seek-fade-compensation": StorageManager.get(
+      "ivLyrics:visual:seek-fade-compensation",
+      false
+    ),
     "karaoke-line-transition": StorageManager.get(
       "ivLyrics:visual:karaoke-line-transition",
       true

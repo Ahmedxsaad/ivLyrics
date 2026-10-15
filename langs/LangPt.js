@@ -1401,6 +1401,10 @@ window.LANG_PT = {
         "label": "Exibir controles rápidos de sincronização da faixa",
         "info": "Exibe os controles de offset de sincronização específicos da faixa no canto inferior esquerdo das páginas de letras e do modo de tela cheia. Quando ocultos, continuam disponíveis em «Ajustar Sincronização da Letra» no menu à direita."
       },
+      "seekFadeCompensation": {
+        "label": "Começar um pouco antes ao clicar em uma linha",
+        "info": "O Spotify aplica um fade-in no áudio após uma busca, o que pode engolir a primeira sílaba. Quando ativado, clicar em uma linha busca 0,3 segundo antes do seu início."
+      },
       "fullscreenShortcut": {
         "label": "Atalho de Tela Cheia",
         "desc": "Atalho de teclado para o modo de tela cheia de letras"

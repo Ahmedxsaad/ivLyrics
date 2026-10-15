@@ -1401,6 +1401,10 @@ window.LANG_IT = {
         "label": "Mostra i controlli rapidi di sincronizzazione della traccia",
         "info": "Mostra i controlli dell’offset di sincronizzazione specifico per la traccia in basso a sinistra nelle pagine dei testi e in modalità schermo intero. Se nascosti, restano disponibili in «Regola sync testi» nel menu a destra."
       },
+      "seekFadeCompensation": {
+        "label": "Inizia leggermente prima al clic su una riga",
+        "info": "Spotify applica una dissolvenza in entrata dopo uno spostamento, che può far perdere la prima sillaba. Se attivo, il clic su una riga salta a 0,3 secondi prima del suo inizio."
+      },
       "fullscreenShortcut": {
         "label": "Scorciatoia schermo intero",
         "desc": "Scorciatoia da tastiera per la modalità schermo intero"

@@ -1401,6 +1401,10 @@ window.LANG_VI = {
         "label": "Hiển thị điều khiển đồng bộ nhanh cho bài hát",
         "info": "Hiển thị các điều khiển độ lệch đồng bộ riêng cho bài hát ở góc dưới bên trái của trang lời bài hát và chế độ toàn màn hình. Khi ẩn, chúng vẫn có trong mục «Điều chỉnh đồng bộ lời bài hát» ở menu bên phải."
       },
+      "seekFadeCompensation": {
+        "label": "Bắt đầu sớm hơn một chút khi nhấp vào một dòng",
+        "info": "Spotify tăng dần âm lượng sau khi tua, có thể làm mất âm tiết đầu tiên. Khi bật, nhấp vào một dòng lời sẽ tua đến 0,3 giây trước khi dòng bắt đầu."
+      },
       "fullscreenShortcut": {
         "label": "Phím tắt toàn màn hình",
         "desc": "Phím tắt bàn phím để vào chế độ toàn màn hình lời bài hát"

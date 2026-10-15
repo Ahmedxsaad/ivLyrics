@@ -7266,7 +7266,8 @@ const SETTINGS_DEFAULT_VALUES = Object.freeze({
   "spotify-fake-karaoke-enabled": false, "pseudo-karaoke-render-advance": 250,
   "prefer-sync-data-provider": true, "prefer-lyrics-type-over-provider-order": true,
   "prefetch-enabled": true, "prefetch-video-enabled": true, "prefetch-word-details-enabled": true,
-  "quick-sync-controls-enabled": true, "fullscreen-key": "f12", "translate-metadata": false,
+  "quick-sync-controls-enabled": true, "seek-fade-compensation": false, "fullscreen-key": "f12",
+  "translate-metadata": false,
   "translate-metadata-mode": "translated", "fullscreen-two-column": true,
   "fullscreen-layout-reverse": false, "fullscreen-show-album": true, "fullscreen-show-info": true,
   "fullscreen-center-when-no-lyrics": true, "fullscreen-album-size": "400",
@@ -9373,6 +9374,18 @@ const ConfigModal = ({
           "tabs.behavior",
           "settingsAdvanced.playback.quickSyncControls.label",
           "settingsAdvanced.playback.quickSyncControls.info",
+        ]
+      },
+      {
+        section: I18n.t("tabs.behavior"),
+        sectionKey: "lyrics",
+        settingKey: "seek-fade-compensation",
+        name: I18n.t("settingsAdvanced.playback.seekFadeCompensation.label"),
+        desc: I18n.t("settingsAdvanced.playback.seekFadeCompensation.info"),
+        i18nKeys: [
+          "tabs.behavior",
+          "settingsAdvanced.playback.seekFadeCompensation.label",
+          "settingsAdvanced.playback.seekFadeCompensation.info",
         ]
       },
       {
@@ -11834,6 +11847,13 @@ const ConfigModal = ({
               info: I18n.t("settingsAdvanced.playback.quickSyncControls.info"),
               type: ConfigSlider,
               defaultValue: CONFIG.visual["quick-sync-controls-enabled"] ?? true,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.playback.seekFadeCompensation.label"),
+              key: "seek-fade-compensation",
+              info: I18n.t("settingsAdvanced.playback.seekFadeCompensation.info"),
+              type: ConfigSlider,
+              defaultValue: CONFIG.visual["seek-fade-compensation"] === true,
             },
           ],
           onChange: handleVisualConfigChange,

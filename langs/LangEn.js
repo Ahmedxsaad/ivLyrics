@@ -1401,6 +1401,10 @@ window.LANG_EN = {
         "label": "Show quick track sync controls",
         "info": "Show track-specific sync offset controls in the lower-left corner of lyrics pages and fullscreen mode. When hidden, they remain available under Adjust Lyrics Sync in the right-side menu."
       },
+      "seekFadeCompensation": {
+        "label": "Start Slightly Early When Clicking a Line",
+        "info": "Spotify fades audio in after a seek, which can swallow the first syllable. When enabled, clicking a lyric line seeks 0.3 seconds before it starts."
+      },
       "fullscreenShortcut": {
         "label": "Fullscreen Shortcut",
         "desc": "Keyboard shortcut for lyrics fullscreen mode"

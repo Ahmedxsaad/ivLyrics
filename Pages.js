@@ -5959,7 +5959,11 @@ const LyricsLineBlock = react.memo(({
 	const handleClick = useCallback((event) => {
 		if (Number.isFinite(seekTime)) {
 			window.Utils?.clearSafePlayerProgressCorrection?.();
-			Spicetify.Player.seek(seekTime);
+			// Spotify fades audio in after a seek, which can swallow the first
+			// syllable. When enabled, land 300 ms before the line instead.
+			const seekFadeCompensation = typeof CONFIG !== "undefined"
+				&& CONFIG?.visual?.["seek-fade-compensation"] === true;
+			Spicetify.Player.seek(seekFadeCompensation ? Math.max(0, seekTime - 300) : seekTime);
 			playLyricsLineSelectionFeedback(event?.currentTarget, isKara, event?.repeat === true);
 		}
 	}, [seekTime, isKara]);

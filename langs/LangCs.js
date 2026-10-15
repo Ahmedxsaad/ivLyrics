@@ -1401,6 +1401,10 @@ window.LANG_CS = {
         "label": "Zobrazit rychlé ovládání synchronizace skladby",
         "info": "Zobrazí ovládání posunu synchronizace pro konkrétní skladbu v levém dolním rohu stránek s texty a režimu celé obrazovky. Po skrytí zůstane dostupné v nabídce vpravo pod položkou „Upravit synchronizaci textů“."
       },
+      "seekFadeCompensation": {
+        "label": "Při kliknutí na řádek začít o něco dříve",
+        "info": "Spotify po přetočení postupně zesiluje zvuk, takže první slabika může zaniknout. Když je zapnuto, kliknutí na řádek přetočí 0,3 sekundy před jeho začátek."
+      },
       "fullscreenShortcut": {
         "label": "Zkratka na celou obrazovku",
         "desc": "Klávesová zkratka pro celoobrazovkový režim textů"

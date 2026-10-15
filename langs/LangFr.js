@@ -1401,6 +1401,10 @@ window.LANG_FR = {
         "label": "Afficher les contrôles rapides de synchro du titre",
         "info": "Affiche les contrôles de décalage propres au titre en bas à gauche des pages de paroles et du mode plein écran. Lorsqu’ils sont masqués, ils restent accessibles sous « Ajustement de la synchro » dans le menu de droite."
       },
+      "seekFadeCompensation": {
+        "label": "Démarrer un peu plus tôt au clic sur une ligne",
+        "info": "Spotify applique un fondu d'entrée après un déplacement, ce qui peut masquer la première syllabe. Si activé, cliquer sur une ligne se place 0,3 seconde avant son début."
+      },
       "fullscreenShortcut": {
         "label": "Raccourci plein écran",
         "desc": "Raccourci clavier pour le mode plein écran des paroles"

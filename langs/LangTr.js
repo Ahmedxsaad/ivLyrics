@@ -1401,6 +1401,10 @@ window.LANG_TR = {
       "label": "Hızlı parça senkronizasyonu kontrollerini göster",
       "info": "Parçaya özel senkronizasyon ofseti kontrollerini söz sayfalarının ve tam ekran modunun sol alt köşesinde gösterir. Gizlendiğinde, sağ menüdeki «Söz Senkronizasyonunu Ayarla» altında kullanılmaya devam eder."
     },
+    "seekFadeCompensation": {
+      "label": "Bir satıra tıklandığında biraz erken başla",
+      "info": "Spotify, atlamadan sonra sesi yavaşça açar ve bu ilk heceyi yutabilir. Etkinleştirildiğinde, bir şarkı sözü satırına tıklamak satırın başlangıcından 0,3 saniye önceye atlar."
+    },
     "fullscreenShortcut": {
       "label": "Tam Ekran Kısayolu",
       "desc": "Sözler tam ekran modu için klavye kısayolu"

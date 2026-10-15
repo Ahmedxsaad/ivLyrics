@@ -1401,6 +1401,10 @@ window.LANG_MS = {
         "label": "Tunjukkan kawalan pantas penyegerakan trek",
         "info": "Menunjukkan kawalan ofset penyegerakan khusus trek di sudut kiri bawah halaman lirik dan mod skrin penuh. Apabila disembunyikan, kawalan ini masih tersedia di bawah «Laraskan Lirik Senada» dalam menu sebelah kanan."
       },
+      "seekFadeCompensation": {
+        "label": "Mula sedikit awal apabila mengklik baris",
+        "info": "Spotify menguatkan audio secara beransur-ansur selepas melompat, jadi suku kata pertama mungkin tenggelam. Apabila didayakan, mengklik baris lirik akan melompat 0.3 saat sebelum baris bermula."
+      },
       "fullscreenShortcut": {
         "label": "Pintasan Skrin Penuh",
         "desc": "Pintasan papan kekunci untuk menogol mod skrin penuh lirik"

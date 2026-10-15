@@ -1401,6 +1401,10 @@ window.LANG_ES = {
         "label": "Mostrar controles rápidos de sincronización de pista",
         "info": "Muestra los controles de desfase de sincronización específicos de la pista en la esquina inferior izquierda de las páginas de letras y el modo de pantalla completa. Si se ocultan, siguen disponibles en «Ajustar sincronización de letras», en el menú derecho."
       },
+      "seekFadeCompensation": {
+        "label": "Empezar un poco antes al hacer clic en una línea",
+        "info": "Spotify aplica un fundido de entrada tras saltar a otra posición, lo que puede ocultar la primera sílaba. Si se activa, al hacer clic en una línea se salta 0,3 segundos antes de su inicio."
+      },
       "fullscreenShortcut": {
         "label": "Atajo de pantalla completa",
         "desc": "Atajo de teclado para el modo de pantalla completa de letras"
