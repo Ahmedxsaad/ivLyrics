@@ -7259,7 +7259,8 @@ const SETTINGS_DEFAULT_VALUES = Object.freeze({
   "cultural-annotations-opacity": 60, "cultural-annotations-vinyl-opacity": 60,
   "translate:target-language": "auto", "cultural-annotations-enabled": false, "furigana-enabled": false,
   "ja-detect-threshold": 40, "hans-detect-threshold": 40, "fade-blur": true, "highlight-mode": false,
-  "highlight-intensity": 70, "karaoke-bounce": true, "karaoke-line-transition": true,
+  "highlight-intensity": 70, "karaoke-bounce": true, "karaoke-motion-style": "classic",
+  "karaoke-line-transition": true,
   "karaoke-text-effects": true, "karaoke-mode-enabled": true, "sync-creator-auto-boundary-chars": true,
   "karaoke-fill-correction-curve": "[[0,0],[0.25,0.25],[0.5,0.5],[0.75,0.75],[1,1]]",
   "spotify-fake-karaoke-enabled": false, "pseudo-karaoke-render-advance": 250,
@@ -9399,6 +9400,20 @@ const ConfigModal = ({
         name: I18n.t("settingsAdvanced.karaokeMode.title"),
         desc: I18n.t("settingsAdvanced.karaokeMode.subtitle"),
         i18nKeys: ["tabs.behavior", "settingsAdvanced.karaokeMode.title", "settingsAdvanced.karaokeMode.subtitle"]
+      },
+      {
+        section: I18n.t("tabs.behavior"),
+        sectionKey: "lyrics",
+        settingKey: "karaoke-motion-style",
+        name: I18n.t("settingsAdvanced.karaokeMode.motionStyle.label"),
+        desc: I18n.t("settingsAdvanced.karaokeMode.motionStyle.desc"),
+        i18nKeys: [
+          "tabs.behavior",
+          "settingsAdvanced.karaokeMode.motionStyle.label",
+          "settingsAdvanced.karaokeMode.motionStyle.desc",
+          "settingsAdvanced.karaokeMode.motionStyle.options.classic",
+          "settingsAdvanced.karaokeMode.motionStyle.options.expressive",
+        ]
       },
       {
         section: I18n.t("tabs.behavior"),
@@ -11946,6 +11961,19 @@ const ConfigModal = ({
               info: I18n.t("settingsAdvanced.karaokeMode.bounce.desc"),
               key: "karaoke-bounce",
               type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.karaokeMode.motionStyle.label"),
+              info: I18n.t("settingsAdvanced.karaokeMode.motionStyle.desc"),
+              key: "karaoke-motion-style",
+              type: ConfigSelection,
+              defaultValue: CONFIG.visual["karaoke-motion-style"] === "expressive" ? "expressive" : "classic",
+              options: {
+                classic: I18n.t("settingsAdvanced.karaokeMode.motionStyle.options.classic"),
+                expressive: I18n.t("settingsAdvanced.karaokeMode.motionStyle.options.expressive"),
+              },
+              // Expressive motion is a style of the bounce, so it needs the bounce on.
+              when: () => CONFIG.visual["karaoke-bounce"] !== false,
             },
             {
               desc: I18n.t("settingsAdvanced.karaokeMode.lineTransition.label"),

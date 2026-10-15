@@ -1513,6 +1513,14 @@ window.LANG_FR = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Avance de rendu du karaoké virtuel",
         "desc": "Applique un décalage temporel au rendu uniquement pour le karaoké virtuel. Des valeurs positives font apparaître le surlignage plus tôt."
+      },
+      "motionStyle": {
+        "label": "Style d'animation du karaoké",
+        "desc": "Classique conserve le rebond discret. Expressif utilise une physique de ressort : les mots chantés grossissent, s'élèvent et brillent, les mots à venir restent un peu plus petits et les notes tenues s'animent lettre par lettre.",
+        "options": {
+          "classic": "Classique",
+          "expressive": "Expressif"
+        }
       }
     },
     "prefetch": {

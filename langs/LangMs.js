@@ -1513,6 +1513,14 @@ window.LANG_MS = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Nilai Pendahuluan Render Karaoke Maya",
         "desc": "Terapkan ofset masa rendering khusus untuk karaoke maya. Nilai positif yang lebih tinggi menjadikan sorotan bergerak lebih cepat."
+      },
+      "motionStyle": {
+        "label": "Gaya pergerakan karaoke",
+        "desc": "Klasik mengekalkan lantunan halus. Ekspresif menggunakan fizik spring: perkataan yang sedang dinyanyikan membesar, terangkat dan bercahaya, perkataan yang belum dinyanyikan kekal sedikit lebih kecil, dan not panjang dianimasikan huruf demi huruf.",
+        "options": {
+          "classic": "Klasik",
+          "expressive": "Ekspresif"
+        }
       }
     },
     "prefetch": {

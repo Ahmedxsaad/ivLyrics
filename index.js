@@ -2810,6 +2810,11 @@ const CONFIG = {
       "ivLyrics:visual:karaoke-bounce",
       true
     ),
+    // "classic" (default) or "expressive" spring-driven word motion.
+    "karaoke-motion-style":
+      StorageManager.getItem("ivLyrics:visual:karaoke-motion-style") === "expressive"
+        ? "expressive"
+        : "classic",
     "karaoke-line-transition": StorageManager.get(
       "ivLyrics:visual:karaoke-line-transition",
       true

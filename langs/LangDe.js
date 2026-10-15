@@ -1513,6 +1513,14 @@ window.LANG_DE = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Pseudo-Karaoke-Vorlauf",
         "desc": "Wendet einen Timing-Offset nur beim Rendern von Pseudo-Karaoke an. Positive Werte lassen die Hervorhebung früher erscheinen."
+      },
+      "motionStyle": {
+        "label": "Karaoke-Bewegungsstil",
+        "desc": "Klassisch behält das dezente Hüpfen bei. Ausdrucksstark nutzt Federphysik: gesungene Wörter wachsen, heben sich und leuchten, noch nicht gesungene Wörter bleiben etwas kleiner, und lang gehaltene Töne werden Buchstabe für Buchstabe animiert.",
+        "options": {
+          "classic": "Klassisch",
+          "expressive": "Ausdrucksstark"
+        }
       }
     },
     "prefetch": {

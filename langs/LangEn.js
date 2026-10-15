@@ -1513,6 +1513,14 @@ window.LANG_EN = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Pseudo Karaoke Render Advance",
         "desc": "Apply a render-time timing offset to pseudo karaoke only. Positive values make the highlight appear earlier."
+      },
+      "motionStyle": {
+        "label": "Karaoke Motion Style",
+        "desc": "Classic keeps the subtle bounce. Expressive uses spring physics: sung words swell, lift and glow, words not yet sung rest slightly smaller, and long held notes animate letter by letter.",
+        "options": {
+          "classic": "Classic",
+          "expressive": "Expressive"
+        }
       }
     },
     "prefetch": {

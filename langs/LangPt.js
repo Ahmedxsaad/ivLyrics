@@ -1513,6 +1513,14 @@ window.LANG_PT = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Avanço de renderização do karaokê virtual",
         "desc": "Aplica um deslocamento de tempo na renderização apenas ao karaokê virtual. Valores positivos fazem o destaque aparecer mais cedo."
+      },
+      "motionStyle": {
+        "label": "Estilo de movimento do karaokê",
+        "desc": "Clássico mantém o salto sutil. Expressivo usa física de mola: as palavras cantadas crescem, sobem e brilham, as ainda não cantadas ficam um pouco menores e as notas longas são animadas letra por letra.",
+        "options": {
+          "classic": "Clássico",
+          "expressive": "Expressivo"
+        }
       }
     },
     "prefetch": {

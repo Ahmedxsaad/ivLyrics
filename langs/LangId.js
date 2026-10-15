@@ -1513,6 +1513,14 @@ window.LANG_ID = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Pemajuan render karaoke virtual",
         "desc": "Menerapkan offset waktu saat render hanya untuk karaoke virtual. Nilai positif membuat sorotan muncul lebih awal."
+      },
+      "motionStyle": {
+        "label": "Gaya gerakan karaoke",
+        "desc": "Klasik mempertahankan pantulan halus. Ekspresif menggunakan fisika pegas: kata yang sedang dinyanyikan membesar, terangkat, dan bersinar, kata yang belum dinyanyikan sedikit lebih kecil, dan nada panjang dianimasikan huruf demi huruf.",
+        "options": {
+          "classic": "Klasik",
+          "expressive": "Ekspresif"
+        }
       }
     },
     "prefetch": {

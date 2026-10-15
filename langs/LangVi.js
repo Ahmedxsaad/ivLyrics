@@ -1513,6 +1513,14 @@ window.LANG_VI = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Độ sớm khi render karaoke ảo",
         "desc": "Áp dụng độ lệch thời gian khi render chỉ cho karaoke ảo. Giá trị dương sẽ làm phần tô sáng xuất hiện sớm hơn."
+      },
+      "motionStyle": {
+        "label": "Kiểu chuyển động karaoke",
+        "desc": "Cổ điển giữ hiệu ứng nảy nhẹ. Biểu cảm dùng vật lý lò xo: từ đang hát phóng to, nâng lên và phát sáng, từ chưa hát nhỏ hơn một chút, và các nốt ngân dài chuyển động theo từng chữ cái.",
+        "options": {
+          "classic": "Cổ điển",
+          "expressive": "Biểu cảm"
+        }
       }
     },
     "prefetch": {

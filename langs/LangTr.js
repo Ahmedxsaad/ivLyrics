@@ -1513,6 +1513,14 @@ window.LANG_TR = {
     "pseudoKaraokeRenderAdvance": {
       "label": "Sanal Karaoke Görüntüleme İlerlemesi",
       "desc": "Sadece sanal karaoke için işleme zamanlaması ofseti uygular. Pozitif değerler vurgunun daha erken görünmesini sağlar."
+    },
+    "motionStyle": {
+      "label": "Karaoke hareket stili",
+      "desc": "Klasik, hafif zıplamayı korur. Etkileyici, yay fiziği kullanır: söylenen kelimeler büyür, yükselir ve parlar, henüz söylenmemiş kelimeler biraz daha küçük bekler ve uzun tutulan notalar harf harf canlandırılır.",
+      "options": {
+        "classic": "Klasik",
+        "expressive": "Etkileyici"
+      }
     }
   },
   "prefetch": {

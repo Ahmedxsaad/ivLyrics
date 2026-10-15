@@ -1513,6 +1513,14 @@ window.LANG_ES = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Adelanto de renderizado de karaoke virtual",
         "desc": "Aplica un desplazamiento de tiempo en el renderizado solo al karaoke virtual. Los valores positivos hacen que el resaltado aparezca antes."
+      },
+      "motionStyle": {
+        "label": "Estilo de movimiento del karaoke",
+        "desc": "Clásico mantiene el rebote sutil. Expresivo usa física de resortes: las palabras cantadas crecen, se elevan y brillan, las que aún no se cantan esperan un poco más pequeñas y las notas largas se animan letra por letra.",
+        "options": {
+          "classic": "Clásico",
+          "expressive": "Expresivo"
+        }
       }
     },
     "prefetch": {

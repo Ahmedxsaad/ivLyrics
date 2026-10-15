@@ -1513,6 +1513,14 @@ window.LANG_SV = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Förskjutning för virtuell karaoke-rendering",
         "desc": "Tillämpa en renderingstidsförskjutning endast på pseudo-karaoke. Positiva värden gör att markeringen visas tidigare."
+      },
+      "motionStyle": {
+        "label": "Rörelsestil för karaoke",
+        "desc": "Klassisk behåller den diskreta studsen. Uttrycksfull använder fjäderfysik: sjungna ord växer, lyfts och lyser, ord som inte sjungits än vilar lite mindre och långa toner animeras bokstav för bokstav.",
+        "options": {
+          "classic": "Klassisk",
+          "expressive": "Uttrycksfull"
+        }
       }
     },
     "prefetch": {

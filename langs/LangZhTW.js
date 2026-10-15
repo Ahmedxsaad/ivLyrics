@@ -1513,6 +1513,14 @@ window.LANG_ZH_TW = {
       "pseudoKaraokeRenderAdvance": {
         "label": "虛擬卡拉OK渲染提前量",
         "desc": "僅對虛擬卡拉OK套用渲染時序偏移。數值越大，高亮推進越早。"
+      },
+      "motionStyle": {
+        "label": "卡拉OK動態風格",
+        "desc": "經典保留細微的彈跳效果。表現力使用彈簧物理：正在演唱的詞會放大、上浮並發光，尚未演唱的詞會略微縮小，長音會逐字動畫。",
+        "options": {
+          "classic": "經典",
+          "expressive": "表現力"
+        }
       }
     },
     "prefetch": {
