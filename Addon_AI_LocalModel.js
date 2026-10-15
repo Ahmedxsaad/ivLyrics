@@ -127,22 +127,136 @@
         return IDLE_UNLOAD_OPTIONS.includes(minutes) ? minutes : DEFAULT_IDLE_UNLOAD_MINUTES;
     };
     const formatGigabytes = (bytes) => `${(bytes / 1e9).toFixed(2)}GB`;
-    const errorMessage = (error) => String(error?.message || error || 'Unknown error');
+    // Raw error text (URLs, file names) only feeds the debug log and error classification.
+    const rawText = (error) => String(error?.message || error || '');
+
+    function languageLabel(lang) {
+        try {
+            return new Intl.DisplayNames([window.I18n?.getCurrentLanguage?.() || 'en'], { type: 'language' }).of(lang) || lang;
+        } catch {
+            return lang;
+        }
+    }
+
+    function targetLanguageName(lang) {
+        const code = String(lang || 'en').trim().replace(/_/g, '-').toLowerCase();
+        return TARGET_LANGUAGE_NAMES[code] || TARGET_LANGUAGE_NAMES[code.split('-')[0]] || null;
+    }
+
+    const unsupportedLanguageText = (lang) => t('unsupportedLanguage', 'The local model cannot translate into {language}.', { language: languageLabel(lang) });
 
     function resolveTargetLanguage(lang) {
-        const code = String(lang || 'en').trim().replace(/_/g, '-').toLowerCase();
-        const name = TARGET_LANGUAGE_NAMES[code] || TARGET_LANGUAGE_NAMES[code.split('-')[0]];
-        if (!name) {
-            let label = lang;
-            try {
-                label = new Intl.DisplayNames([window.I18n?.getCurrentLanguage?.() || 'en'], { type: 'language' }).of(lang) || lang;
-            } catch {
-                label = lang;
-            }
-            throw new Error(t('unsupportedLanguage', 'The local model cannot translate into {language}.', { language: label }));
-        }
+        const name = targetLanguageName(lang);
+        if (!name) throw localError('unsupportedLanguage', unsupportedLanguageText(lang));
         return name;
     }
+
+    // The language lyrics are translated into, resolved the way the app resolves it.
+    function getCurrentTargetLanguage() {
+        let configured = window.CONFIG?.visual?.['translate:target-language'];
+        if (!configured) {
+            try {
+                configured = window.localStorage?.getItem?.('ivLyrics:visual:translate:target-language') || null;
+            } catch {
+                configured = null;
+            }
+        }
+        return configured && configured !== 'auto' ? configured : (window.I18n?.getCurrentLanguage?.() || 'en');
+    }
+
+    // ============================================
+    // Errors: people read a short localized explanation; engine and network
+    // details (URLs, file names) only go to the debug log.
+    // ============================================
+
+    function localError(kind, message, extra) {
+        const error = new Error(message);
+        error.localModelKind = kind;
+        if (extra) Object.assign(error, extra);
+        return error;
+    }
+
+    function logDetail(context, error) {
+        try {
+            if (typeof window.__ivLyricsDebugLog === 'function') {
+                window.__ivLyricsDebugLog(`[Local AI] ${context}:`, error);
+            } else {
+                console.warn(`[Local AI] ${context}:`, rawText(error));
+            }
+        } catch {
+            // Logging must never break the provider.
+        }
+    }
+
+    function classifyFailure(error, stage) {
+        if (error?.localModelKind) return { kind: error.localModelKind, status: error.httpStatus };
+        const name = String(error?.name || '');
+        const text = rawText(error);
+        if (name === 'AbortError') return { kind: 'cancelled' };
+        if (name === 'TimeoutError') return { kind: 'timeout' };
+        // wllama reports a refused download as "Failed to fetch <url>: HTTP <status>".
+        const http = text.match(/\bHTTP\s*(\d{3})\b/i);
+        if (http) return { kind: 'http', status: Number(http[1]) };
+        if (name === 'QuotaExceededError' || /quota|no space|not enough (?:disk |storage )?space|disk (?:is )?full/i.test(text)) {
+            return { kind: 'storage' };
+        }
+        if (/out of memory|\boom\b|could not allocate|allocation failed|cannot enlarge memory/i.test(text)) return { kind: 'memory' };
+        if (/webgpu|\bgpu\b|device (?:was )?lost/i.test(text)) return { kind: 'webgpu' };
+        const network = /failed to fetch|network ?error|load failed/i.test(text);
+        // The model itself is local, so a failed fetch while loading means the engine files.
+        if (stage === 'engine' || (stage === 'load' && network) || /dynamically imported module|webassembly|\bwasm\b/i.test(text)) {
+            return { kind: 'engine' };
+        }
+        if (network || (stage === 'download' && name === 'TypeError')) return { kind: 'network' };
+        return { kind: stage === 'load' ? 'load' : 'unknown' };
+    }
+
+    function failureMessage(kind, status) {
+        switch (kind) {
+            case 'network':
+                return t('errorNetwork', "Couldn't connect to the download server. Check your internet connection and try again.");
+            case 'http':
+                if (status === 429 || status === 503) {
+                    return t('errorHttpBusy', 'The download server is busy right now (HTTP {status}). Wait a few minutes, then try again.', { status });
+                }
+                if (status === 401 || status === 403) {
+                    return t('errorHttpBlocked', 'The download server refused the request (HTTP {status}). Try again later, or turn off any VPN or proxy you use.', { status });
+                }
+                return t('errorHttp', 'The download server returned an error (HTTP {status}). Try again later.', { status });
+            case 'storage':
+                return t('errorStorage', "There isn't enough storage space for the model. Free up disk space or choose a lighter quality, then try again.");
+            case 'engine':
+                return t('errorEngine', "The translation engine couldn't be loaded. Check your internet connection and try again.");
+            case 'load':
+                return t('errorLoad', "The model couldn't be loaded. Delete it and download it again.");
+            case 'memory':
+                return t('errorMemory', "There isn't enough memory to run the model. Close other apps or choose a lighter quality, then try again.");
+            case 'webgpu':
+                return t('errorWebGpu', 'The graphics processor (WebGPU) stopped responding. Try again, or set Processor to CPU only.');
+            case 'timeout':
+                return t('errorTimeout', 'Translation took too long on this device and was stopped. A lighter quality translates faster.');
+            default:
+                return t('errorUnknown', 'Something went wrong with the local model. Try again.');
+        }
+    }
+
+    // Turns any failure into an error whose message is safe to show.
+    function friendlyError(error, stage) {
+        if (error?.localModelKind) return error;
+        const { kind, status } = classifyFailure(error, stage);
+        logDetail(`${stage} failed`, error);
+        const extra = status ? { httpStatus: status } : {};
+        if (kind === 'timeout') extra.name = 'TimeoutError';
+        if (kind === 'cancelled') extra.name = 'AbortError';
+        return localError(kind, failureMessage(kind, status), extra);
+    }
+
+    const timeoutError = () => localError('timeout', failureMessage('timeout'), { name: 'TimeoutError' });
+    const cancelledError = () => localError('cancelled', failureMessage('cancelled'), { name: 'AbortError' });
+    // Lets the manager tell a stopped request from a failure: nobody waits for that song any more.
+    const supersededError = () => localError('superseded',
+        t('errorSuperseded', 'This translation was stopped because a newer song needs the local model.'),
+        { name: 'AbortError', superseded: true });
 
     // ============================================
     // Status shared by the settings card and the engine
@@ -150,7 +264,11 @@
 
     const state = { phase: 'unknown', loadedBytes: 0, totalBytes: 0, device: null, error: null, downloadedTiers: [] };
     const listeners = new Set();
-    function setState(patch) {
+    // Every phase change bumps the version, so a slower status check never
+    // overwrites newer work. A soft update is only a guess the check may correct.
+    let statusVersion = 0;
+    function setState(patch, { soft = false } = {}) {
+        if (!soft && 'phase' in patch) statusVersion++;
         Object.assign(state, patch);
         const snapshot = { ...state };
         for (const listener of listeners) {
@@ -170,7 +288,8 @@
     let engine = null;
     let loadedModelUrl = null;
     let loadPromise = null;
-    let downloadController = null;
+    // The download in progress ({ url, controller, promise }); there is never more than one.
+    let activeDownload = null;
     let webGpuAvailable = null;
     let idleTimer = null;
 
@@ -184,7 +303,7 @@
                 .then(() => importModule(`${WLLAMA_CDN}/esm/index.js`))
                 .catch((error) => {
                     wllamaModulePromise = null;
-                    throw error;
+                    throw friendlyError(error, 'engine');
                 });
         }
         return wllamaModulePromise;
@@ -195,22 +314,29 @@
         if (engine) return engine;
         const { Wllama } = await loadWllamaModule();
         if (!engine) {
-            engine = new Wllama({ default: `${WLLAMA_CDN}/src/wasm/wllama.wasm` }, {
-                suppressNativeLog: true,
-                logger: {
-                    debug() {},
-                    log() {},
-                    warn: (...args) => console.warn('[Local AI]', ...args),
-                    error: (...args) => console.error('[Local AI]', ...args)
-                }
-            });
+            try {
+                engine = new Wllama({ default: `${WLLAMA_CDN}/src/wasm/wllama.wasm` }, {
+                    suppressNativeLog: true,
+                    logger: {
+                        debug() {},
+                        log() {},
+                        warn: (...args) => console.warn('[Local AI]', ...args),
+                        error: (...args) => console.error('[Local AI]', ...args)
+                    }
+                });
+            } catch (error) {
+                throw friendlyError(error, 'engine');
+            }
         }
         return engine;
     }
 
+    // Only finished downloads are models to wllama: it writes a file's metadata
+    // after the last byte and skips files without metadata.
+    const listModels = (instance) => instance.modelManager.getModels({ includeInvalid: true });
+
     async function listCachedModels() {
-        const instance = await getEngine();
-        return instance.modelManager.getModels({ includeInvalid: true });
+        return listModels(await getEngine());
     }
 
     async function findCachedModel(url = getModelUrl()) {
@@ -219,12 +345,17 @@
     }
 
     const isValidModel = (model) => !!model && model.validate() === 'valid';
+    const isBusy = () => !!activeDownload || !!loadPromise || state.phase === 'downloading' || state.phase === 'loading';
 
     async function refreshStatus() {
-        if (state.phase === 'downloading' || state.phase === 'loading') return { ...state };
+        const version = ++statusVersion;
+        if (isBusy()) return { ...state };
         const tier = getQualityTier();
         try {
             const models = await listCachedModels();
+            // A download, a model load or a newer check may have started while the
+            // cache was being read; that work owns the status now.
+            if (version !== statusVersion || isBusy()) return { ...state };
             const downloadedTiers = QUALITY_TIERS
                 .filter((candidate) => isValidModel(models.find((model) => model.url === getModelUrl(candidate))))
                 .map((candidate) => candidate.id);
@@ -237,7 +368,8 @@
                 ...(loaded ? {} : { device: null })
             });
         } catch (error) {
-            setState({ phase: 'error', error: errorMessage(error) });
+            const failure = friendlyError(error, 'cache');
+            if (version === statusVersion && !isBusy()) setState({ phase: 'error', error: failure.message });
         }
         return { ...state };
     }
@@ -261,7 +393,7 @@
                 new Promise((resolve) => { timer = setTimeout(resolve, 5000); })
             ]);
         } catch (error) {
-            console.warn('[Local AI] Failed to release the engine:', errorMessage(error));
+            console.warn('[Local AI] Failed to release the engine:', rawText(error));
         } finally {
             if (timer !== null) clearTimeout(timer);
         }
@@ -274,16 +406,17 @@
         loadedModelUrl = null;
         await exitEngine(instance);
         if (state.phase === 'ready' || state.phase === 'loading') {
-            setState({ phase: 'downloaded', device: null });
+            // After a quality change the pending status check knows better.
+            setState({ phase: 'downloaded', device: null }, { soft: true });
         }
     }
 
     function ensureLoaded() {
         const url = getModelUrl();
         if (engine?.isModelLoaded?.() && loadedModelUrl === url) return Promise.resolve(engine);
-        if (state.phase === 'downloading') {
+        if (activeDownload || state.phase === 'downloading') {
             // The download shares the engine instance; leave it and its status untouched.
-            return Promise.reject(new Error(t('downloadBusy', 'Wait for the model download to finish, then try again.')));
+            return Promise.reject(localError('busy', t('downloadBusy', 'Wait for the model download to finish, then try again.')));
         }
         if (loadPromise) return loadPromise;
         loadPromise = (async () => {
@@ -291,7 +424,7 @@
             const model = await findCachedModel(url);
             if (!isValidModel(model)) {
                 setState({ phase: 'missing', device: null });
-                throw new Error(t('notReady', 'The local model is not ready yet. Download it first in Settings > AI Providers > Local AI.'));
+                throw localError('notReady', t('notReady', 'The local model is not ready yet. Download it first in Settings > AI Providers > Local AI.'));
             }
             setState({ phase: 'loading', error: null });
             const useGpu = getDevicePreference() === 'auto' && await hasWebGpu();
@@ -301,7 +434,7 @@
             } catch (error) {
                 if (!useGpu) throw error;
                 // A WebGPU failure on this adapter still leaves the slower CPU path.
-                console.warn('[Local AI] WebGPU load failed; retrying on the CPU:', errorMessage(error));
+                console.warn('[Local AI] WebGPU load failed; retrying on the CPU:', rawText(error));
                 const failed = engine;
                 engine = null;
                 await exitEngine(failed);
@@ -315,65 +448,120 @@
             setState({ phase: 'ready', device: usedGpu ? 'WebGPU' : 'CPU', error: null });
             return engine;
         })().catch(async (error) => {
+            const failure = friendlyError(error, 'load');
             const keepPhase = state.phase === 'missing';
             const failed = engine;
             engine = null;
             loadedModelUrl = null;
             await exitEngine(failed);
-            if (!keepPhase) setState({ phase: 'error', device: null, error: errorMessage(error) });
-            throw error;
+            if (!keepPhase) setState({ phase: 'error', device: null, error: failure.message });
+            throw failure;
         }).finally(() => {
             loadPromise = null;
         });
         return loadPromise;
     }
 
-    async function downloadModel() {
-        if (state.phase === 'downloading') return;
-        const tier = getQualityTier();
-        const url = getModelUrl(tier);
-        const controller = new AbortController();
-        downloadController = controller;
-        let lastUpdate = 0;
-        setState({ phase: 'downloading', loadedBytes: 0, totalBytes: tier.size, error: null });
-        try {
-            const instance = await getEngine();
-            const cached = await findCachedModel(url);
-            if (!isValidModel(cached)) {
-                await instance.modelManager.downloadModel({ url }, {
-                    signal: controller.signal,
-                    progressCallback: ({ loaded, total }) => {
-                        const now = Date.now();
-                        if (now - lastUpdate < 250 && loaded < total) return;
-                        lastUpdate = now;
-                        setState({ loadedBytes: loaded, totalBytes: total > 0 ? total : tier.size });
-                    }
-                });
-            }
-            setState({
-                phase: 'downloaded', loadedBytes: tier.size, totalBytes: tier.size,
-                downloadedTiers: QUALITY_TIERS.map((candidate) => candidate.id)
-                    .filter((id) => id === tier.id || state.downloadedTiers.includes(id))
-            });
-        } catch (error) {
-            if (controller.signal.aborted || error?.name === 'AbortError') {
-                setState({ phase: 'missing', loadedBytes: 0 });
-                return;
-            }
-            setState({ phase: 'error', error: errorMessage(error) });
-            throw error;
-        } finally {
-            if (downloadController === controller) downloadController = null;
+    // Deleting by URL also removes a file whose download never finished; the
+    // model list (and Model.remove) only know files that have metadata.
+    async function deleteCachedFile(instance, url, model = null) {
+        const cache = instance?.modelManager?.cacheManager;
+        if (typeof cache?.delete === 'function') {
+            await cache.delete(url);
+        } else if (model) {
+            await model.remove();
         }
     }
 
-    const cancelDownload = () => downloadController?.abort();
+    async function removeUnfinishedDownload(instance, url) {
+        try {
+            const models = await listModels(instance);
+            if (isValidModel(models.find((model) => model.url === url))) return;
+            await deleteCachedFile(instance, url);
+        } catch (error) {
+            logDetail('Could not remove an unfinished download', error);
+        }
+    }
+
+    function downloadModel() {
+        // Another click (or a second settings card) joins the download already running.
+        if (activeDownload) return activeDownload.promise;
+        const tier = getQualityTier();
+        const url = getModelUrl(tier);
+        const controller = new AbortController();
+        const download = { url, controller, promise: null };
+        const finish = (patch) => {
+            if (activeDownload === download) activeDownload = null;
+            setState(patch);
+        };
+        const stopIfCancelled = () => {
+            if (controller.signal.aborted) throw cancelledError();
+        };
+        activeDownload = download;
+        setState({ phase: 'downloading', loadedBytes: 0, totalBytes: tier.size, error: null });
+        download.promise = (async () => {
+            let instance = null;
+            let lastUpdate = 0;
+            try {
+                instance = await getEngine();
+                stopIfCancelled();
+                if (!isValidModel(await findCachedModel(url))) {
+                    stopIfCancelled();
+                    await instance.modelManager.downloadModel({ url }, {
+                        signal: controller.signal,
+                        progressCallback: ({ loaded, total }) => {
+                            if (controller.signal.aborted) return;
+                            const now = Date.now();
+                            if (now - lastUpdate < 250 && loaded < total) return;
+                            lastUpdate = now;
+                            setState({ loadedBytes: loaded, totalBytes: total > 0 ? total : tier.size });
+                        }
+                    });
+                }
+            } catch (error) {
+                const cancelled = controller.signal.aborted || error?.name === 'AbortError';
+                const failure = cancelled ? null : friendlyError(error, 'download');
+                // wllama leaves the partial file of a cancelled or failed download behind.
+                if (instance) await removeUnfinishedDownload(instance, url);
+                if (cancelled) {
+                    finish({ phase: 'missing', loadedBytes: 0, error: null });
+                    return;
+                }
+                finish({ phase: 'error', loadedBytes: 0, error: failure.message });
+                throw failure;
+            }
+            const downloadedTiers = QUALITY_TIERS.map((candidate) => candidate.id)
+                .filter((id) => id === tier.id || state.downloadedTiers.includes(id));
+            finish({
+                phase: downloadedTiers.includes(getQualityTier().id) ? 'downloaded' : 'missing',
+                loadedBytes: tier.size, totalBytes: tier.size, downloadedTiers, error: null
+            });
+        })();
+        return download.promise;
+    }
+
+    const cancelDownload = () => activeDownload?.controller.abort();
 
     async function removeModel() {
+        if (activeDownload) {
+            throw localError('busy', t('downloadBusy', 'Wait for the model download to finish, then try again.'));
+        }
         await unloadModel();
         const tier = getQualityTier();
-        const model = await findCachedModel(getModelUrl(tier));
-        if (model) await model.remove();
+        const instance = await getEngine();
+        const models = await listModels(instance);
+        const modelOf = (candidate) => models.find((model) => model.url === getModelUrl(candidate)) || null;
+        await deleteCachedFile(instance, getModelUrl(tier), modelOf(tier));
+        // Partial files from interrupted downloads of every quality go too;
+        // finished downloads of the other qualities stay.
+        for (const candidate of QUALITY_TIERS) {
+            if (candidate.id === tier.id || isValidModel(modelOf(candidate))) continue;
+            try {
+                await deleteCachedFile(instance, getModelUrl(candidate), modelOf(candidate));
+            } catch (error) {
+                logDetail('Could not remove an unfinished download', error);
+            }
+        }
         setState({
             phase: 'missing', loadedBytes: 0, device: null, error: null,
             downloadedTiers: state.downloadedTiers.filter((id) => id !== tier.id)
@@ -381,11 +569,14 @@
     }
 
     // ============================================
-    // Scheduler: one model, so requests share it. Lyrics on screen (with a line
-    // callback) run before prefetching for upcoming songs, one block at a time.
+    // Scheduler: one model, so requests share it, one block at a time. Settings
+    // actions run first, then the song that is playing, then lyrics on screen,
+    // then prefetching for upcoming songs. A newer song stops older work for
+    // songs nobody is looking at any more.
     // ============================================
 
-    const queues = { interactive: [], background: [] };
+    const queue = [];
+    const jobs = new Set();
     let pumping = false;
 
     function clearIdleTimer() {
@@ -399,13 +590,106 @@
         if (!minutes || !engine?.isModelLoaded?.()) return;
         idleTimer = setTimeout(() => {
             idleTimer = null;
-            if (!pumping && !queues.interactive.length && !queues.background.length) void unloadModel();
+            if (!pumping && !queue.length) void unloadModel();
         }, minutes * 60_000);
     }
 
-    function runTask(priority, task) {
+    // Requests carry their song's translation cache id; compare it with the song playing now.
+    function getPlayingTrackId() {
+        try {
+            const player = (typeof Spicetify !== 'undefined' ? Spicetify : window.Spicetify)?.Player;
+            const uri = player?.data?.item?.uri;
+            if (!uri) return null;
+            const identity = [window.ivLyricsTrackIdentity, window.LyricsService, window.Utils]
+                .find((candidate) => typeof candidate?.getTranslationCacheId === 'function');
+            return identity?.getTranslationCacheId(uri) || null;
+        } catch {
+            return null;
+        }
+    }
+
+    // kind 'lyrics' is a request from the app; 'test' is the settings card's test translation.
+    function startJob({ kind, trackId = null, text = '', onScreen = false }) {
+        const controller = new AbortController();
+        let rejectStopped = null;
+        const whenStopped = new Promise((_, reject) => { rejectStopped = reject; });
+        whenStopped.catch(() => {});
+        const id = trackId ? String(trackId) : null;
+        const job = {
+            kind,
+            onScreen,
+            trackId: id,
+            // Lyrics on screen without a track id are told apart by their text.
+            identity: id ? `track:${id}` : (onScreen ? `text:${text}` : null),
+            signal: controller.signal,
+            stopped: false,
+            stopReason: null,
+            // Set by the first failed block, so the request's other blocks skip the engine.
+            failure: null,
+            whenStopped,
+            stop(reason) {
+                if (job.stopped) return;
+                job.stopped = true;
+                job.stopReason = reason;
+                rejectStopped(reason);
+                // Blocks that have not started are dropped; the running one is aborted.
+                dropQueuedBlocks(job, reason);
+                controller.abort();
+            }
+        };
+        if (kind === 'lyrics') stopSupersededJobs(job);
+        jobs.add(job);
+        return job;
+    }
+
+    function dropQueuedBlocks(job, reason) {
+        for (let index = queue.length - 1; index >= 0; index--) {
+            if (queue[index].job === job) queue.splice(index, 1)[0].reject(reason);
+        }
+    }
+
+    function stopSupersededJobs(job) {
+        if (!job.identity) return;
+        const playingTrackId = getPlayingTrackId();
+        // A request without a line callback is either another view of the playing
+        // song or a prefetch for an upcoming one. Only a prefetch replaces older
+        // prefetches, and only when it is certain which song is playing.
+        if (!job.onScreen && (!playingTrackId || job.trackId === playingTrackId)) return;
+        for (const other of jobs) {
+            if (other.kind !== 'lyrics' || other.onScreen !== job.onScreen) continue;
+            if (!other.identity || other.identity === job.identity) continue;
+            // The playing song's translation is never stopped.
+            if (playingTrackId && other.trackId === playingTrackId) continue;
+            other.stop(supersededError());
+        }
+    }
+
+    const finishJob = (job) => jobs.delete(job);
+
+    function priorityOf(entry, playingTrackId) {
+        const { job } = entry;
+        if (!job) return 0;
+        // The settings card's test is a single line someone is waiting for.
+        if (job.kind === 'test') return 1;
+        if (playingTrackId && job.trackId === playingTrackId) return 2;
+        return job.onScreen ? 3 : 4;
+    }
+
+    function takeNextTask() {
+        if (!queue.length) return null;
+        const playingTrackId = queue.length > 1 ? getPlayingTrackId() : null;
+        let best = 0;
+        for (let index = 1; index < queue.length; index++) {
+            if (priorityOf(queue[index], playingTrackId) < priorityOf(queue[best], playingTrackId)) best = index;
+        }
+        return queue.splice(best, 1)[0];
+    }
+
+    // Settings actions pass no job and run before any translation work.
+    function runTask(task, job = null) {
+        if (job?.stopped) return Promise.reject(job.stopReason);
         return new Promise((resolve, reject) => {
-            queues[priority === 'interactive' ? 'interactive' : 'background'].push({ task, resolve, reject });
+            queue.push({ task, job, resolve, reject });
             void pump();
         });
     }
@@ -415,9 +699,7 @@
         pumping = true;
         clearIdleTimer();
         try {
-            for (;;) {
-                const next = queues.interactive.shift() || queues.background.shift();
-                if (!next) break;
+            for (let next = takeNextTask(); next; next = takeNextTask()) {
                 try {
                     next.resolve(await next.task());
                 } catch (error) {
@@ -438,7 +720,8 @@
     const buildBlockPrompt = (lines, language) => `Please accurately translate the following text into ${language}.\nYou must retain the exact same number of delimiters in the translation. Strictly do not omit, escape, or translate these symbols, and pay close attention to their placement.\n\n${lines.join('\n')}`;
     const outputBudget = (text) => Math.min(1536, 48 + Math.ceil(String(text).length * 3));
 
-    async function complete(instance, prompt, maxTokens) {
+    async function complete(instance, prompt, maxTokens, signal) {
+        if (signal?.aborted) throw cancelledError();
         let text = '';
         let finishReason = null;
         await instance.createChatCompletion({
@@ -446,6 +729,8 @@
             max_tokens: maxTokens,
             ...SAMPLING,
             stream: true,
+            // Lets a song nobody waits for any more give the engine back mid-block.
+            abortSignal: signal,
             onData(chunk) {
                 const choice = chunk?.choices?.[0];
                 if (typeof choice?.delta?.content === 'string') text += choice.delta.content;
@@ -455,16 +740,16 @@
         return { text, finishReason };
     }
 
-    async function translateBlock(instance, parts, language) {
+    async function translateBlock(instance, parts, language, signal) {
         if (parts.length > 1) {
-            const { text, finishReason } = await complete(instance, buildBlockPrompt(parts, language), outputBudget(parts.join('\n')));
+            const { text, finishReason } = await complete(instance, buildBlockPrompt(parts, language), outputBudget(parts.join('\n')), signal);
             const lines = text.replace(/\r\n?/g, '\n').trim().split('\n').map((line) => line.trim());
             if (finishReason !== 'length' && lines.length === parts.length && lines.every(Boolean)) return lines;
         }
         // The block lost or merged a line: translate each line on its own instead.
         const translated = [];
         for (const part of parts) {
-            const { text } = await complete(instance, buildLinePrompt(part, language), outputBudget(part));
+            const { text } = await complete(instance, buildLinePrompt(part, language), outputBudget(part), signal);
             const line = text.replace(/\s*\n+\s*/g, ' ').trim();
             if (!line) throw new Error('[Local AI] The model returned an empty line.');
             translated.push(line);
@@ -490,9 +775,11 @@
     }
 
     const isTranslatablePart = (part) => !!part.trim() && !PROTECTED_PART_PATTERN.test(part);
+    // wllama names its runtime errors 'RuntimeError', like WebAssembly traps.
+    const needsFreshEngine = (error) => error?.name === 'RuntimeError' || error?.name === 'WllamaRuntimeError'
+        || /out of memory|memory access|device (?:was )?lost/i.test(rawText(error));
 
-    async function translateLyricsLines(text, lang, onLine, priority) {
-        const language = resolveTargetLanguage(lang);
+    async function translateLyricsLines(text, language, onLine, job) {
         const deadline = Date.now() + JOB_BUDGET_MS;
         const sourceLines = String(text).replace(/\r\n?/g, '\n').split('\n');
         // Simultaneous vocal parts share a line as "a / b" and are translated separately.
@@ -521,47 +808,59 @@
                 try {
                     onLine(row, rowText(row), { provider: ADDON_ID, final: true });
                 } catch (error) {
-                    console.warn('[Local AI] Line callback failed:', errorMessage(error));
+                    console.warn('[Local AI] Line callback failed:', rawText(error));
                 }
             });
         };
 
         emitReadyRows();
-        for (const block of buildBlocks(pending)) {
-            const translated = await runTask(priority, async () => {
-                if (Date.now() > deadline) {
-                    const error = new Error('[Local AI] Translation took too long and was stopped.');
-                    error.name = 'TimeoutError';
-                    throw error;
-                }
+        // Every block is queued at once so the scheduler sees the whole song: the
+        // playing song then runs all of its blocks before lower priority work.
+        const blocks = buildBlocks(pending);
+        const results = blocks.map((block) => runTask(async () => {
+            if (job.stopped) throw job.stopReason;
+            if (job.failure) throw job.failure;
+            try {
+                if (Date.now() > deadline) throw timeoutError();
                 const instance = await ensureLoaded();
-                try {
-                    return await translateBlock(instance, block, language);
-                } catch (error) {
-                    // A crashed WASM runtime or lost GPU device needs a fresh engine next time.
-                    if (error?.name === 'WllamaRuntimeError' || /out of memory|memory access|device (was )?lost/i.test(errorMessage(error))) {
-                        await unloadModel();
-                    }
-                    throw error;
-                }
-            });
-            block.forEach((part, index) => translations.set(part, translated[index]));
-            emitReadyRows();
+                return await translateBlock(instance, block, language, job.signal);
+            } catch (error) {
+                // Stopping a song nobody waits for aborts its block on purpose; the engine is fine.
+                if (job.stopped) throw job.stopReason;
+                job.failure ||= error;
+                // A crashed WASM runtime or lost GPU device needs a fresh engine next time.
+                if (needsFreshEngine(error)) await unloadModel();
+                throw error;
+            }
+        }, job));
+        // Failures surface in block order below; the rest are only dropped work.
+        results.forEach((result) => result.catch(() => {}));
+        try {
+            for (const [index, block] of blocks.entries()) {
+                const translated = await results[index];
+                if (job.stopped) throw job.stopReason;
+                block.forEach((part, offset) => translations.set(part, translated[offset]));
+                emitReadyRows();
+            }
+        } catch (error) {
+            dropQueuedBlocks(job, error);
+            throw error;
         }
         return sourceLines.map((_, row) => rowText(row));
     }
 
-    function getCurrentTargetLanguage() {
-        const configured = window.CONFIG?.visual?.['translate:target-language'];
-        return configured && configured !== 'auto' ? configured : (window.I18n?.getCurrentLanguage?.() || 'en');
-    }
-
     async function runTestTranslation() {
         const lang = getCurrentTargetLanguage();
+        const language = resolveTargetLanguage(lang);
         const sample = String(lang).toLowerCase().startsWith('ja') ? 'The night is still young.' : '今夜はまだ始まったばかり';
         const started = Date.now();
-        const [line] = await translateLyricsLines(sample, lang, null, 'interactive');
-        return { sample, line, seconds: (Date.now() - started) / 1000 };
+        const job = startJob({ kind: 'test' });
+        try {
+            const [line] = await translateLyricsLines(sample, language, null, job);
+            return { sample, line, seconds: (Date.now() - started) / 1000 };
+        } finally {
+            finishJob(job);
+        }
     }
 
     // ============================================
@@ -611,6 +910,9 @@
 
             const busy = snapshot.phase === 'downloading' || snapshot.phase === 'loading';
             const hasModel = snapshot.phase === 'downloaded' || snapshot.phase === 'ready';
+            // Say so before anyone downloads the model for a language it cannot translate into.
+            const targetLanguage = getCurrentTargetLanguage();
+            const languageSupported = !!targetLanguageName(targetLanguage);
             const tierIndex = Math.max(0, QUALITY_TIERS.findIndex((candidate) => candidate.id === tierId));
             const tier = QUALITY_TIERS[tierIndex];
             const downloadedTiers = Array.isArray(snapshot.downloadedTiers) ? snapshot.downloadedTiers : [];
@@ -624,13 +926,13 @@
                 setTierId(id);
                 setConfirmRemove(false);
                 setTest(null);
-                void runTask('interactive', unloadModel);
+                void runTask(unloadModel);
             };
             const changeDevice = async (event) => {
                 const next = event.target.value === 'cpu' ? 'cpu' : 'auto';
                 setSetting('device', next);
                 setDevice(next);
-                await runTask('interactive', unloadModel);
+                await runTask(unloadModel);
             };
             const changeIdle = (event) => {
                 const next = Number(event.target.value);
@@ -639,7 +941,7 @@
                 if (!pumping) scheduleIdleUnload();
             };
             const startDownload = () => { setTest(null); void downloadModel().catch(() => {}); };
-            const freeMemory = () => { void runTask('interactive', unloadModel); };
+            const freeMemory = () => { void runTask(unloadModel); };
             const deleteModel = () => {
                 if (!confirmRemove) {
                     setConfirmRemove(true);
@@ -647,7 +949,7 @@
                 }
                 setConfirmRemove(false);
                 setTest(null);
-                void runTask('interactive', removeModel).catch((error) => setState({ phase: 'error', error: errorMessage(error) }));
+                void runTask(removeModel).catch((error) => setState({ phase: 'error', error: friendlyError(error, 'cache').message }));
             };
             const testTranslation = async () => {
                 setTest({ running: true });
@@ -655,7 +957,7 @@
                     const result = await runTestTranslation();
                     setTest({ ok: true, text: `✓ ${result.sample} → ${result.line} (${result.seconds.toFixed(1)}s)` });
                 } catch (error) {
-                    setTest({ ok: false, text: `✗ ${errorMessage(error)}` });
+                    setTest({ ok: false, text: `✗ ${friendlyError(error, 'translate').message}` });
                 }
             };
 
@@ -705,10 +1007,19 @@
                     t('tierHint', 'Higher quality translates more accurately but uses more storage and memory.'))
             );
 
+            // Without a supported language the download is not offered, so the line
+            // inviting one would only contradict the notice.
+            const showStatus = languageSupported || (snapshot.phase !== 'missing' && snapshot.phase !== 'unknown');
+
             return h('div', { className: 'ai-addon-settings local-model-settings' },
                 qualityControl,
                 h('div', { className: 'ai-addon-setting' },
-                    h('span', {
+                    !languageSupported && h('small', {
+                        className: 'ai-addon-test-status error',
+                        role: 'note',
+                        style: { display: 'block', marginBottom: '8px', lineHeight: 1.5 }
+                    }, unsupportedLanguageText(targetLanguage)),
+                    showStatus && h('span', {
                         className: `ai-addon-test-status ${snapshot.phase === 'error' ? 'error' : snapshot.phase === 'ready' ? 'success' : ''}`,
                         role: 'status'
                     }, statusText(snapshot)),
@@ -720,10 +1031,10 @@
                         snapshot.phase === 'downloading'
                             ? h('button', { type: 'button', className: 'ai-addon-btn ai-addon-btn-secondary', onClick: cancelDownload }, t('cancel', 'Cancel'))
                             : !hasModel && h('button', {
-                                type: 'button', className: 'ai-addon-btn ai-addon-btn-primary', onClick: startDownload, disabled: busy
+                                type: 'button', className: 'ai-addon-btn ai-addon-btn-primary', onClick: startDownload, disabled: busy || !languageSupported
                             }, t('download', 'Download model ({size})', { size: formatGigabytes(tier.size) })),
                         hasModel && h('button', {
-                            type: 'button', className: 'ai-addon-btn ai-addon-btn-primary', onClick: testTranslation, disabled: busy || test?.running
+                            type: 'button', className: 'ai-addon-btn ai-addon-btn-primary', onClick: testTranslation, disabled: busy || test?.running || !languageSupported
                         }, test?.running ? '…' : t('test', 'Test translation')),
                         snapshot.phase === 'ready' && h('button', {
                             type: 'button', className: 'ai-addon-btn ai-addon-btn-secondary', onClick: freeMemory
@@ -771,21 +1082,37 @@
         },
 
         async testConnection() {
-            const result = await runTestTranslation();
-            if (!result.line) throw new Error('[Local AI] The test translation was empty.');
+            let result;
+            try {
+                result = await runTestTranslation();
+            } catch (error) {
+                throw friendlyError(error, 'translate');
+            }
+            if (!result.line) throw localError('unknown', failureMessage('unknown'));
             return true;
         },
 
-        async translateLyrics({ text, lang, wantSmartPhonetic, onLine }) {
+        // The manager passes the song's trackId; only lyrics on screen pass onLine.
+        async translateLyrics({ text, lang, wantSmartPhonetic, onLine, trackId }) {
             if (wantSmartPhonetic) {
                 throw new Error('[Local AI] Pronunciation generation is not supported');
             }
             if (!text?.trim()) {
                 throw new Error('[Local AI] No text provided');
             }
-            const priority = typeof onLine === 'function' ? 'interactive' : 'background';
-            const translation = await translateLyricsLines(text, lang, onLine, priority);
-            return { translation };
+            // An unsupported language fails before it can stop another song's work.
+            const language = resolveTargetLanguage(lang);
+            const job = startJob({ kind: 'lyrics', trackId, text, onScreen: typeof onLine === 'function' });
+            const work = translateLyricsLines(text, language, onLine, job);
+            work.catch(() => {});
+            try {
+                // A newer song ends this request at once, even while its block still runs.
+                return { translation: await Promise.race([work, job.whenStopped]) };
+            } catch (error) {
+                throw friendlyError(error, 'translate');
+            } finally {
+                finishJob(job);
+            }
         }
     };
 

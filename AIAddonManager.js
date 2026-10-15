@@ -2652,6 +2652,13 @@ ${normalizedText}
                     lastError = e;
                     resetProvisionalOutput({ reason: 'provider-fallback', error: e?.message || null });
 
+                    // The provider stopped a song nobody is viewing any more (the
+                    // local model moved on to a newer song); don't hand it to the
+                    // next provider.
+                    if (e?.name === 'AbortError' && e?.superseded === true) {
+                        throw e;
+                    }
+
                     // 다음 provider 시도
                     continue;
                 }
