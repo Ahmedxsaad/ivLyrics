@@ -695,7 +695,9 @@ window.LANG_AR = {
     "regenerateAction": "إعادة الإنشاء",
     "fullscreen": "ملء الشاشة",
     "exitFullscreen": "الخروج من ملء الشاشة",
-    "localLyricsApplying": "جارٍ التطبيق…"
+    "localLyricsApplying": "جارٍ التطبيق…",
+    "currentTrack": "المسار الحالي",
+    "more": "المزيد"
   },
   "messages": {
     "noLyrics": "لا توجد كلمات متاحة",
@@ -797,7 +799,8 @@ window.LANG_AR = {
       "collection": "الأغاني المعجب بها",
       "station": "راديو"
     },
-    "menuToggle": "قائمة ivLyrics"
+    "menuToggle": "قائمة ivLyrics",
+    "menuToggleShort": "القائمة"
   },
   "about": {
     "version": "الإصدار",
@@ -2078,7 +2081,14 @@ window.LANG_AR = {
     "rightClickToUnlock": "انقر بزر الماوس الأيمن لإلغاء التثبيت",
     "karaoke": "كاريوكي",
     "synced": "متزامن",
-    "unsynced": "كلمات عادية"
+    "unsynced": "كلمات عادية",
+    "lockSelected": "تثبيت الوضع المحدد",
+    "lockSelectedDesc": "اعرض الكلمات دائمًا بهذا الوضع متى دعمته الأغنية.",
+    "locked": "مثبّت",
+    "unlocked": "أُلغي التثبيت",
+    "unavailableNoKaraoke": "لا توجد مزامنة كاريوكي لهذه الأغنية",
+    "unavailableKaraokeOff": "وضع الكاريوكي متوقف",
+    "unavailableNoSynced": "لا توجد كلمات متزامنة لهذه الأغنية"
   },
   "communityVideo": {
     "loginRequired": "يلزم تسجيل الدخول عبر Discord لتسجيل فيديو مجتمعي.",

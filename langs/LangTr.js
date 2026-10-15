@@ -695,7 +695,9 @@ window.LANG_TR = {
     "regenerateAction": "Yeniden Oluştur",
     "fullscreen": "Tam Ekran",
     "exitFullscreen": "Tam Ekrandan Çık",
-    "localLyricsApplying": "Uygulanıyor…"
+    "localLyricsApplying": "Uygulanıyor…",
+    "currentTrack": "Mevcut Parça",
+    "more": "Daha Fazla"
   },
   "messages": {
     "noLyrics": "Söz mevcut değil",
@@ -797,7 +799,8 @@ window.LANG_TR = {
       "collection": "Beğenilen Şarkılar",
       "station": "Radyo"
     },
-    "menuToggle": "ivLyrics menüsü"
+    "menuToggle": "ivLyrics menüsü",
+    "menuToggleShort": "Menü"
   },
   "about": {
     "version": "Sürüm",
@@ -2078,7 +2081,14 @@ window.LANG_TR = {
     "rightClickToUnlock": "Sabitlemeyi kaldırmak için sağ tıklayın",
     "karaoke": "Karaoke",
     "synced": "Senkronize",
-    "unsynced": "Düz Metin"
+    "unsynced": "Düz Metin",
+    "lockSelected": "Seçili moda sabitle",
+    "lockSelectedDesc": "Bir şarkı bu modu destekliyorsa sözler her zaman bu modda gösterilir.",
+    "locked": "Sabitlendi",
+    "unlocked": "Sabitleme kaldırıldı",
+    "unavailableNoKaraoke": "Bu şarkının karaoke senkronizasyonu yok",
+    "unavailableKaraokeOff": "Karaoke modu kapalı",
+    "unavailableNoSynced": "Bu şarkının senkronize sözleri yok"
   },
   "communityVideo": {
     "loginRequired": "Topluluk videolarını kaydetmek için Discord girişi gereklidir.",

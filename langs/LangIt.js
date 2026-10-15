@@ -695,7 +695,9 @@ window.LANG_IT = {
     "regenerateAction": "Rigenera",
     "fullscreen": "Schermo intero",
     "exitFullscreen": "Esci da schermo intero",
-    "localLyricsApplying": "Applicazione…"
+    "localLyricsApplying": "Applicazione…",
+    "currentTrack": "Traccia corrente",
+    "more": "Altro"
   },
   "messages": {
     "noLyrics": "Nessun testo disponibile",
@@ -797,7 +799,8 @@ window.LANG_IT = {
       "collection": "Brani che ti piacciono",
       "station": "Radio"
     },
-    "menuToggle": "Menu di ivLyrics"
+    "menuToggle": "Menu di ivLyrics",
+    "menuToggleShort": "Menu"
   },
   "about": {
     "version": "Versione",
@@ -2078,7 +2081,14 @@ window.LANG_IT = {
     "rightClickToUnlock": "Clic destro per sbloccare",
     "karaoke": "Karaoke",
     "synced": "Sincronizzato",
-    "unsynced": "Testo normale"
+    "unsynced": "Testo normale",
+    "lockSelected": "Blocca sulla modalità scelta",
+    "lockSelectedDesc": "Mostra sempre il testo in questa modalità quando il brano la supporta.",
+    "locked": "Bloccato",
+    "unlocked": "Sbloccato",
+    "unavailableNoKaraoke": "Questo brano non ha la sincronizzazione karaoke",
+    "unavailableKaraokeOff": "La modalità Karaoke è disattivata",
+    "unavailableNoSynced": "Questo brano non ha un testo sincronizzato"
   },
   "communityVideo": {
     "loginRequired": "Per registrare video della community è richiesto l'accesso con Discord.",

@@ -695,7 +695,9 @@ window.LANG_FA = {
     "regenerateAction": "بازتولید",
     "fullscreen": "تمام صفحه",
     "exitFullscreen": "خروج از تمام‌صفحه",
-    "localLyricsApplying": "در حال اعمال…"
+    "localLyricsApplying": "در حال اعمال…",
+    "currentTrack": "آهنگ فعلی",
+    "more": "بیشتر"
   },
   "messages": {
     "noLyrics": "متن آهنگی موجود نیست",
@@ -797,7 +799,8 @@ window.LANG_FA = {
       "collection": "آهنگ‌های مورد علاقه",
       "station": "رادیو"
     },
-    "menuToggle": "منوی ivLyrics"
+    "menuToggle": "منوی ivLyrics",
+    "menuToggleShort": "منو"
   },
   "about": {
     "version": "نسخه",
@@ -2078,7 +2081,14 @@ window.LANG_FA = {
     "rightClickToUnlock": "برای برداشتن تثبیت راست‌کلیک کنید",
     "karaoke": "کارائوکه",
     "synced": "هماهنگ",
-    "unsynced": "متن ساده"
+    "unsynced": "متن ساده",
+    "lockSelected": "ثابت کردن حالت انتخاب‌شده",
+    "lockSelectedDesc": "هر زمان آهنگی از این حالت پشتیبانی کند، متن همیشه در همین حالت نمایش داده می‌شود.",
+    "locked": "ثابت‌شده",
+    "unlocked": "تثبیت برداشته شد",
+    "unavailableNoKaraoke": "این آهنگ همگام‌سازی کارائوکه ندارد",
+    "unavailableKaraokeOff": "استفاده از حالت کارائوکه خاموش است",
+    "unavailableNoSynced": "این آهنگ متن هماهنگ ندارد"
   },
   "communityVideo": {
     "loginRequired": "برای ثبت ویدیوهای انجمن باید وارد دیسکورد شوید.",

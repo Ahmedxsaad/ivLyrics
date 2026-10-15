@@ -695,7 +695,9 @@ window.LANG_SV = {
     "regenerateAction": "Återskapa",
     "fullscreen": "Helskärm",
     "exitFullscreen": "Avsluta helskärm",
-    "localLyricsApplying": "Tillämpar…"
+    "localLyricsApplying": "Tillämpar…",
+    "currentTrack": "Aktuellt spår",
+    "more": "Mer"
   },
   "messages": {
     "noLyrics": "Inga texter tillgängliga",
@@ -797,7 +799,8 @@ window.LANG_SV = {
       "collection": "Gillade låtar",
       "station": "Station"
     },
-    "menuToggle": "ivLyrics-meny"
+    "menuToggle": "ivLyrics-meny",
+    "menuToggleShort": "Meny"
   },
   "about": {
     "version": "Version",
@@ -2078,7 +2081,14 @@ window.LANG_SV = {
     "rightClickToUnlock": "Högerklicka för att låsa upp",
     "karaoke": "Karaoke",
     "synced": "Synkroniserad",
-    "unsynced": "Vanlig text"
+    "unsynced": "Vanlig text",
+    "lockSelected": "Lås till valt läge",
+    "lockSelectedDesc": "Visa alltid texten i det här läget när låten stöder det.",
+    "locked": "Låst",
+    "unlocked": "Upplåst",
+    "unavailableNoKaraoke": "Den här låten har ingen karaokesynk",
+    "unavailableKaraokeOff": "Karaokeläget är avstängt",
+    "unavailableNoSynced": "Den här låten har ingen synkroniserad text"
   },
   "communityVideo": {
     "loginRequired": "Discord-inloggning krävs för att registrera community-videor.",

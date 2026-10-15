@@ -695,7 +695,9 @@ window.LANG_BN = {
     "regenerateAction": "পুনরায় তৈরি",
     "fullscreen": "ফুলস্ক্রিন",
     "exitFullscreen": "ফুলস্ক্রিন থেকে বের হন",
-    "localLyricsApplying": "প্রয়োগ হচ্ছে…"
+    "localLyricsApplying": "প্রয়োগ হচ্ছে…",
+    "currentTrack": "বর্তমান ট্র্যাক",
+    "more": "আরও"
   },
   "messages": {
     "noLyrics": "কোনো লিরিক্স পাওয়া যায়নি",
@@ -797,7 +799,8 @@ window.LANG_BN = {
       "collection": "পছন্দের গান",
       "station": "রেডিও"
     },
-    "menuToggle": "ivLyrics মেনু"
+    "menuToggle": "ivLyrics মেনু",
+    "menuToggleShort": "মেনু"
   },
   "about": {
     "version": "সংস্করণ",
@@ -2078,7 +2081,14 @@ window.LANG_BN = {
     "rightClickToUnlock": "স্থিরতা সরাতে ডান-ক্লিক করুন",
     "karaoke": "কারাওকে",
     "synced": "সিঙ্ক",
-    "unsynced": "সাধারণ লিরিক্স"
+    "unsynced": "সাধারণ লিরিক্স",
+    "lockSelected": "নির্বাচিত মোডে স্থির রাখুন",
+    "lockSelectedDesc": "কোনো গানে এই মোড পাওয়া গেলে সবসময় এই মোডেই লিরিক্স দেখানো হবে।",
+    "locked": "স্থির",
+    "unlocked": "স্থিরতা সরানো হয়েছে",
+    "unavailableNoKaraoke": "এই গানে কারাওকে সিঙ্ক নেই",
+    "unavailableKaraokeOff": "কারাওকে মোড বন্ধ আছে",
+    "unavailableNoSynced": "এই গানে সিঙ্ক করা লিরিক্স নেই"
   },
   "communityVideo": {
     "loginRequired": "কমিউনিটি ভিডিও নিবন্ধন করতে Discord-এ লগইন করতে হবে।",

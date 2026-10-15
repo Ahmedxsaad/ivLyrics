@@ -695,7 +695,9 @@ window.LANG_FR = {
     "regenerateAction": "Régénérer",
     "fullscreen": "Plein écran",
     "exitFullscreen": "Quitter le plein écran",
-    "localLyricsApplying": "Application…"
+    "localLyricsApplying": "Application…",
+    "currentTrack": "Titre actuel",
+    "more": "Plus"
   },
   "messages": {
     "noLyrics": "Aucune parole disponible",
@@ -797,7 +799,8 @@ window.LANG_FR = {
       "collection": "Titres likés",
       "station": "Radio"
     },
-    "menuToggle": "Menu ivLyrics"
+    "menuToggle": "Menu ivLyrics",
+    "menuToggleShort": "Menu"
   },
   "about": {
     "version": "Version",
@@ -2078,7 +2081,14 @@ window.LANG_FR = {
     "rightClickToUnlock": "Clic droit pour déverrouiller",
     "karaoke": "Karaoké",
     "synced": "Synchro",
-    "unsynced": "Paroles"
+    "unsynced": "Paroles",
+    "lockSelected": "Verrouiller le mode choisi",
+    "lockSelectedDesc": "Affiche toujours les paroles dans ce mode lorsque le titre le permet.",
+    "locked": "Verrouillé",
+    "unlocked": "Déverrouillé",
+    "unavailableNoKaraoke": "Ce titre n'a pas de synchro karaoké",
+    "unavailableKaraokeOff": "Le mode karaoké est désactivé",
+    "unavailableNoSynced": "Ce titre n'a pas de paroles synchronisées"
   },
   "communityVideo": {
     "loginRequired": "La connexion à Discord est requise pour enregistrer des vidéos communautaires.",

@@ -695,7 +695,9 @@ window.LANG_DE = {
     "regenerateAction": "Neu erzeugen",
     "fullscreen": "Vollbild",
     "exitFullscreen": "Vollbild verlassen",
-    "localLyricsApplying": "Wird angewendet…"
+    "localLyricsApplying": "Wird angewendet…",
+    "currentTrack": "Aktueller Track",
+    "more": "Mehr"
   },
   "messages": {
     "noLyrics": "Kein Songtext verfügbar",
@@ -797,7 +799,8 @@ window.LANG_DE = {
       "collection": "Lieblingssongs",
       "station": "Radio"
     },
-    "menuToggle": "ivLyrics-Menü"
+    "menuToggle": "ivLyrics-Menü",
+    "menuToggleShort": "Menü"
   },
   "about": {
     "version": "Version",
@@ -2078,7 +2081,14 @@ window.LANG_DE = {
     "rightClickToUnlock": "Rechtsklick zum Lösen",
     "karaoke": "Karaoke",
     "synced": "Sync",
-    "unsynced": "Text"
+    "unsynced": "Text",
+    "lockSelected": "Ausgewählten Modus fixieren",
+    "lockSelectedDesc": "Songtexte immer in diesem Modus anzeigen, wenn ein Song ihn unterstützt.",
+    "locked": "Fixiert",
+    "unlocked": "Gelöst",
+    "unavailableNoKaraoke": "Für diesen Song gibt es keinen Karaoke-Sync",
+    "unavailableKaraokeOff": "Der Karaoke-Modus ist deaktiviert",
+    "unavailableNoSynced": "Für diesen Song gibt es keinen synchronisierten Songtext"
   },
   "communityVideo": {
     "loginRequired": "Zum Registrieren von Community-Videos ist eine Discord-Anmeldung erforderlich.",

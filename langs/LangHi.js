@@ -695,7 +695,9 @@ window.LANG_HI = {
     "regenerateAction": "फिर से बनाएँ",
     "fullscreen": "फुलस्क्रीन",
     "exitFullscreen": "फुलस्क्रीन से बाहर निकलें",
-    "localLyricsApplying": "लागू हो रहा है…"
+    "localLyricsApplying": "लागू हो रहा है…",
+    "currentTrack": "वर्तमान ट्रैक",
+    "more": "अधिक"
   },
   "messages": {
     "noLyrics": "कोई लिरिक्स उपलब्ध नहीं",
@@ -797,7 +799,8 @@ window.LANG_HI = {
       "collection": "पसंदीदा गीत",
       "station": "रेडियो"
     },
-    "menuToggle": "ivLyrics मेनू"
+    "menuToggle": "ivLyrics मेनू",
+    "menuToggleShort": "मेनू"
   },
   "about": {
     "version": "संस्करण",
@@ -2078,7 +2081,14 @@ window.LANG_HI = {
     "rightClickToUnlock": "स्थिरता हटाने के लिए राइट-क्लिक करें",
     "karaoke": "कराओके",
     "synced": "सिंक",
-    "unsynced": "सामान्य लिरिक्स"
+    "unsynced": "सामान्य लिरिक्स",
+    "lockSelected": "चुने गए मोड पर स्थिर रखें",
+    "lockSelectedDesc": "जब भी किसी गाने में यह मोड उपलब्ध हो, लिरिक्स हमेशा इसी मोड में दिखेंगे।",
+    "locked": "स्थिर",
+    "unlocked": "स्थिरता हटाई गई",
+    "unavailableNoKaraoke": "इस गाने में कराओके सिंक नहीं है",
+    "unavailableKaraokeOff": "कराओके मोड का उपयोग बंद है",
+    "unavailableNoSynced": "इस गाने में सिंक किए गए लिरिक्स नहीं हैं"
   },
   "communityVideo": {
     "loginRequired": "कम्युनिटी वीडियो दर्ज करने के लिए Discord में लॉग इन करना आवश्यक है।",

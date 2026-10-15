@@ -695,7 +695,9 @@ window.LANG_JA = {
     "regenerateAction": "再生成",
     "fullscreen": "フルスクリーン",
     "exitFullscreen": "フルスクリーンを終了",
-    "localLyricsApplying": "適用中…"
+    "localLyricsApplying": "適用中…",
+    "currentTrack": "現在の曲",
+    "more": "その他"
   },
   "messages": {
     "noLyrics": "利用可能な歌詞がありません",
@@ -797,7 +799,8 @@ window.LANG_JA = {
       "collection": "お気に入りの曲",
       "station": "ラジオ"
     },
-    "menuToggle": "ivLyrics メニュー"
+    "menuToggle": "ivLyrics メニュー",
+    "menuToggleShort": "メニュー"
   },
   "about": {
     "version": "バージョン",
@@ -2078,7 +2081,14 @@ window.LANG_JA = {
     "rightClickToUnlock": "右クリックで固定解除",
     "karaoke": "カラオケ",
     "synced": "同期",
-    "unsynced": "通常歌詞"
+    "unsynced": "通常歌詞",
+    "lockSelected": "選択したモードに固定",
+    "lockSelectedDesc": "このモードが使える曲では、常にこのモードで表示します。",
+    "locked": "固定中",
+    "unlocked": "固定解除",
+    "unavailableNoKaraoke": "この曲にはカラオケ同期がありません",
+    "unavailableKaraokeOff": "カラオケモードの使用がオフになっています",
+    "unavailableNoSynced": "この曲には同期歌詞がありません"
   },
   "communityVideo": {
     "loginRequired": "コミュニティ動画を登録するにはDiscordへのログインが必要です。",

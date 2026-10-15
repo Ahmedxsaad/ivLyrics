@@ -695,7 +695,9 @@ window.LANG_VI = {
     "regenerateAction": "Tạo lại",
     "fullscreen": "Toàn màn hình",
     "exitFullscreen": "Thoát toàn màn hình",
-    "localLyricsApplying": "Đang áp dụng…"
+    "localLyricsApplying": "Đang áp dụng…",
+    "currentTrack": "Bài hát hiện tại",
+    "more": "Thêm"
   },
   "messages": {
     "noLyrics": "Không có lời bài hát khả dụng",
@@ -797,7 +799,8 @@ window.LANG_VI = {
       "collection": "Bài hát đã thích",
       "station": "Đài phát thanh"
     },
-    "menuToggle": "Menu ivLyrics"
+    "menuToggle": "Menu ivLyrics",
+    "menuToggleShort": "Menu"
   },
   "about": {
     "version": "Phiên bản",
@@ -2078,7 +2081,14 @@ window.LANG_VI = {
     "rightClickToUnlock": "Nhấp chuột phải để mở khóa",
     "karaoke": "Karaoke",
     "synced": "Đồng bộ",
-    "unsynced": "Lời thường"
+    "unsynced": "Lời thường",
+    "lockSelected": "Khóa ở chế độ đã chọn",
+    "lockSelectedDesc": "Luôn hiển thị lời bài hát ở chế độ này khi bài hát hỗ trợ.",
+    "locked": "Đã khóa",
+    "unlocked": "Đã mở khóa",
+    "unavailableNoKaraoke": "Bài hát này không có đồng bộ karaoke",
+    "unavailableKaraokeOff": "Chế độ Karaoke đang tắt",
+    "unavailableNoSynced": "Bài hát này không có lời đồng bộ"
   },
   "communityVideo": {
     "loginRequired": "Cần đăng nhập Discord để đăng ký video cộng đồng.",

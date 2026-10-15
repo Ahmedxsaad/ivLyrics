@@ -695,7 +695,9 @@ window.LANG_TH = {
     "regenerateAction": "สร้างใหม่",
     "fullscreen": "เต็มหน้าจอ",
     "exitFullscreen": "ออกจากโหมดเต็มหน้าจอ",
-    "localLyricsApplying": "กำลังใช้…"
+    "localLyricsApplying": "กำลังใช้…",
+    "currentTrack": "แทร็กปัจจุบัน",
+    "more": "เพิ่มเติม"
   },
   "messages": {
     "noLyrics": "ไม่มีเนื้อเพลงที่ใช้ได้",
@@ -797,7 +799,8 @@ window.LANG_TH = {
       "collection": "เพลงที่ถูกใจ",
       "station": "วิทยุ"
     },
-    "menuToggle": "เมนู ivLyrics"
+    "menuToggle": "เมนู ivLyrics",
+    "menuToggleShort": "เมนู"
   },
   "about": {
     "version": "เวอร์ชัน",
@@ -2078,7 +2081,14 @@ window.LANG_TH = {
     "rightClickToUnlock": "คลิกขวาเพื่อปลดล็อก",
     "karaoke": "คาราโอเกะ",
     "synced": "ซิงค์",
-    "unsynced": "เนื้อเพลงทั่วไป"
+    "unsynced": "เนื้อเพลงทั่วไป",
+    "lockSelected": "ล็อกโหมดที่เลือก",
+    "lockSelectedDesc": "แสดงเนื้อเพลงในโหมดนี้เสมอเมื่อเพลงรองรับ",
+    "locked": "ล็อกแล้ว",
+    "unlocked": "ปลดล็อกแล้ว",
+    "unavailableNoKaraoke": "เพลงนี้ไม่มีซิงค์คาราโอเกะ",
+    "unavailableKaraokeOff": "ปิดการใช้โหมดคาราโอเกะอยู่",
+    "unavailableNoSynced": "เพลงนี้ไม่มีเนื้อเพลงแบบซิงค์"
   },
   "communityVideo": {
     "loginRequired": "การลงทะเบียนวิดีโอชุมชนต้องเข้าสู่ระบบ Discord",

@@ -695,7 +695,9 @@ window.LANG_RU = {
     "regenerateAction": "Пересоздать",
     "fullscreen": "Полный экран",
     "exitFullscreen": "Выйти из полноэкранного режима",
-    "localLyricsApplying": "Применение…"
+    "localLyricsApplying": "Применение…",
+    "currentTrack": "Текущий трек",
+    "more": "Ещё"
   },
   "messages": {
     "noLyrics": "Текст отсутствует",
@@ -797,7 +799,8 @@ window.LANG_RU = {
       "collection": "Любимые треки",
       "station": "Радио"
     },
-    "menuToggle": "Меню ivLyrics"
+    "menuToggle": "Меню ivLyrics",
+    "menuToggleShort": "Меню"
   },
   "about": {
     "version": "Версия",
@@ -2078,7 +2081,14 @@ window.LANG_RU = {
     "rightClickToUnlock": "Щёлкните правой кнопкой, чтобы открепить",
     "karaoke": "Караоке",
     "synced": "Синхронизация",
-    "unsynced": "Текст"
+    "unsynced": "Текст",
+    "lockSelected": "Закрепить выбранный режим",
+    "lockSelectedDesc": "Если песня поддерживает этот режим, текст всегда показывается в нём.",
+    "locked": "Закреплён",
+    "unlocked": "Откреплён",
+    "unavailableNoKaraoke": "У этой песни нет караоке-синхронизации",
+    "unavailableKaraokeOff": "Режим караоке отключён",
+    "unavailableNoSynced": "У этой песни нет синхронизированного текста"
   },
   "communityVideo": {
     "loginRequired": "Чтобы регистрировать видео сообщества, требуется вход через Discord.",

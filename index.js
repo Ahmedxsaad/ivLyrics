@@ -4570,6 +4570,8 @@ const LyricsCacheEditModal = ({
     "div",
     {
       className: "ivlyrics-cache-edit-overlay",
+      // Opened from the toolbar's conversion panel: same theme as its panels.
+      "data-ui-theme": typeof getSettingsSurfaceTheme === "function" ? getSettingsSurfaceTheme() : "dark",
       onClick: handleOverlayClick,
     },
     react.createElement(
@@ -4936,6 +4938,27 @@ const areTranslationTextsSimilar = (text1, text2) => {
   return similarity > 0.85;
 };
 
+// The floating toolbar names lyrics modes by key; these map them to the
+// render modes (and back) and to their labels.
+const FLOATING_TOOLBAR_MODES = Object.freeze({
+  character: KARAOKE,
+  word: WORD_KARAOKE,
+  synced: SYNCED,
+  unsynced: UNSYNCED,
+});
+const FLOATING_TOOLBAR_MODE_KEYS = Object.freeze({
+  [KARAOKE]: "character",
+  [WORD_KARAOKE]: "word",
+  [SYNCED]: "synced",
+  [UNSYNCED]: "unsynced",
+});
+const FLOATING_TOOLBAR_MODE_LABEL_KEYS = Object.freeze({
+  character: "modes.character",
+  word: "modes.word",
+  synced: "modes.synced",
+  unsynced: "modes.unsynced",
+});
+
 class LyricsContainer extends react.Component {
   constructor() {
     super();
@@ -5038,20 +5061,28 @@ class LyricsContainer extends react.Component {
         clearTimeout(this.mouseIdleTimer);
       }
 
-      // Set new timer - hide after 3 seconds of inactivity
-      this.mouseIdleTimer = setTimeout(() => {
+      // Hide after 2.5 seconds of inactivity, but not while the floating
+      // toolbar is in use (a panel is open or it has keyboard focus).
+      const hideWhenIdle = () => {
+        if (this.isFloatingToolbarEngaged()) {
+          this.mouseIdleTimer = setTimeout(hideWhenIdle, 1200);
+          return;
+        }
         this.isMouseActive = false;
         const container = this.containerRef.current;
         if (container) {
           container.classList.add('controls-hidden');
           container.classList.add('ui-hidden');
         }
-      }, 3000);
+      };
+      this.mouseIdleTimer = setTimeout(hideWhenIdle, 2500);
     };
 
     this._handleMouseLeave = () => {
-      // Immediately hide when mouse leaves
+      // Immediately hide when mouse leaves, unless a toolbar panel is open
+      // (it can reach beyond the page) or the toolbar has keyboard focus.
       if (this.mouseIdleTimer) clearTimeout(this.mouseIdleTimer);
+      if (this.isFloatingToolbarEngaged()) return;
       this.isMouseActive = false;
       const container = this.containerRef.current;
       if (container) {
@@ -5074,6 +5105,50 @@ class LyricsContainer extends react.Component {
     this.removeLocalLyricsForCurrentTrack = this.removeLocalLyricsForCurrentTrack.bind(this);
     this.handleLyricsProviderAttempt = this.handleLyricsProviderAttempt.bind(this);
     this.handleVideoBackgroundLoadingChange = this.handleVideoBackgroundLoadingChange.bind(this);
+
+    // The floating toolbar gets one stable set of callbacks, so its props stay
+    // equal across renders that do not concern it (e.g. lyric line changes).
+    this._floatingToolbarEngaged = false;
+    this.floatingToolbarActions = Object.freeze({
+      onSelectMode: (modeKey) => {
+        const mode = FLOATING_TOOLBAR_MODES[modeKey];
+        if (mode !== undefined) this.switchTo(mode);
+      },
+      onSetModeLock: (locked) => this.setCurrentModeLock(locked),
+      onToggleModeLock: () => this.toggleCurrentModeLock(),
+      getRegenerateChoices: () => this.getRegenerateTranslationChoices(),
+      onRegenerate: (target) => this.runRegenerateTranslationChoice(target),
+      onOpenLyricsEditor: () => this.openLyricsEditModal(),
+      getCurrentTrackInfo: () => this.getCurrentPlayerTrackInfo(),
+      onSelectProvider: this.selectLyricsProviderForCurrentTrack,
+      onImportLocalLyricsFile: this.importLocalLyricsFile,
+      onApplyLocalLyrics: this.applyLocalLyricsFromLrclibCandidate,
+      getHasLocalLyrics: this.hasLocalLyricsForCurrentTrack,
+      onDeleteLocalLyrics: this.removeLocalLyricsForCurrentTrack,
+      onSelectBackground: this.selectBackgroundForCurrentTrack,
+      onVideoSelect: (videoInfo) => this.selectCommunityVideoForCurrentTrack(videoInfo),
+      getSyncCreatorTrackInfo: () => this.getSyncCreatorTrackInfo(),
+      getShareTrackInfo: () => this.getShareImageTrackInfo(),
+      onToggleMarketplace: () => this.toggleMarketplaceFromToolbar(),
+      onToggleFullscreen: () => {
+        if (this.state.isFullscreen) {
+          this.closeFloatingMenu();
+        }
+        this.toggleFullscreen();
+      },
+      onToggleMenu: () => this.toggleFloatingMenu(),
+      onCloseMenu: () => this.closeFloatingMenu(),
+      onVisualConfigChange: (name, value) => this.handleFloatingToolbarConfigChange(name, value),
+      setEngaged: (engaged) => {
+        if (this._floatingToolbarEngaged === !!engaged) return;
+        this._floatingToolbarEngaged = !!engaged;
+        // Opening shows hidden controls; closing restarts the idle timer.
+        this._handleMouseMove?.();
+      },
+      setContentRef: (element) => {
+        this.floatingMenuContentRef = element;
+      },
+    });
   }
 
   shouldReduceMotion() {
@@ -5389,6 +5464,118 @@ class LyricsContainer extends react.Component {
     }
 
     this.openFloatingMenu();
+  }
+
+  // While a toolbar panel is open, or the toolbar has keyboard focus, the
+  // page controls do not hide on idle or when the pointer leaves the page.
+  isFloatingToolbarEngaged() {
+    if (this._floatingToolbarEngaged) return true;
+    const toolbar = this.containerRef.current?.querySelector?.(".ivl-tb");
+    return !!toolbar?.querySelector?.(":focus-visible");
+  }
+
+  // The 선택한 모드로 고정 switch: locks the mode on screen, or releases the
+  // lock in effect, through the same toggle right-clicking a mode used.
+  setCurrentModeLock(locked) {
+    const isLockInEffect = this.isModeAvailable(this.state.lockedMode);
+    if (!!locked === isLockInEffect) return;
+    const mode = locked ? this.getCurrentMode() : this.state.lockedMode;
+    if (mode === -1) return;
+    this.toggleModeLock(mode);
+  }
+
+  // Right-clicking the mode entry still toggles the lock, and says so.
+  toggleCurrentModeLock() {
+    const locking = !this.isModeAvailable(this.state.lockedMode);
+    const mode = locking ? this.getCurrentMode() : this.state.lockedMode;
+    const labelKey = FLOATING_TOOLBAR_MODE_LABEL_KEYS[FLOATING_TOOLBAR_MODE_KEYS[mode]];
+    if (!labelKey) return;
+    this.setCurrentModeLock(locking);
+    Toast.show(
+      `${I18n.t(labelKey)} · ${this.getText(locking ? "modes.locked" : "modes.unlocked", locking ? "Locked" : "Unlocked")}`
+    );
+  }
+
+  // The player item as the toolbar's track tools see it (LRCLIB search uses
+  // its title and artist).
+  getCurrentPlayerTrackInfo() {
+    const currentPlayerItem = Spicetify.Player.data?.item;
+    return this.infoFromTrack(currentPlayerItem) || {
+      duration: Number(currentPlayerItem?.metadata?.duration || 0),
+      album: currentPlayerItem?.metadata?.album_title || "",
+      artist: this.state.artist || currentPlayerItem?.metadata?.artist_name || "",
+      title: this.state.title || currentPlayerItem?.metadata?.title || "",
+      uri: this.currentTrackUri || this.state.uri || currentPlayerItem?.uri || "",
+      image: this.state.coverUrl || currentPlayerItem?.metadata?.image_url || "",
+    };
+  }
+
+  getSyncCreatorTrackInfo() {
+    const item = Spicetify.Player.data?.item;
+    return {
+      uri: this.currentTrackUri,
+      name: item?.name || '',
+      artists: item?.artists || [],
+      album: item?.album || {},
+      metadata: item?.metadata || {},
+      external_ids: item?.external_ids || {},
+      externalIds: item?.externalIds || {},
+    };
+  }
+
+  getShareImageTrackInfo() {
+    const item = Spicetify.Player.data?.item;
+    return {
+      name: item?.name || item?.metadata?.title || '',
+      artist: item?.artists?.map(a => a.name).join(', ') || item?.metadata?.artist_name || '',
+      cover: item?.metadata?.image_xlarge_url ||
+        item?.metadata?.image_large_url ||
+        item?.metadata?.image_url ||
+        item?.album?.images?.[0]?.url || '',
+    };
+  }
+
+  async selectCommunityVideoForCurrentTrack(newVideoInfo) {
+    const selectionTrackUri = this.currentTrackUri;
+    if (!selectionTrackUri) return;
+    if (newVideoInfo?.youtubeVideoId) {
+      await Utils.saveSelectedVideo(selectionTrackUri, newVideoInfo);
+      if (this.currentTrackUri === selectionTrackUri) {
+        this.setState({ videoInfo: newVideoInfo });
+      }
+    } else {
+      await Utils.removeSelectedVideo(selectionTrackUri);
+      if (this.currentTrackUri === selectionTrackUri) {
+        this.setState({
+          videoInfo: {
+            suppressVideoBackground: true,
+            reason: "no-visible-community-video",
+          },
+        });
+      }
+    }
+  }
+
+  toggleMarketplaceFromToolbar() {
+    this.clearFloatingMenuCloseTimer();
+    this.setState((prevState) => ({
+      showMarketplace: !prevState.showMarketplace,
+      isFloatingMenuOpen: false,
+      isFloatingMenuClosing: false,
+    }));
+  }
+
+  // A setting changed from a toolbar panel is saved and announced exactly as
+  // the settings window does it.
+  handleFloatingToolbarConfigChange(name, value) {
+    CONFIG.visual[name] = value;
+    StorageManager.saveConfig(name, value);
+    lyricContainerUpdate?.();
+    window.dispatchEvent(
+      new CustomEvent("ivLyrics", {
+        detail: { type: "config", name, value },
+      })
+    );
   }
 
   getTranslationTargetLanguage() {
@@ -6473,17 +6660,7 @@ class LyricsContainer extends react.Component {
         targets,
         includeCulturalAnnotations,
         includeWordSupplements,
-        onSelect: (target) => {
-          if (target === "cultural-annotations") {
-            this.regenerateCulturalAnnotations();
-            return;
-          }
-          if (target === "word-supplements") {
-            this.regenerateWordSupplements();
-            return;
-          }
-          this.regenerateTranslation(target);
-        },
+        onSelect: (target) => this.runRegenerateTranslationChoice(target),
       });
       return;
     }
@@ -6499,6 +6676,44 @@ class LyricsContainer extends react.Component {
     }
 
     this.regenerateTranslation("all");
+  }
+
+  // 번역 재생성 choices in the toolbar's conversion panel: the choice dialog's
+  // list, or the single target the old toolbar button regenerated directly.
+  getRegenerateTranslationChoices() {
+    const targets = this.getRegenerationTargets();
+    const includeCulturalAnnotations = this.isCulturalAnnotationsEnabled();
+    const includeWordSupplements = !!window.ivLyricsWordSupplements;
+    if (
+      (includeCulturalAnnotations || includeWordSupplements || (targets.needPhonetic && targets.needTranslation)) &&
+      typeof getRegenerateTranslationChoiceItems === "function"
+    ) {
+      return getRegenerateTranslationChoiceItems({
+        targets,
+        includeCulturalAnnotations,
+        includeWordSupplements,
+      });
+    }
+
+    const target = targets.needPhonetic ? "phonetic" : targets.needTranslation ? "translation" : "all";
+    const labelKey = target === "phonetic"
+      ? "menu.regeneratePronunciationOnly"
+      : target === "translation"
+        ? "menu.regenerateTranslationOnly"
+        : "menu.regenerateBoth";
+    return [{ key: `regenerate-${target}`, target, label: I18n.t(labelKey) }];
+  }
+
+  runRegenerateTranslationChoice(target) {
+    if (target === "cultural-annotations") {
+      this.regenerateCulturalAnnotations();
+      return;
+    }
+    if (target === "word-supplements") {
+      this.regenerateWordSupplements();
+      return;
+    }
+    this.regenerateTranslation(target);
   }
 
   async regenerateCulturalAnnotations() {
@@ -9664,7 +9879,7 @@ class LyricsContainer extends react.Component {
           document.body.append(this.fullscreenContainer);
         }
         const hasOpenIvLyricsDialog = () => Boolean(document.querySelector(
-          '.ivlyrics-fluent-overlay:not([aria-hidden="true"]), .lyrics-sync-adjust-floating [role="dialog"], .ivlyrics-settings-overlay.is-open, .community-video-overlay, .ivlyrics-cache-edit-overlay'
+          '.ivlyrics-fluent-overlay:not([aria-hidden="true"]), .lyrics-sync-adjust-floating [role="dialog"], .ivl-tb-fly, .ivlyrics-settings-overlay.is-open, .community-video-overlay, .ivlyrics-cache-edit-overlay'
         ));
         this.mousetrap.bind("esc", () => {
           if (hasOpenIvLyricsDialog()) return;
@@ -10445,26 +10660,11 @@ class LyricsContainer extends react.Component {
     const shouldReduceMotion = this.shouldReduceMotion();
     const isFullscreenMarketplace = this.state.isFullscreen && this.state.showMarketplace;
     const isFullscreenPageUi = this.state.isFullscreen && this.fullscreenUsesPageUi === true;
-    const shouldRenderFloatingMenu =
-      !this.state.isFullscreen ||
-      this.state.isFloatingMenuOpen ||
-      this.state.isFloatingMenuClosing;
-    const currentPlayerItem = Spicetify.Player.data?.item;
-    const currentTrackInfo = this.infoFromTrack(currentPlayerItem) || {
-      duration: Number(currentPlayerItem?.metadata?.duration || 0),
-      album: currentPlayerItem?.metadata?.album_title || "",
-      artist: this.state.artist || currentPlayerItem?.metadata?.artist_name || "",
-      title: this.state.title || currentPlayerItem?.metadata?.title || "",
-      uri: this.currentTrackUri || this.state.uri || currentPlayerItem?.uri || "",
-      image: this.state.coverUrl || currentPlayerItem?.metadata?.image_url || "",
-    };
+    const currentTrackInfo = this.getCurrentPlayerTrackInfo();
     const renderTrackUri = currentTrackInfo?.uri || this.currentTrackUri || this.state.uri || "";
     const isLocalTrack = !!renderTrackUri && !Utils.extractTrackId(renderTrackUri);
     const isVideoStagePresentation =
       fullscreenPresentation === "video";
-    const floatingToolbarStyle = this.state.isFullscreen
-      ? { "--iv-floating-menu-content-top-offset": `${this.getFloatingMenuContentTopOffset()}px` }
-      : undefined;
     const shouldUseVideoBackground =
       !isSyncCreatorActive &&
       !this.state.isFADMode &&
@@ -10473,100 +10673,6 @@ class LyricsContainer extends react.Component {
         fullscreenPresentation === "video"
       );
     const shouldRenderStaticBackground = !shouldUseVideoBackground;
-    const renderFloatingToolbarIcon = (name, size = 18) =>
-      window.IvLyricsToolbarIcon
-        ? react.createElement(window.IvLyricsToolbarIcon, { name, size })
-        : react.createElement("span", {
-          className: "ivlyrics-toolbar-icon-fallback",
-          "aria-hidden": "true",
-        });
-    const computeModeButtons = () => {
-      const getModeButtonLabel = (modeId, labelKey) => {
-        const modeLabel = I18n.t(labelKey);
-        const lockHint = this.state.lockedMode === modeId
-          ? I18n.t("modes.rightClickToUnlock")
-          : I18n.t("modes.rightClickToLock");
-        return `${modeLabel} · ${lockHint}`;
-      };
-      const modeButtons = [
-        this.state.karaoke &&
-        CONFIG.visual["karaoke-mode-enabled"] &&
-        react.createElement(
-          IvLyricsTooltip,
-          { key: "character", label: getModeButtonLabel(KARAOKE, "modes.character"), showDelay: 0 },
-          react.createElement(
-            "button",
-            {
-              type: "button",
-              className: `lyrics-config-button lyrics-mode-button ${mode === KARAOKE ? "active" : ""}${this.state.lockedMode === KARAOKE ? " mode-locked" : ""}`,
-              onClick: () => this.switchTo(KARAOKE),
-              onContextMenu: (event) => this.toggleModeLock(KARAOKE, event),
-              "aria-pressed": mode === KARAOKE,
-              "aria-label": getModeButtonLabel(KARAOKE, "modes.character"),
-              "data-mode-locked": this.state.lockedMode === KARAOKE,
-            },
-            renderFloatingToolbarIcon("character")
-          )
-        ),
-        this.state.karaoke &&
-        CONFIG.visual["karaoke-mode-enabled"] &&
-        react.createElement(
-          IvLyricsTooltip,
-          { key: "word", label: getModeButtonLabel(WORD_KARAOKE, "modes.word"), showDelay: 0 },
-          react.createElement(
-            "button",
-            {
-              type: "button",
-              className: `lyrics-config-button lyrics-mode-button ${mode === WORD_KARAOKE ? "active" : ""}${this.state.lockedMode === WORD_KARAOKE ? " mode-locked" : ""}`,
-              onClick: () => this.switchTo(WORD_KARAOKE),
-              onContextMenu: (event) => this.toggleModeLock(WORD_KARAOKE, event),
-              "aria-pressed": mode === WORD_KARAOKE,
-              "aria-label": getModeButtonLabel(WORD_KARAOKE, "modes.word"),
-              "data-mode-locked": this.state.lockedMode === WORD_KARAOKE,
-            },
-            renderFloatingToolbarIcon("word")
-          )
-        ),
-        this.state.synced &&
-        react.createElement(
-          IvLyricsTooltip,
-          { key: "synced", label: getModeButtonLabel(SYNCED, "modes.synced"), showDelay: 0 },
-          react.createElement(
-            "button",
-            {
-              type: "button",
-              className: `lyrics-config-button lyrics-mode-button ${mode === SYNCED ? "active" : ""}${this.state.lockedMode === SYNCED ? " mode-locked" : ""}`,
-              onClick: () => this.switchTo(SYNCED),
-              onContextMenu: (event) => this.toggleModeLock(SYNCED, event),
-              "aria-pressed": mode === SYNCED,
-              "aria-label": getModeButtonLabel(SYNCED, "modes.synced"),
-              "data-mode-locked": this.state.lockedMode === SYNCED,
-            },
-            renderFloatingToolbarIcon("synced")
-          )
-        ),
-        this.state.unsynced &&
-        react.createElement(
-          IvLyricsTooltip,
-          { key: "unsynced", label: getModeButtonLabel(UNSYNCED, "modes.unsynced"), showDelay: 0 },
-          react.createElement(
-            "button",
-            {
-              type: "button",
-              className: `lyrics-config-button lyrics-mode-button ${mode === UNSYNCED ? "active" : ""}${this.state.lockedMode === UNSYNCED ? " mode-locked" : ""}`,
-              onClick: () => this.switchTo(UNSYNCED),
-              onContextMenu: (event) => this.toggleModeLock(UNSYNCED, event),
-              "aria-pressed": mode === UNSYNCED,
-              "aria-label": getModeButtonLabel(UNSYNCED, "modes.unsynced"),
-              "data-mode-locked": this.state.lockedMode === UNSYNCED,
-            },
-            renderFloatingToolbarIcon("unsynced")
-          )
-        ),
-      ].filter(Boolean);
-      return modeButtons;
-    };
-    const modeButtons = computeModeButtons();
 
     // Build fullscreen class names
     const computeFullscreenClasses = () => {
@@ -10853,284 +10959,56 @@ class LyricsContainer extends react.Component {
           activeLineIndex: this.state.currentLyricIndex || 0,
         })
     );
+    // The floating toolbar gets primitive values and stable callbacks only, so
+    // it re-renders when something it shows changes, not on every lyric line.
+    // While a song loads, its entry keeps the mode it had before.
+    const toolbarMode = mode !== -1
+      ? mode
+      : this.state.isLoading ? this.lastModeBeforeLoading ?? -1 : -1;
     const renderFloatingToolbar = () => (
-        !isFullscreenMarketplace && !isSyncCreatorActive && react.createElement(
-          "div",
-          {
-            className: "lyrics-config-button-container lyrics-fluent-floating-toolbar" +
-              (this.state.isFullscreen ? " fullscreen-mode-container" : "") +
-              (this.state.isFullscreen && this.state.isFloatingMenuOpen ? " menu-open" : "") +
-              (this.state.isFullscreen && this.state.isFloatingMenuClosing ? " menu-closing" : ""),
-            style: floatingToolbarStyle,
-            ref: (el) => {
-              if (this._cleanupFloatingMenuOutsideClick) {
-                this._cleanupFloatingMenuOutsideClick();
-                this._cleanupFloatingMenuOutsideClick = null;
-              }
-
-              if (el && this.state.isFullscreen) {
-                // 전체화면에서 바깥 클릭 시 메뉴 닫기
-                const handleClickOutside = (e) => {
-                  const target = e.target;
-                  const isExternalMenuSurface = target?.closest?.([
-                    ".lyrics-sync-adjust-floating",
-                    "#ivLyrics-sync-creator-overlay",
-                    ".ivlyrics-fluent-overlay",
-                    ".community-video-overlay",
-                    "#ivLyrics-share-image-overlay",
-                    ".ivlyrics-cache-edit-overlay",
-                    ".lyrics-creator-profile-overlay",
-                  ].join(","));
-
-                  if (!el.contains(target) && !isExternalMenuSurface && (this.state.isFloatingMenuOpen || this.state.isFloatingMenuClosing)) {
-                    this.closeFloatingMenu();
-                  }
-                };
-                document.addEventListener('click', handleClickOutside);
-                this._cleanupFloatingMenuOutsideClick = () => {
-                  document.removeEventListener('click', handleClickOutside);
-                };
-              }
-            },
-          },
-          // 전체화면에서만 보이는 메뉴 토글 버튼
-          this.state.isFullscreen && react.createElement(
-            IvLyricsTooltip,
-            { label: this.state.isFloatingMenuOpen
-              ? (I18n.t("buttons.close") || "Close")
-              : (I18n.t("fullscreen.menuToggle") || "ivLyrics") },
-            react.createElement(
-              "button",
-              {
-                className: "lyrics-config-button lyrics-floating-menu-toggle",
-                type: "button",
-                "aria-label": this.state.isFloatingMenuOpen
-                  ? (I18n.t("buttons.close") || "Close")
-                  : (I18n.t("fullscreen.menuToggle") || "ivLyrics"),
-                "aria-expanded": this.state.isFloatingMenuOpen,
-                onClick: (e) => {
-                  e.stopPropagation();
-                  this.toggleFloatingMenu();
-                },
-              },
-              renderFloatingToolbarIcon(this.state.isFloatingMenuOpen ? "close" : "menu")
-            )
+        !isFullscreenMarketplace && !isSyncCreatorActive && react.createElement(IvLyricsFloatingToolbar, {
+          actions: this.floatingToolbarActions,
+          isFullscreen: this.state.isFullscreen,
+          isMenuOpen: this.state.isFullscreen && this.state.isFloatingMenuOpen,
+          isMenuClosing: this.state.isFullscreen && this.state.isFloatingMenuClosing,
+          contentTopOffset: this.getFloatingMenuContentTopOffset(),
+          modeKey: FLOATING_TOOLBAR_MODE_KEYS[toolbarMode] || null,
+          lockedModeKey: FLOATING_TOOLBAR_MODE_KEYS[this.state.lockedMode] || null,
+          lockInEffect: this.isModeAvailable(this.state.lockedMode),
+          hasKaraoke: !!this.state.karaoke,
+          karaokeEnabled: !!CONFIG.visual["karaoke-mode-enabled"],
+          hasSynced: !!this.state.synced,
+          hasUnsynced: !!this.state.unsynced,
+          showConvert: !!showTranslationButton,
+          friendlyLanguage: friendlyLanguage || null,
+          detectedLanguage: originalLanguage || null,
+          canRegenerate: !!canRegenerateTranslation,
+          isRegenerating: !!(
+            this.state.isTranslationLoading ||
+            this.state.isPhoneticLoading ||
+            this.state.isCulturalAnnotationsLoading
           ),
-          // 메뉴 내용 (일반 모드: 항상 표시, 전체화면: 열렸을 때만 표시)
-          shouldRenderFloatingMenu && react.createElement(
-            "div",
-            {
-              className: `lyrics-floating-menu-content${this.state.isFullscreen && this.state.isFloatingMenuOpen ? " menu-open" : ""}${this.state.isFullscreen && this.state.isFloatingMenuClosing ? " menu-closing" : ""}`,
-              ref: (el) => {
-                this.floatingMenuContentRef = el;
-                if (el && !el.__ivLyricsScrollInitialized) {
-                  el.__ivLyricsScrollInitialized = true;
-                  this.resetFloatingMenuScroll();
-                }
-              },
-            },
-            react.createElement(
-              "div",
-              {
-                className: "lyrics-floating-menu-group",
-                "data-group": "lyrics",
-              },
-              showTranslationButton && react.createElement(TranslationMenu, {
-                friendlyLanguage,
-                hasTranslation: {},
-              }),
-              react.createElement(LyricsProviderSelectButton, {
-                currentProvider: this.state.provider,
-                selectedProvider: this.state.trackLyricsProviderOverride,
-                isLoading: this.state.isLoading,
-                onSelectProvider: this.selectLyricsProviderForCurrentTrack,
-                isLocalTrack,
-                trackInfo: currentTrackInfo,
-                onImportLocalLyricsFile: this.importLocalLyricsFile,
-                onApplyLocalLyrics: this.applyLocalLyricsFromLrclibCandidate,
-                getHasLocalLyrics: this.hasLocalLyricsForCurrentTrack,
-                onDeleteLocalLyrics: this.removeLocalLyricsForCurrentTrack,
-              }),
-              react.createElement(TrackBackgroundButton, {
-                trackUri: this.currentTrackUri,
-                overrideMode: getIvLyricsTrackBackgroundMode(this.state.trackBackgroundOverride),
-                effectiveMode: effectiveBackgroundMode,
-                onSelectBackground: this.selectBackgroundForCurrentTrack,
-              }),
-              react.createElement(RegenerateTranslationButton, {
-                onRegenerate: this.handleRegenerateTranslationRequest,
-                isEnabled: canRegenerateTranslation,
-                isLoading:
-                  this.state.isTranslationLoading ||
-                  this.state.isPhoneticLoading ||
-                  this.state.isCulturalAnnotationsLoading,
-              }),
-              window.IvLyricsLearningMode?.StudyButton &&
-              react.createElement(window.IvLyricsLearningMode.StudyButton, {
-                disabled: !hasLyrics || this.state.isLoading,
-              })
-            ),
-            react.createElement(
-              "div",
-              {
-                className: "lyrics-floating-menu-group",
-                "data-group": "playback",
-              },
-              react.createElement(SyncAdjustButtonFluent, {
-                trackUri: renderTrackUri,
-                includeTrackOffset:
-                  canAdjustTrackSync && !quickSyncControlsEnabled,
-              }),
-              react.createElement(CommunityVideoButton, {
-                trackUri: this.currentTrackUri,
-                enabled: shouldUseVideoBackground,
-                videoInfo: this.state.videoInfo,
-                defaultStartTime: defaultCommunityVideoStartTime,
-                onVideoSelect: async (newVideoInfo) => {
-                  const selectionTrackUri = this.currentTrackUri;
-                  if (!selectionTrackUri) return;
-                  if (newVideoInfo?.youtubeVideoId) {
-                    await Utils.saveSelectedVideo(selectionTrackUri, newVideoInfo);
-                    if (this.currentTrackUri === selectionTrackUri) {
-                      this.setState({ videoInfo: newVideoInfo });
-                    }
-                  } else {
-                    await Utils.removeSelectedVideo(selectionTrackUri);
-                    if (this.currentTrackUri === selectionTrackUri) {
-                      this.setState({
-                        videoInfo: {
-                          suppressVideoBackground: true,
-                          reason: "no-visible-community-video",
-                        },
-                      });
-                    }
-                  }
-                },
-              }),
-              react.createElement(ShareImageButton, {
-                lyrics: this.state.currentLyrics || [],
-                trackInfo: {
-                  name: Spicetify.Player.data?.item?.name || Spicetify.Player.data?.item?.metadata?.title || '',
-                  artist: Spicetify.Player.data?.item?.artists?.map(a => a.name).join(', ') || Spicetify.Player.data?.item?.metadata?.artist_name || '',
-                  cover: Spicetify.Player.data?.item?.metadata?.image_xlarge_url ||
-                    Spicetify.Player.data?.item?.metadata?.image_large_url ||
-                    Spicetify.Player.data?.item?.metadata?.image_url ||
-                    Spicetify.Player.data?.item?.album?.images?.[0]?.url || '',
-                },
-              }),
-              hasLyrics && react.createElement(
-                IvLyricsTooltip,
-                {
-                  label: I18n.t("lyricsCacheEditor.button"),
-                  showDelay: 0,
-                },
-                react.createElement(
-                  "button",
-                  {
-                    className: "lyrics-config-button lyrics-cache-edit-button",
-                    type: "button",
-                    onClick: () => this.openLyricsEditModal(),
-                    disabled:
-                      this.state.isLyricsEditLoading || this.state.isLyricsEditSaving,
-                    "data-active": this.state.isLyricsEditModalOpen ? "true" : "false",
-                    "aria-label": I18n.t("lyricsCacheEditor.button"),
-                  },
-                  renderFloatingToolbarIcon("editLyrics")
-                )
-              )
-            ),
-            react.createElement(
-              "div",
-              {
-                className: "lyrics-floating-menu-group",
-                "data-group": "app",
-              },
-              react.createElement(
-                IvLyricsTooltip,
-                { label: I18n.t("marketplace.title"), showDelay: 0 },
-                react.createElement(
-                  "button",
-                  {
-                    className: `lyrics-config-button lyrics-marketplace-button${this.state.showMarketplace ? " active" : ""}`,
-                    type: "button",
-                    "aria-label": I18n.t("marketplace.title"),
-                    onClick: () => {
-                      this.clearFloatingMenuCloseTimer();
-                      this.setState((prevState) => ({
-                        showMarketplace: !prevState.showMarketplace,
-                        isFloatingMenuOpen: false,
-                        isFloatingMenuClosing: false,
-                      }));
-                    },
-                  },
-                  renderFloatingToolbarIcon("marketplace")
-                )
-              ),
-              react.createElement(SettingsMenu),
-              (() => !document.getElementById("fad-ivLyrics-container"))() && react.createElement(
-                IvLyricsTooltip,
-                {
-                  label: this.state.isFullscreen ? I18n.t("menu.exitFullscreen") || "Exit Fullscreen" : I18n.t("menu.fullscreen"),
-                  showDelay: 0,
-                },
-                react.createElement(
-                  "button",
-                  {
-                    className: "lyrics-config-button lyrics-fullscreen-toggle-button",
-                    type: "button",
-                    "aria-label": this.state.isFullscreen
-                      ? (I18n.t("menu.exitFullscreen") || "Exit Fullscreen")
-                      : I18n.t("menu.fullscreen"),
-                    onClick: () => {
-                      if (this.state.isFullscreen) {
-                        this.closeFloatingMenu();
-                      }
-                      this.toggleFullscreen();
-                    },
-                  },
-                  renderFloatingToolbarIcon(
-                    this.state.isFullscreen ? "fullscreenExit" : "fullscreenEnter"
-                  )
-                )
-              )
-            ),
-            modeButtons.length > 0 && react.createElement(
-              "div",
-              {
-                className: "lyrics-floating-menu-group lyrics-config-mode-section",
-                "data-group": "modes",
-              },
-              react.createElement(
-                "div",
-                {
-                  className: "lyrics-config-mode-group",
-                  role: "group",
-                },
-                ...modeButtons
-              )
-            ),
-            react.createElement(
-              "div",
-              {
-                className: "lyrics-floating-menu-group",
-                "data-group": "creator",
-              },
-              react.createElement(SyncDataCreatorButton, {
-                trackInfo: {
-                  uri: this.currentTrackUri,
-                  name: Spicetify.Player.data?.item?.name || '',
-                  artists: Spicetify.Player.data?.item?.artists || [],
-                  album: Spicetify.Player.data?.item?.album || {},
-                  metadata: Spicetify.Player.data?.item?.metadata || {},
-                  external_ids: Spicetify.Player.data?.item?.external_ids || {},
-                  externalIds: Spicetify.Player.data?.item?.externalIds || {},
-                },
-                showHint: !this.state.isFullscreen || this.state.isFloatingMenuOpen,
-                isFullscreen: this.state.isFullscreen
-              })
-            )
-          )
-        )
+          hasLyrics,
+          isLyricsLoading: !!this.state.isLoading,
+          isLyricsEditBusy: !!(this.state.isLyricsEditLoading || this.state.isLyricsEditSaving),
+          syncTrackUri: renderTrackUri,
+          canAdjustTrackSync,
+          quickSyncEnabled: quickSyncControlsEnabled,
+          trackUri: this.currentTrackUri,
+          trackTitle: this.state.title || currentTrackInfo?.title || "",
+          trackArtist: this.state.artist || currentTrackInfo?.artist || "",
+          isLocalTrack,
+          currentProvider: this.state.provider,
+          providerOverride: this.state.trackLyricsProviderOverride || null,
+          backgroundOverride: getIvLyricsTrackBackgroundMode(this.state.trackBackgroundOverride) || null,
+          effectiveBackground: effectiveBackgroundMode,
+          videoEnabled: shouldUseVideoBackground,
+          videoInfo: this.state.videoInfo,
+          videoStartTime: defaultCommunityVideoStartTime,
+          lyrics: this.state.currentLyrics || null,
+          showMarketplace: !!this.state.showMarketplace,
+          canToggleFullscreen: !document.getElementById("fad-ivLyrics-container"),
+        })
     );
     const out = react.createElement(
       "div",

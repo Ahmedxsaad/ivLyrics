@@ -695,7 +695,9 @@ window.LANG_ES = {
     "regenerateAction": "Regenerar",
     "fullscreen": "Pantalla completa",
     "exitFullscreen": "Salir de pantalla completa",
-    "localLyricsApplying": "Aplicando…"
+    "localLyricsApplying": "Aplicando…",
+    "currentTrack": "Pista actual",
+    "more": "Más"
   },
   "messages": {
     "noLyrics": "No hay letras disponibles",
@@ -797,7 +799,8 @@ window.LANG_ES = {
       "collection": "Canciones que te gustan",
       "station": "Radio"
     },
-    "menuToggle": "Menú de ivLyrics"
+    "menuToggle": "Menú de ivLyrics",
+    "menuToggleShort": "Menú"
   },
   "about": {
     "version": "Versión",
@@ -2078,7 +2081,14 @@ window.LANG_ES = {
     "rightClickToUnlock": "Clic derecho para desfijar",
     "karaoke": "Karaoke",
     "synced": "Sincronizado",
-    "unsynced": "Letra normal"
+    "unsynced": "Letra normal",
+    "lockSelected": "Fijar el modo seleccionado",
+    "lockSelectedDesc": "Muestra siempre la letra en este modo cuando la canción lo admita.",
+    "locked": "Fijado",
+    "unlocked": "Desfijado",
+    "unavailableNoKaraoke": "Esta canción no tiene sincronización de karaoke",
+    "unavailableKaraokeOff": "El modo Karaoke está desactivado",
+    "unavailableNoSynced": "Esta canción no tiene letra sincronizada"
   },
   "communityVideo": {
     "loginRequired": "Se requiere iniciar sesión en Discord para registrar videos de la comunidad.",

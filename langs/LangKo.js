@@ -695,7 +695,9 @@ window.LANG_KO = {
     "regenerateAction": "재생성",
     "fullscreen": "전체화면",
     "exitFullscreen": "전체화면 종료",
-    "localLyricsApplying": "적용 중…"
+    "localLyricsApplying": "적용 중…",
+    "currentTrack": "현재 곡",
+    "more": "더보기"
   },
   "messages": {
     "noLyrics": "사용 가능한 가사가 없음",
@@ -797,7 +799,8 @@ window.LANG_KO = {
       "collection": "좋아요 표시한 곡",
       "station": "라디오"
     },
-    "menuToggle": "ivLyrics 메뉴"
+    "menuToggle": "ivLyrics 메뉴",
+    "menuToggleShort": "메뉴"
   },
   "about": {
     "version": "버전",
@@ -2078,7 +2081,14 @@ window.LANG_KO = {
     "rightClickToUnlock": "우클릭하여 고정 해제",
     "karaoke": "노래방",
     "synced": "동기화",
-    "unsynced": "일반가사"
+    "unsynced": "일반가사",
+    "lockSelected": "선택한 모드로 고정",
+    "lockSelectedDesc": "다른 곡에서도 이 모드를 쓸 수 있으면 항상 이 모드로 보여 줍니다.",
+    "locked": "고정됨",
+    "unlocked": "고정 해제",
+    "unavailableNoKaraoke": "이 곡에는 노래방 싱크가 없습니다",
+    "unavailableKaraokeOff": "노래방 모드 사용이 꺼져 있습니다",
+    "unavailableNoSynced": "이 곡에는 동기화 가사가 없습니다"
   },
   "communityVideo": {
     "loginRequired": "커뮤니티 영상 등록은 Discord 로그인이 필요합니다.",

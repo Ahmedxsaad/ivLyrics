@@ -695,7 +695,9 @@ window.LANG_CS = {
     "regenerateAction": "Regenerovat",
     "fullscreen": "Celá obrazovka",
     "exitFullscreen": "Ukončete celou obrazovku",
-    "localLyricsApplying": "Používá se…"
+    "localLyricsApplying": "Používá se…",
+    "currentTrack": "Aktuální skladba",
+    "more": "Více"
   },
   "messages": {
     "noLyrics": "Nejsou k dispozici žádné texty",
@@ -797,7 +799,8 @@ window.LANG_CS = {
       "collection": "Oblíbené skladby",
       "station": "Stanice"
     },
-    "menuToggle": "Nabídka ivLyrics"
+    "menuToggle": "Nabídka ivLyrics",
+    "menuToggleShort": "Nabídka"
   },
   "about": {
     "version": "Verze",
@@ -2078,7 +2081,14 @@ window.LANG_CS = {
     "rightClickToUnlock": "Pravým kliknutím odepnout",
     "karaoke": "Karaoke",
     "synced": "Synchronizováno",
-    "unsynced": "Prostý text"
+    "unsynced": "Prostý text",
+    "lockSelected": "Připnout vybraný režim",
+    "lockSelectedDesc": "Text se vždy zobrazí v tomto režimu, pokud ho skladba podporuje.",
+    "locked": "Připnuto",
+    "unlocked": "Odepnuto",
+    "unavailableNoKaraoke": "Tato skladba nemá karaoke synchronizaci",
+    "unavailableKaraokeOff": "Režim Karaoke je vypnutý",
+    "unavailableNoSynced": "Tato skladba nemá synchronizovaný text"
   },
   "communityVideo": {
     "loginRequired": "K registraci komunitních videí je vyžadováno přihlášení Discord.",

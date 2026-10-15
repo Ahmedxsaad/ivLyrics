@@ -695,7 +695,9 @@ window.LANG_EN = {
     "regenerateAction": "Regenerate",
     "fullscreen": "Fullscreen",
     "exitFullscreen": "Exit Fullscreen",
-    "localLyricsApplying": "Applying…"
+    "localLyricsApplying": "Applying…",
+    "currentTrack": "Current Track",
+    "more": "More"
   },
   "messages": {
     "noLyrics": "No lyrics available",
@@ -797,7 +799,8 @@ window.LANG_EN = {
       "collection": "Liked Songs",
       "station": "Station"
     },
-    "menuToggle": "ivLyrics menu"
+    "menuToggle": "ivLyrics menu",
+    "menuToggleShort": "Menu"
   },
   "about": {
     "version": "Version",
@@ -2078,7 +2081,14 @@ window.LANG_EN = {
     "rightClickToUnlock": "Right-click to unlock",
     "karaoke": "Karaoke",
     "synced": "Synced",
-    "unsynced": "Plain Text"
+    "unsynced": "Plain Text",
+    "lockSelected": "Lock to selected mode",
+    "lockSelectedDesc": "Always show lyrics in this mode whenever a song supports it.",
+    "locked": "Locked",
+    "unlocked": "Unlocked",
+    "unavailableNoKaraoke": "This song has no karaoke sync",
+    "unavailableKaraokeOff": "Karaoke Mode is turned off",
+    "unavailableNoSynced": "This song has no synced lyrics"
   },
   "communityVideo": {
     "loginRequired": "Discord login is required to register community videos.",

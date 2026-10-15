@@ -68,9 +68,18 @@ window.IvLyricsTooltip = IvLyricsTooltip;
 function getSettingsSurfaceTheme() {
   const storedTheme = window.ivLyricsStoragePersistence?.getItem("ivLyrics:settings-ui-theme")
     ?? localStorage.getItem("ivLyrics:settings-ui-theme");
-  return storedTheme === "light"
-    ? "light"
-    : "dark";
+  if (storedTheme === "light" || storedTheme === "dark") {
+    return storedTheme;
+  }
+  // Follow the settings screen when it resolves an older "auto" preference;
+  // popups stay dark when the settings module is not available.
+  try {
+    return window.ivLyricsResolveSettingsUiTheme?.(storedTheme || "auto") === "light"
+      ? "light"
+      : "dark";
+  } catch {
+    return "dark";
+  }
 }
 
 function resolveOptionsReactDom() {
@@ -2229,6 +2238,17 @@ const IVLYRICS_TOOLBAR_ICON_PATHS = Object.freeze({
   synced: '<path d="M4 6h10M4 11h9M4 16h7"/><path d="M18 6v7"/><circle cx="18" cy="15" r="2"/>',
   unsynced: '<path d="M4 6h14M4 11h16M4 16h12"/>',
   syncCreator: '<path d="M3 12h2l2-5 3 10 3-8 2 6"/><path d="m16 19 4-4 2 2-4 4-3 1 1-3Z"/>',
+  // Lyrics-page toolbar: entries and panel controls drawn on the same grid.
+  track: '<path d="M9 18V5.5l11-2V16"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+  more: '<path d="M6 12h.01M12 12h.01M18 12h.01" stroke-width="3"/>',
+  lock: '<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+  chevronRight: '<path d="m9 6 6 6-6 6"/>',
+  chevronDown: '<path d="m6 9 6 6 6-6"/>',
+  back: '<path d="M15 5 8 12l7 7"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 8v.01M11 11.5h1v5h1"/>',
+  refresh: '<path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4M4 13a8 8 0 0 0 14.9 3M20 20v-4h-4"/>',
+  reset: '<path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4"/>',
 });
 
 const IvLyricsToolbarIcon = ({ name, size = 18, className = "" }) =>
@@ -2256,6 +2276,455 @@ const getOptionsText = (key, fallback) => {
   const value = I18n?.t?.(key);
   return value && value !== key ? value : fallback;
 };
+
+// ---------------------------------------------------------------------------
+// Lyrics-page toolbar: panel parts
+// The toolbar's panels are small settings pages: groups of rows with switches,
+// pickers, option lists, offsets and sliders on neutral surfaces, with the
+// accent kept for state. They render inside the toolbar element (no portals),
+// so hover, focus-within and outside clicks treat the toolbar and its open
+// panel as one surface.
+// ---------------------------------------------------------------------------
+const joinToolbarClasses = (...names) => names.filter(Boolean).join(" ");
+let toolbarControlIdSeq = 0;
+const useToolbarControlId = (prefix) => {
+  const ref = useRef(null);
+  if (!ref.current) {
+    toolbarControlIdSeq += 1;
+    ref.current = prefix + "-" + toolbarControlIdSeq.toString(36);
+  }
+  return ref.current;
+};
+
+const ToolbarGlyph = ({ name, size = 18, className = "" }) =>
+  react.createElement(IvLyricsToolbarIcon, { name, size, className });
+
+const ToolbarPanelSection = ({ title, children, className = "" }) =>
+  react.createElement(
+    "section",
+    { className: joinToolbarClasses("ivl-tb-sec", className) },
+    title ? react.createElement("h3", { className: "ivl-tb-sec-title" }, title) : null,
+    children
+  );
+
+const ToolbarPanelGroup = ({ children, className = "" }) =>
+  react.createElement("div", { className: joinToolbarClasses("ivl-tb-group", className) }, children);
+
+const ToolbarPanelRow = ({ label, desc, control, stack = false, indent = false, className = "", mainProps = null }) =>
+  react.createElement(
+    "div",
+    { className: joinToolbarClasses("ivl-tb-row", stack ? "is-stack" : "is-inline", indent && "is-indent", className) },
+    react.createElement(
+      "div",
+      { className: "ivl-tb-row-main", ...(mainProps || {}) },
+      label ? react.createElement("div", { className: "ivl-tb-row-label" }, label) : null,
+      desc ? react.createElement("div", { className: "ivl-tb-row-desc" }, desc) : null
+    ),
+    control ? react.createElement("div", { className: "ivl-tb-row-control" }, control) : null
+  );
+
+const ToolbarButton = ({ children, onClick, variant = "", size = "sm", disabled = false, className = "", ...rest }) =>
+  react.createElement(
+    "button",
+    {
+      type: "button",
+      className: joinToolbarClasses(
+        "ivl-tb-btn",
+        size === "sm" && "is-sm",
+        variant && "is-" + variant,
+        className
+      ),
+      disabled,
+      onClick,
+      ...rest,
+    },
+    children
+  );
+
+const ToolbarSwitch = ({ checked, onChange, label, disabled = false }) =>
+  react.createElement(
+    "label",
+    { className: "ivl-tb-switch" },
+    react.createElement("input", {
+      type: "checkbox",
+      role: "switch",
+      checked: !!checked,
+      disabled,
+      "aria-label": label,
+      onChange: (event) => onChange(event.target.checked),
+    }),
+    react.createElement("span", { className: "ivl-tb-switch-track", "aria-hidden": "true" }),
+    react.createElement("span", { className: "ivl-tb-switch-thumb", "aria-hidden": "true" })
+  );
+
+// On/off rows: the title and description are part of the hit area. A press
+// that wandered (drag) or ended in a text selection is not a toggle.
+const ToolbarToggleRow = ({ label, desc, checked, onChange, indent = false, disabled = false }) => {
+  const pressRef = useRef(null);
+  return react.createElement(ToolbarPanelRow, {
+    label,
+    desc,
+    indent,
+    className: joinToolbarClasses("is-toggle-row", disabled && "is-disabled"),
+    mainProps: {
+      onPointerDown: (event) => {
+        pressRef.current = { x: event.clientX, y: event.clientY };
+      },
+      onClick: (event) => {
+        if (disabled || event.target.closest?.("a, button, input, select, textarea, label")) return;
+        const press = pressRef.current;
+        if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 6) return;
+        if (String(window.getSelection?.() || "")) return;
+        onChange(!checked);
+      },
+    },
+    control: react.createElement(ToolbarSwitch, { checked, onChange, label, disabled }),
+  });
+};
+
+// Picker button with a listbox below (or above, when the panel has no room).
+// Esc and outside clicks close the list without closing the panel.
+const ToolbarSelect = ({ value, options, onChange, label, disabled = false }) => {
+  const safeOptions = Array.isArray(options) ? options : [];
+  const selectedIndex = Math.max(0, safeOptions.findIndex((option) => option.key === value));
+  const [isOpen, setIsOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(selectedIndex);
+  const [placement, setPlacement] = useState("below");
+  const wrapRef = useRef(null);
+  const buttonRef = useRef(null);
+  const listRef = useRef(null);
+  const listId = useToolbarControlId("ivl-tb-select");
+
+  const openList = () => {
+    setActiveIndex(selectedIndex);
+    setPlacement("below");
+    setIsOpen(true);
+  };
+  const closeList = (restoreFocus) => {
+    setIsOpen(false);
+    if (restoreFocus) buttonRef.current?.focus({ preventScroll: true });
+  };
+  const pick = (option) => {
+    if (!option || option.disabled) return;
+    closeList(true);
+    if (option.key !== value) onChange(option.key);
+  };
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const handlePointerDown = (event) => {
+      if (!wrapRef.current?.contains(event.target)) setIsOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    return () => document.removeEventListener("pointerdown", handlePointerDown, true);
+  }, [isOpen]);
+
+  react.useLayoutEffect(() => {
+    if (!isOpen) return;
+    const list = listRef.current;
+    const wrap = wrapRef.current;
+    const scroller = wrap?.closest?.(".ivl-tb-fly-body");
+    if (list && wrap && scroller) {
+      const wrapRect = wrap.getBoundingClientRect();
+      const scrollerRect = scroller.getBoundingClientRect();
+      const below = scrollerRect.bottom - wrapRect.bottom;
+      const above = wrapRect.top - scrollerRect.top;
+      if (below < list.offsetHeight + 8 && above > below) setPlacement("above");
+    }
+    list?.focus({ preventScroll: true });
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    listRef.current?.children?.[activeIndex]?.scrollIntoView?.({ block: "nearest" });
+  }, [isOpen, activeIndex]);
+
+  const handleListKeyDown = (event) => {
+    const last = safeOptions.length - 1;
+    let next = null;
+    if (event.key === "ArrowDown") next = Math.min(last, activeIndex + 1);
+    else if (event.key === "ArrowUp") next = Math.max(0, activeIndex - 1);
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = last;
+    if (next !== null) {
+      event.preventDefault();
+      event.stopPropagation();
+      setActiveIndex(next);
+      return;
+    }
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      event.stopPropagation();
+      pick(safeOptions[activeIndex]);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      event.stopPropagation();
+      closeList(true);
+    } else if (event.key === "Tab") {
+      setIsOpen(false);
+    }
+  };
+
+  return react.createElement(
+    "div",
+    { className: joinToolbarClasses("ivl-tb-select", isOpen && "is-open"), ref: wrapRef },
+    react.createElement(
+      "button",
+      {
+        type: "button",
+        ref: buttonRef,
+        className: "ivl-tb-picker",
+        disabled,
+        "aria-haspopup": "listbox",
+        "aria-expanded": isOpen,
+        "aria-controls": isOpen ? listId : undefined,
+        "aria-label": label + ": " + (safeOptions[selectedIndex]?.value || ""),
+        onClick: () => (isOpen ? closeList(false) : openList()),
+        onKeyDown: (event) => {
+          if (!isOpen && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+            event.preventDefault();
+            event.stopPropagation();
+            openList();
+          }
+        },
+      },
+      react.createElement("span", { className: "ivl-tb-picker-value ivl-tb-trunc" }, safeOptions[selectedIndex]?.value || ""),
+      react.createElement(ToolbarGlyph, { name: "chevronDown", size: 15 })
+    ),
+    isOpen && react.createElement(
+      "div",
+      {
+        ref: listRef,
+        id: listId,
+        className: "ivl-tb-pop is-" + placement,
+        role: "listbox",
+        tabIndex: -1,
+        "aria-label": label,
+        "aria-activedescendant": listId + "-" + activeIndex,
+        onKeyDown: handleListKeyDown,
+      },
+      safeOptions.map((option, index) => react.createElement(
+        "div",
+        {
+          key: option.key,
+          id: listId + "-" + index,
+          role: "option",
+          className: joinToolbarClasses("ivl-tb-opt", index === activeIndex && "is-active"),
+          "aria-selected": index === selectedIndex,
+          "aria-disabled": option.disabled ? "true" : undefined,
+          onPointerDown: (event) => event.preventDefault(),
+          onPointerMove: () => {
+            if (index !== activeIndex) setActiveIndex(index);
+          },
+          onClick: () => pick(option),
+        },
+        react.createElement("span", { className: "ivl-tb-opt-label ivl-tb-trunc" }, option.value),
+        react.createElement(ToolbarGlyph, { name: "check", size: 15, className: "ivl-tb-opt-check" })
+      ))
+    )
+  );
+};
+
+const moveToolbarFocus = (event, container, selector) => {
+  if (!container || !["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return false;
+  const items = Array.from(container.querySelectorAll(selector))
+    .filter((item) => !item.disabled && item.getClientRects().length > 0);
+  if (!items.length) return false;
+  const index = items.indexOf(document.activeElement);
+  let next = 0;
+  if (event.key === "ArrowDown") next = index < 0 ? 0 : (index + 1) % items.length;
+  else if (event.key === "ArrowUp") next = index <= 0 ? items.length - 1 : index - 1;
+  else if (event.key === "End") next = items.length - 1;
+  event.preventDefault();
+  event.stopPropagation();
+  items[next].focus();
+  return true;
+};
+
+// Inline option list (provider, background): the selected option is the tab
+// stop, arrows move between options, Enter, Space or a click picks one.
+const ToolbarOptionList = ({ options, value, onPick, label, disabled = false }) => {
+  const listRef = useRef(null);
+  const safeOptions = Array.isArray(options) ? options : [];
+  const selectedKey = safeOptions.some((option) => option.key === value) ? value : safeOptions[0]?.key;
+  return react.createElement(
+    "div",
+    {
+      ref: listRef,
+      className: joinToolbarClasses("ivl-tb-options", disabled && "is-disabled"),
+      role: "listbox",
+      "aria-label": label,
+      "aria-disabled": disabled || undefined,
+      onKeyDown: (event) => moveToolbarFocus(event, listRef.current, ".ivl-tb-opt"),
+    },
+    safeOptions.map((option) => react.createElement(
+      "button",
+      {
+        key: option.key,
+        type: "button",
+        role: "option",
+        className: "ivl-tb-opt",
+        "aria-selected": option.key === value,
+        tabIndex: option.key === selectedKey ? 0 : -1,
+        disabled: disabled || option.disabled,
+        onClick: () => onPick(option.key),
+      },
+      react.createElement("span", { className: "ivl-tb-opt-label ivl-tb-trunc" }, option.value),
+      react.createElement(ToolbarGlyph, { name: "check", size: 15, className: "ivl-tb-opt-check" })
+    ))
+  );
+};
+
+const ToolbarMenuList = ({ label, children }) => {
+  const listRef = useRef(null);
+  return react.createElement(
+    "div",
+    {
+      ref: listRef,
+      className: "ivl-tb-group ivl-tb-menu",
+      role: "menu",
+      "aria-label": label,
+      onKeyDown: (event) => moveToolbarFocus(event, listRef.current, ".ivl-tb-mi"),
+    },
+    children
+  );
+};
+
+const ToolbarMenuItem = ({ icon, label, desc, value, drill = false, checked, current = false, disabled = false, onClick }) =>
+  react.createElement(
+    "button",
+    {
+      type: "button",
+      className: joinToolbarClasses("ivl-tb-mi", current && "is-current"),
+      role: checked === undefined ? "menuitem" : "menuitemcheckbox",
+      "aria-checked": checked === undefined ? undefined : !!checked,
+      "aria-haspopup": drill ? "true" : undefined,
+      "aria-current": current ? "page" : undefined,
+      disabled,
+      onClick,
+    },
+    react.createElement("span", { className: "ivl-tb-mi-ico" }, react.createElement(ToolbarGlyph, { name: icon, size: 18 })),
+    react.createElement(
+      "span",
+      { className: "ivl-tb-mi-main" },
+      react.createElement("span", { className: "ivl-tb-mi-label ivl-tb-trunc" }, label),
+      desc ? react.createElement("small", null, desc) : null
+    ),
+    value ? react.createElement("span", { className: "ivl-tb-mi-value ivl-tb-trunc" }, value) : null,
+    checked === undefined ? null : react.createElement("span", {
+      className: joinToolbarClasses("ivl-tb-mi-state", checked && "is-on"),
+      "aria-hidden": "true",
+    }),
+    current ? react.createElement(ToolbarGlyph, { name: "check", size: 16, className: "ivl-tb-mi-check" }) : null,
+    drill ? react.createElement(ToolbarGlyph, { name: "chevronRight", size: 16, className: "ivl-tb-mi-chev" }) : null
+  );
+
+const ToolbarNote = ({ children, actions = null }) =>
+  react.createElement(
+    "div",
+    { className: "ivl-tb-note" },
+    react.createElement(ToolbarGlyph, { name: "info", size: 16 }),
+    react.createElement(
+      "div",
+      { className: "ivl-tb-note-body" },
+      children,
+      actions ? react.createElement("div", { className: "ivl-tb-note-actions" }, actions) : null
+    )
+  );
+
+const formatToolbarOffsetStep = (step) => (step > 0 ? "+" : "\u2212") + Math.abs(step) + "ms";
+
+const ToolbarOffsetSteps = ({ steps, onStep, label, disabled = false, unit = true }) =>
+  react.createElement(
+    "div",
+    { className: "ivl-tb-offset-quick", role: "group", "aria-label": label },
+    steps.map((step) => react.createElement(ToolbarButton, {
+      key: step,
+      disabled,
+      "aria-label": label + " " + formatToolbarOffsetStep(step),
+      onClick: () => onStep(step),
+    }, unit ? formatToolbarOffsetStep(step) : (step > 0 ? "+" : "\u2212") + Math.abs(step)))
+  );
+
+// Numeric value field: the wheel never changes it (it blurs, so the panel
+// scrolls), Enter commits and Esc puts the value from before back.
+const ToolbarNumberField = ({ value, min, max, step = 1, unit, label, onCommit }) => {
+  const [draft, setDraft] = useState(null);
+  const cancelRef = useRef(false);
+  const commit = () => {
+    if (cancelRef.current || draft === null) {
+      cancelRef.current = false;
+      setDraft(null);
+      return;
+    }
+    const numericValue = Number(draft);
+    setDraft(null);
+    if (!Number.isFinite(numericValue)) return;
+    const snapped = Math.round(numericValue / step) * step;
+    onCommit(Math.max(min, Math.min(max, snapped)));
+  };
+  return react.createElement(
+    "label",
+    { className: "ivl-tb-value-chip" },
+    react.createElement("input", {
+      type: "number",
+      inputMode: "numeric",
+      min,
+      max,
+      step,
+      value: draft === null ? String(value) : draft,
+      "aria-label": label,
+      onChange: (event) => setDraft(event.target.value),
+      onBlur: commit,
+      onWheel: (event) => {
+        if (document.activeElement === event.currentTarget) event.currentTarget.blur();
+      },
+      onKeyDown: (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          event.currentTarget.blur();
+        } else if (event.key === "Escape") {
+          // The value from before typing stays (nothing was committed). An
+          // untouched field lets Esc through, so it still closes the panel.
+          if (draft !== null) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          cancelRef.current = true;
+          event.currentTarget.blur();
+        }
+      },
+    }),
+    unit ? react.createElement("span", { className: "ivl-tb-unit" }, unit) : null
+  );
+};
+
+const ToolbarRangeField = ({ value, min, max, step, label, unit, onChange }) => {
+  const percent = ((Math.max(min, Math.min(max, value)) - min) / (max - min)) * 100;
+  const zero = ((0 - min) / (max - min)) * 100;
+  return react.createElement(
+    "div",
+    { className: "ivl-tb-range", style: { "--ivl-tb-p": percent, "--ivl-tb-d": zero } },
+    react.createElement(
+      "div",
+      { className: "ivl-tb-range-track" },
+      react.createElement("span", { className: "ivl-tb-range-rail" }, react.createElement("span", { className: "ivl-tb-range-fill" })),
+      react.createElement("span", { className: "ivl-tb-range-default", "aria-hidden": "true" }),
+      react.createElement("input", {
+        type: "range",
+        min,
+        max,
+        step,
+        value,
+        "aria-label": label,
+        "aria-valuetext": formatSyncOffset(value),
+        onChange: (event) => onChange(Number(event.target.value)),
+      })
+    ),
+    react.createElement(ToolbarNumberField, { value, min, max, step, unit, label, onCommit: onChange })
+  );
+};
+
 
 const FALLBACK_BACKGROUND_PRESETS = [
   { id: "none", labelKey: "settingsUi.background.none", fallbackLabel: "Minimal" },
@@ -2882,6 +3351,7 @@ const LocalLyricsLrclibSearchModal = ({ trackInfo = {}, onApplyLocalLyrics, onCl
         className: "ivlyrics-fluent-close",
         type: "button",
         onClick: onClose,
+        "aria-label": I18n.t("buttons.close") || "Close",
       },
       react.createElement("svg", {
         viewBox: "0 0 16 16",
@@ -2900,6 +3370,7 @@ const LocalLyricsLrclibSearchModal = ({ trackInfo = {}, onApplyLocalLyrics, onCl
     const album = candidate.albumName || "";
     const duration = formatLrclibCandidateDuration(candidate.duration);
     const previewLines = getLrclibCandidatePreviewLines(candidate);
+    const meta = [artist, album, duration].filter(Boolean).join(" · ");
     const badges = [
       (candidate.hasSyncedLyrics || candidate.syncedLyrics) && getOptionsText("syncCreator.lrclibBadgeSynced", "Synced"),
       (candidate.hasPlainLyrics || candidate.plainLyrics) && getOptionsText("syncCreator.lrclibBadgePlain", "Plain"),
@@ -2908,82 +3379,20 @@ const LocalLyricsLrclibSearchModal = ({ trackInfo = {}, onApplyLocalLyrics, onCl
 
     return react.createElement(
       "div",
-      {
-        key: candidateKey,
-        style: {
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) auto",
-          gap: "12px",
-          padding: "12px",
-          border: "1px solid rgba(255,255,255,0.1)",
-          background: "rgba(255,255,255,0.04)",
-        },
-      },
+      { key: candidateKey, className: "ivl-tb-lrclib-result" },
       react.createElement(
         "div",
-        { style: { minWidth: 0 } },
+        { className: "ivl-tb-lrclib-main" },
         react.createElement(
           "div",
-          {
-            style: {
-              fontWeight: 700,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            },
-            title,
-          },
-          title
+          { className: "ivl-tb-lrclib-title" },
+          react.createElement("span", { className: "ivl-tb-trunc", title }, title),
+          badges.map((badge) => react.createElement("span", { key: badge, className: "ivl-tb-pill" }, badge))
         ),
-        react.createElement(
-          "div",
-          {
-            style: {
-              marginTop: "3px",
-              color: "rgba(255,255,255,0.7)",
-              fontSize: "13px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            },
-            title: [artist, album, duration].filter(Boolean).join(" · "),
-          },
-          [artist, album, duration].filter(Boolean).join(" · ")
-        ),
-        badges.length > 0 && react.createElement(
-          "div",
-          {
-            style: {
-              display: "flex",
-              gap: "6px",
-              flexWrap: "wrap",
-              marginTop: "8px",
-            },
-          },
-          badges.map((badge) => react.createElement(
-            "span",
-            {
-              key: badge,
-              style: {
-                padding: "2px 6px",
-                border: "1px solid rgba(255,255,255,0.12)",
-                fontSize: "11px",
-                color: "rgba(255,255,255,0.78)",
-              },
-            },
-            badge
-          ))
-        ),
+        react.createElement("div", { className: "ivl-tb-lrclib-meta ivl-tb-trunc", title: meta }, meta),
         previewLines.length > 0 && react.createElement(
           "div",
-          {
-            style: {
-              marginTop: "8px",
-              color: "rgba(255,255,255,0.58)",
-              fontSize: "12px",
-              lineHeight: 1.45,
-            },
-          },
+          { className: "ivl-tb-lrclib-preview" },
           previewLines.join(" / ")
         )
       ),
@@ -2994,7 +3403,6 @@ const LocalLyricsLrclibSearchModal = ({ trackInfo = {}, onApplyLocalLyrics, onCl
           type: "button",
           onClick: () => void applyCandidate(candidate),
           disabled: !!applyingKey,
-          style: { alignSelf: "start" },
         },
         applyingKey === candidateKey
           ? getOptionsText("menu.localLyricsApplying", "적용 중")
@@ -3003,45 +3411,33 @@ const LocalLyricsLrclibSearchModal = ({ trackInfo = {}, onApplyLocalLyrics, onCl
     );
   };
 
+  const searchPlaceholder = getOptionsText("menu.localLyricsSearchPlaceholder", "곡명 또는 아티스트 검색");
   const renderLrclibSearchBar = () => react.createElement(
-        "div",
-        {
-          style: {
-            display: "flex",
-            gap: "8px",
-            alignItems: "stretch",
-            marginBottom: "12px",
-          },
-        },
-        react.createElement("input", {
-          value: query,
-          onChange: (event) => setQuery(event.target.value),
-          onKeyDown: handleKeyDown,
-          placeholder: getOptionsText("menu.localLyricsSearchPlaceholder", "곡명 또는 아티스트 검색"),
-          style: {
-            flex: "1 1 auto",
-            minWidth: 0,
-            height: "38px",
-            padding: "0 12px",
-            border: "1px solid rgba(255,255,255,0.14)",
-            background: "rgba(255,255,255,0.06)",
-            color: "inherit",
-            borderRadius: "0",
-          },
-        }),
-        react.createElement(
-          "button",
-          {
-            className: "ivlyrics-fluent-btn",
-            type: "button",
-            onClick: () => void performSearch(),
-            disabled: isSearching,
-          },
-          isSearching
-            ? getOptionsText("menu.localLyricsSearching", "검색 중")
-            : getOptionsText("menu.search", "검색")
-        )
-      );
+    "div",
+    { className: "ivl-tb-lrclib-search" },
+    react.createElement("input", {
+      className: "ivl-tb-lrclib-input",
+      type: "search",
+      value: query,
+      onChange: (event) => setQuery(event.target.value),
+      onKeyDown: handleKeyDown,
+      placeholder: searchPlaceholder,
+      "aria-label": searchPlaceholder,
+      autoComplete: "off",
+    }),
+    react.createElement(
+      "button",
+      {
+        className: "ivlyrics-fluent-btn primary",
+        type: "button",
+        onClick: () => void performSearch(),
+        disabled: isSearching,
+      },
+      isSearching
+        ? getOptionsText("menu.localLyricsSearching", "검색 중")
+        : getOptionsText("menu.search", "검색")
+    )
+  );
 
   return react.createElement(
     react.Fragment,
@@ -3049,28 +3445,12 @@ const LocalLyricsLrclibSearchModal = ({ trackInfo = {}, onApplyLocalLyrics, onCl
     renderSearchHeader(),
     react.createElement(
       "div",
-      { className: "ivlyrics-fluent-body ivlyrics-options-modal-body" },
+      { className: "ivlyrics-fluent-body ivlyrics-options-modal-body ivl-tb-lrclib" },
       renderLrclibSearchBar(),
-      statusText && react.createElement(
+      statusText && react.createElement("p", { className: "ivl-tb-lrclib-status", role: "status" }, statusText),
+      candidates.length > 0 && react.createElement(
         "div",
-        {
-          style: {
-            marginBottom: "12px",
-            color: "rgba(255,255,255,0.68)",
-            fontSize: "13px",
-          },
-        },
-        statusText
-      ),
-      react.createElement(
-        "div",
-        {
-          style: {
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
-          },
-        },
+        { className: "ivl-tb-lrclib-results" },
         candidates.map(renderLrclibCandidate)
       )
     )
@@ -3080,7 +3460,9 @@ const LocalLyricsLrclibSearchModal = ({ trackInfo = {}, onApplyLocalLyrics, onCl
 function openLocalLyricsLrclibSearchModal({ trackInfo, onApplyLocalLyrics }) {
   return openFluentReactModal({
     overlayId: "ivLyrics-local-lyrics-lrclib-overlay",
-    shellClassName: "ivlyrics-options-modal-shell",
+    // ivl-tb-dialog: dialogs opened from the lyrics-page toolbar share its look.
+    overlayClassName: "ivl-tb-dialog-overlay",
+    shellClassName: "ivlyrics-options-modal-shell ivl-tb-dialog ivl-tb-lrclib-shell",
     render: (closeModal) => react.createElement(LocalLyricsLrclibSearchModal, {
       trackInfo,
       onApplyLocalLyrics,
@@ -3089,8 +3471,29 @@ function openLocalLyricsLrclibSearchModal({ trackInfo, onApplyLocalLyrics }) {
   });
 }
 
-const TranslationMenu = react.memo(({ friendlyLanguage, hasTranslation }) => {
-  // Open modal on click instead of ContextMenu to avoid xpui hook errors
+// Opens the settings window on a tab (and section) from a toolbar panel. An
+// already open settings window is closed first, as the conversion dialog did.
+const openToolbarSettings = (options = {}) => {
+  const overlay = document.getElementById("ivLyrics-settings-overlay");
+  if (overlay) {
+    if (typeof window.ivLyricsCloseConfig === "function") {
+      window.ivLyricsCloseConfig();
+    } else {
+      overlay.remove();
+      document.documentElement.classList.remove("ivlyrics-settings-open");
+      document.body?.classList.remove("ivlyrics-settings-open");
+    }
+  }
+  setTimeout(() => {
+    openConfig(options);
+  }, overlay ? getSettingsMotionDurationMs() + 24 : 0);
+};
+
+// 변환 (conversion) panel. It mounts each time the panel opens; opening it
+// leaves the legacy replacement display mode exactly as opening the old
+// conversion dialog did, and every control writes the same keys with the same
+// side effects as that dialog's rows.
+const TranslationMenu = react.memo(({ friendlyLanguage, detectedLanguage = null, regenerate = null, cacheEdit = null, onOpenSettings }) => {
   const open = () => {
     // Refresh prepared lyric rows when leaving the legacy replacement mode.
     const displayModeChanged = CONFIG.visual["translate:display-mode"] !== "below";
@@ -3102,494 +3505,459 @@ const TranslationMenu = react.memo(({ friendlyLanguage, hasTranslation }) => {
     if (displayModeChanged) lyricContainerUpdate?.();
 
     // Determine the correct mode key based on language
-    const modeKey = friendlyLanguage || "gemini";
-
     window.__ivLyricsDebugLog?.(
       "[TranslationMenu] Language:",
       friendlyLanguage,
       "ModeKey:",
-      modeKey
+      friendlyLanguage || "gemini"
     );
-    window.__ivLyricsDebugLog?.("[TranslationMenu] Current values:");
-    window.__ivLyricsDebugLog?.(
-      `translation-mode:${modeKey} =`,
-      CONFIG.visual[`translation-mode:${modeKey}`]
-    );
-    window.__ivLyricsDebugLog?.(
-      `translation-mode-2:${modeKey} =`,
-      CONFIG.visual[`translation-mode-2:${modeKey}`]
-    );
+  };
+  useEffect(() => {
+    open();
+  }, []);
 
-    // 감지된 언어를 사용자 친화적인 이름으로 변환
-    const getDisplayLanguageName = (lang) => {
-      if (!lang) return I18n.t("menu.unknownLanguage");
-      try {
-        // 현재 UI 언어로 언어 이름 표시
-        const uiLang = I18n.getCurrentLanguage();
-        const displayName = new Intl.DisplayNames([uiLang], { type: "language" }).of(lang);
-        return displayName || lang;
-      } catch {
-        return lang;
-      }
-    };
+  const modeKey = friendlyLanguage || "gemini";
 
-    const displayLanguageName = getDisplayLanguageName(friendlyLanguage);
+  // 감지된 언어를 사용자 친화적인 이름으로 변환
+  const getDisplayLanguageName = (lang) => {
+    if (!lang) return I18n.t("menu.unknownLanguage");
+    try {
+      // 현재 UI 언어로 언어 이름 표시
+      const uiLang = I18n.getCurrentLanguage();
+      const displayName = new Intl.DisplayNames([uiLang], { type: "language" }).of(lang);
+      return displayName || lang;
+    } catch {
+      return lang;
+    }
+  };
 
-    // Get target language for translation (to display)
-    const getTranslationTargetDisplay = () => {
-      const targetLang = CONFIG.visual?.["translate:target-language"];
-      if (targetLang && targetLang !== "auto") {
-        return getDisplayLanguageName(targetLang);
-      }
-      // If "auto", defaults to interface language.
-      const interfaceLang = I18n.getCurrentLanguage();
-      const autoText = I18n.t("settings.translationTargetLanguage.options.auto") || "Same as interface language";
-      return `${autoText} (${getDisplayLanguageName(interfaceLang)})`;
-    };
-    const translationTargetName = getTranslationTargetDisplay();
-    const normalizePronunciationNotation = (value) => {
-      const sharedNormalize = window.ivLyricsPronunciationNotation?.normalize;
-      if (typeof sharedNormalize === "function") {
-        return sharedNormalize(value);
-      }
-      const normalized = String(value || "").trim().toLowerCase();
-      return normalized === "latin" || normalized === "ipa"
-        ? normalized
-        : "translation";
-    };
-    const pronunciationNotation = normalizePronunciationNotation(
-      CONFIG.visual?.["translate:pronunciation-notation"] ||
-      StorageManager.getItem(`${APP_NAME}:visual:translate:pronunciation-notation`)
-    );
-    const pronunciationNotationOptions = [
-      {
-        key: "translation",
-        value: I18n.t("menu.pronunciationNotationTranslation") || "Current translation language",
-      },
-      {
-        key: "latin",
-        value: I18n.t("menu.pronunciationNotationLatin") || "Latin (Romanization)",
-      },
-      {
-        key: "ipa",
-        value: I18n.t("menu.pronunciationNotationIpa") || "International Phonetic Alphabet (IPA)",
-      },
-    ];
+  // Get target language for translation (to display)
+  const getTranslationTargetDisplay = () => {
+    const targetLang = CONFIG.visual?.["translate:target-language"];
+    if (targetLang && targetLang !== "auto") {
+      return getDisplayLanguageName(targetLang);
+    }
+    // If "auto", defaults to interface language.
+    const interfaceLang = I18n.getCurrentLanguage();
+    const autoText = I18n.t("settings.translationTargetLanguage.options.auto") || "Same as interface language";
+    return `${autoText} (${getDisplayLanguageName(interfaceLang)})`;
+  };
+  const normalizePronunciationNotation = (value) => {
+    const sharedNormalize = window.ivLyricsPronunciationNotation?.normalize;
+    if (typeof sharedNormalize === "function") {
+      return sharedNormalize(value);
+    }
+    const normalized = String(value || "").trim().toLowerCase();
+    return normalized === "latin" || normalized === "ipa"
+      ? normalized
+      : "translation";
+  };
+  const pronunciationNotationOptions = useMemo(() => [
+    {
+      key: "translation",
+      value: I18n.t("menu.pronunciationNotationTranslation") || "Current translation language",
+    },
+    {
+      key: "latin",
+      value: I18n.t("menu.pronunciationNotationLatin") || "Latin (Romanization)",
+    },
+    {
+      key: "ipa",
+      value: I18n.t("menu.pronunciationNotationIpa") || "International Phonetic Alphabet (IPA)",
+    },
+  ], []);
 
-    // 지원되는 언어 목록
-    const supportedLanguages = [
-      { key: "auto", value: I18n.t("menu.autoDetect") || "자동 감지" },
-      { key: "ja", value: getDisplayLanguageName("ja") },
-      { key: "ko", value: getDisplayLanguageName("ko") },
-      { key: "zh-hans", value: getDisplayLanguageName("zh-Hans") },
-      { key: "zh-hant", value: getDisplayLanguageName("zh-Hant") },
-      { key: "en", value: getDisplayLanguageName("en") },
-      { key: "ru", value: getDisplayLanguageName("ru") },
-      { key: "vi", value: getDisplayLanguageName("vi") },
-      { key: "de", value: getDisplayLanguageName("de") },
-      { key: "sv", value: getDisplayLanguageName("sv") },
-      { key: "es", value: getDisplayLanguageName("es") },
-      { key: "fr", value: getDisplayLanguageName("fr") },
-      { key: "pt", value: getDisplayLanguageName("pt") },
-      { key: "tr", value: getDisplayLanguageName("tr") },
-      { key: "cs", value: getDisplayLanguageName("cs") },
-      { key: "pl", value: getDisplayLanguageName("pl") },
-      { key: "ar", value: getDisplayLanguageName("ar") },
-      { key: "th", value: getDisplayLanguageName("th") },
-      { key: "hi", value: getDisplayLanguageName("hi") },
-      { key: "id", value: getDisplayLanguageName("id") },
-      { key: "ms", value: getDisplayLanguageName("ms") },
-    ];
+  // 지원되는 언어 목록
+  const supportedLanguages = useMemo(() => [
+    { key: "auto", value: I18n.t("menu.autoDetect") || "자동 감지" },
+    { key: "ja", value: getDisplayLanguageName("ja") },
+    { key: "ko", value: getDisplayLanguageName("ko") },
+    { key: "zh-hans", value: getDisplayLanguageName("zh-Hans") },
+    { key: "zh-hant", value: getDisplayLanguageName("zh-Hant") },
+    { key: "en", value: getDisplayLanguageName("en") },
+    { key: "ru", value: getDisplayLanguageName("ru") },
+    { key: "vi", value: getDisplayLanguageName("vi") },
+    { key: "de", value: getDisplayLanguageName("de") },
+    { key: "sv", value: getDisplayLanguageName("sv") },
+    { key: "es", value: getDisplayLanguageName("es") },
+    { key: "fr", value: getDisplayLanguageName("fr") },
+    { key: "pt", value: getDisplayLanguageName("pt") },
+    { key: "tr", value: getDisplayLanguageName("tr") },
+    { key: "cs", value: getDisplayLanguageName("cs") },
+    { key: "pl", value: getDisplayLanguageName("pl") },
+    { key: "ar", value: getDisplayLanguageName("ar") },
+    { key: "th", value: getDisplayLanguageName("th") },
+    { key: "hi", value: getDisplayLanguageName("hi") },
+    { key: "id", value: getDisplayLanguageName("id") },
+    { key: "ms", value: getDisplayLanguageName("ms") },
+  ], []);
 
-    // 현재 트랙의 언어 오버라이드 상태 (비동기로 로드)
-    const currentOverride = window.lyricContainer?.trackLanguageOverride || null;
+  const [isPronunciationOn, setPronunciationOn] = useState(
+    () => CONFIG.visual[`translation-mode:${modeKey}`] !== "none"
+  );
+  const [isTranslationOn, setTranslationOn] = useState(
+    () => CONFIG.visual[`translation-mode-2:${modeKey}`] !== "none"
+  );
+  const [pronunciationNotation, setPronunciationNotation] = useState(() => normalizePronunciationNotation(
+    CONFIG.visual?.["translate:pronunciation-notation"] ||
+    StorageManager.getItem(`${APP_NAME}:visual:translate:pronunciation-notation`)
+  ));
+  // 현재 트랙의 언어 오버라이드 상태
+  const [languageOverride, setLanguageOverride] = useState(
+    () => window.lyricContainer?.trackLanguageOverride || "auto"
+  );
 
-    const buildTranslationMenuItems = () => [
-      {
-        section: I18n.t("menu.detectedLanguage"),
-        subtitle: I18n.t("menu.detectedLanguageInfo"),
-        items: [
-          {
-            desc: react.createElement(SettingRowDescription, {
-              icon: ICONS.language,
-              text: displayLanguageName,
-            }),
-            key: "detected-language-display",
-            type: "info",
-          },
-          {
-            desc: react.createElement(SettingRowDescription, {
-              icon: ICONS.language,
-              text: I18n.t("menu.overrideLanguage") || "언어 수동 설정",
-            }),
-            key: "track-language-override",
-            type: OptionsMenu,
-            options: supportedLanguages,
-            defaultValue: currentOverride
-              ? supportedLanguages.find(l => l.key === currentOverride)
-              : supportedLanguages[0],
-            info: I18n.t("menu.overrideLanguageInfo") || "이 곡의 언어를 수동으로 설정합니다. 자동 감지 대신 선택한 언어로 번역됩니다.",
-          },
-        ],
-      },
-      {
-        section: I18n.t("menu.translationOptions"),
-        subtitle: I18n.t("menu.translationOptionsSubtitle"),
-        items: [
-          {
-            desc: react.createElement(SettingRowDescription, {
-              icon: ICONS.mode,
-              text: I18n.t("menu.pronunciation"),
-            }),
-            key: `translation-mode:${modeKey}`,
-            type: ConfigSlider,
-            defaultValue:
-              CONFIG.visual[`translation-mode:${modeKey}`] !== "none",
-            renderInline: true,
-            info: I18n.t("menu.pronunciationInfo"),
-          },
-          {
-            desc: react.createElement(SettingRowDescription, {
-              icon: ICONS.language,
-              text: I18n.t("menu.pronunciationNotation") || "Pronunciation notation",
-            }),
-            key: "translate:pronunciation-notation",
-            type: OptionsMenu,
-            options: pronunciationNotationOptions,
-            defaultValue:
-              pronunciationNotationOptions.find(option => option.key === pronunciationNotation) ||
-              pronunciationNotationOptions[0],
-            info: I18n.t("menu.pronunciationNotationInfo") || "Choose how generated pronunciation is written. Regenerate pronunciation to update the current lyrics.",
-          },
-          {
-            desc: react.createElement(SettingRowDescription, {
-              icon: ICONS.mode,
-              text: I18n.t("menu.translationLabel"),
-            }),
-            key: `translation-mode-2:${modeKey}`,
-            type: ConfigSlider,
-            defaultValue:
-              CONFIG.visual[`translation-mode-2:${modeKey}`] !== "none",
-            renderInline: true,
-            info: I18n.t("menu.translationInfo"),
-          },
-          {
-            desc: react.createElement(SettingRowDescription, {
-              icon: ICONS.language,
-              text: `${I18n.t("menu.translationTargetLang")}: ${translationTargetName}`,
-            }),
-            key: "translation-target-display",
-            type: "info",
-            info: I18n.t("menu.translationTargetLangInfo"),
-          },
-        ],
-      },
-      {
-        section: I18n.t("menu.apiSettings"),
-        subtitle: I18n.t("menu.apiSettingsSubtitle"),
-        items: [
-          {
-            desc: react.createElement(SettingRowDescription, {
-              icon: ICONS.provider,
-              text: I18n.t("menu.apiKeySettings"),
-            }),
-            key: "open-api-settings",
-            type: ConfigButton,
-            text: I18n.t("menu.openSettings"),
-            onChange: () => {
-              const overlay = document.getElementById(
-                "ivLyrics-settings-overlay"
-              );
-              if (overlay) {
-                if (typeof window.ivLyricsCloseConfig === "function") {
-                  window.ivLyricsCloseConfig();
-                } else {
-                  overlay.remove();
-                  document.documentElement.classList.remove("ivlyrics-settings-open");
-                  document.body?.classList.remove("ivlyrics-settings-open");
-                }
-              }
-              setTimeout(() => {
-                openConfig({ initialTab: "ai-providers" });
-              }, overlay ? getSettingsMotionDurationMs() + 24 : 0);
-            },
-            info: I18n.t("menu.apiKeySettingsInfo"),
-          },
-        ],
-      },
-    ];
+  const handleTranslationMenuChange = async (name, value) => {
+    // 트랙별 언어 오버라이드 처리
+    if (name === "track-language-override") {
+      const trackUri = Spicetify.Player.data?.item?.uri;
+      if (!trackUri) return;
 
-    const items = buildTranslationMenuItems();
-
-    const handleTranslationMenuChange = async (name, value) => {
-      // Skip processing for button items
-      if (name === "open-api-settings") {
-        return;
-      }
-
-      // 트랙별 언어 오버라이드 처리
-      if (name === "track-language-override") {
-        const trackUri = Spicetify.Player.data?.item?.uri;
-        if (!trackUri) return;
-
-        if (value === "auto") {
-          // 자동 감지로 되돌리기 - DB에서 삭제
-          await window.TrackLanguageDB?.clearLanguage(trackUri);
-          if (window.lyricContainer) {
-            window.lyricContainer.trackLanguageOverride = null;
-          }
-        } else {
-          // 언어 오버라이드 저장
-          await window.TrackLanguageDB?.setLanguage(trackUri, value);
-          if (window.lyricContainer) {
-            window.lyricContainer.trackLanguageOverride = value;
-          }
-        }
-
-        // 번역 캐시 클리어 및 강제 리로드
-        window.LyricsService?.clearLyricsSnapshot?.(trackUri);
+      if (value === "auto") {
+        // 자동 감지로 되돌리기 - DB에서 삭제
+        await window.TrackLanguageDB?.clearLanguage(trackUri);
         if (window.lyricContainer) {
-          window.lyricContainer._dmResults = {};
-          window.lyricContainer.lastProcessedUri = null;
-          window.lyricContainer.lastProcessedMode = null;
-          window.lyricContainer.forceUpdate();
+          window.lyricContainer.trackLanguageOverride = null;
         }
-        lyricContainerUpdate?.();
-        return;
-      }
-
-      if (name === "translate:pronunciation-notation") {
-        const normalizedNotation = normalizePronunciationNotation(value);
-        CONFIG.visual[name] = normalizedNotation;
-        StorageManager.setItem(`${APP_NAME}:visual:${name}`, normalizedNotation);
-        return;
-      }
-
-      // Handle toggle values - convert boolean to appropriate mode string
-      if (name.startsWith("translation-mode")) {
-        // For first line (발음), set to romaji or none
-        if (name.startsWith(`translation-mode:`) && !name.includes("mode-2")) {
-          value = value ? "gemini_romaji" : "none";
-        }
-        // For second line (번역), set to korean or none
-        else if (name.startsWith(`translation-mode-2:`)) {
-          value = value ? "gemini_ko" : "none";
-        }
-      }
-
-      CONFIG.visual[name] = value;
-      StorageManager.setItem(`${APP_NAME}:visual:${name}`, value);
-
-      if (name.startsWith("translation-mode")) {
+      } else {
+        // 언어 오버라이드 저장
+        await window.TrackLanguageDB?.setLanguage(trackUri, value);
         if (window.lyricContainer) {
-          // Clear translation cache to force reload with new settings
-          window.lyricContainer._dmResults = {};
-          window.lyricContainer.lastProcessedUri = null;
-          window.lyricContainer.lastProcessedMode = null;
-          window.lyricContainer.forceUpdate();
+          window.lyricContainer.trackLanguageOverride = value;
         }
       }
 
+      // 번역 캐시 클리어 및 강제 리로드
+      window.LyricsService?.clearLyricsSnapshot?.(trackUri);
+      if (window.lyricContainer) {
+        window.lyricContainer._dmResults = {};
+        window.lyricContainer.lastProcessedUri = null;
+        window.lyricContainer.lastProcessedMode = null;
+        window.lyricContainer.forceUpdate();
+      }
       lyricContainerUpdate?.();
-    };
+      return;
+    }
 
-    openOptionsModal(I18n.t("menu.translationSettings"), items, handleTranslationMenuChange);
+    if (name === "translate:pronunciation-notation") {
+      const normalizedNotation = normalizePronunciationNotation(value);
+      CONFIG.visual[name] = normalizedNotation;
+      StorageManager.setItem(`${APP_NAME}:visual:${name}`, normalizedNotation);
+      return;
+    }
+
+    // Handle toggle values - convert boolean to appropriate mode string
+    if (name.startsWith("translation-mode")) {
+      // For first line (발음), set to romaji or none
+      if (name.startsWith(`translation-mode:`) && !name.includes("mode-2")) {
+        value = value ? "gemini_romaji" : "none";
+      }
+      // For second line (번역), set to korean or none
+      else if (name.startsWith(`translation-mode-2:`)) {
+        value = value ? "gemini_ko" : "none";
+      }
+    }
+
+    CONFIG.visual[name] = value;
+    StorageManager.setItem(`${APP_NAME}:visual:${name}`, value);
+
+    if (name.startsWith("translation-mode")) {
+      if (window.lyricContainer) {
+        // Clear translation cache to force reload with new settings
+        window.lyricContainer._dmResults = {};
+        window.lyricContainer.lastProcessedUri = null;
+        window.lyricContainer.lastProcessedMode = null;
+        window.lyricContainer.forceUpdate();
+      }
+    }
+
+    lyricContainerUpdate?.();
   };
 
   return react.createElement(
-    IvLyricsTooltip,
-    { label: I18n.t("menu.translation"), showDelay: 0 },
+    "div",
+    { className: "ivl-tb-stack" },
     react.createElement(
-      "button",
-      {
-        className: "lyrics-config-button",
-        onClick: open,
-        "aria-label": I18n.t("menu.translation"),
-      },
-      react.createElement(IvLyricsToolbarIcon, { name: "translation" })
+      ToolbarPanelSection,
+      { title: I18n.t("menu.translationOptions") },
+      react.createElement(
+        ToolbarPanelGroup,
+        null,
+        react.createElement(ToolbarToggleRow, {
+          label: I18n.t("menu.pronunciation"),
+          desc: I18n.t("menu.pronunciationInfo"),
+          checked: isPronunciationOn,
+          onChange: (checked) => {
+            setPronunciationOn(checked);
+            void handleTranslationMenuChange(`translation-mode:${modeKey}`, checked);
+          },
+        }),
+        isPronunciationOn && react.createElement(ToolbarPanelRow, {
+          indent: true,
+          stack: true,
+          label: I18n.t("menu.pronunciationNotation") || "Pronunciation notation",
+          desc: I18n.t("menu.pronunciationNotationInfo") || "Choose how generated pronunciation is written. Regenerate pronunciation to update the current lyrics.",
+          control: react.createElement(ToolbarSelect, {
+            value: pronunciationNotation,
+            options: pronunciationNotationOptions,
+            label: I18n.t("menu.pronunciationNotation") || "Pronunciation notation",
+            onChange: (key) => {
+              setPronunciationNotation(normalizePronunciationNotation(key));
+              void handleTranslationMenuChange("translate:pronunciation-notation", key);
+            },
+          }),
+        }),
+        react.createElement(ToolbarToggleRow, {
+          label: I18n.t("menu.translationLabel"),
+          desc: I18n.t("menu.translationInfo"),
+          checked: isTranslationOn,
+          onChange: (checked) => {
+            setTranslationOn(checked);
+            void handleTranslationMenuChange(`translation-mode-2:${modeKey}`, checked);
+          },
+        }),
+        react.createElement(ToolbarPanelRow, {
+          stack: true,
+          label: I18n.t("menu.translationTargetLang"),
+          desc: I18n.t("menu.translationTargetLangInfo"),
+          control: react.createElement(
+            "span",
+            { className: "ivl-tb-value-wrap" },
+            react.createElement("span", { className: "ivl-tb-value ivl-tb-trunc" }, getTranslationTargetDisplay()),
+            react.createElement(ToolbarButton, {
+              variant: "link",
+              onClick: () => onOpenSettings?.({ initialTab: "general", initialSettingKey: "language" }),
+            }, getOptionsText("settings.hotkey.change", "변경"))
+          ),
+        })
+      )
+    ),
+    react.createElement(
+      ToolbarPanelSection,
+      { title: I18n.t("menu.detectedLanguage") },
+      react.createElement(
+        ToolbarPanelGroup,
+        null,
+        react.createElement(ToolbarPanelRow, {
+          // The detected code reads as a localized name (friendlyLanguage is an
+          // English config key such as "japanese").
+          label: getDisplayLanguageName(detectedLanguage || friendlyLanguage),
+          desc: I18n.t("menu.detectedLanguageInfo"),
+          control: languageOverride === "auto"
+            ? react.createElement("span", { className: "ivl-tb-pill" }, I18n.t("menu.autoDetect") || "자동 감지")
+            : null,
+        }),
+        react.createElement(ToolbarPanelRow, {
+          stack: true,
+          label: I18n.t("menu.overrideLanguage") || "언어 수동 설정",
+          desc: I18n.t("menu.overrideLanguageInfo") || "이 곡의 언어를 수동으로 설정합니다. 자동 감지 대신 선택한 언어로 번역됩니다.",
+          control: react.createElement(ToolbarSelect, {
+            value: languageOverride,
+            options: supportedLanguages,
+            label: I18n.t("menu.overrideLanguage") || "언어 수동 설정",
+            onChange: (key) => {
+              setLanguageOverride(key);
+              void handleTranslationMenuChange("track-language-override", key);
+            },
+          }),
+        })
+      )
+    ),
+    (regenerate || cacheEdit) && react.createElement(
+      ToolbarPanelSection,
+      { title: I18n.t("menu.regenerateTranslation") },
+      react.createElement(
+        ToolbarPanelGroup,
+        null,
+        regenerate && react.createElement(RegenerateTranslationButton, regenerate),
+        cacheEdit && react.createElement(ToolbarPanelRow, {
+          label: I18n.t("lyricsCacheEditor.button"),
+          control: react.createElement(ToolbarButton, {
+            disabled: cacheEdit.disabled,
+            onClick: cacheEdit.onOpen,
+          }, I18n.t("buttons.edit")),
+        })
+      )
+    ),
+    react.createElement(
+      ToolbarPanelSection,
+      { title: I18n.t("menu.apiSettings") },
+      react.createElement(
+        ToolbarPanelGroup,
+        null,
+        react.createElement(ToolbarPanelRow, {
+          label: I18n.t("menu.apiKeySettings"),
+          desc: I18n.t("menu.apiSettingsSubtitle"),
+          control: react.createElement(ToolbarButton, {
+            onClick: () => onOpenSettings?.({ initialTab: "ai-providers" }),
+          }, I18n.t("menu.openSettings")),
+        })
+      )
     )
   );
 });
 
+// 현재 곡 > 가사 제공자 선택 (로컬 가사 on a local track). The item drills into
+// the view built below, which keeps the rows, choices and handlers of the
+// dialog it replaces.
 const LyricsProviderSelectButton = react.memo(
   ({
-    currentProvider,
     selectedProvider,
     isLoading,
-    onSelectProvider,
     isLocalTrack = false,
-    trackInfo = null,
-    onImportLocalLyricsFile,
-    onApplyLocalLyrics,
-    getHasLocalLyrics,
-    onDeleteLocalLyrics,
+    hasLocalLyrics = false,
+    onOpen,
   }) => {
-    const open = () => {
-      const providers = window.LyricsAddonManager?.getEnabledProviders?.() || [];
-      const providerOptions = [
-        { key: "auto", value: I18n.t("menu.lyricsProviderAuto") },
-        ...providers.map((provider) => ({
-          key: provider.id,
-          value: provider.name || provider.id,
-        })),
-      ];
+    const providers = !isLocalTrack && selectedProvider
+      ? window.LyricsAddonManager?.getEnabledProviders?.() || []
+      : [];
+    const value = isLocalTrack
+      ? (hasLocalLyrics ? getOptionsText("menu.localLyricsProvider", "Local") : "")
+      : selectedProvider
+        ? providers.find((provider) => provider.id === selectedProvider)?.name || selectedProvider
+        : I18n.t("menu.lyricsProviderAuto");
 
-      if (
-        selectedProvider &&
-        !providerOptions.some((option) => option.key === selectedProvider)
-      ) {
-        providerOptions.push({
-          key: selectedProvider,
-          value: `${selectedProvider} (${I18n.t("menu.lyricsProviderUnavailable")})`,
-        });
-      }
-
-      const selectedValue = selectedProvider || "auto";
-      const selectedOption =
-        providerOptions.find((option) => option.key === selectedValue) ||
-        providerOptions[0];
-      const currentProviderLabel =
-        isLocalTrack
-          ? getOptionsText("menu.localLyricsProvider", "Local")
-          : (
-            providers.find((provider) => provider.id === currentProvider)?.name ||
-            currentProvider ||
-            I18n.t("menu.unknownLanguage")
-          );
-
-      let closeModal = null;
-      const items = [];
-      if (isLocalTrack) {
-        const hasLocalLyrics = !!getHasLocalLyrics?.();
-        items.push({
-          section: getOptionsText("menu.localLyricsTools", "로컬 가사"),
-          subtitle: getOptionsText(
-            "menu.localLyricsToolsSubtitle",
-            "로컬 곡은 ivLyrics 서버와 분리됩니다. LRC 파일을 가져오거나 LRCLIB에서 직접 검색해 이 기기에 저장합니다."
-          ),
-          items: [
-            {
-              desc: react.createElement(SettingRowDescription, {
-                icon: ICONS.localLyrics,
-                text: getOptionsText("menu.localLyricsCurrent", "현재 로컬 가사"),
-              }),
-              key: "current-local-lyrics-provider",
-              type: "info",
-              info: currentProviderLabel || "local",
-            },
-            {
-              desc: react.createElement(SettingRowDescription, {
-                icon: ICONS.file,
-                text: getOptionsText("menu.importLrcFile", "LRC 파일 가져오기"),
-              }),
-              key: "local-lyrics-import",
-              type: IvConfigButton,
-              text: getOptionsText("menu.import", "가져오기"),
-              onChange: () => {
-                closeModal?.();
-                onImportLocalLyricsFile?.();
-              },
-            },
-            {
-              desc: react.createElement(SettingRowDescription, {
-                icon: ICONS.search,
-                text: getOptionsText("menu.searchLrclibLocal", "LRCLIB에서 검색"),
-              }),
-              key: "local-lyrics-lrclib-search",
-              type: IvConfigButton,
-              text: getOptionsText("menu.search", "검색"),
-              onChange: () => {
-                closeModal?.();
-                openLocalLyricsLrclibSearchModal({
-                  trackInfo,
-                  onApplyLocalLyrics,
-                });
-              },
-            },
-            // 가져온 로컬 가사는 곡 캐시가 아니라 이 기기에 저장된 사용자 데이터라서,
-            // 캐시 삭제로는 지워지지 않는다. 저장된 가사가 있을 때 여기서 직접 지운다.
-            hasLocalLyrics && {
-              desc: react.createElement(SettingRowDescription, {
-                icon: ICONS.trash,
-                text: getOptionsText("menu.localLyricsDelete", "로컬 가사 삭제"),
-              }),
-              key: "local-lyrics-delete",
-              type: IvConfigButton,
-              text: getOptionsText("buttons.delete", "삭제"),
-              onChange: () => {
-                closeModal?.();
-                onDeleteLocalLyrics?.();
-              },
-            },
-          ].filter(Boolean),
-        });
-      } else {
-        items.push({
-          section: I18n.t("menu.lyricsProviderSelect"),
-          subtitle: I18n.t("menu.lyricsProviderSelectSubtitle"),
-          items: [
-            {
-              desc: react.createElement(SettingRowDescription, {
-                icon: ICONS.provider,
-                text: I18n.t("menu.lyricsProviderCurrent"),
-              }),
-              key: "current-lyrics-provider",
-              type: "info",
-              info: currentProviderLabel,
-            },
-            {
-              desc: react.createElement(SettingRowDescription, {
-                icon: ICONS.provider,
-                text: I18n.t("menu.lyricsProviderSelect"),
-              }),
-              key: "track-lyrics-provider",
-              type: OptionsMenu,
-              options: providerOptions,
-              defaultValue: selectedOption,
-              info: I18n.t("menu.lyricsProviderSelectSubtitle"),
-            },
-          ],
-        });
-      }
-
-      closeModal = openOptionsModal(
-        isLocalTrack
-          ? getOptionsText("menu.localLyricsTools", "로컬 가사")
-          : I18n.t("menu.lyricsProviderSelect"),
-        items,
-        async (name, value) => {
-          if (name !== "track-lyrics-provider") {
-            return;
-          }
-          if (isLocalTrack) {
-            return;
-          }
-          await onSelectProvider?.(value === "auto" ? null : value);
-          closeModal?.();
-        }
-      );
-    };
-
-    return react.createElement(
-      IvLyricsTooltip,
-      { label: isLocalTrack ? getOptionsText("menu.localLyricsTools", "로컬 가사") : I18n.t("menu.lyricsProviderSelect"), showDelay: 0 },
-      react.createElement(
-        "button",
-        {
-          className: "lyrics-config-button",
-          onClick: open,
-          disabled: isLoading && !isLocalTrack,
-          "aria-label": isLocalTrack
-            ? getOptionsText("menu.localLyricsTools", "로컬 가사")
-            : I18n.t("menu.lyricsProviderSelect"),
-        },
-        react.createElement(IvLyricsToolbarIcon, {
-          name: isLocalTrack ? "localLyrics" : "provider",
-        })
-      )
-    );
+    return react.createElement(ToolbarMenuItem, {
+      icon: isLocalTrack ? "localLyrics" : "provider",
+      label: isLocalTrack
+        ? getOptionsText("menu.localLyricsTools", "로컬 가사")
+        : I18n.t("menu.lyricsProviderSelect"),
+      value,
+      drill: true,
+      disabled: isLoading && !isLocalTrack,
+      onClick: onOpen,
+    });
   }
 );
+
+// The view behind the provider item. closeModal closes the whole panel (a file
+// picker or a dialog takes over); closeView goes back to the 현재 곡 list.
+function buildLyricsProviderView({
+  currentProvider,
+  selectedProvider,
+  isLocalTrack = false,
+  trackInfo = null,
+  onSelectProvider,
+  onImportLocalLyricsFile,
+  onApplyLocalLyrics,
+  getHasLocalLyrics,
+  onDeleteLocalLyrics,
+  closeModal,
+  closeView,
+}) {
+  const providers = window.LyricsAddonManager?.getEnabledProviders?.() || [];
+  const providerOptions = [
+    { key: "auto", value: I18n.t("menu.lyricsProviderAuto") },
+    ...providers.map((provider) => ({
+      key: provider.id,
+      value: provider.name || provider.id,
+    })),
+  ];
+
+  if (
+    selectedProvider &&
+    !providerOptions.some((option) => option.key === selectedProvider)
+  ) {
+    providerOptions.push({
+      key: selectedProvider,
+      value: `${selectedProvider} (${I18n.t("menu.lyricsProviderUnavailable")})`,
+    });
+  }
+
+  const currentProviderLabel =
+    isLocalTrack
+      ? getOptionsText("menu.localLyricsProvider", "Local")
+      : (
+        providers.find((provider) => provider.id === currentProvider)?.name ||
+        currentProvider ||
+        I18n.t("menu.unknownLanguage")
+      );
+
+  if (isLocalTrack) {
+    const hasLocalLyrics = !!getHasLocalLyrics?.();
+    return {
+      title: getOptionsText("menu.localLyricsTools", "로컬 가사"),
+      subtitle: getOptionsText(
+        "menu.localLyricsToolsSubtitle",
+        "로컬 곡은 ivLyrics 서버와 분리됩니다. LRC 파일을 가져오거나 LRCLIB에서 직접 검색해 이 기기에 저장합니다."
+      ),
+      groups: [
+        [
+          {
+            key: "current-local-lyrics-provider",
+            type: "info",
+            label: getOptionsText("menu.localLyricsCurrent", "현재 로컬 가사"),
+            value: currentProviderLabel || "local",
+          },
+          {
+            key: "local-lyrics-import",
+            type: "button",
+            label: getOptionsText("menu.importLrcFile", "LRC 파일 가져오기"),
+            buttonText: getOptionsText("menu.import", "가져오기"),
+            onClick: () => {
+              closeModal?.();
+              onImportLocalLyricsFile?.();
+            },
+          },
+          {
+            key: "local-lyrics-lrclib-search",
+            type: "button",
+            label: getOptionsText("menu.searchLrclibLocal", "LRCLIB에서 검색"),
+            buttonText: getOptionsText("menu.search", "검색"),
+            onClick: () => {
+              closeModal?.();
+              openLocalLyricsLrclibSearchModal({
+                trackInfo,
+                onApplyLocalLyrics,
+              });
+            },
+          },
+          // 가져온 로컬 가사는 곡 캐시가 아니라 이 기기에 저장된 사용자 데이터라서,
+          // 캐시 삭제로는 지워지지 않는다. 저장된 가사가 있을 때 여기서 직접 지운다.
+          hasLocalLyrics && {
+            key: "local-lyrics-delete",
+            type: "button",
+            danger: true,
+            label: getOptionsText("menu.localLyricsDelete", "로컬 가사 삭제"),
+            buttonText: getOptionsText("buttons.delete", "삭제"),
+            onClick: () => {
+              closeModal?.();
+              onDeleteLocalLyrics?.();
+            },
+          },
+        ].filter(Boolean),
+      ],
+    };
+  }
+
+  return {
+    title: I18n.t("menu.lyricsProviderSelect"),
+    subtitle: I18n.t("menu.lyricsProviderSelectSubtitle"),
+    groups: [
+      [
+        {
+          key: "current-lyrics-provider",
+          type: "info",
+          label: I18n.t("menu.lyricsProviderCurrent"),
+          value: currentProviderLabel,
+        },
+      ],
+      [
+        {
+          key: "track-lyrics-provider",
+          type: "choice",
+          label: I18n.t("menu.lyricsProviderSelect"),
+          options: providerOptions,
+          value: selectedProvider || "auto",
+          onPick: async (value) => {
+            await onSelectProvider?.(value === "auto" ? null : value);
+            closeView?.();
+          },
+        },
+      ],
+    ],
+  };
+}
 
 function openRegenerateTranslationChoiceModal({
   onSelect,
@@ -3598,10 +3966,14 @@ function openRegenerateTranslationChoiceModal({
   includeWordSupplements = false,
 }) {
   let closeModal = null;
-  const makeTargetButton = (key, text, target) => ({
+  const targetItems = getRegenerateTranslationChoiceItems({
+    targets,
+    includeCulturalAnnotations,
+    includeWordSupplements,
+  }).map(({ key, label, target }) => ({
     desc: react.createElement(SettingRowDescription, {
       icon: ICONS.language,
-      text,
+      text: label,
     }),
     key,
     type: ConfigButton,
@@ -3610,54 +3982,7 @@ function openRegenerateTranslationChoiceModal({
       closeModal?.();
       onSelect?.(target);
     },
-  });
-
-  const targetItems = [];
-  if (targets.needPhonetic) {
-    targetItems.push(
-      makeTargetButton(
-        "regenerate-phonetic-only",
-        I18n.t("menu.regeneratePronunciationOnly"),
-        "phonetic"
-      )
-    );
-  }
-  if (targets.needTranslation) {
-    targetItems.push(
-      makeTargetButton(
-        "regenerate-translation-only",
-        I18n.t("menu.regenerateTranslationOnly"),
-        "translation"
-      )
-    );
-  }
-  if (targets.needPhonetic && targets.needTranslation) {
-    targetItems.push(
-      makeTargetButton(
-        "regenerate-both",
-        I18n.t("menu.regenerateBoth"),
-        "all"
-      )
-    );
-  }
-  if (includeCulturalAnnotations) {
-    targetItems.push(
-      makeTargetButton(
-        "regenerate-cultural-annotations",
-        I18n.t("settings.culturalAnnotations.label"),
-        "cultural-annotations"
-      )
-    );
-  }
-  if (includeWordSupplements) {
-    targetItems.push(
-      makeTargetButton(
-        "regenerate-word-supplements",
-        I18n.t("menu.regenerateWordDetails") || "Word details",
-        "word-supplements"
-      )
-    );
-  }
+  }));
 
   const items = [
     {
@@ -3674,103 +3999,178 @@ function openRegenerateTranslationChoiceModal({
   );
 }
 
+// Regeneration targets offered for the current lyrics, in the order the choice
+// dialog above lists them. The conversion panel shows the same list inline.
+const getRegenerateTranslationChoiceItems = ({
+  targets = {},
+  includeCulturalAnnotations = false,
+  includeWordSupplements = false,
+}) => {
+  const items = [];
+  if (targets.needPhonetic) {
+    items.push({ key: "regenerate-phonetic-only", target: "phonetic", label: I18n.t("menu.regeneratePronunciationOnly") });
+  }
+  if (targets.needTranslation) {
+    items.push({ key: "regenerate-translation-only", target: "translation", label: I18n.t("menu.regenerateTranslationOnly") });
+  }
+  if (targets.needPhonetic && targets.needTranslation) {
+    items.push({ key: "regenerate-both", target: "all", label: I18n.t("menu.regenerateBoth") });
+  }
+  if (includeCulturalAnnotations) {
+    items.push({ key: "regenerate-cultural-annotations", target: "cultural-annotations", label: I18n.t("settings.culturalAnnotations.label") });
+  }
+  if (includeWordSupplements) {
+    items.push({ key: "regenerate-word-supplements", target: "word-supplements", label: I18n.t("menu.regenerateWordDetails") || "Word details" });
+  }
+  return items;
+};
+
+// 번역 재생성 in the conversion panel: one button per target. The panel stays
+// open, and the button that started a regeneration spins until it finishes.
 const RegenerateTranslationButton = react.memo(
-  ({ onRegenerate, isEnabled, isLoading }) => {
-    return react.createElement(
-      IvLyricsTooltip,
-      { label: I18n.t("menu.regenerateTranslation"), showDelay: 0 },
-      react.createElement(
-        "button",
-        {
-          className: "lyrics-config-button" + (isLoading ? " loading-spin" : ""),
-          onClick: onRegenerate,
-          disabled: !isEnabled || isLoading,
-          "aria-label": I18n.t("menu.regenerateTranslation"),
-        },
-        react.createElement(IvLyricsToolbarIcon, { name: "regenerate" })
-      )
-    );
+  ({ choices = [], onRegenerate, isEnabled, isLoading }) => {
+    const [pendingTarget, setPendingTarget] = useState(null);
+    useEffect(() => {
+      if (!isLoading) setPendingTarget(null);
+    }, [isLoading]);
+
+    return react.createElement(ToolbarPanelRow, {
+      stack: true,
+      className: "ivl-tb-regen",
+      desc: I18n.t("menu.regenerateTranslationOptionsSubtitle"),
+      control: react.createElement(
+        "div",
+        { className: "ivl-tb-chips" },
+        choices.map((choice) => react.createElement(
+          ToolbarButton,
+          {
+            key: choice.key,
+            className: joinToolbarClasses("ivl-tb-chip", isLoading && pendingTarget === choice.target && "is-busy"),
+            disabled: !isEnabled || isLoading,
+            onClick: () => {
+              setPendingTarget(choice.target);
+              onRegenerate?.(choice.target);
+            },
+          },
+          react.createElement(ToolbarGlyph, { name: "refresh", size: 14 }),
+          react.createElement("span", null, choice.label)
+        ))
+      ),
+    });
   }
 );
 
+// 현재 곡 > 개별 배경: drills into the background view below, which keeps the
+// choices and handler of the dialog it replaces.
 const TrackBackgroundButton = react.memo(
-  ({ trackUri, overrideMode, effectiveMode, onSelectBackground }) => {
-    const open = () => {
-      if (!trackUri) {
-        Toast.error(I18n.t("notifications.noTrackPlaying"));
-        return;
-      }
-
-      const backgroundOptions = getTrackBackgroundOptions();
-      const selectedKey = overrideMode || "inherit";
-      const selectedOption =
-        backgroundOptions.find((option) => option.key === selectedKey) ||
-        backgroundOptions[0];
-      const effectiveLabel = getBackgroundPresetLabel(effectiveMode || "none");
-
-      const items = [
-        {
-          section: getOptionsText("menu.trackBackgroundTitle", "개별 배경"),
-          subtitle: getOptionsText(
-            "menu.trackBackgroundSubtitle",
-            "이 곡에서만 사용할 배경 종류를 선택합니다. 블러, 밝기, 영상 배율 같은 세부 옵션은 기본 배경 설정을 따릅니다."
-          ),
-          items: [
-            {
-              desc: react.createElement(SettingRowDescription, {
-                icon: ICONS.background,
-                text: getOptionsText("menu.trackBackgroundCurrent", "현재 적용 배경"),
-              }),
-              key: "current-track-background",
-              type: "info",
-              info: effectiveLabel,
-            },
-            {
-              desc: react.createElement(SettingRowDescription, {
-                icon: ICONS.background,
-                text: getOptionsText("menu.trackBackgroundSelect", "이 곡의 배경"),
-              }),
-              key: "track-background-mode",
-              type: OptionsMenu,
-              options: backgroundOptions,
-              defaultValue: selectedOption,
-              info: getOptionsText(
-                "menu.trackBackgroundSelectInfo",
-                "기본 설정 사용을 선택하면 설정 > 외관 > 시각효과의 배경을 그대로 사용합니다."
-              ),
-            },
-          ],
-        },
-      ];
-
-      openOptionsModal(
-        getOptionsText("menu.trackBackgroundTitle", "개별 배경"),
-        items,
-        async (name, value) => {
-          if (name !== "track-background-mode") {
-            return;
-          }
-          await onSelectBackground?.(value === "inherit" ? null : value);
+  ({ trackUri, overrideMode, onOpen }) =>
+    react.createElement(ToolbarMenuItem, {
+      icon: "background",
+      label: getOptionsText("menu.trackBackground", "개별 배경"),
+      value: overrideMode
+        ? getBackgroundPresetLabel(overrideMode)
+        : getOptionsText("menu.trackBackgroundUseGlobal", "기본 설정 사용"),
+      drill: true,
+      onClick: () => {
+        if (!trackUri) {
+          Toast.error(I18n.t("notifications.noTrackPlaying"));
+          return;
         }
-      );
-    };
-
-    return react.createElement(
-      IvLyricsTooltip,
-      { label: getOptionsText("menu.trackBackground", "개별 배경"), showDelay: 0 },
-      react.createElement(
-        "button",
-        {
-          className: "lyrics-config-button lyrics-track-background-button",
-          onClick: open,
-          "data-active": overrideMode ? "true" : "false",
-          "aria-label": getOptionsText("menu.trackBackground", "개별 배경"),
-        },
-        react.createElement(IvLyricsToolbarIcon, { name: "background" })
-      )
-    );
-  }
+        onOpen?.();
+      },
+    })
 );
+
+function buildTrackBackgroundView({ overrideMode, effectiveMode, onSelectBackground, onOpenSettings }) {
+  const backgroundOptions = getTrackBackgroundOptions();
+  const selectedKey = overrideMode || "inherit";
+  const selectedOption =
+    backgroundOptions.find((option) => option.key === selectedKey) ||
+    backgroundOptions[0];
+
+  return {
+    title: getOptionsText("menu.trackBackgroundTitle", "개별 배경"),
+    subtitle: getOptionsText(
+      "menu.trackBackgroundSubtitle",
+      "이 곡에서만 사용할 배경 종류를 선택합니다. 블러, 밝기, 영상 배율 같은 세부 옵션은 기본 배경 설정을 따릅니다."
+    ),
+    groups: [
+      [
+        {
+          key: "current-track-background",
+          type: "info",
+          label: getOptionsText("menu.trackBackgroundCurrent", "현재 적용 배경"),
+          value: getBackgroundPresetLabel(effectiveMode || "none"),
+        },
+      ],
+      [
+        {
+          key: "track-background-mode",
+          type: "choice",
+          label: getOptionsText("menu.trackBackgroundSelect", "이 곡의 배경"),
+          options: backgroundOptions,
+          value: selectedOption?.key,
+          onPick: async (value) => {
+            await onSelectBackground?.(value === "inherit" ? null : value);
+          },
+        },
+      ],
+    ],
+    note: {
+      text: getOptionsText(
+        "menu.trackBackgroundSelectInfo",
+        "기본 설정 사용을 선택하면 설정 > 외관 > 시각효과의 배경을 그대로 사용합니다."
+      ),
+      actionLabel: I18n.t("menu.openSettings"),
+      onAction: () => onOpenSettings?.({ initialTab: "appearance", initialSettingKey: "background-experience" }),
+    },
+  };
+}
+
+// Renders a view description (see the builders above) with the panel parts.
+const ToolbarModelView = ({ view }) =>
+  react.createElement(
+    "div",
+    { className: "ivl-tb-stack" },
+    (view?.groups || []).filter((rows) => rows.length > 0).map((rows, index) => react.createElement(
+      ToolbarPanelGroup,
+      { key: index, className: rows.every((row) => row.type === "choice") ? "is-options" : "" },
+      rows.map((row) => {
+        if (row.type === "choice") {
+          return react.createElement(ToolbarOptionList, {
+            key: row.key,
+            label: row.label,
+            options: row.options,
+            value: row.value,
+            onPick: row.onPick,
+          });
+        }
+        if (row.type === "button") {
+          return react.createElement(ToolbarPanelRow, {
+            key: row.key,
+            label: row.label,
+            desc: row.desc,
+            control: react.createElement(ToolbarButton, {
+              variant: row.danger ? "danger" : "",
+              onClick: row.onClick,
+            }, row.buttonText),
+          });
+        }
+        return react.createElement(ToolbarPanelRow, {
+          key: row.key,
+          label: row.label,
+          control: react.createElement("span", { className: "ivl-tb-value ivl-tb-trunc" }, row.value),
+        });
+      })
+    )),
+    view?.note
+      ? react.createElement(ToolbarNote, {
+        actions: view.note.onAction
+          ? react.createElement(ToolbarButton, { onClick: view.note.onAction }, view.note.actionLabel)
+          : null,
+      }, view.note.text)
+      : null
+  );
 
 const clampSyncOffset = (value) => {
   const numericValue = Number(value);
@@ -4106,363 +4506,214 @@ const TrackSyncAdjustPill = react.memo(({ trackUri }) => {
 const SYNC_ADJUST_PANEL_GAP = 10;
 const SYNC_ADJUST_VIEWPORT_PADDING = 12;
 const SYNC_ADJUST_PANEL_POSITION_ATTEMPTS = 8;
+// A panel aligned to the start of its trigger sits this far above the
+// trigger's top edge, so the panel header lines up with the toolbar entry.
+const SYNC_ADJUST_PANEL_START_OFFSET = 6;
 
 // Pure helper (kept outside the component so it can be unit-tested):
-// positions the sync panel to the left of the toolbar trigger, clamped
-// into the viewport. Returns null when the rects are not measurable yet.
-const computeSyncAdjustPanelPosition = (triggerRect, panelRect, viewportWidth, viewportHeight) => {
+// positions a toolbar panel to the left of its trigger, clamped into the
+// viewport (or options.bounds). By default the panel is vertically centred on
+// the trigger; options.align "start" lines its top up with the trigger
+// instead, which is how the toolbar panels open. options.edge is the x the
+// panel keeps its gap from (the toolbar's left edge). Returns null when the
+// rects are not measurable yet.
+const computeSyncAdjustPanelPosition = (triggerRect, panelRect, viewportWidth, viewportHeight, options = {}) => {
   if (!triggerRect || !panelRect?.width || !panelRect?.height) return null;
 
   const viewportPadding = SYNC_ADJUST_VIEWPORT_PADDING;
   const gap = SYNC_ADJUST_PANEL_GAP;
+  const bounds = options.bounds || { left: 0, top: 0, right: viewportWidth, bottom: viewportHeight };
+  const edge = Number.isFinite(options.edge) ? options.edge : triggerRect.left;
+  const desiredTop = options.align === "start"
+    ? triggerRect.top - SYNC_ADJUST_PANEL_START_OFFSET
+    : triggerRect.top + (triggerRect.height - panelRect.height) / 2;
   const left = Math.max(
-    viewportPadding,
+    bounds.left + viewportPadding,
     Math.min(
-      triggerRect.left - panelRect.width - gap,
-      viewportWidth - panelRect.width - viewportPadding
+      edge - panelRect.width - gap,
+      bounds.right - panelRect.width - viewportPadding
     )
   );
   const top = Math.max(
-    viewportPadding,
+    bounds.top + viewportPadding,
     Math.min(
-      triggerRect.top + (triggerRect.height - panelRect.height) / 2,
-      viewportHeight - panelRect.height - viewportPadding
+      desiredTop,
+      bounds.bottom - panelRect.height - viewportPadding
     )
   );
   return { left, top };
 };
 
-const SyncAdjustButtonFluent = react.memo(({
-  trackUri = null,
-  includeTrackOffset = false,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [globalOffset, setGlobalOffset] = useState(() => Utils.getGlobalSyncOffset?.() || 0);
-  const [panelPosition, setPanelPosition] = useState(null);
-  const triggerRef = useRef(null);
-  const panelRef = useRef(null);
-  const globalSliderRef = useRef(null);
-  const previousFocusRef = useRef(null);
-  const reactDom = window.Spicetify?.ReactDOM ?? window.ReactDOM ?? null;
-  const hasTrackOffsetControls = Boolean(
-    includeTrackOffset &&
-    trackUri &&
-    typeof TrackSyncAdjustPill !== "undefined"
-  );
-  const updatePanelPosition = react.useCallback(() => {
-    if (window.innerWidth <= 840) {
-      setPanelPosition(null);
-      return true;
-    }
-
-    const triggerRect = triggerRef.current?.getBoundingClientRect?.();
-    const panelRect = panelRef.current?.getBoundingClientRect?.();
-    const nextPosition = computeSyncAdjustPanelPosition(
-      triggerRect,
-      panelRect,
-      window.innerWidth,
-      window.innerHeight
-    );
-    if (!nextPosition) return false;
-    setPanelPosition(nextPosition);
-    return true;
-  }, []);
+// Current-track and global offsets as the toolbar shows and edits them. The
+// track value goes through the quick sync pill's write queue and event, so
+// both stay in step; the global value through Utils, as before.
+const useToolbarSyncOffsets = (trackUri) => {
+  const [trackOffset, setTrackOffset] = useState(0);
+  const [loadedTrackUri, setLoadedTrackUri] = useState(null);
+  const [globalOffset, setGlobalOffset] = useState(() => clampSyncOffset(Utils.getGlobalSyncOffset?.() || 0));
+  const trackOffsetRef = useRef(0);
+  const loadSeqRef = useRef(0);
 
   useEffect(() => {
-    ensureFluentModalStyles();
-  }, []);
+    trackOffsetRef.current = 0;
+    setTrackOffset(0);
+    setLoadedTrackUri(null);
+    const loadSeq = ++loadSeqRef.current;
+    if (!trackUri) return undefined;
+
+    let active = true;
+    const apply = (offset) => {
+      if (!active || loadSeqRef.current !== loadSeq) return;
+      trackOffsetRef.current = offset;
+      setTrackOffset(offset);
+      setLoadedTrackUri(trackUri);
+    };
+    Promise.resolve(Utils.getTrackSyncOffset(trackUri))
+      .then((savedOffset) => apply(clampSyncOffset(savedOffset)))
+      .catch((error) => {
+        console.error("[ivLyrics] Failed to load track sync offset:", error);
+        apply(0);
+      });
+    return () => {
+      active = false;
+    };
+  }, [trackUri]);
 
   useEffect(() => {
+    const handleTrackOffsetChange = (event) => {
+      if (!trackUri || event.detail?.trackUri !== trackUri) return;
+      const nextOffset = clampSyncOffset(event.detail?.offset);
+      loadSeqRef.current += 1;
+      trackOffsetRef.current = nextOffset;
+      setTrackOffset(nextOffset);
+      setLoadedTrackUri(trackUri);
+    };
     const handleGlobalOffsetChange = (event) => {
       setGlobalOffset(clampSyncOffset(event.detail?.offset));
     };
-
+    window.addEventListener("ivLyrics:offset-changed", handleTrackOffsetChange);
     window.addEventListener("ivLyrics:global-offset-changed", handleGlobalOffsetChange);
     return () => {
+      window.removeEventListener("ivLyrics:offset-changed", handleTrackOffsetChange);
       window.removeEventListener("ivLyrics:global-offset-changed", handleGlobalOffsetChange);
     };
-  }, []);
+  }, [trackUri]);
 
-  useEffect(() => {
-    if (!isOpen) return undefined;
-    setGlobalOffset(clampSyncOffset(Utils.getGlobalSyncOffset?.() || 0));
-    previousFocusRef.current = document.activeElement instanceof HTMLElement
-      ? document.activeElement
-      : null;
-
-    const handlePointerDown = (event) => {
-      const target = event.target;
-      if (panelRef.current?.contains(target) || triggerRef.current?.contains(target)) {
-        return;
-      }
-      setIsOpen(false);
-    };
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        setIsOpen(false);
-        return;
-      }
-      if (event.key !== "Tab" || !panelRef.current) return;
-
-      const focusable = Array.from(panelRef.current.querySelectorAll(
-        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
-      ));
-      if (!focusable.length) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
-      } else if (!panelRef.current.contains(document.activeElement)) {
-        event.preventDefault();
-        first.focus();
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown, true);
-    document.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("resize", updatePanelPosition);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown, true);
-      document.removeEventListener("keydown", handleKeyDown);
-      window.removeEventListener("resize", updatePanelPosition);
-      const previousFocus = previousFocusRef.current;
-      requestAnimationFrame(() => {
-        if (previousFocus && document.contains(previousFocus)) {
-          previousFocus.focus();
-        } else if (triggerRef.current && document.contains(triggerRef.current)) {
-          triggerRef.current.focus();
-        }
-      });
-    };
-  }, [isOpen, updatePanelPosition]);
-
-  useEffect(() => {
-    if (!isOpen) return undefined;
-
-    let focusFrame = null;
-    let layoutFrame = null;
-    let attempts = 0;
-    const measure = () => {
-      // Refs/rects may not be ready on the first frame after the portal
-      // mounts (or the portal fallback renders inline). Retry across a few
-      // frames instead of giving up and leaving the panel unpositioned.
-      const positioned = updatePanelPosition();
-      if (!positioned && attempts < SYNC_ADJUST_PANEL_POSITION_ATTEMPTS) {
-        attempts += 1;
-        layoutFrame = requestAnimationFrame(measure);
-        return;
-      }
-      focusFrame = requestAnimationFrame(() => {
-        const panel = panelRef.current;
-        if (!panel || panel.contains(document.activeElement)) return;
-
-        const initialControl = hasTrackOffsetControls
-          ? panel.querySelector?.(".lyrics-track-sync-step:not([disabled])") ||
-            panel.querySelector?.(".ivlyrics-fluent-close") ||
-            globalSliderRef.current
-          : globalSliderRef.current;
-        initialControl?.focus();
-      });
-    };
-    layoutFrame = requestAnimationFrame(measure);
-
-    return () => {
-      cancelAnimationFrame(layoutFrame);
-      if (focusFrame !== null) {
-        cancelAnimationFrame(focusFrame);
-      }
-    };
-  }, [isOpen, hasTrackOffsetControls, trackUri, updatePanelPosition]);
-
-  const handleGlobalOffsetChange = (newOffset) => {
-    const safeOffset = clampSyncOffset(newOffset);
+  const isTrackOffsetLoaded = Boolean(trackUri && loadedTrackUri === trackUri);
+  const changeTrackOffset = (nextOffset) => {
+    if (!isTrackOffsetLoaded) return;
+    const safeOffset = clampSyncOffset(nextOffset);
+    loadSeqRef.current += 1;
+    trackOffsetRef.current = safeOffset;
+    setTrackOffset(safeOffset);
+    window.dispatchEvent(new CustomEvent("ivLyrics:offset-changed", {
+      detail: { trackUri, offset: safeOffset },
+    }));
+    queueTrackSyncOffsetWrite(trackUri, safeOffset);
+  };
+  const changeGlobalOffset = (nextOffset) => {
+    const safeOffset = clampSyncOffset(nextOffset);
     setGlobalOffset(safeOffset);
     Utils.setGlobalSyncOffset?.(safeOffset);
   };
 
+  return {
+    trackOffset,
+    isTrackOffsetLoaded,
+    globalOffset,
+    trackOffsetRef,
+    changeTrackOffset,
+    changeGlobalOffset,
+  };
+};
+
+// 싱크 조절 panel (the name is kept from the toolbar button it replaces): the
+// current track's offset (when the track has timed lyrics), the global offset
+// and the quick sync controls switch. Its footer resets both offsets.
+const SyncAdjustButtonFluent = react.memo(({
+  offsets,
+  includeTrackOffset = false,
+  quickSyncEnabled = true,
+  onQuickSyncChange,
+}) => {
+  const trackTitle = I18n.t("syncAdjust.trackTitle");
   const globalTitle = I18n.t("syncAdjust.globalTitle");
-  const modalTitle = hasTrackOffsetControls
-    ? I18n.t("menu.syncAdjustTitle")
-    : globalTitle;
-  const modalDescription = hasTrackOffsetControls
-    ? I18n.t("syncAdjust.info")
-    : I18n.t("syncAdjust.globalInfo");
-  const globalControls = react.createElement(
-    "div",
-    { className: "lyrics-sync-adjust-layout" },
-    react.createElement(
-      "div",
-      { className: "lyrics-sync-adjust-track" },
-      react.createElement(
-        "div",
-        { className: "lyrics-sync-adjust-slider-container" },
-        react.createElement("input", {
-          ref: globalSliderRef,
-          type: "range",
-          className: "sync-slider",
-          min: -10000,
-          max: 10000,
-          step: 10,
-          value: globalOffset,
-          onInput: (event) => handleGlobalOffsetChange(Number(event.target.value)),
-          "aria-label": globalTitle,
-          "aria-valuetext": formatSyncOffset(globalOffset),
-          style: {
-            "--progress-percent": `${((globalOffset + 10000) / 20000) * 100}%`,
-          },
-        }),
-        react.createElement(
-          "div",
-          { className: "lyrics-sync-adjust-slider-summary" },
-          react.createElement("span", null, "-10s"),
-          react.createElement("span", { className: "lyrics-sync-adjust-current" }, formatSyncOffset(globalOffset)),
-          react.createElement("span", null, "+10s")
-        )
-      )
-    ),
-    react.createElement(
-      "div",
-      { className: "lyrics-sync-adjust-side" },
-      react.createElement(
-        "div",
-        { className: "lyrics-sync-adjust-fine" },
-        react.createElement(
-          "div",
-          { className: "lyrics-sync-adjust-quick" },
-          react.createElement(AdjustButton, { value: "-1000", ariaLabel: `${globalTitle} -1000ms`, onClick: () => handleGlobalOffsetChange(globalOffset - 1000) }),
-          react.createElement(AdjustButton, { value: "-100", ariaLabel: `${globalTitle} -100ms`, onClick: () => handleGlobalOffsetChange(globalOffset - 100) }),
-          react.createElement(AdjustButton, { value: "-10", ariaLabel: `${globalTitle} -10ms`, onClick: () => handleGlobalOffsetChange(globalOffset - 10) })
-        ),
-        react.createElement(
-          "div",
-          { className: "lyrics-sync-adjust-quick" },
-          react.createElement(AdjustButton, { value: "+1000", ariaLabel: `${globalTitle} +1000ms`, onClick: () => handleGlobalOffsetChange(globalOffset + 1000) }),
-          react.createElement(AdjustButton, { value: "+100", ariaLabel: `${globalTitle} +100ms`, onClick: () => handleGlobalOffsetChange(globalOffset + 100) }),
-          react.createElement(AdjustButton, { value: "+10", ariaLabel: `${globalTitle} +10ms`, onClick: () => handleGlobalOffsetChange(globalOffset + 10) })
-        )
-      ),
-      react.createElement(
-        "button",
-        {
-          type: "button",
-          className: "ivlyrics-fluent-btn lyrics-sync-adjust-reset",
-          onClick: () => handleGlobalOffsetChange(0),
-        },
-        I18n.t("syncAdjust.reset")
-      )
-    )
-  );
-  const renderSyncAdjustOverlay = () => react.createElement(
-        "div",
-        {
-          className: "lyrics-sync-adjust-floating",
-          // Never render hidden: the panel stays visible at its default
-          // fixed position until measured, so a missed measurement can
-          // never leave it stuck invisible after clicking the button.
-          style: panelPosition
-            ? { left: `${panelPosition.left}px`, top: `${panelPosition.top}px`, right: "auto", bottom: "auto" }
-            : undefined,
-          onMouseDown: (event) => event.stopPropagation(),
-          onClick: (event) => event.stopPropagation(),
-        },
-        react.createElement(
-          "div",
-          {
-            ref: panelRef,
-            className: "ivlyrics-fluent-shell lyrics-sync-adjust-modal-shell",
-            "data-ui-theme": getSettingsSurfaceTheme(),
-            role: "dialog",
-            "aria-modal": "true",
-            "aria-labelledby": "ivlyrics-sync-adjust-title",
-            "aria-describedby": "ivlyrics-sync-adjust-description",
-          },
-          react.createElement(
-            "div",
-            { className: "ivlyrics-fluent-header" },
-            react.createElement(
-              "div",
-              { className: "ivlyrics-fluent-title-wrap" },
-              react.createElement("div", { id: "ivlyrics-sync-adjust-title", className: "ivlyrics-fluent-title" }, modalTitle),
-              react.createElement("p", { id: "ivlyrics-sync-adjust-description", className: "ivlyrics-fluent-subtitle" }, modalDescription)
-            ),
-            react.createElement(
-              "button",
-              {
-                type: "button",
-                className: "ivlyrics-fluent-close",
-                onClick: () => setIsOpen(false),
-                "aria-label": I18n.t("buttons.close") || "Close",
-              },
-              react.createElement(
-                "svg",
-                { width: 16, height: 16, viewBox: "0 0 16 16", fill: "currentColor", "aria-hidden": "true" },
-                react.createElement("path", { d: "M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z" })
-              )
-            )
-          ),
-          react.createElement(
-            "div",
-            { className: "ivlyrics-fluent-body lyrics-sync-adjust-modal" },
-            hasTrackOffsetControls &&
-            react.createElement(
-              "div",
-              { className: "lyrics-sync-adjust-track-section" },
-              react.createElement("div", { className: "lyrics-sync-adjust-section-title" }, I18n.t("syncAdjust.trackTitle")),
-              react.createElement("p", { className: "lyrics-sync-adjust-section-desc" }, I18n.t("syncAdjust.trackInfo")),
-              react.createElement(TrackSyncAdjustPill, {
-                key: trackUri,
-                trackUri,
-              })
-            ),
-            hasTrackOffsetControls
-              ? react.createElement(
-                "div",
-                { className: "lyrics-sync-adjust-global-section" },
-                react.createElement("div", { className: "lyrics-sync-adjust-section-title" }, globalTitle),
-                react.createElement("p", { className: "lyrics-sync-adjust-section-desc" }, I18n.t("syncAdjust.globalInfo")),
-                globalControls
-              )
-              : globalControls
-          )
-        )
-      );
-
-  const modalOverlay = isOpen
-    ? renderSyncAdjustOverlay()
-    : null;
-
   return react.createElement(
-    react.Fragment,
-    null,
-    react.createElement(
-      IvLyricsTooltip,
-      { label: modalTitle, showDelay: 0 },
+    "div",
+    { className: "ivl-tb-stack" },
+    includeTrackOffset && react.createElement(
+      ToolbarPanelSection,
+      { title: trackTitle },
       react.createElement(
-        "button",
-        {
-          ref: triggerRef,
-          type: "button",
-          className: "lyrics-config-button lyrics-global-sync-button",
-          onClick: (event) => {
-            triggerRef.current = event.currentTarget;
-            setIsOpen((prev) => !prev);
-          },
-          "aria-label": modalTitle,
-          "aria-expanded": isOpen,
-        },
-        react.createElement(IvLyricsToolbarIcon, { name: "globalSync" })
+        ToolbarPanelGroup,
+        null,
+        react.createElement(ToolbarPanelRow, {
+          stack: true,
+          className: "ivl-tb-offset-row",
+          desc: I18n.t("syncAdjust.trackInfo"),
+          control: react.createElement(
+            "div",
+            { className: "ivl-tb-offset" },
+            react.createElement(
+              "output",
+              {
+                className: joinToolbarClasses("ivl-tb-offset-value", offsets.trackOffset === 0 && "is-zero"),
+                "aria-live": "polite",
+                "aria-busy": !offsets.isTrackOffsetLoaded,
+              },
+              offsets.isTrackOffsetLoaded ? formatSyncOffset(offsets.trackOffset) : "…"
+            ),
+            react.createElement(ToolbarOffsetSteps, {
+              steps: [-100, -50, -10, 10, 50, 100],
+              label: trackTitle,
+              disabled: !offsets.isTrackOffsetLoaded,
+              onStep: (step) => offsets.changeTrackOffset(offsets.trackOffsetRef.current + step),
+            })
+          ),
+        })
       )
     ),
-    modalOverlay && reactDom?.createPortal
-      ? reactDom.createPortal(modalOverlay, document.body)
-      : modalOverlay
+    react.createElement(
+      ToolbarPanelSection,
+      { title: globalTitle },
+      react.createElement(
+        ToolbarPanelGroup,
+        null,
+        react.createElement(ToolbarPanelRow, {
+          stack: true,
+          className: "ivl-tb-offset-row",
+          desc: I18n.t("syncAdjust.globalInfo"),
+          control: react.createElement(
+            "div",
+            { className: "ivl-tb-offset" },
+            react.createElement(ToolbarRangeField, {
+              value: offsets.globalOffset,
+              min: -10000,
+              max: 10000,
+              step: 10,
+              unit: "ms",
+              label: globalTitle,
+              onChange: offsets.changeGlobalOffset,
+            }),
+            react.createElement(ToolbarOffsetSteps, {
+              steps: [-1000, -100, -10, 10, 100, 1000],
+              label: globalTitle,
+              unit: false,
+              onStep: (step) => offsets.changeGlobalOffset(offsets.globalOffset + step),
+            })
+          ),
+        })
+      )
+    ),
+    react.createElement(
+      ToolbarPanelGroup,
+      null,
+      react.createElement(ToolbarToggleRow, {
+        label: I18n.t("settingsAdvanced.playback.quickSyncControls.label"),
+        checked: quickSyncEnabled,
+        onChange: onQuickSyncChange,
+      })
+    )
   );
 });
 
@@ -4475,8 +4726,8 @@ function openCommunityVideoSelector(trackUri, currentVideoId, onVideoSelect, def
 
   openFluentReactModal({
     overlayId: "ivLyrics-community-video-overlay",
-    overlayClassName: "community-video-overlay",
-    shellClassName: "community-video-modal-shell",
+    overlayClassName: "community-video-overlay ivl-tb-dialog-overlay",
+    shellClassName: "community-video-modal-shell ivl-tb-dialog",
     shellStyle: `
       max-width: 90vw;
       height: min(70vh, 760px);
@@ -4501,14 +4752,15 @@ function openCommunityVideoSelector(trackUri, currentVideoId, onVideoSelect, def
   });
 }
 
-// Community Video Selector Button
-const CommunityVideoButton = react.memo(({ trackUri, videoInfo, onVideoSelect, defaultStartTime = 0, enabled = CONFIG.visual["video-background"] }) => {
-  // 비디오 배경이 비활성화되어 있으면 버튼 숨김
+// 현재 곡 > 영상 선택, listed while the video background is in use.
+const CommunityVideoButton = react.memo(({ trackUri, videoInfo, onVideoSelect, defaultStartTime = 0, enabled = CONFIG.visual["video-background"], onBeforeOpen }) => {
+  // 비디오 배경이 비활성화되어 있으면 항목 숨김
   if (!enabled) {
     return null;
   }
 
   const handleClick = () => {
+    onBeforeOpen?.();
     const activeVideoInfo = window.ivLyricsActiveCommunityVideoInfo;
     const activeVideoId = activeVideoInfo?.trackUri === trackUri
       ? activeVideoInfo.youtubeVideoId
@@ -4521,39 +4773,11 @@ const CommunityVideoButton = react.memo(({ trackUri, videoInfo, onVideoSelect, d
     );
   };
 
-  return react.createElement(
-    IvLyricsTooltip,
-    { label: I18n.t("communityVideo.selectVideo"), showDelay: 0 },
-    react.createElement(
-      "button",
-      {
-        className: "lyrics-config-button",
-        onClick: handleClick,
-        "aria-label": I18n.t("communityVideo.selectVideo"),
-      },
-      react.createElement(IvLyricsToolbarIcon, { name: "communityVideo" })
-    )
-  );
-});
-
-const SettingsMenu = react.memo(() => {
-  const openSettings = () => {
-    openConfig();
-  };
-
-  return react.createElement(
-    IvLyricsTooltip,
-    { label: I18n.t("menu.settings"), showDelay: 0 },
-    react.createElement(
-      "button",
-      {
-        className: "lyrics-config-button",
-        onClick: openSettings,
-        "aria-label": I18n.t("menu.settings"),
-      },
-      react.createElement(IvLyricsToolbarIcon, { name: "settings" })
-    )
-  );
+  return react.createElement(ToolbarMenuItem, {
+    icon: "communityVideo",
+    label: I18n.t("communityVideo.selectVideo"),
+    onClick: handleClick,
+  });
 });
 // Reuse the advanced panel's controls without adding component or DOM wrappers.
 const renderShareImageControls = (settings, updateSetting) => {
@@ -5416,7 +5640,8 @@ const ShareImageModal = ({ lyrics, trackInfo, onClose }) => {
 function openShareImageModal(lyrics, trackInfo) {
   openFluentReactModal({
     overlayId: "ivLyrics-share-image-overlay",
-    shellClassName: "share-image-modal-shell",
+    overlayClassName: "ivl-tb-dialog-overlay",
+    shellClassName: "share-image-modal-shell ivl-tb-dialog",
     shellStyle: `
       width: 94%;
       max-width: 1600px;
@@ -5431,29 +5656,22 @@ function openShareImageModal(lyrics, trackInfo) {
   });
 }
 
-// Share Image Button
-const ShareImageButton = react.memo(({ lyrics, trackInfo }) => {
+// 더보기 > 가사 이미지 공유. Track details are read when the dialog opens.
+const ShareImageButton = react.memo(({ lyrics, getTrackInfo, onBeforeOpen }) => {
   const handleClick = () => {
+    onBeforeOpen?.();
     if (!lyrics || lyrics.length === 0) {
       Toast.error(I18n.t("notifications.shareImageNoLyrics"));
       return;
     }
-    openShareImageModal(lyrics, trackInfo);
+    openShareImageModal(lyrics, getTrackInfo?.() || {});
   };
 
-  return react.createElement(
-    IvLyricsTooltip,
-    { label: I18n.t("menu.shareImage"), showDelay: 0 },
-    react.createElement(
-      "button",
-      {
-        className: "lyrics-config-button",
-        onClick: handleClick,
-        "aria-label": I18n.t("menu.shareImage"),
-      },
-      react.createElement(IvLyricsToolbarIcon, { name: "shareImage" })
-    )
-  );
+  return react.createElement(ToolbarMenuItem, {
+    icon: "shareImage",
+    label: I18n.t("menu.shareImage"),
+    onClick: handleClick,
+  });
 });
 
 function setSyncDataCreatorVisibility(active) {
@@ -5542,107 +5760,949 @@ async function openSyncDataCreator(trackInfo, initialData = null) {
   dom.render(creatorComponent, overlay);
 }
 
-// Sync Data Creator Button
-const SyncDataCreatorButton = react.memo(({ trackInfo, showHint, isFullscreen = false }) => {
-  const wrapperRef = react.useRef(null);
-  const [hintPosition, setHintPosition] = react.useState(null);
-  const reactDom = resolveOptionsReactDom();
-  const hasTrackId = !!Utils.extractTrackId(trackInfo?.uri);
+// 현재 곡 > 노래방 싱크 생성. A local track cannot be submitted (it has no
+// Spotify trackId); a song without karaoke sync carries the invitation that
+// used to float beside the toolbar.
+const SyncDataCreatorButton = react.memo(({ trackUri, getTrackInfo, hasKaraokeSync = true, onBeforeOpen }) => {
+  const hasTrackId = !!Utils.extractTrackId(trackUri);
   const disabledTooltip = I18n.t("syncCreator.trackIdRequired") || "Spotify trackId가 없는 로컬 곡은 노래방 싱크를 등록할 수 없습니다.";
-
-  const updateHintPosition = react.useCallback(() => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) {
-      setHintPosition(null);
-      return;
-    }
-
-    const rect = wrapper.getBoundingClientRect();
-    setHintPosition({
-      left: rect.left - 10,
-      top: rect.top + (rect.height / 2)
-    });
-  }, []);
-
-  react.useEffect(() => {
-    if (!showHint) {
-      setHintPosition(null);
-      return undefined;
-    }
-
-    updateHintPosition();
-    const rafId = requestAnimationFrame(updateHintPosition);
-
-    window.addEventListener("resize", updateHintPosition);
-    document.addEventListener("scroll", updateHintPosition, true);
-
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener("resize", updateHintPosition);
-      document.removeEventListener("scroll", updateHintPosition, true);
-    };
-  }, [showHint, isFullscreen, updateHintPosition]);
 
   const handleClick = () => {
     if (!hasTrackId) {
       Toast.error(disabledTooltip);
       return;
     }
-    void openSyncDataCreator(trackInfo, null);
+    onBeforeOpen?.();
+    void openSyncDataCreator(getTrackInfo?.() || { uri: trackUri }, null);
   };
-  const hintText = I18n.t("syncCreator.clickHereHint") || "";
-  const canPortalHint = !!reactDom?.createPortal;
-  const inlineHint = showHint && !canPortalHint
-    ? react.createElement("div", {
-      className: `sync-creator-hint${isFullscreen ? " is-fullscreen" : ""}`,
-    }, hintText)
-    : null;
-  const portalHint = showHint && canPortalHint && hintPosition
-    ? reactDom.createPortal(
-      react.createElement("div", {
-        className: `sync-creator-hint sync-creator-hint--portal${isFullscreen ? " is-fullscreen" : ""}`,
-        style: {
-          "--sync-creator-hint-left": `${hintPosition.left}px`,
-          "--sync-creator-hint-top": `${hintPosition.top}px`
-        },
-        "aria-hidden": "true"
-      }, hintText),
-      document.body
-    )
-    : null;
 
+  return react.createElement(ToolbarMenuItem, {
+    icon: "syncCreator",
+    label: I18n.t("syncCreator.buttonTooltip") || "Create Karaoke Sync",
+    desc: !hasTrackId
+      ? disabledTooltip
+      : hasKaraokeSync
+        ? null
+        : I18n.t("syncCreator.clickHereHint") || null,
+    disabled: !hasTrackId,
+    onClick: handleClick,
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Lyrics-page floating toolbar
+// Seven labelled entries in three groups: the lyrics mode (named after the
+// current mode), 변환 and 싱크 조절 | 현재 곡 and 더보기 | 설정 and 전체화면.
+// In fullscreen they fold into one 메뉴 button. Entries with a panel open it
+// to the left of the toolbar; 현재 곡 drills into the provider, local lyrics
+// and background views. Video selection, image sharing, the cache editor,
+// LRCLIB search and the karaoke sync creator keep their dialogs.
+// ---------------------------------------------------------------------------
+const TOOLBAR_ENTRY_GROUPS = Object.freeze([
+  Object.freeze(["mode", "convert", "sync"]),
+  Object.freeze(["track", "more"]),
+  Object.freeze(["settings", "fullscreen"]),
+]);
+const TOOLBAR_MODE_KEYS = Object.freeze(["character", "word", "synced", "unsynced"]);
+const TOOLBAR_MODE_LABEL_KEYS = Object.freeze({
+  character: "modes.character",
+  word: "modes.word",
+  synced: "modes.synced",
+  unsynced: "modes.unsynced",
+});
+const TOOLBAR_TOOLTIP_DELAY_MS = 420;
+const TOOLBAR_TOOLTIP_SWITCH_DELAY_MS = 40;
+// Dialogs that take over from a panel: Esc belongs to them while they are open.
+const TOOLBAR_PANEL_DIALOG_SURFACES = [
+  ".ivlyrics-fluent-overlay",
+  ".ivlyrics-cache-edit-overlay",
+  ".community-video-overlay",
+  ".confirm-dialog-overlay",
+  "#ivLyrics-settings-overlay",
+  "#ivLyrics-sync-creator-overlay",
+].join(", ");
+// Pressing inside these does not count as a click outside the open panel.
+const TOOLBAR_PANEL_COMPANION_SURFACES = TOOLBAR_PANEL_DIALOG_SURFACES +
+  ", .optionsMenu-dropdown-list, .ivlyrics-toast-container";
+// In fullscreen, a click outside the opened menu folds it, except in these.
+const TOOLBAR_FULLSCREEN_MENU_SURFACES = TOOLBAR_PANEL_COMPANION_SURFACES +
+  ", #ivLyrics-share-image-overlay, .lyrics-creator-profile-overlay";
+const TOOLBAR_HOTKEY_LABELS = Object.freeze({
+  ctrl: "⌃",
+  control: "⌃",
+  alt: "⌥",
+  option: "⌥",
+  shift: "⇧",
+  meta: "⌘",
+  command: "⌘",
+  cmd: "⌘",
+  space: "Space",
+  enter: "Enter",
+  return: "Enter",
+  esc: "Esc",
+  escape: "Esc",
+  tab: "Tab",
+  left: "←",
+  right: "→",
+  up: "↑",
+  down: "↓",
+});
+
+const getToolbarHotkeyParts = (combo) =>
+  String(combo || "")
+    .split("+")
+    .map((token) => token.trim())
+    .filter(Boolean)
+    .map((token) => {
+      const lower = token.toLowerCase();
+      if (TOOLBAR_HOTKEY_LABELS[lower]) return TOOLBAR_HOTKEY_LABELS[lower];
+      return token.length === 1 || /^f\d{1,2}$/.test(lower) ? token.toUpperCase() : token;
+    });
+
+const isToolbarModeAvailable = (modeKey, lyrics) => {
+  if (modeKey === "character" || modeKey === "word") return !!lyrics.hasKaraoke && !!lyrics.karaokeEnabled;
+  if (modeKey === "synced") return !!lyrics.hasSynced;
+  if (modeKey === "unsynced") return !!lyrics.hasUnsynced;
+  return false;
+};
+
+// Why a mode cannot be chosen for the current song. Nothing is claimed while
+// the song's lyrics are still loading.
+const getToolbarModeUnavailableReason = (modeKey, lyrics) => {
+  if (lyrics.isLoading) return "";
+  if (modeKey === "character" || modeKey === "word") {
+    if (!lyrics.hasKaraoke) return getOptionsText("modes.unavailableNoKaraoke", "이 곡에는 노래방 싱크가 없습니다");
+    if (!lyrics.karaokeEnabled) return getOptionsText("modes.unavailableKaraokeOff", "노래방 모드 사용이 꺼져 있습니다");
+    return "";
+  }
+  if (modeKey === "synced") return getOptionsText("modes.unavailableNoSynced", "이 곡에는 동기화 가사가 없습니다");
+  return getOptionsText("messages.noLyrics", "사용 가능한 가사가 없음");
+};
+
+const getToolbarFlyoutBounds = (toolbar) => {
+  const pageRect = toolbar?.closest?.(".lyrics-lyricsContainer-LyricsContainer")?.getBoundingClientRect?.();
+  const bounds = {
+    left: Math.max(0, pageRect?.left ?? 0),
+    top: Math.max(0, pageRect?.top ?? 0),
+    right: Math.min(window.innerWidth, pageRect?.right ?? window.innerWidth),
+    bottom: Math.min(window.innerHeight, pageRect?.bottom ?? window.innerHeight),
+  };
+  return bounds.right - bounds.left > 0 && bounds.bottom - bounds.top > 0
+    ? bounds
+    : { left: 0, top: 0, right: window.innerWidth, bottom: window.innerHeight };
+};
+
+const useToolbarStudyOpen = () => {
+  const learning = window.IvLyricsLearningMode;
+  const [isOpen, setIsOpen] = useState(() => !!learning?.isOpen?.());
+  useEffect(() => {
+    if (typeof learning?.subscribe !== "function") return undefined;
+    setIsOpen(!!learning.isOpen?.());
+    const unsubscribe = learning.subscribe((open) => setIsOpen(!!open));
+    return () => {
+      unsubscribe?.();
+    };
+  }, [learning]);
+  return isOpen;
+};
+
+// A panel next to the toolbar: header with title (and 뒤로 inside a drilled
+// view), a scrolling body and an optional footer. It is positioned from the
+// entry that opened it and kept inside the lyrics page.
+const ToolbarFlyout = ({ entryId, anchor, toolbar, view, viewKey, direction, onBack, onClose }) => {
+  const ref = useRef(null);
+  const titleId = useToolbarControlId("ivl-tb-fly-title");
+
+  const place = useCallback(() => {
+    const flyout = ref.current;
+    if (!flyout || !toolbar || !anchor?.isConnected) return false;
+    const bounds = getToolbarFlyoutBounds(toolbar);
+    flyout.style.setProperty("--ivl-tb-fly-max-w", Math.max(240, bounds.right - bounds.left - 24) + "px");
+    flyout.style.setProperty("--ivl-tb-fly-max-h", Math.max(200, bounds.bottom - bounds.top - 24) + "px");
+    const toolbarRect = toolbar.getBoundingClientRect();
+    const position = computeSyncAdjustPanelPosition(
+      anchor.getBoundingClientRect(),
+      flyout.getBoundingClientRect(),
+      window.innerWidth,
+      window.innerHeight,
+      { align: "start", edge: toolbarRect.left, bounds }
+    );
+    if (!position) return false;
+    flyout.style.left = Math.round(position.left - toolbarRect.left - toolbar.clientLeft) + "px";
+    flyout.style.top = Math.round(position.top - toolbarRect.top - toolbar.clientTop) + "px";
+    flyout.style.right = "auto";
+    flyout.style.bottom = "auto";
+    return true;
+  }, [anchor, toolbar]);
+
+  // Place before paint; rects can be unmeasurable for a frame right after
+  // mounting, so retry across a few frames (the default CSS spot stays visible).
+  react.useLayoutEffect(() => {
+    let frame = 0;
+    let attempts = 0;
+    const measure = () => {
+      if (place() || attempts >= SYNC_ADJUST_PANEL_POSITION_ATTEMPTS) return;
+      attempts += 1;
+      frame = requestAnimationFrame(measure);
+    };
+    measure();
+    return () => cancelAnimationFrame(frame);
+  }, [place, viewKey]);
+
+  useEffect(() => {
+    const flyout = ref.current;
+    if (!flyout) return undefined;
+    let frame = 0;
+    const schedule = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => place());
+    };
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(schedule) : null;
+    observer?.observe(flyout);
+    if (toolbar) observer?.observe(toolbar);
+    window.addEventListener("resize", schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("resize", schedule);
+    };
+  }, [place, toolbar]);
+
+  useEffect(() => {
+    ref.current?.focus({ preventScroll: true });
+  }, [viewKey]);
+
+  // Text cut off with an ellipsis shows its full wording on hover.
+  const handlePointerOver = (event) => {
+    const node = event.target?.closest?.(".ivl-tb-trunc");
+    if (!node || !ref.current?.contains(node)) return;
+    if (node.scrollWidth > node.clientWidth + 1) node.title = node.textContent.trim();
+    else node.removeAttribute("title");
+  };
+
+  const backLabel = getOptionsText("creatorProfile.back", "뒤로");
+  const closeLabel = I18n.t("buttons.close") || "Close";
   return react.createElement(
-    react.Fragment,
-    null,
+    "section",
+    {
+      ref,
+      className: "ivl-tb-fly",
+      role: "dialog",
+      tabIndex: -1,
+      "aria-labelledby": titleId,
+      "data-entry": entryId,
+      onPointerOver: handlePointerOver,
+    },
+    react.createElement(
+      "header",
+      { className: "ivl-tb-fly-head" },
+      onBack
+        ? react.createElement("button", {
+          type: "button",
+          className: "ivl-tb-icon-btn ivl-tb-fly-back",
+          "aria-label": backLabel,
+          title: backLabel,
+          onClick: onBack,
+        }, react.createElement(ToolbarGlyph, { name: "back", size: 16 }))
+        : null,
+      react.createElement(
+        "div",
+        { className: "ivl-tb-fly-titles" },
+        react.createElement("h2", { className: "ivl-tb-fly-title", id: titleId }, view.title),
+        view.subtitle ? react.createElement("p", { className: "ivl-tb-fly-sub" }, view.subtitle) : null
+      ),
+      react.createElement("button", {
+        type: "button",
+        className: "ivl-tb-icon-btn",
+        "aria-label": closeLabel,
+        title: closeLabel,
+        onClick: onClose,
+      }, react.createElement(ToolbarGlyph, { name: "close", size: 16 }))
+    ),
     react.createElement(
       "div",
       {
-        className: "sync-creator-button-wrapper",
-        ref: wrapperRef,
-        style: { position: "relative", display: "inline-flex", alignItems: "center" }
+        key: viewKey,
+        className: joinToolbarClasses("ivl-tb-fly-body", direction && "is-sliding-" + direction),
       },
-      inlineHint,
+      view.body
+    ),
+    view.footer ? react.createElement("footer", { className: "ivl-tb-fly-foot" }, view.footer) : null
+  );
+};
+
+// 가사 모드 panel: the four modes, each with the reason it cannot be used for
+// this song, and the switch that replaced locking by right-click.
+const LyricsModeMenu = ({ modeKey, lockedModeKey, lockInEffect, lyrics, onSelectMode, onSetModeLock }) => {
+  const listRef = useRef(null);
+  const label = getOptionsText("settings.lyricsMode.label", "가사 모드");
+  const canLock = TOOLBAR_MODE_KEYS.some((key) => isToolbarModeAvailable(key, lyrics));
+  return react.createElement(
+    "div",
+    { className: "ivl-tb-stack" },
     react.createElement(
-      IvLyricsTooltip,
-      { label: hasTrackId ? (I18n.t("syncCreator.buttonTooltip") || "Create Karaoke Sync") : disabledTooltip, showDelay: 0 },
+      "div",
+      {
+        ref: listRef,
+        className: "ivl-tb-group ivl-tb-choices",
+        role: "radiogroup",
+        "aria-label": label,
+        onKeyDown: (event) => moveToolbarFocus(event, listRef.current, ".ivl-tb-choice"),
+      },
+      TOOLBAR_MODE_KEYS.map((key) => {
+        const isAvailable = isToolbarModeAvailable(key, lyrics);
+        const reason = isAvailable ? "" : getToolbarModeUnavailableReason(key, lyrics);
+        const isOn = isAvailable && key === modeKey;
+        return react.createElement(
+          "button",
+          {
+            key,
+            type: "button",
+            role: "radio",
+            className: joinToolbarClasses("ivl-tb-choice", isOn && "is-on"),
+            "aria-checked": isOn,
+            disabled: !isAvailable,
+            onClick: () => onSelectMode?.(key),
+          },
+          react.createElement("span", { className: "ivl-tb-choice-ico" }, react.createElement(ToolbarGlyph, { name: key, size: 18 })),
+          react.createElement(
+            "span",
+            { className: "ivl-tb-choice-main" },
+            react.createElement(
+              "span",
+              { className: "ivl-tb-choice-label" },
+              react.createElement("span", null, I18n.t(TOOLBAR_MODE_LABEL_KEYS[key])),
+              lockInEffect && lockedModeKey === key
+                ? react.createElement(
+                  "span",
+                  { className: "ivl-tb-pill is-accent" },
+                  react.createElement(ToolbarGlyph, { name: "lock", size: 11 }),
+                  getOptionsText("modes.locked", "고정됨")
+                )
+                : null
+            ),
+            reason ? react.createElement("small", null, reason) : null
+          ),
+          react.createElement("span", { className: "ivl-tb-choice-check", "aria-hidden": "true" }, react.createElement(ToolbarGlyph, { name: "check", size: 16 }))
+        );
+      })
+    ),
+    react.createElement(
+      ToolbarPanelGroup,
+      null,
+      react.createElement(ToolbarToggleRow, {
+        label: getOptionsText("modes.lockSelected", "선택한 모드로 고정"),
+        desc: getOptionsText("modes.lockSelectedDesc", "다른 곡에서도 이 모드를 쓸 수 있으면 항상 이 모드로 보여 줍니다."),
+        checked: !!lockInEffect,
+        disabled: !canLock,
+        onChange: (checked) => onSetModeLock?.(checked),
+      })
+    )
+  );
+};
+
+// 현재 곡 panel: provider (or local lyrics), the song's own background, video
+// selection while the video background is used, and the karaoke sync creator.
+const CurrentTrackMenu = ({ toolbar, actions, onOpenView, closePanel }) => {
+  const hasLocalLyrics = toolbar.isLocalTrack && !!actions.getHasLocalLyrics?.();
+  return react.createElement(
+    ToolbarMenuList,
+    { label: getOptionsText("menu.currentTrack", "현재 곡") },
+    react.createElement(LyricsProviderSelectButton, {
+      selectedProvider: toolbar.providerOverride,
+      isLoading: toolbar.isLyricsLoading,
+      isLocalTrack: toolbar.isLocalTrack,
+      hasLocalLyrics,
+      onOpen: () => onOpenView("provider"),
+    }),
+    react.createElement(TrackBackgroundButton, {
+      trackUri: toolbar.trackUri,
+      overrideMode: toolbar.backgroundOverride,
+      onOpen: () => onOpenView("background"),
+    }),
+    react.createElement(CommunityVideoButton, {
+      trackUri: toolbar.trackUri,
+      enabled: toolbar.videoEnabled,
+      videoInfo: toolbar.videoInfo,
+      defaultStartTime: toolbar.videoStartTime,
+      onVideoSelect: actions.onVideoSelect,
+      onBeforeOpen: closePanel,
+    }),
+    react.createElement(SyncDataCreatorButton, {
+      trackUri: toolbar.trackUri,
+      getTrackInfo: actions.getSyncCreatorTrackInfo,
+      hasKaraokeSync: toolbar.hasKaraoke,
+      onBeforeOpen: closePanel,
+    })
+  );
+};
+
+// 더보기 panel: the study panel toggle, image sharing and the marketplace.
+const ToolbarMoreMenu = ({ toolbar, actions, closePanel }) => {
+  const isStudyOpen = useToolbarStudyOpen();
+  const learning = window.IvLyricsLearningMode;
+  return react.createElement(
+    ToolbarMenuList,
+    { label: getOptionsText("menu.more", "더보기") },
+    typeof learning?.toggle === "function"
+      ? react.createElement(ToolbarMenuItem, {
+        icon: "study",
+        label: I18n.t("learningMode.button"),
+        desc: I18n.t("learningMode.title"),
+        checked: isStudyOpen,
+        disabled: !toolbar.hasLyrics || toolbar.isLyricsLoading,
+        onClick: () => {
+          const opening = !isStudyOpen;
+          learning.toggle();
+          if (opening) closePanel();
+        },
+      })
+      : null,
+    react.createElement(ShareImageButton, {
+      lyrics: toolbar.lyrics,
+      getTrackInfo: actions.getShareTrackInfo,
+      onBeforeOpen: closePanel,
+    }),
+    react.createElement("div", { className: "ivl-tb-mi-sep", role: "separator" }),
+    react.createElement(ToolbarMenuItem, {
+      icon: "marketplace",
+      label: I18n.t("marketplace.title"),
+      current: !!toolbar.showMarketplace,
+      onClick: () => {
+        closePanel();
+        actions.onToggleMarketplace?.();
+      },
+    })
+  );
+};
+
+const IvLyricsFloatingToolbar = react.memo((toolbar) => {
+  const { actions } = toolbar;
+  const rootRef = useRef(null);
+  const columnRef = useRef(null);
+  const anchorsRef = useRef(new Map());
+  const anchorRefCallbacks = useRef(new Map());
+  const entriesRef = useRef({});
+  const tipRef = useRef(null);
+  const tipTimerRef = useRef(0);
+  const openIdRef = useRef(null);
+  const [openId, setOpenId] = useState(null);
+  const [trackViews, setTrackViews] = useState([]);
+  const [slide, setSlide] = useState(null);
+  const [tip, setTip] = useState(null);
+  const [theme, setTheme] = useState(getSettingsSurfaceTheme);
+  const offsets = useToolbarSyncOffsets(toolbar.syncTrackUri);
+  openIdRef.current = openId;
+  tipRef.current = tip;
+
+  const hideTip = useCallback(() => {
+    clearTimeout(tipTimerRef.current);
+    if (tipRef.current) setTip(null);
+  }, []);
+
+  // Esc, the close button, an outside click and any action that hands over to
+  // a dialog close the panel; focus inside it goes back to its entry first.
+  const closePanel = useCallback(() => {
+    const current = openIdRef.current;
+    if (!current) return;
+    const flyout = rootRef.current?.querySelector(".ivl-tb-fly");
+    const hadFocus = !!flyout?.contains(document.activeElement);
+    openIdRef.current = null;
+    setOpenId(null);
+    setTrackViews([]);
+    setSlide(null);
+    if (hadFocus) anchorsRef.current.get(current)?.focus({ preventScroll: true });
+  }, []);
+
+  const togglePanel = useCallback((id) => {
+    hideTip();
+    if (openIdRef.current === id) {
+      closePanel();
+      return;
+    }
+    setTheme(getSettingsSurfaceTheme());
+    setTrackViews([]);
+    setSlide(null);
+    openIdRef.current = id;
+    setOpenId(id);
+  }, [closePanel, hideTip]);
+
+  const getAnchorRef = (id) => {
+    let callback = anchorRefCallbacks.current.get(id);
+    if (!callback) {
+      callback = (element) => {
+        if (element) anchorsRef.current.set(id, element);
+        else anchorsRef.current.delete(id);
+      };
+      anchorRefCallbacks.current.set(id, callback);
+    }
+    return callback;
+  };
+
+  useEffect(() => {
+    actions?.setEngaged?.(!!openId);
+  }, [openId, actions]);
+  useEffect(() => () => {
+    clearTimeout(tipTimerRef.current);
+    actions?.setEngaged?.(false);
+  }, [actions]);
+
+  useEffect(() => {
+    if (!openId) return undefined;
+    const handlePointerDown = (event) => {
+      const target = event.target;
+      if (rootRef.current?.contains(target) || target?.closest?.(TOOLBAR_PANEL_COMPANION_SURFACES)) return;
+      closePanel();
+    };
+    // Focus outside the toolbar (e.g. on the page) still lets Esc close it.
+    const handleKeyDown = (event) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (rootRef.current?.contains(document.activeElement)) return;
+      if (document.querySelector(TOOLBAR_PANEL_DIALOG_SURFACES)) return;
+      closePanel();
+    };
+    document.addEventListener("pointerdown", handlePointerDown, true);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [openId, closePanel]);
+
+  // Folding the fullscreen menu folds an open panel with it.
+  useEffect(() => {
+    if (toolbar.isFullscreen && !toolbar.isMenuOpen) closePanel();
+  }, [toolbar.isFullscreen, toolbar.isMenuOpen, closePanel]);
+
+  const isMenuUnfolded = !!toolbar.isFullscreen && !!(toolbar.isMenuOpen || toolbar.isMenuClosing);
+  useEffect(() => {
+    if (!isMenuUnfolded) return undefined;
+    const handleClickOutside = (event) => {
+      const target = event.target;
+      if (rootRef.current?.contains(target) || target?.closest?.(TOOLBAR_FULLSCREEN_MENU_SURFACES)) return;
+      actions?.onCloseMenu?.();
+    };
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, [isMenuUnfolded, actions]);
+
+  // The panels follow the settings theme; it can only change while the
+  // settings window is open.
+  useEffect(() => {
+    const refreshTheme = () => setTheme(getSettingsSurfaceTheme());
+    window.addEventListener("ivLyrics:settings-visibility", refreshTheme);
+    return () => window.removeEventListener("ivLyrics:settings-visibility", refreshTheme);
+  }, []);
+
+  const lyricsState = {
+    hasKaraoke: toolbar.hasKaraoke,
+    karaokeEnabled: toolbar.karaokeEnabled,
+    hasSynced: toolbar.hasSynced,
+    hasUnsynced: toolbar.hasUnsynced,
+    isLoading: toolbar.isLyricsLoading,
+  };
+  const modeLabel = TOOLBAR_MODE_LABEL_KEYS[toolbar.modeKey]
+    ? I18n.t(TOOLBAR_MODE_LABEL_KEYS[toolbar.modeKey])
+    : getOptionsText("settings.lyricsMode.label", "가사 모드");
+  const modeTitle = getOptionsText("settings.lyricsMode.label", "가사 모드") + " · " + modeLabel +
+    (toolbar.lockInEffect ? " · " + getOptionsText("modes.locked", "고정됨") : "");
+  const trackLine = [toolbar.trackTitle, toolbar.trackArtist].filter(Boolean).join(" · ");
+  const entries = {
+    mode: {
+      panel: true,
+      icon: toolbar.modeKey || "synced",
+      label: modeLabel,
+      ariaLabel: modeTitle,
+      lock: !!toolbar.lockInEffect,
+      tip: () => ({
+        title: modeTitle,
+        lines: [I18n.t(toolbar.lockInEffect ? "modes.rightClickToUnlock" : "modes.rightClickToLock")],
+      }),
+      onContextMenu: (event) => {
+        event.preventDefault();
+        hideTip();
+        actions?.onToggleModeLock?.();
+      },
+    },
+    convert: {
+      panel: true,
+      hidden: !toolbar.showConvert,
+      icon: "translation",
+      label: I18n.t("menu.translation"),
+      busy: !!toolbar.isRegenerating,
+      tip: () => {
+        const modeKey = toolbar.friendlyLanguage || "gemini";
+        const shown = [
+          CONFIG.visual?.["translation-mode:" + modeKey] !== "none" && I18n.t("menu.pronunciation"),
+          CONFIG.visual?.["translation-mode-2:" + modeKey] !== "none" && I18n.t("menu.translationLabel"),
+        ].filter(Boolean);
+        return { title: I18n.t("menu.translationSettings"), lines: shown.length ? [shown.join(" · ")] : [] };
+      },
+    },
+    sync: {
+      panel: true,
+      icon: "globalSync",
+      label: I18n.t("menu.syncAdjust"),
+      dot: offsets.trackOffset !== 0 || offsets.globalOffset !== 0,
+      tip: () => ({
+        title: I18n.t("menu.syncAdjustTitle"),
+        lines: [[
+          toolbar.canAdjustTrackSync && I18n.t("syncAdjust.trackTitle") + " " + formatSyncOffset(offsets.trackOffset),
+          I18n.t("syncAdjust.globalTitle") + " " + formatSyncOffset(offsets.globalOffset),
+        ].filter(Boolean).join(" · ")],
+      }),
+    },
+    track: {
+      panel: true,
+      icon: "track",
+      label: getOptionsText("menu.currentTrack", "현재 곡"),
+      dot: !!toolbar.providerOverride || !!toolbar.backgroundOverride,
+      tip: () => ({ title: getOptionsText("menu.currentTrack", "현재 곡"), lines: trackLine ? [trackLine] : [] }),
+    },
+    more: {
+      panel: true,
+      icon: "more",
+      label: getOptionsText("menu.more", "더보기"),
+      tip: () => ({
+        title: getOptionsText("menu.more", "더보기"),
+        lines: [[I18n.t("learningMode.button"), I18n.t("menu.shareImage"), I18n.t("marketplace.title")].join(" · ")],
+      }),
+    },
+    settings: {
+      icon: "settings",
+      label: I18n.t("menu.settings"),
+      onActivate: () => openConfig(),
+    },
+    fullscreen: {
+      hidden: !toolbar.canToggleFullscreen,
+      icon: toolbar.isFullscreen ? "fullscreenExit" : "fullscreenEnter",
+      // The label stays put; the icon, the pressed state and the accessible
+      // name say whether the click enters or leaves fullscreen.
+      label: I18n.t("menu.fullscreen"),
+      ariaLabel: toolbar.isFullscreen ? I18n.t("menu.exitFullscreen") || "Exit Fullscreen" : I18n.t("menu.fullscreen"),
+      pressed: !!toolbar.isFullscreen,
+      keys: getToolbarHotkeyParts(CONFIG.visual?.["fullscreen-key"] || "f12"),
+      tip: () => ({
+        title: toolbar.isFullscreen ? I18n.t("menu.exitFullscreen") || "Exit Fullscreen" : I18n.t("menu.fullscreen"),
+      }),
+      onActivate: () => actions?.onToggleFullscreen?.(),
+    },
+    menu: {
+      icon: toolbar.isMenuOpen ? "close" : "menu",
+      label: toolbar.isMenuOpen ? I18n.t("buttons.close") || "Close" : getOptionsText("fullscreen.menuToggleShort", "메뉴"),
+      ariaLabel: toolbar.isMenuOpen ? I18n.t("buttons.close") || "Close" : I18n.t("fullscreen.menuToggle") || "ivLyrics",
+      tip: () => ({ title: toolbar.isMenuOpen ? I18n.t("buttons.close") || "Close" : I18n.t("fullscreen.menuToggle") || "ivLyrics" }),
+    },
+  };
+  entriesRef.current = entries;
+
+  const showTip = (id) => {
+    const button = anchorsRef.current.get(id);
+    const root = rootRef.current;
+    const entry = entriesRef.current[id];
+    if (!button || !root || !entry || openIdRef.current === id) return;
+    const content = entry.tip ? entry.tip() : { title: entry.label };
+    const rect = button.getBoundingClientRect();
+    const rootRect = root.getBoundingClientRect();
+    setTip({
+      id,
+      top: rect.top - rootRect.top - root.clientTop + rect.height / 2,
+      title: content.title,
+      lines: content.lines || [],
+      keys: entry.keys || [],
+    });
+  };
+
+  const handleColumnPointerOver = (event) => {
+    if (event.pointerType && event.pointerType !== "mouse") return;
+    const button = event.target?.closest?.(".ivl-tb-item");
+    if (!button) return;
+    const id = button.dataset.entry;
+    if (tipRef.current?.id === id) return;
+    clearTimeout(tipTimerRef.current);
+    tipTimerRef.current = setTimeout(
+      () => showTip(id),
+      tipRef.current ? TOOLBAR_TOOLTIP_SWITCH_DELAY_MS : TOOLBAR_TOOLTIP_DELAY_MS
+    );
+  };
+
+  const handleColumnFocus = (event) => {
+    const button = event.target?.closest?.(".ivl-tb-item");
+    if (!button || !button.matches?.(":focus-visible")) return;
+    clearTimeout(tipTimerRef.current);
+    showTip(button.dataset.entry);
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Escape") {
+      if (openIdRef.current) {
+        event.preventDefault();
+        event.stopPropagation();
+        closePanel();
+      } else {
+        hideTip();
+      }
+      return;
+    }
+    if (event.target?.classList?.contains("ivl-tb-item")) {
+      moveToolbarFocus(event, columnRef.current, ".ivl-tb-item");
+    }
+  };
+
+  const activate = (id) => {
+    const entry = entries[id];
+    if (entry.panel) {
+      togglePanel(id);
+      return;
+    }
+    hideTip();
+    closePanel();
+    entry.onActivate?.();
+  };
+
+  const renderEntry = (id) => {
+    const entry = entries[id];
+    if (!entry || entry.hidden) return null;
+    const isOpen = openId === id;
+    return react.createElement(
+      "button",
+      {
+        key: id,
+        type: "button",
+        ref: getAnchorRef(id),
+        className: joinToolbarClasses("ivl-tb-item", isOpen && "is-open", entry.busy && "is-busy"),
+        "data-entry": id,
+        "aria-label": entry.ariaLabel || entry.label,
+        "aria-haspopup": entry.panel ? "dialog" : undefined,
+        "aria-expanded": entry.panel ? isOpen : undefined,
+        "aria-pressed": entry.pressed === undefined ? undefined : entry.pressed,
+        onClick: () => activate(id),
+        onContextMenu: entry.onContextMenu,
+      },
       react.createElement(
+        "span",
+        { className: "ivl-tb-ico" },
+        react.createElement(ToolbarGlyph, { name: entry.icon, size: 20 }),
+        entry.lock ? react.createElement("span", { className: "ivl-tb-lock" }, react.createElement(ToolbarGlyph, { name: "lock", size: 9 })) : null,
+        entry.dot ? react.createElement("span", { className: "ivl-tb-dot" }) : null
+      ),
+      react.createElement("span", { className: "ivl-tb-label" }, entry.label)
+    );
+  };
+
+  const openTrackView = (view) => {
+    setSlide("in");
+    setTrackViews((views) => views.concat(view));
+  };
+  const leaveTrackView = () => {
+    setSlide("out");
+    setTrackViews((views) => views.slice(0, -1));
+  };
+  const openSettingsFromPanel = (options) => {
+    closePanel();
+    openToolbarSettings(options);
+  };
+
+  const buildPanelView = (id) => {
+    if (id === "mode") {
+      return {
+        title: getOptionsText("settings.lyricsMode.label", "가사 모드"),
+        body: react.createElement(LyricsModeMenu, {
+          modeKey: toolbar.modeKey,
+          lockedModeKey: toolbar.lockedModeKey,
+          lockInEffect: toolbar.lockInEffect,
+          lyrics: lyricsState,
+          onSelectMode: actions?.onSelectMode,
+          onSetModeLock: actions?.onSetModeLock,
+        }),
+      };
+    }
+    if (id === "convert") {
+      return {
+        title: I18n.t("menu.translationSettings"),
+        subtitle: I18n.t("menu.translationOptionsSubtitle"),
+        body: react.createElement(TranslationMenu, {
+          key: toolbar.friendlyLanguage || "gemini",
+          friendlyLanguage: toolbar.friendlyLanguage,
+          detectedLanguage: toolbar.detectedLanguage,
+          regenerate: {
+            choices: actions?.getRegenerateChoices?.() || [],
+            onRegenerate: actions?.onRegenerate,
+            isEnabled: !!toolbar.canRegenerate,
+            isLoading: !!toolbar.isRegenerating,
+          },
+          cacheEdit: toolbar.hasLyrics
+            ? {
+              disabled: !!toolbar.isLyricsEditBusy,
+              onOpen: () => {
+                closePanel();
+                actions?.onOpenLyricsEditor?.();
+              },
+            }
+            : null,
+          onOpenSettings: openSettingsFromPanel,
+        }),
+      };
+    }
+    if (id === "sync") {
+      const hasOffsets = (toolbar.canAdjustTrackSync && offsets.trackOffset !== 0) || offsets.globalOffset !== 0;
+      return {
+        title: I18n.t("menu.syncAdjustTitle"),
+        subtitle: I18n.t("syncAdjust.info"),
+        body: react.createElement(SyncAdjustButtonFluent, {
+          offsets,
+          includeTrackOffset: !!toolbar.canAdjustTrackSync,
+          quickSyncEnabled: toolbar.quickSyncEnabled !== false,
+          onQuickSyncChange: (value) => actions?.onVisualConfigChange?.("quick-sync-controls-enabled", value),
+        }),
+        footer: react.createElement(
+          "div",
+          { className: "ivl-tb-foot-row" },
+          react.createElement(
+            ToolbarButton,
+            {
+              disabled: !hasOffsets,
+              onClick: () => {
+                if (toolbar.canAdjustTrackSync && offsets.trackOffset !== 0) offsets.changeTrackOffset(0);
+                if (offsets.globalOffset !== 0) offsets.changeGlobalOffset(0);
+              },
+            },
+            react.createElement(ToolbarGlyph, { name: "reset", size: 15 }),
+            react.createElement("span", null, I18n.t("syncAdjust.reset"))
+          )
+        ),
+      };
+    }
+    if (id === "track") {
+      const view = trackViews[trackViews.length - 1];
+      if (view === "provider" || view === "background") {
+        const built = view === "provider"
+          ? buildLyricsProviderView({
+            currentProvider: toolbar.currentProvider,
+            selectedProvider: toolbar.providerOverride,
+            isLocalTrack: toolbar.isLocalTrack,
+            trackInfo: actions?.getCurrentTrackInfo?.() || null,
+            onSelectProvider: actions?.onSelectProvider,
+            onImportLocalLyricsFile: actions?.onImportLocalLyricsFile,
+            onApplyLocalLyrics: actions?.onApplyLocalLyrics,
+            getHasLocalLyrics: actions?.getHasLocalLyrics,
+            onDeleteLocalLyrics: actions?.onDeleteLocalLyrics,
+            closeModal: closePanel,
+            closeView: leaveTrackView,
+          })
+          : buildTrackBackgroundView({
+            overrideMode: toolbar.backgroundOverride,
+            effectiveMode: toolbar.effectiveBackground,
+            onSelectBackground: actions?.onSelectBackground,
+            onOpenSettings: openSettingsFromPanel,
+          });
+        return { title: built.title, subtitle: built.subtitle, body: react.createElement(ToolbarModelView, { view: built }) };
+      }
+      return {
+        title: getOptionsText("menu.currentTrack", "현재 곡"),
+        subtitle: trackLine,
+        body: react.createElement(CurrentTrackMenu, { toolbar, actions, onOpenView: openTrackView, closePanel }),
+      };
+    }
+    if (id === "more") {
+      return {
+        title: getOptionsText("menu.more", "더보기"),
+        body: react.createElement(ToolbarMoreMenu, { toolbar, actions, closePanel }),
+      };
+    }
+    return null;
+  };
+
+  const panelView = openId ? buildPanelView(openId) : null;
+  const showEntries = !toolbar.isFullscreen || toolbar.isMenuOpen || toolbar.isMenuClosing;
+  return react.createElement(
+    "div",
+    {
+      ref: rootRef,
+      className: joinToolbarClasses(
+        "lyrics-config-button-container",
+        "ivl-tb",
+        toolbar.isFullscreen && "is-fullscreen",
+        toolbar.isFullscreen && toolbar.isMenuOpen && "is-menu-open",
+        toolbar.isFullscreen && toolbar.isMenuClosing && "is-menu-closing",
+        openId && "is-engaged"
+      ),
+      "data-ui-theme": theme,
+      style: toolbar.contentTopOffset
+        ? { "--iv-floating-menu-content-top-offset": toolbar.contentTopOffset + "px" }
+        : undefined,
+      onKeyDown: handleKeyDown,
+    },
+    react.createElement(
+      "div",
+      {
+        ref: columnRef,
+        className: "ivl-tb-col",
+        role: "toolbar",
+        "aria-label": I18n.t("fullscreen.menuToggle") || "ivLyrics",
+        "aria-orientation": "vertical",
+        onPointerOver: handleColumnPointerOver,
+        onPointerLeave: hideTip,
+        onPointerDown: hideTip,
+        onFocus: handleColumnFocus,
+        onBlur: hideTip,
+      },
+      showEntries && react.createElement(
+        "div",
+        { className: "ivl-tb-content", ref: actions?.setContentRef },
+        TOOLBAR_ENTRY_GROUPS.map((group) => {
+          const items = group.filter((id) => !entries[id].hidden);
+          return items.length
+            ? react.createElement("div", { key: group[0], className: "ivl-tb-cluster", role: "group" }, items.map(renderEntry))
+            : null;
+        })
+      ),
+      toolbar.isFullscreen && react.createElement(
         "button",
         {
-        className: `lyrics-config-button${hasTrackId ? "" : " disabled"}`,
-          onClick: handleClick,
-          disabled: !hasTrackId,
-          "aria-label": hasTrackId
-            ? (I18n.t("syncCreator.buttonTooltip") || "Create Karaoke Sync")
-            : disabledTooltip,
+          type: "button",
+          ref: getAnchorRef("menu"),
+          className: joinToolbarClasses("ivl-tb-item", "ivl-tb-toggle", toolbar.isMenuOpen && "is-open"),
+          "data-entry": "menu",
+          "aria-label": entries.menu.ariaLabel,
+          "aria-expanded": !!toolbar.isMenuOpen,
+          onClick: (event) => {
+            event.stopPropagation();
+            hideTip();
+            actions?.onToggleMenu?.();
+          },
         },
-        react.createElement(IvLyricsToolbarIcon, { name: "syncCreator" })
+        react.createElement("span", { className: "ivl-tb-ico" }, react.createElement(ToolbarGlyph, { name: entries.menu.icon, size: 20 })),
+        react.createElement("span", { className: "ivl-tb-label" }, entries.menu.label)
       )
     ),
+    tip && react.createElement(
+      "div",
+      { className: "ivl-tb-tip", role: "tooltip", style: { top: tip.top + "px" } },
+      react.createElement("b", null, tip.title),
+      tip.lines.map((line, index) => react.createElement("span", { key: index }, line)),
+      tip.keys.length
+        ? react.createElement(
+          "span",
+          { className: "ivl-tb-tip-keys" },
+          tip.keys.map((key, index) => react.createElement("kbd", { key: index, className: "ivl-tb-kbd" }, key))
+        )
+        : null
     ),
-    portalHint
+    panelView && react.createElement(ToolbarFlyout, {
+      entryId: openId,
+      anchor: anchorsRef.current.get(openId),
+      toolbar: rootRef.current,
+      view: panelView,
+      viewKey: openId + ":" + trackViews.join("/"),
+      direction: slide,
+      onBack: openId === "track" && trackViews.length ? leaveTrackView : null,
+      onClose: closePanel,
+    })
   );
 });
 
 // 전역으로 노출
 window.openSyncDataCreator = openSyncDataCreator;
 window.SyncDataCreatorButton = SyncDataCreatorButton;
+window.IvLyricsFloatingToolbar = IvLyricsFloatingToolbar;

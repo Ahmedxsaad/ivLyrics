@@ -695,7 +695,9 @@ window.LANG_MS = {
     "regenerateAction": "Jana semula",
     "fullscreen": "Skrin Penuh",
     "exitFullscreen": "Keluar Skrin Penuh",
-    "localLyricsApplying": "Sedang digunakan…"
+    "localLyricsApplying": "Sedang digunakan…",
+    "currentTrack": "Trek Semasa",
+    "more": "Lagi"
   },
   "messages": {
     "noLyrics": "Tiada lirik yang tersedia",
@@ -797,7 +799,8 @@ window.LANG_MS = {
       "collection": "Lagu Disukai",
       "station": "Radio"
     },
-    "menuToggle": "Menu ivLyrics"
+    "menuToggle": "Menu ivLyrics",
+    "menuToggleShort": "Menu"
   },
   "about": {
     "version": "Versi",
@@ -2078,7 +2081,14 @@ window.LANG_MS = {
     "rightClickToUnlock": "Klik kanan untuk membuka kunci",
     "karaoke": "Karaoke",
     "synced": "Senada",
-    "unsynced": "Lirik Biasa"
+    "unsynced": "Lirik Biasa",
+    "lockSelected": "Kunci pada mod yang dipilih",
+    "lockSelectedDesc": "Sentiasa paparkan lirik dalam mod ini apabila lagu menyokongnya.",
+    "locked": "Dikunci",
+    "unlocked": "Kunci dibuka",
+    "unavailableNoKaraoke": "Lagu ini tiada penyegerakan karaoke",
+    "unavailableKaraokeOff": "Mod Karaoke dimatikan",
+    "unavailableNoSynced": "Lagu ini tiada lirik senada"
   },
   "communityVideo": {
     "loginRequired": "Log masuk Discord diperlukan untuk mendaftarkan video komuniti.",

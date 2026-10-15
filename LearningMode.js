@@ -5514,7 +5514,12 @@
         StudyButton,
         StudyPanel,
         open,
-        close
+        close,
+        // The lyrics-page toolbar shows the panel as an on/off item in its
+        // 더보기 menu, so it needs the state and the toggle without the button.
+        toggle,
+        isOpen: () => !!state.open,
+        subscribe
     };
 
     state.initialized = true;

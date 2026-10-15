@@ -695,7 +695,9 @@ window.LANG_ZH_CN = {
     "regenerateAction": "重新生成",
     "fullscreen": "全屏",
     "exitFullscreen": "退出全屏",
-    "localLyricsApplying": "正在应用…"
+    "localLyricsApplying": "正在应用…",
+    "currentTrack": "当前曲目",
+    "more": "更多"
   },
   "messages": {
     "noLyrics": "暂无可用歌词",
@@ -797,7 +799,8 @@ window.LANG_ZH_CN = {
       "collection": "已点赞的歌曲",
       "station": "电台"
     },
-    "menuToggle": "ivLyrics 菜单"
+    "menuToggle": "ivLyrics 菜单",
+    "menuToggleShort": "菜单"
   },
   "about": {
     "version": "版本",
@@ -2078,7 +2081,14 @@ window.LANG_ZH_CN = {
     "rightClickToUnlock": "右键取消固定",
     "karaoke": "卡拉OK",
     "synced": "同步",
-    "unsynced": "纯文本"
+    "unsynced": "纯文本",
+    "lockSelected": "固定为所选模式",
+    "lockSelectedDesc": "只要歌曲支持此模式，就始终以此模式显示歌词。",
+    "locked": "已固定",
+    "unlocked": "已取消固定",
+    "unavailableNoKaraoke": "这首歌没有卡拉OK 同步",
+    "unavailableKaraokeOff": "卡拉OK 模式已关闭",
+    "unavailableNoSynced": "这首歌没有同步歌词"
   },
   "communityVideo": {
     "loginRequired": "注册社区视频需要登录 Discord。",
