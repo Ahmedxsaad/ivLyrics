@@ -44,6 +44,8 @@ const SYNC_CREATOR_SPEAKER_TEXT_COLORS = {
 const SYNC_CREATOR_DEFAULT_SPEAKER = 'NORMAL';
 const SYNC_CREATOR_DEFAULT_KIND = 'vocal';
 const SYNC_CREATOR_MAX_MERGED_LINES = 5;
+const SYNC_CREATOR_MAX_PARALLEL_PARTS = 16;
+const SYNC_CREATOR_MAX_PART_ID_LENGTH = 32;
 const SYNC_CREATOR_SYNC_DATA_VERSION = 5;
 const SYNC_CREATOR_SOURCE_ADDON_ID = 'lrclib';
 const SYNC_CREATOR_GRANULARITIES = new Set(['line', 'word', 'character']);
@@ -578,9 +580,15 @@ const getSyncCreatorSyncDataValidationError = (data) => {
 		}
 
 		const parts = Array.isArray(line?.parallel?.parts) ? line.parallel.parts : [];
+		if (parts.length > SYNC_CREATOR_MAX_PARALLEL_PARTS) {
+			return `Line ${lineIndex + 1}: parallel.parts cannot exceed ${SYNC_CREATOR_MAX_PARALLEL_PARTS}`;
+		}
 		for (let partIndex = 0; partIndex < parts.length; partIndex++) {
 			const part = parts[partIndex];
 			const partLabel = String(part?.id || partIndex + 1);
+			if (typeof part?.id === 'string' && part.id.length > SYNC_CREATOR_MAX_PART_ID_LENGTH) {
+				return `Line ${lineIndex + 1}, parallel part ${partIndex + 1}: id is too long`;
+			}
 			const rangeError = getSyncCreatorRangesValidationError(
 				part?.ranges,
 				start,
@@ -791,6 +799,7 @@ const findSyncCreatorParallelSourcePart = (targetPart, sourceParts) => {
 };
 const buildSyncCreatorExistingTimingIndex = (line) => {
 	const timingByAbsoluteIndex = new Map();
+	const partTimedIndexes = new Set();
 	const parts = Array.isArray(line?.parallel?.parts) ? line.parallel.parts : [];
 	for (const part of parts) {
 		const expectedLength = countSyncCreatorRangeChars(part?.ranges);
@@ -804,6 +813,7 @@ const buildSyncCreatorExistingTimingIndex = (line) => {
 				const time = part.chars[charIndex++];
 				if (isFiniteSyncCreatorTime(time) && !timingByAbsoluteIndex.has(absoluteIndex)) {
 					timingByAbsoluteIndex.set(absoluteIndex, time);
+					partTimedIndexes.add(absoluteIndex);
 				}
 			}
 		}
@@ -821,6 +831,37 @@ const buildSyncCreatorExistingTimingIndex = (line) => {
 				timingByAbsoluteIndex.set(absoluteIndex, time);
 			}
 		});
+	}
+	// Split separators have no sung timing. Their parent marks may predate a
+	// vocal offset, so constrain only those gaps to their visible neighbours.
+	// Real vocal overlaps must retain every recorded mark exactly.
+	const hiddenIndexes = new Set();
+	for (const range of [
+		...(Array.isArray(line?.hiddenRanges) ? line.hiddenRanges : []),
+		...(Array.isArray(line?.parallel?.hiddenRanges) ? line.parallel.hiddenRanges : [])
+	]) {
+		const start = Math.max(lineStart, Number(range?.start));
+		const end = Math.min(lineEnd, Number(range?.end));
+		if (!Number.isInteger(start) || !Number.isInteger(end)) continue;
+		for (let index = start; index <= end; index++) {
+			if (!partTimedIndexes.has(index)) hiddenIndexes.add(index);
+		}
+	}
+	for (let index = lineStart; hiddenIndexes.size && index <= lineEnd; index++) {
+		if (!hiddenIndexes.has(index)) continue;
+		const start = index;
+		while (index < lineEnd && hiddenIndexes.has(index + 1)) index++;
+		const previous = timingByAbsoluteIndex.get(start - 1);
+		const next = timingByAbsoluteIndex.get(index + 1);
+		let minimum = isFiniteSyncCreatorTime(previous) ? previous : 0;
+		const maximum = isFiniteSyncCreatorTime(next) ? next : Infinity;
+		if (minimum > maximum) continue;
+		for (let gapIndex = start; gapIndex <= index; gapIndex++) {
+			const time = timingByAbsoluteIndex.get(gapIndex);
+			if (!isFiniteSyncCreatorTime(time)) continue;
+			minimum = Math.max(minimum, Math.min(maximum, time));
+			timingByAbsoluteIndex.set(gapIndex, minimum);
+		}
 	}
 	return timingByAbsoluteIndex;
 };
@@ -922,8 +963,12 @@ const preserveSyncCreatorParallelTimingRuns = (parallel) => {
 					let id = part.id;
 					if (run) {
 						let suffix = 1;
-						while (usedIds.has(`${part.id}_${suffix}`)) suffix++;
-						id = `${part.id}_${suffix}`;
+						const candidate = () => {
+							const ending = `_${suffix}`;
+							return `${String(part.id).slice(0, SYNC_CREATOR_MAX_PART_ID_LENGTH - ending.length)}${ending}`;
+						};
+						while (usedIds.has(candidate())) suffix++;
+						id = candidate();
 						usedIds.add(id);
 					}
 					run = { ...part, id, granularity: 'character', ranges: [], join: [], chars: [] };
@@ -941,6 +986,64 @@ const preserveSyncCreatorParallelTimingRuns = (parallel) => {
 		return runs;
 	});
 	return { ...parallel, parts };
+};
+const prepareSyncCreatorWorkSnapshot = (data) => {
+	if (!Array.isArray(data?.lines)) return data;
+	return { ...data, lines: data.lines.map(line => {
+		const expanded = decodeSyncCreatorCompactTiming(line, Number(line.end) - Number(line.start) + 1);
+		if (!Array.isArray(line?.parallel?.parts)) return expanded;
+		const parallel = {
+			...line.parallel,
+			parts: line.parallel.parts.map(part => decodeSyncCreatorCompactTiming(part, countSyncCreatorRangeChars(part?.ranges)))
+		};
+		// A partially rejoined target can contain several valid timing runs.
+		// Store them independently rather than moving any sung character time.
+		if (!parallel.parts.some(part => hasReusableSyncCreatorParallelChars(part, part)
+			&& part.chars.every(time => isFiniteSyncCreatorTime(time) && time >= 0)
+			&& !hasOrderedSyncCreatorTimes(part.chars))) {
+			return { ...expanded, parallel };
+		}
+		return refreshSyncCreatorLineCharsFromParallel({
+			...expanded, parallel: preserveSyncCreatorParallelTimingRuns(parallel)
+		});
+	}) };
+};
+const encodeSyncCreatorWorkSnapshot = (expanded, original) => {
+	const encodeTarget = (target, previous) => {
+		if (!Array.isArray(target?.chars) || target.granularity === 'character') return target;
+		const decodedPrevious = decodeSyncCreatorCompactTiming(previous, target.chars.length);
+		const unchanged = previous?.chars === undefined && previous?.timing !== undefined
+			&& previous.granularity === target.granularity
+			&& Array.isArray(decodedPrevious?.chars)
+			&& decodedPrevious.chars.length === target.chars.length
+			&& target.chars.every((time, index) => time === decodedPrevious.chars[index]);
+		const encoded = { ...target };
+		delete encoded.chars;
+		if (unchanged) {
+			encoded.timing = previous.timing;
+		} else if (target.granularity === 'line' && target.chars.every(time => time === target.chars[0])) {
+			encoded.timing = target.chars[0];
+		} else if (target.granularity === 'word') {
+			// Recover exact time runs without guessing word boundaries from the
+			// current lyrics. Historical compact marks above remain unchanged.
+			encoded.timing = target.chars.flatMap((time, index, chars) => (
+				index === chars.length - 1 || time !== chars[index + 1] ? [[index, time]] : []
+			));
+		} else {
+			encoded.granularity = 'character';
+			encoded.chars = target.chars;
+			delete encoded.timing;
+		}
+		return encoded;
+	};
+	return { ...expanded, lines: expanded.lines.map((line, index) => {
+		const previous = original.lines[index];
+		const encoded = encodeTarget(line, previous);
+		if (!Array.isArray(line?.parallel?.parts)) return encoded;
+		return { ...encoded, parallel: { ...line.parallel, parts: line.parallel.parts.map(part => encodeTarget(
+			part, previous?.parallel?.parts?.find(saved => saved.id === part.id)
+		)) } };
+	}) };
 };
 const resolveSyncCreatorParallelTemplateParts = (templateParts, existingLine) => {
 	const existingParts = Array.isArray(existingLine?.parallel?.parts) ? existingLine.parallel.parts : [];
@@ -3217,6 +3320,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				isrc: context.isrc,
 				initialSyncData: pendingBaseline ? { ...pendingBaseline, source: pendingBaseline.source || context.initialSyncData.source } : context.initialSyncData,
 				storage: window.SyncCreatorDraftStore,
+				repairSnapshot: data => scoreContextRef.current?.repairSnapshot?.(data),
 				isAuthorized: () => Boolean(Utils.getAuthToken?.()) && Utils.getUserHash?.() === context.accountId,
 				isActive: () => document.visibilityState === 'visible'
 					&& document.hasFocus()
@@ -6239,11 +6343,11 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				lineData.granularity = parts.length > 1
 					? 'line'
 					: normalizeSyncCreatorGranularity(parts[0]?.granularity || lineData.granularity);
-				lineData.parallel = sanitizeSyncCreatorParallel({
+				lineData.parallel = sanitizeSyncCreatorParallel(preserveSyncCreatorParallelTimingRuns({
 					layout: currentParallelData.layout || 'stack',
 					hiddenRanges: currentParallelData.hiddenRanges || [],
 					parts
-				});
+				}));
 			} else {
 				delete lineData.parallel;
 			}
@@ -8313,7 +8417,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	// Capture the baseline before edits. ISRC resolution can finish later; queued
 	// edits retain their original snapshots instead of turning into imported work.
 	const buildScoreSnapshot = useCallback((data) => {
-		const raw = data || { version: SYNC_CREATOR_SYNC_DATA_VERSION, lines: [] };
+		const raw = prepareSyncCreatorWorkSnapshot(data || { version: SYNC_CREATOR_SYNC_DATA_VERSION, lines: [] });
 		const expanded = attachSelectedLrclibSource(raw);
 		if (!expanded) return null;
 		if (isCompleteSyncCreatorLrclibSource(raw.source)) expanded.source = raw.source;
@@ -8321,6 +8425,17 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			...expanded, ...(trackDurationMs > 0 ? { trackDurationMs } : {})
 		}, lyricsFullTextChars, lyricsLanguage || undefined);
 	}, [attachSelectedLrclibSource, lyricsFullTextChars, lyricsLanguage, trackDurationMs]);
+	const repairScoreSnapshot = useCallback((data) => {
+		try {
+			const repaired = prepareSyncCreatorWorkSnapshot(data);
+			assertValidSyncCreatorSyncData(repaired);
+			// Keep the historical source and body. Current layout drafts and the
+			// current song's source must never be projected onto queued work.
+			return encodeSyncCreatorWorkSnapshot(repaired, data);
+		} catch (_) {
+			return null;
+		}
+	}, []);
 	const scoreCurrentSnapshot = useMemo(() => buildScoreSnapshot(syncData), [buildScoreSnapshot, syncData]);
 	scoreContextRef.current = {
 		ready: !isLoading && sessionHydrationComplete && Boolean(activeSessionDraftKey)
@@ -8329,7 +8444,8 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		isrc: trackIsrc || scoreResolvedIsrc,
 		trackUri, mode,
 		initialSyncData: scoreCurrentSnapshot,
-		buildSnapshot: buildScoreSnapshot
+		buildSnapshot: buildScoreSnapshot,
+		repairSnapshot: repairScoreSnapshot
 	};
 	useEffect(() => {
 		let canceled = false;

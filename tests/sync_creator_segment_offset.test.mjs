@@ -26,6 +26,7 @@ const callbacks = [
     slice('\tconst adjustCurrentLineOffset =', '\tconst resetFromStart ='),
     slice('\tconst materializeSyncCreatorParallelDrafts =', '\tconst handleRevertToPublished ='),
     slice('\tconst buildSyncCreatorSessionRecord =', '\tconst syncSessionUiFromRecord ='),
+    slice('\tconst buildScoreSnapshot =', '\tconst scoreCurrentSnapshot ='),
     slice('\tconst applySyncCreatorSessionRecord =', '\tconst saveSessionCheckpoint ='),
     slice('\tconst exportSyncData =', '\t// 싱크 데이터 불러오기'),
     slice('\tconst importSyncData =', '\t// 가사 전체 복사'),
@@ -129,7 +130,7 @@ function createEditor({ rows = ['PRE', 'ABCD', 'TAIL'], data = null } = {}) {
             sanitizeSyncCreatorSyncData, compactSyncCreatorSyncData, assertValidSyncCreatorSyncData,
             getSyncCreatorRejoinedLineChars, inheritSyncCreatorParallelPartChars,
             getSyncCreatorParallelPreviewChars, buildSyncCreatorSessionRecord, applySyncCreatorSessionRecord,
-            exportSyncData, importSyncData,
+            exportSyncData, importSyncData, buildScoreSnapshot, repairScoreSnapshot,
         };`, context);
     const render = (selected = context.activeParallelPartId) => {
         context.currentLineStart = lineCharOffsets[context.currentLineIndex];
@@ -287,6 +288,116 @@ test('Use auto suppresses persisted manual boundaries without discarding recorde
     assert.equal(editor.context.activeParallelPart, null);
     assert.deepEqual(editor.times(), [11.1, 11.35, 11.5, 11.75]);
     assert.deepEqual(plain(editor.context.manualParallelSplitDrafts[3]), []);
+});
+
+// The reported song's visible marks are ordered. Only the invisible split
+// separator retains a later parent mark than the following vocal's first mark.
+for (const { row, chars, ranges, hidden } of [
+    { row: 'AB CD' + 'E'.repeat(13),
+      chars: [134.316, 135.496, 136.719, 136.667, 136.735, 138.024, 138.097, 139.241, 139.796, 139.897, 140.179, 140.458, 140.563, 141.024, 141.111, 141.438, 141.686, 141.873],
+      ranges: [[0, 1], [3, 4], [5, 17]], hidden: [2] },
+    { row: 'A'.repeat(18) + ' ' + 'B'.repeat(8) + ' ' + 'C'.repeat(6),
+      chars: [195.683, 195.783, 195.846, 195.847, 195.959, 196.013, 196.099, 196.48, 196.509, 196.967, 197.002, 197.037, 197.231, 197.232, 197.256, 197.35, 197.399, 197.581, 198.363, 198.299, 198.329, 198.364, 198.378, 198.397, 198.419, 198.471, 198.506, 199.657, 199.738, 199.805, 199.879, 199.916, 199.999, 200.093],
+      ranges: [[0, 17], [19, 26], [28, 33]], hidden: [18, 27] },
+]) {
+    test(`reported ${row.length}-character row saves and reopens as one row after removing every split`, async () => {
+        const editor = createEditor({ rows: ['PRE', row, 'TAIL'] });
+        const line = editor.line();
+        const expected = chars.slice();
+        for (const index of hidden) expected[index] = Math.min(expected[index], expected[index + 1]);
+        line.chars = chars.map((time, index) => Math.max(time, ...chars.slice(0, index)));
+        line.parallel = { layout: 'stack',
+            hiddenRanges: hidden.map(index => ({ start: line.start + index, end: line.start + index })),
+            parts: ranges.map(([start, end], index) => ({
+                id: String.fromCharCode(97 + index), role: index ? 'background' : 'lead',
+                speaker: 'NORMAL', kind: 'vocal', granularity: 'character', join: [],
+                ranges: [{ start: line.start + start, end: line.start + end }], chars: chars.slice(start, end + 1),
+            })),
+        };
+        editor.render();
+        for (const [start] of ranges.slice(1)) editor.split(start);
+        assert.equal(editor.context.activeParallelPart, null);
+        const file = await editor.export();
+        assert.equal(file.lines[1].parallel, undefined, 'hidden separator timing must not resurrect saved splits');
+        assert.deepEqual(file.lines[1].chars, expected, 'visible character times are untouched');
+        editor.recover(editor.record());
+        await editor.import(file);
+        assert.equal(editor.context.activeParallelPart, null);
+        assert.deepEqual(editor.times(), expected);
+    });
+}
+
+test('recording a sibling after partially rejoining overlapping vocals saves valid independent timing runs', () => {
+    const editor = createEditor({ rows: ['PRE', 'ABCDEF', 'TAIL'] });
+    editor.split(2); editor.split(4);
+    editor.render('b'); editor.shift(-1000);
+    editor.split(2);
+    editor.render('b');
+    editor.api.commitCurrentLineSync([30, 31]); editor.render();
+    editor.api.assertValidSyncCreatorSyncData(editor.context.syncData);
+    assert.deepEqual(plain(editor.api.getSyncCreatorRejoinedLineChars(editor.line())), [11, 11.25, 10.5, 10.75, 30, 31]);
+    const reopened = createEditor({ rows: ['PRE', 'ABCDEF', 'TAIL'] });
+    reopened.recover(editor.record());
+    reopened.api.assertValidSyncCreatorSyncData(reopened.context.syncData);
+});
+
+test('work snapshots preserve old overlapping part marks as ordered runs without changing the source or input', () => {
+    const editor = createEditor({ rows: ['PRE', 'ABCDEF', 'TAIL'] });
+    const line = editor.line();
+    line.parallel = { layout: 'stack', parts: [
+        { id: 'a', role: 'lead', ranges: [{ start: 3, end: 6 }], chars: [11, 11.25, 10.5, 10.75], granularity: 'character' },
+        { id: 'b', role: 'background', ranges: [{ start: 7, end: 8 }], chars: [12, 12.25], granularity: 'character' },
+    ] };
+    const input = plain(editor.context.syncData);
+    const repaired = editor.api.sanitizeSyncCreatorSyncData(editor.api.buildScoreSnapshot(editor.context.syncData));
+    editor.api.assertValidSyncCreatorSyncData(repaired);
+    assert.deepEqual(plain(editor.api.getSyncCreatorRejoinedLineChars(repaired.lines[1])), [11, 11.25, 10.5, 10.75, 12, 12.25]);
+    assert.deepEqual(plain(editor.context.syncData), input);
+});
+
+test('historical repairs retain compact line and word marks without using the current lyric text', () => {
+    const editor = createEditor({ rows: ['PRE', 'ABCDEF', 'TAIL'] });
+    const data = plain(editor.context.syncData);
+    delete data.lines[0].chars;
+    Object.assign(data.lines[0], { granularity: 'line', timing: 1 });
+    delete data.lines[2].chars;
+    Object.assign(data.lines[2], { granularity: 'word', timing: [[1, 21], [3, 21]] });
+    data.lines[1].granularity = 'line';
+    delete data.lines[1].chars;
+    data.lines[1].timing = 11;
+    data.lines[1].parallel = { layout: 'stack', parts: [
+        { id: 'a', role: 'lead', ranges: [{ start: 3, end: 6 }], join: [], chars: [11, 11.25, 10.5, 10.75], granularity: 'character' },
+        { id: 'b', role: 'background', ranges: [{ start: 7, end: 8 }], join: [], chars: [12, 12.25], granularity: 'character' },
+    ] };
+    const before = plain(data);
+    editor.context.lyricsFullTextChars = [];
+    const repaired = plain(editor.api.repairScoreSnapshot(data));
+    assert.deepEqual(repaired.lines[0], before.lines[0]);
+    assert.deepEqual(repaired.lines[2], before.lines[2], 'even equal word marks keep their original boundaries');
+    assert.equal(repaired.lines[1].granularity, 'character');
+    assert.equal(repaired.lines[1].timing, undefined);
+    editor.api.assertValidSyncCreatorSyncData(editor.api.sanitizeSyncCreatorSyncData(repaired));
+    assert.deepEqual(data, before);
+});
+
+test('historical repairs refuse excess vocal timing runs and keep generated IDs within the wire limit', () => {
+    const editor = createEditor({ rows: ['PRE', 'A'.repeat(32), 'TAIL'] });
+    const data = plain(editor.context.syncData);
+    const line = data.lines[1];
+    line.parallel = { layout: 'stack', parts: Array.from({ length: 16 }, (_, index) => ({
+        id: String.fromCharCode(97 + index), role: index ? 'background' : 'lead', granularity: 'character',
+        ranges: [{ start: 3 + index * 2, end: 4 + index * 2 }], join: [], chars: [20 + index, 20.5 + index],
+    })) };
+    line.parallel.parts[0].chars = [20, 19];
+    assert.equal(editor.api.repairScoreSnapshot(data), null, 'cannot persist a 17-part replacement');
+    line.parallel.parts = line.parallel.parts.slice(0, 2);
+    line.parallel.parts[0].id = 'a'.repeat(32);
+    const repaired = editor.api.repairScoreSnapshot(data);
+    assert.equal(repaired.lines[1].parallel.parts.length, 3);
+    assert.equal(repaired.lines[1].parallel.parts[0].id, 'a'.repeat(32));
+    assert.equal(repaired.lines[1].parallel.parts[1].id.length, 32);
+    assert.equal(new Set(repaired.lines[1].parallel.parts.map(part => part.id)).size, 3);
+    editor.api.assertValidSyncCreatorSyncData(editor.api.sanitizeSyncCreatorSyncData(repaired));
 });
 
 test('overlapping vocals retain exact timing through remove/re-split, compact save/import and live preview', async () => {
