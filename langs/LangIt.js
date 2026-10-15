@@ -611,7 +611,29 @@ window.LANG_IT = {
       "pollinationsKeyStatus": "Account Pollinations · Abilitato: %s",
       "pollinationsDescription": "Supporta chiavi API manuali e token di accesso dell'account. Se disponibile, il token viene usato per primo.",
       "pollinationsInvalid": "La chiave API non è valida. Riconnettiti o inserisci una nuova chiave.",
-      "pollinationsExpires": "Scade tra %d giorno/i"
+      "pollinationsExpires": "Scade tra %d giorno/i",
+      "enterApiKeyFirst": "Inserisci prima la tua chiave API",
+      "emptyResponse": "La risposta è vuota",
+      "apiKeyRotationDesc": "Inserisci una sola chiave o un array JSON di chiavi da usare a rotazione.",
+      "advancedParams": "Parametri API avanzati",
+      "advancedParamsDesc": "I parametri non selezionati vengono esclusi dalla richiesta API.",
+      "maxTokens": "Token massimi",
+      "maxOutputTokens": "Token di output massimi",
+      "temperature": "Temperatura",
+      "thinking": "Ragionamento",
+      "thinkingBudget": "Budget di ragionamento",
+      "thinkingStreamingHint": "Con il ragionamento disattivato, le risposte vengono trasmesse in tempo reale.",
+      "customModel": "Modello personalizzato",
+      "getFreeApiKey": "Ottieni chiave gratuita",
+      "groqDesc": "Groq offre inferenza ultraveloce e gratuita.",
+      "sonarWebSearch": "I modelli Sonar includono la ricerca web in tempo reale.",
+      "geminiBaseUrlDesc": "Modificalo per usare un’API compatibile con Gemini.",
+      "modelsAvailable": "Modelli disponibili: {count}",
+      "requestBodyMerge": "JSON da unire al corpo della richiesta",
+      "requestBodyMergeDesc": "Viene unito al corpo della richiesta predefinito. max_completion_tokens e temperature sono compilati per impostazione predefinita. Imposta una chiave su null per rimuoverla.",
+      "requestBodyMergeNotObject": "Inserisci un oggetto JSON, non un array o un valore singolo.",
+      "invalidJson": "JSON non valido",
+      "pollinationsLoginTimeout": "Accesso scaduto. Riprova."
     },
     "lyricsProviders": {
       "title": "Fornitori di testi",
@@ -642,7 +664,15 @@ window.LANG_IT = {
         "synced": "Sinc.",
         "unsynced": "Non sinc.",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Funzioni di Spotify Premium",
+        "desc": "Recupera i testi direttamente da Spotify.",
+        "premium": "Richiede Spotify Premium",
+        "providers": "Supporta più fornitori di testi",
+        "quality": "Elevata precisione e qualità di sincronizzazione"
+      },
+      "attribution": "Testi forniti da {source}."
     }
   },
   "buttons": {

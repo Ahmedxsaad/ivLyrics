@@ -611,7 +611,29 @@ window.LANG_TR = {
       "pollinationsKeyStatus": "Pollinations hesabı · Etkin: %s",
       "pollinationsDescription": "Hem elle girilen API anahtarlarını hem de hesap giriş belirteçlerini destekler. Varsa giriş belirteci önce kullanılır.",
       "pollinationsInvalid": "API anahtarı geçersiz. Yeniden bağlanın veya yeni bir anahtar girin.",
-      "pollinationsExpires": "%d gün içinde sona erer"
+      "pollinationsExpires": "%d gün içinde sona erer",
+      "enterApiKeyFirst": "Önce API anahtarınızı girin",
+      "emptyResponse": "Yanıt boş geldi",
+      "apiKeyRotationDesc": "Tek bir anahtar ya da sırayla kullanılacak anahtarların JSON dizisini girin.",
+      "advancedParams": "Gelişmiş API parametreleri",
+      "advancedParamsDesc": "İşaretli olmayan parametreler API isteğine eklenmez.",
+      "maxTokens": "Maks. token sayısı",
+      "maxOutputTokens": "Maks. çıktı token sayısı",
+      "temperature": "Sıcaklık",
+      "thinking": "Düşünme",
+      "thinkingBudget": "Düşünme bütçesi",
+      "thinkingStreamingHint": "Düşünme kapalıyken yanıtlar gerçek zamanlı olarak akış hâlinde gelir.",
+      "customModel": "Özel model",
+      "getFreeApiKey": "Ücretsiz Anahtar Al",
+      "groqDesc": "Groq ücretsiz ve son derece hızlı çıkarım sunar.",
+      "sonarWebSearch": "Sonar modelleri gerçek zamanlı web aramasını içerir.",
+      "geminiBaseUrlDesc": "Gemini uyumlu bir API kullanmak için bunu değiştirin.",
+      "modelsAvailable": "Kullanılabilir model sayısı: {count}",
+      "requestBodyMerge": "İstek gövdesiyle birleştirilecek JSON",
+      "requestBodyMergeDesc": "Varsayılan istek gövdesiyle birleştirilir. max_completion_tokens ve temperature varsayılan olarak doldurulur. Bir anahtarı kaldırmak için değerini null yapın.",
+      "requestBodyMergeNotObject": "Dizi ya da tek bir değer değil, bir JSON nesnesi girin.",
+      "invalidJson": "Geçersiz JSON",
+      "pollinationsLoginTimeout": "Giriş zaman aşımına uğradı. Lütfen tekrar deneyin."
     },
     "lyricsProviders": {
       "title": "Söz Sağlayıcıları",
@@ -642,7 +664,15 @@ window.LANG_TR = {
         "synced": "Senkronize",
         "unsynced": "Düz Metin",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Spotify Premium özellikleri",
+        "desc": "Şarkı sözlerini doğrudan Spotify’dan alır.",
+        "premium": "Spotify Premium gerektirir",
+        "providers": "Birden fazla söz sağlayıcısını destekler",
+        "quality": "Yüksek doğruluk ve senkron kalitesi"
+      },
+      "attribution": "Şarkı sözleri {source} tarafından sağlanır."
     }
   },
   "buttons": {

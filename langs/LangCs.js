@@ -611,7 +611,29 @@ window.LANG_CS = {
       "pollinationsKeyStatus": "Účet Pollinations · Povoleno: %s",
       "pollinationsDescription": "Podporuje ruční klíče API i přihlašovací tokeny účtu. Dostupný přihlašovací token se použije jako první.",
       "pollinationsInvalid": "Klíč API není platný. Znovu se připojte nebo zadejte nový klíč.",
-      "pollinationsExpires": "Vyprší za %d dnů"
+      "pollinationsExpires": "Vyprší za %d dnů",
+      "enterApiKeyFirst": "Nejdřív zadejte klíč API",
+      "emptyResponse": "Odpověď je prázdná",
+      "apiKeyRotationDesc": "Zadejte jeden klíč nebo pole JSON s klíči, které se budou střídat.",
+      "advancedParams": "Pokročilé parametry API",
+      "advancedParamsDesc": "Nezaškrtnuté parametry se do požadavku API nezahrnou.",
+      "maxTokens": "Max. tokenů",
+      "maxOutputTokens": "Max. výstupních tokenů",
+      "temperature": "Teplota",
+      "thinking": "Přemýšlení",
+      "thinkingBudget": "Rozpočet na přemýšlení",
+      "thinkingStreamingHint": "Když je přemýšlení vypnuté, odpovědi se streamují v reálném čase.",
+      "customModel": "Vlastní model",
+      "getFreeApiKey": "Získat klíč zdarma",
+      "groqDesc": "Groq nabízí bezplatnou a extrémně rychlou inferenci.",
+      "sonarWebSearch": "Modely Sonar zahrnují vyhledávání na webu v reálném čase.",
+      "geminiBaseUrlDesc": "Změňte ji, pokud chcete použít API kompatibilní s Gemini.",
+      "modelsAvailable": "Dostupné modely: {count}",
+      "requestBodyMerge": "JSON ke sloučení s tělem požadavku",
+      "requestBodyMergeDesc": "Sloučí se s výchozím tělem požadavku. max_completion_tokens a temperature se vyplňují automaticky. Klíč odstraníte nastavením na null.",
+      "requestBodyMergeNotObject": "Zadejte objekt JSON, ne pole ani jednotlivou hodnotu.",
+      "invalidJson": "Neplatný JSON",
+      "pollinationsLoginTimeout": "Časový limit přihlášení vypršel. Zkuste to znovu."
     },
     "lyricsProviders": {
       "title": "Poskytovatelé textů",
@@ -642,7 +664,15 @@ window.LANG_CS = {
         "synced": "Synchronizováno",
         "unsynced": "Obyčejný",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Funkce Spotify Premium",
+        "desc": "Načítá texty písní přímo ze Spotify.",
+        "premium": "Vyžaduje Spotify Premium",
+        "providers": "Podpora více poskytovatelů textů",
+        "quality": "Vysoká přesnost a kvalita synchronizace"
+      },
+      "attribution": "Zdroj textů: {source}."
     }
   },
   "buttons": {

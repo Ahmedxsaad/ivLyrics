@@ -611,7 +611,29 @@ window.LANG_ZH_TW = {
       "pollinationsKeyStatus": "Pollinations 帳戶 · 已啟用: %s",
       "pollinationsDescription": "支援手動 API 金鑰和帳戶登入權杖。有登入權杖時會優先使用。",
       "pollinationsInvalid": "API 金鑰無效。請重新連線或輸入新金鑰。",
-      "pollinationsExpires": "%d 天後到期"
+      "pollinationsExpires": "%d 天後到期",
+      "enterApiKeyFirst": "請先輸入 API 金鑰",
+      "emptyResponse": "回應為空",
+      "apiKeyRotationDesc": "輸入單一金鑰，或以 JSON 陣列輸入多個金鑰輪流使用。",
+      "advancedParams": "進階 API 參數",
+      "advancedParamsDesc": "取消勾選的參數不會包含在 API 請求中。",
+      "maxTokens": "最大權杖數",
+      "maxOutputTokens": "最大輸出權杖數",
+      "temperature": "溫度",
+      "thinking": "思考模式",
+      "thinkingBudget": "思考預算",
+      "thinkingStreamingHint": "關閉思考模式後，回覆會即時串流輸出。",
+      "customModel": "自訂模型",
+      "getFreeApiKey": "取得免費金鑰",
+      "groqDesc": "Groq 免費提供超高速推論。",
+      "sonarWebSearch": "Sonar 模型內建即時網頁搜尋。",
+      "geminiBaseUrlDesc": "如需使用相容 Gemini 的 API，請修改此位址。",
+      "modelsAvailable": "可用模型：{count} 個",
+      "requestBodyMerge": "請求本文合併 JSON",
+      "requestBodyMergeDesc": "會合併到預設的請求本文中。max_completion_tokens 與 temperature 預設會自動填入。將某個鍵設為 null 即可移除。",
+      "requestBodyMergeNotObject": "請輸入 JSON 物件，而不是陣列或單一值。",
+      "invalidJson": "JSON 格式無效",
+      "pollinationsLoginTimeout": "登入逾時，請再試一次。"
     },
     "lyricsProviders": {
       "title": "歌詞提供者",
@@ -642,7 +664,15 @@ window.LANG_ZH_TW = {
         "synced": "同步",
         "unsynced": "普通",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Spotify Premium 功能",
+        "desc": "直接從 Spotify 取得歌詞。",
+        "premium": "需要 Spotify Premium",
+        "providers": "支援多個歌詞提供者",
+        "quality": "準確度高，同步品質佳"
+      },
+      "attribution": "歌詞來源：{source}"
     }
   },
   "buttons": {

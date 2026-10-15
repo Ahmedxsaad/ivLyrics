@@ -611,7 +611,29 @@ window.LANG_DE = {
       "pollinationsKeyStatus": "Pollinations-Konto · Aktiviert: %s",
       "pollinationsDescription": "Unterstützt manuelle API-Schlüssel und Konto-Anmeldetokens. Ein vorhandenes Anmeldetoken wird bevorzugt.",
       "pollinationsInvalid": "Der API-Schlüssel ist ungültig. Verbinde dich erneut oder gib einen neuen Schlüssel ein.",
-      "pollinationsExpires": "Läuft in %d Tag(en) ab"
+      "pollinationsExpires": "Läuft in %d Tag(en) ab",
+      "enterApiKeyFirst": "Gib zuerst deinen API-Schlüssel ein",
+      "emptyResponse": "Die Antwort war leer",
+      "apiKeyRotationDesc": "Gib einen einzelnen Schlüssel oder ein JSON-Array mit Schlüsseln ein, die abwechselnd verwendet werden.",
+      "advancedParams": "Erweiterte API-Parameter",
+      "advancedParamsDesc": "Nicht angehakte Parameter werden nicht an die API gesendet.",
+      "maxTokens": "Max. Tokens",
+      "maxOutputTokens": "Max. Ausgabe-Tokens",
+      "temperature": "Temperatur",
+      "thinking": "Denkmodus",
+      "thinkingBudget": "Denkbudget",
+      "thinkingStreamingHint": "Ist der Denkmodus aus, werden Antworten in Echtzeit gestreamt.",
+      "customModel": "Eigenes Modell",
+      "getFreeApiKey": "Kostenlosen Schlüssel abrufen",
+      "groqDesc": "Groq bietet kostenlose, extrem schnelle Inferenz.",
+      "sonarWebSearch": "Sonar-Modelle enthalten eine Websuche in Echtzeit.",
+      "geminiBaseUrlDesc": "Ändere sie, um eine Gemini-kompatible API zu verwenden.",
+      "modelsAvailable": "Verfügbare Modelle: {count}",
+      "requestBodyMerge": "JSON zum Zusammenführen mit dem Request-Body",
+      "requestBodyMergeDesc": "Wird mit dem Standard-Request-Body zusammengeführt. max_completion_tokens und temperature werden standardmäßig gesetzt. Setze einen Schlüssel auf null, um ihn zu entfernen.",
+      "requestBodyMergeNotObject": "Gib ein JSON-Objekt ein, kein Array und keinen Einzelwert.",
+      "invalidJson": "Ungültiges JSON",
+      "pollinationsLoginTimeout": "Die Anmeldung ist abgelaufen. Bitte versuche es erneut."
     },
     "lyricsProviders": {
       "title": "Songtext-Anbieter",
@@ -642,7 +664,15 @@ window.LANG_DE = {
         "synced": "Sync",
         "unsynced": "Unsync",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Spotify-Premium-Funktionen",
+        "desc": "Ruft Songtexte direkt von Spotify ab.",
+        "premium": "Erfordert Spotify Premium",
+        "providers": "Unterstützt mehrere Songtext-Anbieter",
+        "quality": "Hohe Genauigkeit und Synchronisationsqualität"
+      },
+      "attribution": "Songtexte von {source}."
     }
   },
   "buttons": {

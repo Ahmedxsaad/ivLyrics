@@ -611,7 +611,29 @@ window.LANG_ES = {
       "pollinationsKeyStatus": "Cuenta de Pollinations · Habilitado: %s",
       "pollinationsDescription": "Admite claves API manuales y tokens de inicio de sesión. Si hay un token, se usa primero.",
       "pollinationsInvalid": "La clave API no es válida. Vuelve a conectarte o introduce una nueva clave.",
-      "pollinationsExpires": "Caduca en %d día(s)"
+      "pollinationsExpires": "Caduca en %d día(s)",
+      "enterApiKeyFirst": "Primero introduce tu clave API",
+      "emptyResponse": "La respuesta llegó vacía",
+      "apiKeyRotationDesc": "Introduce una sola clave o una matriz JSON de claves para usarlas por turnos.",
+      "advancedParams": "Parámetros avanzados de la API",
+      "advancedParamsDesc": "Los parámetros sin marcar no se incluyen en la solicitud a la API.",
+      "maxTokens": "Máximo de tokens",
+      "maxOutputTokens": "Máximo de tokens de salida",
+      "temperature": "Temperatura",
+      "thinking": "Razonamiento",
+      "thinkingBudget": "Presupuesto de razonamiento",
+      "thinkingStreamingHint": "Con el razonamiento desactivado, las respuestas se transmiten en tiempo real.",
+      "customModel": "Modelo personalizado",
+      "getFreeApiKey": "Obtener clave gratis",
+      "groqDesc": "Groq ofrece inferencia ultrarrápida y gratuita.",
+      "sonarWebSearch": "Los modelos Sonar incluyen búsqueda web en tiempo real.",
+      "geminiBaseUrlDesc": "Cámbiala para usar una API compatible con Gemini.",
+      "modelsAvailable": "Modelos disponibles: {count}",
+      "requestBodyMerge": "JSON para combinar con el cuerpo de la solicitud",
+      "requestBodyMergeDesc": "Se combina con el cuerpo de solicitud predeterminado. max_completion_tokens y temperature se rellenan de forma predeterminada. Asigna null a una clave para quitarla.",
+      "requestBodyMergeNotObject": "Introduce un objeto JSON, no una matriz ni un valor único.",
+      "invalidJson": "JSON no válido",
+      "pollinationsLoginTimeout": "Se agotó el tiempo de inicio de sesión. Inténtalo de nuevo."
     },
     "lyricsProviders": {
       "title": "Proveedores de letras",
@@ -642,7 +664,15 @@ window.LANG_ES = {
         "synced": "Sincr.",
         "unsynced": "No sincr.",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Funciones de Spotify Premium",
+        "desc": "Obtiene las letras directamente de Spotify.",
+        "premium": "Requiere Spotify Premium",
+        "providers": "Compatible con varios proveedores de letras",
+        "quality": "Alta precisión y calidad de sincronización"
+      },
+      "attribution": "Letras de {source}."
     }
   },
   "buttons": {

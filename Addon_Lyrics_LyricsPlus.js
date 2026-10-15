@@ -40,6 +40,14 @@
     const OBJECT_PROPERTY_IS_ENUMERABLE = Object.prototype.propertyIsEnumerable;
     const CACHE_VERSION = '2026-09-06-lyricsplus-11';
     const ATTRIBUTION = 'Lyrics from LyricsPlus.';
+
+    function lyricsText(key, fallback, params) {
+        const path = `settings.lyricsProviders.${key}`;
+        const value = window.I18n?.t?.(path, params);
+        if (value && value !== path) return value;
+        return params ? String(fallback).replace(/\{(\w+)\}/g, (match, name) => params[name] ?? match) : fallback;
+    }
+
     let nextApiBaseIndex = 0;
 
     const SPEAKER_PALETTE = [
@@ -935,7 +943,7 @@
                     React.createElement('div', { className: 'ai-addon-setting', style: { marginTop: '16px' } },
                         React.createElement('div', { className: 'ai-addon-info-box' },
                             React.createElement('p', { style: { fontWeight: 700, marginBottom: '8px' } }, 'LyricsPlus'),
-                            React.createElement('p', { style: { marginBottom: '8px' } }, ATTRIBUTION),
+                            React.createElement('p', { style: { marginBottom: '8px' } }, lyricsText('attribution', ATTRIBUTION, { source: 'LyricsPlus' })),
                             React.createElement('a', {
                                 href: 'https://github.com/ibratabian17/lyricsplus',
                                 target: '_blank',

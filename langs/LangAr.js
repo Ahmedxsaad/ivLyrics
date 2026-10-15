@@ -611,7 +611,29 @@ window.LANG_AR = {
       "pollinationsKeyStatus": "حساب Pollinations · مفعل: %s",
       "pollinationsDescription": "يدعم مفاتيح API اليدوية ورموز تسجيل الدخول إلى الحساب. يُستخدم رمز تسجيل الدخول أولًا عند توفره.",
       "pollinationsInvalid": "مفتاح API غير صالح. أعد الاتصال أو أدخل مفتاحًا جديدًا.",
-      "pollinationsExpires": "تنتهي الصلاحية خلال %d يوم"
+      "pollinationsExpires": "تنتهي الصلاحية خلال %d يوم",
+      "enterApiKeyFirst": "أدخل مفتاح API أولًا",
+      "emptyResponse": "الاستجابة فارغة",
+      "apiKeyRotationDesc": "أدخل مفتاحًا واحدًا، أو مصفوفة JSON من المفاتيح لاستخدامها بالتناوب.",
+      "advancedParams": "معلمات API المتقدمة",
+      "advancedParamsDesc": "لا تُضمَّن المعلمات غير المحددة في طلب API.",
+      "maxTokens": "الحد الأقصى للرموز",
+      "maxOutputTokens": "الحد الأقصى لرموز الإخراج",
+      "temperature": "درجة الحرارة",
+      "thinking": "التفكير",
+      "thinkingBudget": "ميزانية التفكير",
+      "thinkingStreamingHint": "عند إيقاف التفكير، تُبث الردود في الوقت الفعلي.",
+      "customModel": "نموذج مخصص",
+      "getFreeApiKey": "احصل على مفتاح مجاني",
+      "groqDesc": "يوفّر Groq استدلالًا فائق السرعة مجانًا.",
+      "sonarWebSearch": "تتضمن نماذج Sonar البحث على الويب في الوقت الفعلي.",
+      "geminiBaseUrlDesc": "غيّر هذا العنوان لاستخدام API متوافقة مع Gemini.",
+      "modelsAvailable": "النماذج المتاحة: {count}",
+      "requestBodyMerge": "JSON لدمجه في نص الطلب",
+      "requestBodyMergeDesc": "يُدمج في نص الطلب الافتراضي. تُملأ max_completion_tokens و temperature افتراضيًا. اضبط أي مفتاح على null لإزالته.",
+      "requestBodyMergeNotObject": "أدخل كائن JSON، وليس مصفوفة أو قيمة مفردة.",
+      "invalidJson": "JSON غير صالح",
+      "pollinationsLoginTimeout": "انتهت مهلة تسجيل الدخول. يُرجى المحاولة مرة أخرى."
     },
     "lyricsProviders": {
       "title": "موفرو الكلمات",
@@ -642,7 +664,15 @@ window.LANG_AR = {
         "synced": "متزامن",
         "unsynced": "غير متزامن",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "ميزات Spotify Premium",
+        "desc": "يجلب الكلمات مباشرةً من Spotify.",
+        "premium": "يتطلب Spotify Premium",
+        "providers": "يدعم عدة موفرين للكلمات",
+        "quality": "دقة عالية وجودة مزامنة ممتازة"
+      },
+      "attribution": "الكلمات من {source}."
     }
   },
   "buttons": {

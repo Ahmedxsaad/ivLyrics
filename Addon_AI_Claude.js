@@ -134,6 +134,12 @@
     // Helper Functions
     // ============================================
 
+    function aiText(key, fallback) {
+        const path = `settings.aiProviders.${key}`;
+        const value = window.I18n?.t?.(path);
+        return value && value !== path ? value : fallback;
+    }
+
     function getSetting(key, defaultValue = null) {
         return window.AIAddonManager?.getAddonSetting(ADDON_INFO.id, key, defaultValue) ?? defaultValue;
     }
@@ -720,10 +726,12 @@
                 };
 
                 const handleTest = async () => {
-                    setTestStatus('Testing...');
+                    setTestStatus(aiText('testingConnection', 'Testing...'));
                     try {
                         const result = await callClaudeAPIRaw('Say "Hello" in one word.');
-                        setTestStatus(result ? '✓ Connection successful' : '✗ Empty response');
+                        setTestStatus(result
+                            ? '✓ ' + aiText('connectionSuccess', 'Connection successful')
+                            : '✗ ' + aiText('emptyResponse', 'Empty response'));
                     } catch (e) {
                         setTestStatus(`✗ ${e.message}`);
                     }
@@ -766,23 +774,24 @@
                 const hasApiKey = getApiKeys().length > 0;
 
                 const renderApiKeyRow = () => React.createElement('div', { className: 'ai-addon-setting' },
-                        React.createElement('label', null, 'API Key(s)'),
+                        React.createElement('label', null, aiText('apiKey', 'API Key(s)')),
                         React.createElement('div', { className: 'ai-addon-input-group' },
                             React.createElement('input', {
                                 type: 'text',
                                 value: apiKeys,
                                 onChange: handleApiKeyChange,
-                                placeholder: 'sk-ant-... (multiple: ["key1", "key2"])'
+                                placeholder: 'sk-ant-...'
                             }),
                             React.createElement('button', {
+                                type: 'button',
                                 onClick: () => window.open(ADDON_INFO.apiKeyUrl, '_blank'),
-                                className: 'ai-addon-btn-secondary'
-                            }, 'Get API Key')
+                                className: 'ai-addon-btn ai-addon-btn-secondary'
+                            }, aiText('getApiKey', 'Get API Key'))
                         ),
-                        React.createElement('small', null, 'Enter a single key or JSON array for rotation')
+                        React.createElement('small', null, aiText('apiKeyRotationDesc', 'Enter a single key or JSON array for rotation'))
                     );
                 const renderModelRow = () => React.createElement('div', { className: 'ai-addon-setting' },
-                        React.createElement('label', null, 'Model'),
+                        React.createElement('label', null, aiText('model', 'Model')),
                         React.createElement('div', { className: 'ai-addon-input-group' },
                             React.createElement('select', {
                                 value: selectedModel,
@@ -790,21 +799,23 @@
                                 disabled: modelsLoading
                             },
                                 modelsLoading
-                                    ? React.createElement('option', { value: '' }, 'Loading models...')
+                                    ? React.createElement('option', { value: '' }, aiText('loadingModels', 'Loading models...'))
                                     : availableModels.length > 0
                                         ? availableModels.map(m => React.createElement('option', { key: m.id, value: m.id }, m.name))
-                                        : React.createElement('option', { value: selectedModel }, selectedModel || (hasApiKey ? 'No models found' : 'Enter API key first'))
+                                        : React.createElement('option', { value: selectedModel }, selectedModel || (hasApiKey ? aiText('noModels', 'No models found') : aiText('enterApiKeyFirst', 'Enter API key first')))
                             ),
                             React.createElement('button', {
+                                type: 'button',
                                 onClick: loadModels,
-                                className: 'ai-addon-btn-secondary',
+                                className: 'ai-addon-btn ai-addon-btn-secondary ai-addon-connection-icon',
                                 disabled: modelsLoading || !hasApiKey,
-                                title: 'Refresh model list'
+                                'aria-label': aiText('refreshModels', 'Refresh model list'),
+                                title: aiText('refreshModels', 'Refresh model list')
                             }, modelsLoading ? '...' : '↻')
                         )
                     );
                 const renderTestRow = () => React.createElement('div', { className: 'ai-addon-setting' },
-                        React.createElement('button', { onClick: handleTest, className: 'ai-addon-btn-primary' }, 'Test Connection'),
+                        React.createElement('button', { type: 'button', onClick: handleTest, className: 'ai-addon-btn ai-addon-btn-primary' }, aiText('testConnection', 'Test Connection')),
                         testStatus && React.createElement('span', {
                             className: `ai-addon-test-status ${testStatus.startsWith('✓') ? 'success' : testStatus.startsWith('✗') ? 'error' : ''}`
                         }, testStatus)
@@ -830,27 +841,31 @@
                 }, [expanded]);
 
                 return React.createElement('div', { className: 'ai-addon-setting ai-addon-advanced-params' },
-                    React.createElement('div', {
-                        style: { cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', userSelect: 'none', marginBottom: expanded ? '8px' : '0' },
+                    React.createElement('button', {
+                        type: 'button',
+                        className: 'ai-addon-advanced-toggle',
+                        'aria-expanded': expanded,
                         onClick: toggleExpanded
                     },
-                        React.createElement('span', { style: { fontSize: '10px', transition: 'transform 0.2s', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' } }, '▶'),
-                        React.createElement('label', { style: { cursor: 'pointer', margin: 0, fontSize: '12px', opacity: 0.8 } }, 'Advanced API Parameters')
+                        React.createElement('span', { className: 'ai-addon-advanced-chevron', 'aria-hidden': 'true' }, '▶'),
+                        aiText('advancedParams', 'Advanced API Parameters')
                     ),
-                    expanded && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '8px', borderLeft: '2px solid rgba(255,255,255,0.1)' } },
-                        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
-                            React.createElement('input', {
-                                type: 'checkbox', checked: maxTokensEnabled,
-                                onChange: (e) => { setMaxTokensEnabled(e.target.checked); setSetting('adv-maxTokens-enabled', e.target.checked); }
-                            }),
-                            React.createElement('span', { style: { fontSize: '12px', minWidth: '110px' } }, 'Max Tokens'),
+                    expanded && React.createElement('div', { className: 'ai-addon-advanced-body' },
+                        React.createElement('div', { className: 'ai-addon-advanced-row' },
+                            React.createElement('label', { className: 'ai-addon-advanced-check' },
+                                React.createElement('input', {
+                                    type: 'checkbox', checked: maxTokensEnabled,
+                                    onChange: (e) => { setMaxTokensEnabled(e.target.checked); setSetting('adv-maxTokens-enabled', e.target.checked); }
+                                }),
+                                React.createElement('span', null, aiText('maxTokens', 'Max Tokens'))
+                            ),
                             React.createElement('input', {
                                 type: 'number', value: maxTokensValue, disabled: !maxTokensEnabled,
-                                style: { width: '80px', fontSize: '12px' },
+                                'aria-label': aiText('maxTokens', 'Max Tokens'),
                                 onChange: (e) => { const v = parseInt(e.target.value) || 16000; setMaxTokensValue(v); setSetting('adv-maxTokens-value', v); }
                             })
                         ),
-                        React.createElement('small', { style: { opacity: 0.5, fontSize: '11px' } }, 'Uncheck to exclude parameter from API request.')
+                        React.createElement('small', null, aiText('advancedParamsDesc', 'Uncheck to exclude parameter from API request.'))
                     )
                 );
             }

@@ -611,7 +611,29 @@ window.LANG_SV = {
       "pollinationsKeyStatus": "Pollinations-konto · Aktiverad: %s",
       "pollinationsDescription": "Stöder både manuella API-nycklar och inloggningstoken. Ett tillgängligt inloggningstoken används först.",
       "pollinationsInvalid": "API-nyckeln är ogiltig. Anslut igen eller ange en ny nyckel.",
-      "pollinationsExpires": "Går ut om %d dag(ar)"
+      "pollinationsExpires": "Går ut om %d dag(ar)",
+      "enterApiKeyFirst": "Ange din API-nyckel först",
+      "emptyResponse": "Svaret var tomt",
+      "apiKeyRotationDesc": "Ange en enda nyckel eller en JSON-array med nycklar som används växelvis.",
+      "advancedParams": "Avancerade API-parametrar",
+      "advancedParamsDesc": "Parametrar som inte är markerade skickas inte med i API-förfrågan.",
+      "maxTokens": "Max antal tokens",
+      "maxOutputTokens": "Max antal utdatatokens",
+      "temperature": "Temperatur",
+      "thinking": "Tänkande",
+      "thinkingBudget": "Tankebudget",
+      "thinkingStreamingHint": "När tänkandet är avstängt strömmas svaren i realtid.",
+      "customModel": "Egen modell",
+      "getFreeApiKey": "Hämta gratis nyckel",
+      "groqDesc": "Groq erbjuder kostnadsfri, extremt snabb inferens.",
+      "sonarWebSearch": "Sonar-modellerna har inbyggd webbsökning i realtid.",
+      "geminiBaseUrlDesc": "Ändra den för att använda ett Gemini-kompatibelt API.",
+      "modelsAvailable": "Tillgängliga modeller: {count}",
+      "requestBodyMerge": "JSON att slå samman med förfrågans innehåll",
+      "requestBodyMergeDesc": "Slås samman med standardinnehållet i förfrågan. max_completion_tokens och temperature fylls i som standard. Sätt en nyckel till null för att ta bort den.",
+      "requestBodyMergeNotObject": "Ange ett JSON-objekt, inte en array eller ett enskilt värde.",
+      "invalidJson": "Ogiltig JSON",
+      "pollinationsLoginTimeout": "Inloggningen tog för lång tid. Försök igen."
     },
     "lyricsProviders": {
       "title": "Textleverantörer",
@@ -642,7 +664,15 @@ window.LANG_SV = {
         "synced": "Synkroniserad",
         "unsynced": "Vanligt",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Spotify Premium-funktioner",
+        "desc": "Hämtar låttexter direkt från Spotify.",
+        "premium": "Kräver Spotify Premium",
+        "providers": "Stöder flera textleverantörer",
+        "quality": "Hög precision och synkkvalitet"
+      },
+      "attribution": "Låttexter från {source}."
     }
   },
   "buttons": {

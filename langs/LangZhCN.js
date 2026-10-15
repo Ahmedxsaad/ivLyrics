@@ -611,7 +611,29 @@ window.LANG_ZH_CN = {
       "pollinationsKeyStatus": "Pollinations 账户 · 已启用: %s",
       "pollinationsDescription": "支持手动 API 密钥和账户登录令牌。有登录令牌时会优先使用。",
       "pollinationsInvalid": "API 密钥无效。请重新连接或输入新密钥。",
-      "pollinationsExpires": "%d 天后过期"
+      "pollinationsExpires": "%d 天后过期",
+      "enterApiKeyFirst": "请先输入 API 密钥",
+      "emptyResponse": "响应为空",
+      "apiKeyRotationDesc": "输入单个密钥，或以 JSON 数组输入多个密钥轮流使用。",
+      "advancedParams": "高级 API 参数",
+      "advancedParamsDesc": "取消勾选的参数不会包含在 API 请求中。",
+      "maxTokens": "最大令牌数",
+      "maxOutputTokens": "最大输出令牌数",
+      "temperature": "温度",
+      "thinking": "思考模式",
+      "thinkingBudget": "思考预算",
+      "thinkingStreamingHint": "关闭思考模式后，回复将实时流式输出。",
+      "customModel": "自定义模型",
+      "getFreeApiKey": "获取免费密钥",
+      "groqDesc": "Groq 免费提供超高速推理。",
+      "sonarWebSearch": "Sonar 模型内置实时网页搜索。",
+      "geminiBaseUrlDesc": "如需使用兼容 Gemini 的 API，请修改此地址。",
+      "modelsAvailable": "可用模型：{count} 个",
+      "requestBodyMerge": "请求体合并 JSON",
+      "requestBodyMergeDesc": "将合并到默认请求体中。max_completion_tokens 和 temperature 默认会被填入。将某个键设为 null 即可将其移除。",
+      "requestBodyMergeNotObject": "请输入 JSON 对象，而不是数组或单个值。",
+      "invalidJson": "JSON 格式无效",
+      "pollinationsLoginTimeout": "登录超时，请重试。"
     },
     "lyricsProviders": {
       "title": "歌词提供者",
@@ -642,7 +664,15 @@ window.LANG_ZH_CN = {
         "synced": "同步",
         "unsynced": "普通",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Spotify Premium 功能",
+        "desc": "直接从 Spotify 获取歌词。",
+        "premium": "需要 Spotify Premium",
+        "providers": "支持多个歌词提供者",
+        "quality": "准确度高，同步质量好"
+      },
+      "attribution": "歌词来源：{source}"
     }
   },
   "buttons": {

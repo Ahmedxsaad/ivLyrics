@@ -611,7 +611,29 @@ window.LANG_VI = {
       "pollinationsKeyStatus": "Tài khoản Pollinations · Đã bật: %s",
       "pollinationsDescription": "Hỗ trợ cả khóa API nhập thủ công và token đăng nhập. Token đăng nhập được ưu tiên khi có.",
       "pollinationsInvalid": "Khóa API không hợp lệ. Hãy kết nối lại hoặc nhập khóa mới.",
-      "pollinationsExpires": "Hết hạn sau %d ngày"
+      "pollinationsExpires": "Hết hạn sau %d ngày",
+      "enterApiKeyFirst": "Hãy nhập khóa API trước",
+      "emptyResponse": "Phản hồi trống",
+      "apiKeyRotationDesc": "Nhập một khóa, hoặc một mảng JSON gồm nhiều khóa để dùng luân phiên.",
+      "advancedParams": "Tham số API nâng cao",
+      "advancedParamsDesc": "Các tham số bỏ chọn sẽ không được gửi trong yêu cầu API.",
+      "maxTokens": "Số token tối đa",
+      "maxOutputTokens": "Số token đầu ra tối đa",
+      "temperature": "Nhiệt độ",
+      "thinking": "Tư duy",
+      "thinkingBudget": "Ngân sách tư duy",
+      "thinkingStreamingHint": "Khi tắt tư duy, phản hồi sẽ được truyền theo thời gian thực.",
+      "customModel": "Mô hình tùy chỉnh",
+      "getFreeApiKey": "Nhận khóa miễn phí",
+      "groqDesc": "Groq cung cấp suy luận siêu nhanh miễn phí.",
+      "sonarWebSearch": "Các mô hình Sonar có sẵn tính năng tìm kiếm web theo thời gian thực.",
+      "geminiBaseUrlDesc": "Thay đổi địa chỉ này để dùng API tương thích với Gemini.",
+      "modelsAvailable": "Mô hình khả dụng: {count}",
+      "requestBodyMerge": "JSON hợp nhất vào nội dung yêu cầu",
+      "requestBodyMergeDesc": "Được hợp nhất vào nội dung yêu cầu mặc định. max_completion_tokens và temperature được điền sẵn theo mặc định. Đặt một khóa thành null để xóa khóa đó.",
+      "requestBodyMergeNotObject": "Hãy nhập một đối tượng JSON, không phải mảng hay một giá trị đơn lẻ.",
+      "invalidJson": "JSON không hợp lệ",
+      "pollinationsLoginTimeout": "Đăng nhập đã hết thời gian chờ. Vui lòng thử lại."
     },
     "lyricsProviders": {
       "title": "Nhà cung cấp lời bài hát",
@@ -642,7 +664,15 @@ window.LANG_VI = {
         "synced": "Đồng bộ",
         "unsynced": "Chưa đồng bộ",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Tính năng Spotify Premium",
+        "desc": "Lấy lời bài hát trực tiếp từ Spotify.",
+        "premium": "Cần Spotify Premium",
+        "providers": "Hỗ trợ nhiều nhà cung cấp lời bài hát",
+        "quality": "Độ chính xác và chất lượng đồng bộ cao"
+      },
+      "attribution": "Lời bài hát từ {source}."
     }
   },
   "buttons": {

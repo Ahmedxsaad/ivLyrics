@@ -611,7 +611,29 @@ window.LANG_PT = {
       "pollinationsKeyStatus": "Conta Pollinations · Ativado: %s",
       "pollinationsDescription": "Compatível com chaves de API manuais e tokens de login. O token de login é usado primeiro quando disponível.",
       "pollinationsInvalid": "A chave API é inválida. Reconecte ou insira uma nova chave.",
-      "pollinationsExpires": "Expira em %d dia(s)"
+      "pollinationsExpires": "Expira em %d dia(s)",
+      "enterApiKeyFirst": "Insira primeiro sua chave de API",
+      "emptyResponse": "A resposta veio vazia",
+      "apiKeyRotationDesc": "Insira uma única chave ou uma matriz JSON de chaves para usar em rodízio.",
+      "advancedParams": "Parâmetros avançados da API",
+      "advancedParamsDesc": "Os parâmetros desmarcados não são incluídos na solicitação à API.",
+      "maxTokens": "Máximo de tokens",
+      "maxOutputTokens": "Máximo de tokens de saída",
+      "temperature": "Temperatura",
+      "thinking": "Raciocínio",
+      "thinkingBudget": "Orçamento de raciocínio",
+      "thinkingStreamingHint": "Com o raciocínio desativado, as respostas são transmitidas em tempo real.",
+      "customModel": "Modelo personalizado",
+      "getFreeApiKey": "Obter chave grátis",
+      "groqDesc": "O Groq oferece inferência ultrarrápida e gratuita.",
+      "sonarWebSearch": "Os modelos Sonar incluem pesquisa na web em tempo real.",
+      "geminiBaseUrlDesc": "Altere para usar uma API compatível com o Gemini.",
+      "modelsAvailable": "Modelos disponíveis: {count}",
+      "requestBodyMerge": "JSON para mesclar ao corpo da solicitação",
+      "requestBodyMergeDesc": "É mesclado ao corpo de solicitação padrão. max_completion_tokens e temperature são preenchidos por padrão. Defina uma chave como null para removê-la.",
+      "requestBodyMergeNotObject": "Insira um objeto JSON, não uma matriz ou um valor único.",
+      "invalidJson": "JSON inválido",
+      "pollinationsLoginTimeout": "O tempo de login esgotou. Tente novamente."
     },
     "lyricsProviders": {
       "title": "Provedores de letras",
@@ -642,7 +664,15 @@ window.LANG_PT = {
         "synced": "Sinc.",
         "unsynced": "Não Sinc.",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Recursos do Spotify Premium",
+        "desc": "Obtém as letras diretamente do Spotify.",
+        "premium": "Requer Spotify Premium",
+        "providers": "Compatível com vários provedores de letras",
+        "quality": "Alta precisão e qualidade de sincronização"
+      },
+      "attribution": "Letras fornecidas por {source}."
     }
   },
   "buttons": {

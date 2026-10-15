@@ -611,7 +611,29 @@ window.LANG_EN = {
       "pollinationsKeyStatus": "Pollinations Account · Enabled: %s",
       "pollinationsDescription": "Supports both manual API keys and account login tokens. Login tokens are used first when available.",
       "pollinationsInvalid": "The API key is invalid. Reconnect or enter a new key.",
-      "pollinationsExpires": "Expires in %d day(s)"
+      "pollinationsExpires": "Expires in %d day(s)",
+      "enterApiKeyFirst": "Enter your API key first",
+      "emptyResponse": "The response was empty",
+      "apiKeyRotationDesc": "Enter a single key, or a JSON array of keys to rotate through.",
+      "advancedParams": "Advanced API parameters",
+      "advancedParamsDesc": "Unchecked parameters are left out of the API request.",
+      "maxTokens": "Max tokens",
+      "maxOutputTokens": "Max output tokens",
+      "temperature": "Temperature",
+      "thinking": "Thinking",
+      "thinkingBudget": "Thinking budget",
+      "thinkingStreamingHint": "With Thinking off, responses stream in real time.",
+      "customModel": "Custom model",
+      "getFreeApiKey": "Get Free Key",
+      "groqDesc": "Groq offers free, ultra-fast inference.",
+      "sonarWebSearch": "Sonar models include real-time web search.",
+      "geminiBaseUrlDesc": "Change this to use a Gemini-compatible API.",
+      "modelsAvailable": "Models available: {count}",
+      "requestBodyMerge": "Request body merge JSON",
+      "requestBodyMergeDesc": "Merged into the default request body. max_completion_tokens and temperature are filled in by default. Set a key to null to remove it.",
+      "requestBodyMergeNotObject": "Enter a JSON object, not an array or a single value.",
+      "invalidJson": "Invalid JSON",
+      "pollinationsLoginTimeout": "Login timed out. Please try again."
     },
     "lyricsProviders": {
       "title": "Lyrics Providers",
@@ -642,7 +664,15 @@ window.LANG_EN = {
         "synced": "Synced",
         "unsynced": "Plain",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Spotify Premium features",
+        "desc": "Gets lyrics directly from Spotify.",
+        "premium": "Requires Spotify Premium",
+        "providers": "Supports multiple lyrics providers",
+        "quality": "High accuracy and sync quality"
+      },
+      "attribution": "Lyrics from {source}."
     }
   },
   "buttons": {

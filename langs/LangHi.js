@@ -611,7 +611,29 @@ window.LANG_HI = {
       "pollinationsKeyStatus": "Pollinations खाता · सक्षम: %s",
       "pollinationsDescription": "मैन्युअल API कुंजी और खाते के लॉगिन टोकन, दोनों समर्थित हैं। उपलब्ध होने पर लॉगिन टोकन पहले उपयोग होता है।",
       "pollinationsInvalid": "API कुंजी अमान्य है। फिर से कनेक्ट करें या नई कुंजी दर्ज करें।",
-      "pollinationsExpires": "%d दिन में समाप्त"
+      "pollinationsExpires": "%d दिन में समाप्त",
+      "enterApiKeyFirst": "पहले अपनी API कुंजी डालें",
+      "emptyResponse": "जवाब खाली मिला",
+      "apiKeyRotationDesc": "एक कुंजी डालें, या बारी-बारी से इस्तेमाल होने वाली कुंजियों की JSON सरणी डालें।",
+      "advancedParams": "उन्नत API पैरामीटर",
+      "advancedParamsDesc": "जिन पैरामीटर से चेक हटाया गया है, वे API अनुरोध में शामिल नहीं होते।",
+      "maxTokens": "अधिकतम टोकन",
+      "maxOutputTokens": "अधिकतम आउटपुट टोकन",
+      "temperature": "तापमान",
+      "thinking": "थिंकिंग",
+      "thinkingBudget": "थिंकिंग बजट",
+      "thinkingStreamingHint": "थिंकिंग बंद होने पर जवाब रीयल-टाइम में स्ट्रीम होते हैं।",
+      "customModel": "कस्टम मॉडल",
+      "getFreeApiKey": "मुफ़्त कुंजी पाएँ",
+      "groqDesc": "Groq बेहद तेज़ इन्फ़रेंस मुफ़्त में देता है।",
+      "sonarWebSearch": "Sonar मॉडल में रीयल-टाइम वेब खोज शामिल है।",
+      "geminiBaseUrlDesc": "Gemini-संगत API इस्तेमाल करने के लिए इसे बदलें।",
+      "modelsAvailable": "उपलब्ध मॉडल: {count}",
+      "requestBodyMerge": "अनुरोध बॉडी में मर्ज होने वाला JSON",
+      "requestBodyMergeDesc": "यह डिफ़ॉल्ट अनुरोध बॉडी में मर्ज होता है। max_completion_tokens और temperature डिफ़ॉल्ट रूप से भरे जाते हैं। किसी कुंजी को हटाने के लिए उसे null पर सेट करें।",
+      "requestBodyMergeNotObject": "ऐरे या एकल मान नहीं, बल्कि JSON ऑब्जेक्ट डालें।",
+      "invalidJson": "JSON अमान्य है",
+      "pollinationsLoginTimeout": "लॉग इन का समय समाप्त हो गया। कृपया फिर से कोशिश करें।"
     },
     "lyricsProviders": {
       "title": "गीत प्रदाता",
@@ -642,7 +664,15 @@ window.LANG_HI = {
         "synced": "सिंक किया गया",
         "unsynced": "अनसिंक किया गया",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Spotify Premium सुविधाएँ",
+        "desc": "Spotify से सीधे गीत के बोल लाता है।",
+        "premium": "Spotify Premium ज़रूरी है",
+        "providers": "कई गीत प्रदाताओं का समर्थन",
+        "quality": "उच्च सटीकता और सिंक गुणवत्ता"
+      },
+      "attribution": "गीत के बोल {source} से लिए गए हैं।"
     }
   },
   "buttons": {

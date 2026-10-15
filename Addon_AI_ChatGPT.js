@@ -212,12 +212,13 @@
         }
     }
 
-    function t(key, fallback) {
-        const value = window.I18n?.t?.(key);
-        return value && value !== key ? value : fallback;
+    function t(key, fallback, params) {
+        const value = window.I18n?.t?.(key, params);
+        if (value && value !== key) return value;
+        return params ? String(fallback).replace(/\{(\w+)\}/g, (match, name) => params[name] ?? match) : fallback;
     }
 
-    const aiText = (key, fallback) => t(`settings.aiProviders.${key}`, fallback);
+    const aiText = (key, fallback, params) => t(`settings.aiProviders.${key}`, fallback, params);
 
     function getApiKeys(connection = null) {
         if (connection) return parseConnectionKeys(connection.apiKeys);
@@ -1516,7 +1517,7 @@
                         await callChatGPTAPIRaw('Reply with just "OK" if you receive this.');
                         setTestStatus('✓ ' + aiText('connectionSuccess', 'Connection successful.'));
                     } catch (e) {
-                        setTestStatus(`✗ Error: ${e.message}`);
+                        setTestStatus(`✗ ${e.message}`);
                     }
                 }, []);
 
@@ -1536,7 +1537,7 @@
                 const renderApiKeyRow = () => React.createElement('div', { className: 'ai-addon-setting' },
                         React.createElement('label', null, aiText('apiKey', 'API Key(s)')),
                         React.createElement('div', { className: 'ai-addon-input-group' },
-                            React.createElement('input', { type: 'password', autoComplete: 'off', value: apiKeys, onChange: handleApiKeyChange, placeholder: 'sk-... (multiple: ["key1", "key2"])' }),
+                            React.createElement('input', { type: 'password', autoComplete: 'off', value: apiKeys, onChange: handleApiKeyChange, placeholder: 'sk-...' }),
                             React.createElement('button', { type: 'button', onClick: () => window.open(ADDON_INFO.apiKeyUrl, '_blank'), className: 'ai-addon-btn ai-addon-btn-secondary' }, aiText('getApiKey', 'Get API Key'))
                         ),
                         React.createElement('small', null, aiText('apiKeyDesc', 'Enter an API key or JSON array.'))
@@ -1563,7 +1564,7 @@
                                             React.createElement('option', { key: 'custom', value: '' }, aiText('modelId', 'Model ID'))
                                         ].filter(Boolean)
                                         : [
-                                            React.createElement('option', { key: 'empty', value: '' }, hasApiKey ? aiText('noModels', 'No models found') : aiText('apiKey', 'API Key')),
+                                            React.createElement('option', { key: 'empty', value: '' }, hasApiKey ? aiText('noModels', 'No models found') : aiText('enterApiKeyFirst', 'Enter API key first')),
                                             React.createElement('option', { key: 'custom', value: '' }, aiText('modelId', 'Model ID'))
                                         ]
                             ),
@@ -1576,11 +1577,11 @@
                                 title: aiText('refreshModels', 'Refresh model list')
                             }, modelsLoading ? '...' : '↻')
                         ),
-                        availableModels.length > 0 && React.createElement('small', null, `${aiText('model', 'Model')}: ${availableModels.length}`)
+                        availableModels.length > 0 && React.createElement('small', null, aiText('modelsAvailable', '{count} models available', { count: availableModels.length }))
                     );
                 const renderCustomModelRow = () => React.createElement('div', { className: 'ai-addon-setting' },
                         React.createElement('label', null, aiText('modelId', 'Custom Model ID')),
-                        React.createElement('input', { type: 'text', value: customModel, onChange: handleCustomModelChange, placeholder: 'e.g., gpt-4-turbo' })
+                        React.createElement('input', { type: 'text', value: customModel, onChange: handleCustomModelChange, placeholder: 'gpt-4-turbo', 'aria-label': aiText('modelId', 'Custom Model ID') })
                     );
 
                 return React.createElement('div', { className: 'ai-addon-settings chatgpt-settings' },
@@ -1756,13 +1757,24 @@
                 );
             }
 
+            // Settings wording for getRequestBodyMergeValidationError; requests keep its raw message.
+            function describeRequestBodyMergeError(rawValue) {
+                const raw = normalizeRequestBodyMergeJson(rawValue).trim();
+                if (!raw) return '';
+                try {
+                    return isPlainObject(JSON.parse(raw)) ? '' : aiText('requestBodyMergeNotObject', 'Request Body Merge JSON must be a JSON object.');
+                } catch (e) {
+                    return `${aiText('invalidJson', 'Invalid JSON')}: ${e.message}`;
+                }
+            }
+
             function AdvancedParamsSection() {
                 const [expanded, setExpanded] = useState(getSetting('adv-expanded', false));
                 const [requestBodyMergeJson, setRequestBodyMergeJson] = useState(() => {
                     const savedValue = normalizeRequestBodyMergeJson(getSetting('adv-requestBodyMergeJson', ''));
                     return savedValue || getDefaultRequestBodyMergeJson();
                 });
-                const requestBodyMergeError = getRequestBodyMergeValidationError(requestBodyMergeJson);
+                const requestBodyMergeError = describeRequestBodyMergeError(requestBodyMergeJson);
 
                 useEffect(() => {
                     if (!normalizeRequestBodyMergeJson(getSetting('adv-requestBodyMergeJson', ''))) {
@@ -1777,32 +1789,34 @@
                 }, [expanded]);
 
                 return React.createElement('div', { className: 'ai-addon-setting ai-addon-advanced-params' },
-                    React.createElement('div', {
-                        style: { cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', userSelect: 'none', marginBottom: expanded ? '8px' : '0' },
+                    React.createElement('button', {
+                        type: 'button',
+                        className: 'ai-addon-advanced-toggle',
+                        'aria-expanded': expanded,
                         onClick: toggleExpanded
                     },
-                        React.createElement('span', { style: { fontSize: '10px', transition: 'transform 0.2s', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' } }, '▶'),
-                        React.createElement('label', { style: { cursor: 'pointer', margin: 0, fontSize: '12px', opacity: 0.8 } }, 'Advanced API Parameters')
+                        React.createElement('span', { className: 'ai-addon-advanced-chevron', 'aria-hidden': 'true' }, '▶'),
+                        aiText('advancedParams', 'Advanced API Parameters')
                     ),
-                    expanded && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '8px', borderLeft: '2px solid rgba(255,255,255,0.1)' } },
-                        React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
-                            React.createElement('span', { style: { fontSize: '12px' } }, 'Request Body Merge JSON'),
+                    expanded && React.createElement('div', { className: 'ai-addon-advanced-body' },
+                        React.createElement('label', { className: 'ai-addon-advanced-field' },
+                            React.createElement('span', null, aiText('requestBodyMerge', 'Request Body Merge JSON')),
                             React.createElement('textarea', {
                                 value: requestBodyMergeJson,
                                 rows: 7,
                                 spellCheck: false,
-                                style: { width: '100%', fontSize: '12px', fontFamily: 'monospace', resize: 'vertical' },
                                 placeholder: '{\n  "max_completion_tokens": 16000,\n  "max_tokens": null\n}',
+                                'aria-invalid': requestBodyMergeError ? true : undefined,
                                 onChange: (e) => {
                                     const value = e.target.value;
                                     setRequestBodyMergeJson(value);
                                     setSetting('adv-requestBodyMergeJson', value);
                                 }
-                            }),
-                            requestBodyMergeError
-                                ? React.createElement('small', { style: { color: '#ff9b9b', fontSize: '11px' } }, requestBodyMergeError)
-                                : React.createElement('small', { style: { opacity: 0.65, fontSize: '11px' } }, 'Merged into the default request body. max_completion_tokens and temperature are filled in by default. Set a key to null to remove it.')
-                        )
+                            })
+                        ),
+                        requestBodyMergeError
+                            ? React.createElement('small', { className: 'ai-addon-field-error' }, requestBodyMergeError)
+                            : React.createElement('small', null, aiText('requestBodyMergeDesc', 'Merged into the default request body. max_completion_tokens and temperature are filled in by default. Set a key to null to remove it.'))
                     )
                 );
             }

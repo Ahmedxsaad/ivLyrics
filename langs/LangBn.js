@@ -611,7 +611,29 @@ window.LANG_BN = {
       "pollinationsKeyStatus": "Pollinations অ্যাকাউন্ট · সক্রিয়: %s",
       "pollinationsDescription": "ম্যানুয়াল API কী ও অ্যাকাউন্ট লগইন টোকেন উভয়ই সমর্থিত। টোকেন থাকলে সেটি আগে ব্যবহার করা হয়।",
       "pollinationsInvalid": "API কী বৈধ নয়। আবার সংযোগ করুন বা নতুন কী লিখুন।",
-      "pollinationsExpires": "%d দিনের মধ্যে মেয়াদ শেষ"
+      "pollinationsExpires": "%d দিনের মধ্যে মেয়াদ শেষ",
+      "enterApiKeyFirst": "আগে আপনার API কী লিখুন",
+      "emptyResponse": "উত্তর খালি এসেছে",
+      "apiKeyRotationDesc": "একটি কী লিখুন, অথবা পালা করে ব্যবহারের জন্য কীগুলোর একটি JSON অ্যারে লিখুন।",
+      "advancedParams": "উন্নত API প্যারামিটার",
+      "advancedParamsDesc": "যেসব প্যারামিটারে টিক নেই, সেগুলো API অনুরোধে পাঠানো হয় না।",
+      "maxTokens": "সর্বোচ্চ টোকেন",
+      "maxOutputTokens": "সর্বোচ্চ আউটপুট টোকেন",
+      "temperature": "তাপমাত্রা",
+      "thinking": "থিংকিং",
+      "thinkingBudget": "থিংকিং বাজেট",
+      "thinkingStreamingHint": "থিংকিং বন্ধ থাকলে উত্তর রিয়েল-টাইমে স্ট্রিম হয়।",
+      "customModel": "কাস্টম মডেল",
+      "getFreeApiKey": "বিনামূল্যে কী নিন",
+      "groqDesc": "Groq বিনামূল্যে অত্যন্ত দ্রুত ইনফারেন্স দেয়।",
+      "sonarWebSearch": "Sonar মডেলে রিয়েল-টাইম ওয়েব সার্চ অন্তর্ভুক্ত।",
+      "geminiBaseUrlDesc": "Gemini-সামঞ্জস্যপূর্ণ API ব্যবহার করতে এটি বদলান।",
+      "modelsAvailable": "উপলভ্য মডেল: {count}",
+      "requestBodyMerge": "অনুরোধের বডিতে মার্জ করার JSON",
+      "requestBodyMergeDesc": "এটি ডিফল্ট অনুরোধ বডির সঙ্গে মার্জ হয়। max_completion_tokens ও temperature ডিফল্টভাবে পূরণ করা থাকে। কোনো কী সরাতে তার মান null দিন।",
+      "requestBodyMergeNotObject": "অ্যারে বা একক মান নয়, একটি JSON অবজেক্ট লিখুন।",
+      "invalidJson": "JSON সঠিক নয়",
+      "pollinationsLoginTimeout": "লগইনের সময় শেষ হয়ে গেছে। আবার চেষ্টা করুন।"
     },
     "lyricsProviders": {
       "title": "লিরিক্স প্রদানকারী",
@@ -642,7 +664,15 @@ window.LANG_BN = {
         "synced": "সিঙ্ক করা",
         "unsynced": "আনসিঙ্ক করা",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Spotify Premium ফিচার",
+        "desc": "সরাসরি Spotify থেকে লিরিক্স আনে।",
+        "premium": "Spotify Premium প্রয়োজন",
+        "providers": "একাধিক লিরিক্স প্রদানকারী সমর্থিত",
+        "quality": "উচ্চ নির্ভুলতা ও সিঙ্ক মান"
+      },
+      "attribution": "লিরিক্স {source} থেকে নেওয়া।"
     }
   },
   "buttons": {

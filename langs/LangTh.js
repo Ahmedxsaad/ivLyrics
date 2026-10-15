@@ -611,7 +611,29 @@ window.LANG_TH = {
       "pollinationsKeyStatus": "บัญชี Pollinations · เปิดใช้งาน: %s",
       "pollinationsDescription": "รองรับทั้งคีย์ API แบบกรอกเองและโทเค็นเข้าสู่ระบบ หากมีโทเค็น ระบบจะใช้ก่อน",
       "pollinationsInvalid": "คีย์ API ไม่ถูกต้อง กรุณาเชื่อมต่อใหม่หรือป้อนคีย์ใหม่",
-      "pollinationsExpires": "หมดอายุใน %d วัน"
+      "pollinationsExpires": "หมดอายุใน %d วัน",
+      "enterApiKeyFirst": "ป้อนคีย์ API ก่อน",
+      "emptyResponse": "การตอบกลับว่างเปล่า",
+      "apiKeyRotationDesc": "ป้อนคีย์เดียว หรืออาร์เรย์ JSON ของคีย์หลายตัวเพื่อใช้สลับกัน",
+      "advancedParams": "พารามิเตอร์ API ขั้นสูง",
+      "advancedParamsDesc": "พารามิเตอร์ที่ไม่ได้เลือกจะไม่ถูกส่งไปในคำขอ API",
+      "maxTokens": "จำนวนโทเคนสูงสุด",
+      "maxOutputTokens": "จำนวนโทเคนเอาต์พุตสูงสุด",
+      "temperature": "อุณหภูมิ",
+      "thinking": "โหมดการคิด",
+      "thinkingBudget": "งบประมาณการคิด",
+      "thinkingStreamingHint": "เมื่อปิดโหมดการคิด คำตอบจะสตรีมแบบเรียลไทม์",
+      "customModel": "โมเดลที่กำหนดเอง",
+      "getFreeApiKey": "รับคีย์ฟรี",
+      "groqDesc": "Groq ให้บริการประมวลผลโมเดลที่เร็วมากโดยไม่มีค่าใช้จ่าย",
+      "sonarWebSearch": "โมเดล Sonar มีการค้นหาเว็บแบบเรียลไทม์ในตัว",
+      "geminiBaseUrlDesc": "เปลี่ยนที่อยู่นี้หากต้องการใช้ API ที่เข้ากันได้กับ Gemini",
+      "modelsAvailable": "โมเดลที่ใช้ได้: {count}",
+      "requestBodyMerge": "JSON ที่จะรวมเข้ากับเนื้อหาคำขอ",
+      "requestBodyMergeDesc": "จะถูกรวมเข้ากับเนื้อหาคำขอเริ่มต้น max_completion_tokens และ temperature จะถูกกรอกให้โดยค่าเริ่มต้น ตั้งค่าคีย์เป็น null เพื่อลบออก",
+      "requestBodyMergeNotObject": "ป้อนออบเจ็กต์ JSON ไม่ใช่อาร์เรย์หรือค่าเดี่ยว",
+      "invalidJson": "JSON ไม่ถูกต้อง",
+      "pollinationsLoginTimeout": "การเข้าสู่ระบบหมดเวลา โปรดลองอีกครั้ง"
     },
     "lyricsProviders": {
       "title": "ผู้ให้บริการเนื้อเพลง",
@@ -642,7 +664,15 @@ window.LANG_TH = {
         "synced": "ซิงค์",
         "unsynced": "ไม่ซิงค์",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "ฟีเจอร์ Spotify Premium",
+        "desc": "ดึงเนื้อเพลงจาก Spotify โดยตรง",
+        "premium": "ต้องใช้ Spotify Premium",
+        "providers": "รองรับผู้ให้บริการเนื้อเพลงหลายราย",
+        "quality": "แม่นยำและซิงก์ได้ดี"
+      },
+      "attribution": "เนื้อเพลงจาก {source}"
     }
   },
   "buttons": {

@@ -611,7 +611,29 @@ window.LANG_ID = {
       "pollinationsKeyStatus": "Akun Pollinations · Aktif: %s",
       "pollinationsDescription": "Mendukung kunci API manual dan token masuk akun. Token masuk dipakai lebih dahulu jika tersedia.",
       "pollinationsInvalid": "Kunci API tidak valid. Hubungkan kembali atau masukkan kunci baru.",
-      "pollinationsExpires": "Kedaluwarsa dalam %d hari"
+      "pollinationsExpires": "Kedaluwarsa dalam %d hari",
+      "enterApiKeyFirst": "Masukkan kunci API terlebih dahulu",
+      "emptyResponse": "Responsnya kosong",
+      "apiKeyRotationDesc": "Masukkan satu kunci, atau array JSON berisi beberapa kunci untuk digunakan bergantian.",
+      "advancedParams": "Parameter API lanjutan",
+      "advancedParamsDesc": "Parameter yang tidak dicentang tidak disertakan dalam permintaan API.",
+      "maxTokens": "Token maksimum",
+      "maxOutputTokens": "Token output maksimum",
+      "temperature": "Suhu",
+      "thinking": "Penalaran",
+      "thinkingBudget": "Anggaran penalaran",
+      "thinkingStreamingHint": "Saat penalaran dimatikan, respons dialirkan secara real-time.",
+      "customModel": "Model kustom",
+      "getFreeApiKey": "Dapatkan Kunci Gratis",
+      "groqDesc": "Groq menyediakan inferensi supercepat secara gratis.",
+      "sonarWebSearch": "Model Sonar sudah dilengkapi penelusuran web real-time.",
+      "geminiBaseUrlDesc": "Ubah alamat ini untuk menggunakan API yang kompatibel dengan Gemini.",
+      "modelsAvailable": "Model tersedia: {count}",
+      "requestBodyMerge": "JSON untuk digabungkan ke isi permintaan",
+      "requestBodyMergeDesc": "Digabungkan ke isi permintaan bawaan. max_completion_tokens dan temperature diisi secara bawaan. Setel kunci ke null untuk menghapusnya.",
+      "requestBodyMergeNotObject": "Masukkan objek JSON, bukan array atau satu nilai.",
+      "invalidJson": "JSON tidak valid",
+      "pollinationsLoginTimeout": "Waktu login habis. Silakan coba lagi."
     },
     "lyricsProviders": {
       "title": "Penyedia Lirik",
@@ -642,7 +664,15 @@ window.LANG_ID = {
         "synced": "Sinkron",
         "unsynced": "Tidak Sinkron",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Fitur Spotify Premium",
+        "desc": "Mengambil lirik langsung dari Spotify.",
+        "premium": "Memerlukan Spotify Premium",
+        "providers": "Mendukung beberapa penyedia lirik",
+        "quality": "Akurasi dan kualitas sinkronisasi tinggi"
+      },
+      "attribution": "Lirik dari {source}."
     }
   },
   "buttons": {

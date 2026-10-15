@@ -871,7 +871,7 @@
                             return;
                         }
 
-                        throw new Error('[Pollinations.ai] Login timed out. Please try again.');
+                        throw new Error(aiText('pollinationsLoginTimeout', '[Pollinations.ai] Login timed out. Please try again.'));
                     } catch (e) {
                         if (authWindow && !authWindow.closed) {
                             try { authWindow.close(); } catch (closeError) { }
@@ -909,77 +909,59 @@
                 const keyInfoText = keyInfo
                     ? `${keyInfo.valid ? aiText('connectionSuccess', 'Connection successful.') : aiText('pollinationsInvalid', 'Invalid key')}${keyInfo.expiresIn ? ' · ' + aiText('pollinationsExpires', 'Expires in %d day(s)').replace('%d', Math.ceil(keyInfo.expiresIn / 86400)) : ''}`
                     : keyInfoLoading ? '...' : '';
-                const baseButtonStyle = {
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '36px',
-                    padding: '8px 14px',
-                    borderRadius: '8px',
-                    fontSize: '13px',
-                    fontWeight: 700,
-                    lineHeight: 1,
-                    whiteSpace: 'nowrap',
-                    cursor: isConnecting ? 'default' : 'pointer',
-                    transition: 'transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease'
-                };
-                const primaryButtonStyle = {
-                    ...baseButtonStyle,
-                    border: '1px solid rgba(255,255,255,0.18)',
-                    background: isConnecting ? 'rgba(255,255,255,0.16)' : 'linear-gradient(135deg, #22c55e, #16a34a)',
-                    color: '#07130a',
-                    boxShadow: isConnecting ? 'none' : '0 8px 18px rgba(34,197,94,0.24)',
-                    opacity: isConnecting ? 0.7 : 1
-                };
-                const secondaryButtonStyle = {
-                    ...baseButtonStyle,
-                    border: '1px solid rgba(255,255,255,0.22)',
-                    background: 'rgba(255,255,255,0.08)',
-                    color: 'var(--spice-text, #fff)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08)'
-                };
+                const toggleManualKey = () => setManualExpanded(!manualExpanded);
 
                 const renderAccountRow = () => React.createElement('div', { className: 'ai-addon-setting' },
                         React.createElement('label', null, aiText('pollinationsAccount', 'Pollinations Account')),
                         React.createElement('div', { className: 'ai-addon-input-group', style: { display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '8px' } },
                             React.createElement('button', {
+                                type: 'button',
                                 onClick: handleConnect,
-                                className: 'ai-addon-btn-primary',
-                                disabled: isConnecting,
-                                style: primaryButtonStyle
+                                className: 'ai-addon-btn ai-addon-btn-primary',
+                                disabled: isConnecting
                             }, isConnecting ? aiText('pollinationsWaiting', 'Waiting for login') : hasApiKey ? aiText('pollinationsReconnect', 'Reconnect') : aiText('pollinationsConnect', 'Connect Pollinations')),
                             hasApiKey && React.createElement('button', {
+                                type: 'button',
                                 onClick: handleDisconnect,
-                                className: 'ai-addon-btn-secondary',
-                                disabled: isConnecting,
-                                style: secondaryButtonStyle
+                                className: 'ai-addon-btn ai-addon-btn-secondary',
+                                disabled: isConnecting
                             }, aiText('pollinationsDisconnect', 'Disconnect'))
                         ),
                         React.createElement('small', null, authStatus || keyStatusText),
                         deviceAuth && React.createElement('div', { style: { marginTop: '8px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' } },
-                            React.createElement('code', { style: { fontSize: '13px', padding: '7px 10px', borderRadius: '6px', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.16)' } }, deviceAuth.user_code),
+                            React.createElement('code', { className: 'ai-addon-device-code' }, deviceAuth.user_code),
                             React.createElement('button', {
+                                type: 'button',
                                 onClick: () => window.open(deviceAuth.verificationUrl, '_blank'),
-                                className: 'ai-addon-btn-secondary',
-                                style: secondaryButtonStyle
+                                className: 'ai-addon-btn ai-addon-btn-secondary'
                             }, aiText('pollinationsOpenLogin', 'Open Login Page'))
                         ),
-                        keyInfoText && React.createElement('small', { style: { display: 'block', opacity: 0.65 } }, keyInfoText)
+                        keyInfoText && React.createElement('small', null, keyInfoText)
                     );
                 const renderManualKeyRow = () => React.createElement('div', { className: 'ai-addon-setting' },
                         React.createElement('div', {
-                            style: { cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', userSelect: 'none' },
-                            onClick: () => setManualExpanded(!manualExpanded)
+                            className: 'ai-addon-disclosure',
+                            role: 'button',
+                            tabIndex: 0,
+                            'aria-expanded': manualExpanded,
+                            onClick: toggleManualKey,
+                            onKeyDown: (e) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    toggleManualKey();
+                                }
+                            }
                         },
-                            React.createElement('span', { style: { fontSize: '10px', transition: 'transform 0.2s', transform: manualExpanded ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' } }, '>'),
-                            React.createElement('label', { style: { cursor: 'pointer', margin: 0 } }, aiText('apiKey', 'API Key'))
+                            React.createElement('span', { className: 'ai-addon-advanced-chevron', 'aria-hidden': 'true' }, '▶'),
+                            React.createElement('label', null, aiText('apiKey', 'API Key'))
                         ),
-                        manualExpanded && React.createElement('div', { style: { marginTop: '8px' } },
+                        manualExpanded && React.createElement('div', { className: 'ai-addon-disclosure-body' },
                             React.createElement('input', {
                                 type: 'password',
                                 value: apiKeys,
                                 onChange: handleApiKeyChange,
-                                placeholder: 'sk_... or ["sk_...", "sk_..."]',
+                                placeholder: 'sk_...',
+                                'aria-label': aiText('apiKey', 'API Key'),
                                 autoComplete: 'off'
                             }),
                             React.createElement('small', null, aiText('apiKeyDesc', 'Enter your API key.'))
@@ -999,9 +981,11 @@
                                     m.name === m.id ? m.id : `${m.name} · ${m.id}`))
                             ),
                             React.createElement('button', {
+                                type: 'button',
                                 onClick: () => setModelsRevision(value => value + 1),
-                                className: 'ai-addon-btn-secondary',
+                                className: 'ai-addon-btn ai-addon-btn-secondary ai-addon-connection-icon',
                                 disabled: modelsLoading,
+                                'aria-label': aiText('refreshModels', 'Refresh model list'),
                                 title: aiText('refreshModels', 'Refresh model list')
                             }, modelsLoading ? '...' : '↻')
                         ),
@@ -1014,7 +998,7 @@
                         })
                     );
                 const renderTestRow = () => React.createElement('div', { className: 'ai-addon-setting' },
-                        React.createElement('button', { onClick: handleTest, className: 'ai-addon-btn-primary', style: primaryButtonStyle }, aiText('testConnection', 'Test Connection')),
+                        React.createElement('button', { type: 'button', onClick: handleTest, className: 'ai-addon-btn ai-addon-btn-primary' }, aiText('testConnection', 'Test Connection')),
                         testStatus && React.createElement('span', {
                             className: `ai-addon-test-status ${testStatus.startsWith('✓') ? 'success' : testStatus.startsWith('✗') ? 'error' : ''}`
                         }, testStatus)
@@ -1043,25 +1027,31 @@
                 }, [expanded]);
 
                 return React.createElement('div', { className: 'ai-addon-setting ai-addon-advanced-params' },
-                    React.createElement('div', {
-                        style: { cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', userSelect: 'none', marginBottom: expanded ? '8px' : '0' },
+                    React.createElement('button', {
+                        type: 'button',
+                        className: 'ai-addon-advanced-toggle',
+                        'aria-expanded': expanded,
                         onClick: toggleExpanded
                     },
-                        React.createElement('span', { style: { fontSize: '10px', transition: 'transform 0.2s', transform: expanded ? 'rotate(90deg)' : 'rotate(0deg)', display: 'inline-block' } }, '▶'),
-                        React.createElement('label', { style: { cursor: 'pointer', margin: 0, fontSize: '12px', opacity: 0.8 } }, 'Advanced API Parameters')
+                        React.createElement('span', { className: 'ai-addon-advanced-chevron', 'aria-hidden': 'true' }, '▶'),
+                        aiText('advancedParams', 'Advanced API Parameters')
                     ),
-                    expanded && React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', paddingLeft: '8px', borderLeft: '2px solid rgba(255,255,255,0.1)' } },
-                        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
-                            React.createElement('input', { type: 'checkbox', checked: maxTokensEnabled, onChange: (e) => { setMaxTokensEnabled(e.target.checked); setSetting('adv-maxTokens-enabled', e.target.checked); } }),
-                            React.createElement('span', { style: { fontSize: '12px', minWidth: '110px' } }, 'Max Tokens'),
-                            React.createElement('input', { type: 'number', value: maxTokensValue, disabled: !maxTokensEnabled, style: { width: '80px', fontSize: '12px' }, onChange: (e) => { const v = parseInt(e.target.value) || 16000; setMaxTokensValue(v); setSetting('adv-maxTokens-value', v); } })
+                    expanded && React.createElement('div', { className: 'ai-addon-advanced-body' },
+                        React.createElement('div', { className: 'ai-addon-advanced-row' },
+                            React.createElement('label', { className: 'ai-addon-advanced-check' },
+                                React.createElement('input', { type: 'checkbox', checked: maxTokensEnabled, onChange: (e) => { setMaxTokensEnabled(e.target.checked); setSetting('adv-maxTokens-enabled', e.target.checked); } }),
+                                React.createElement('span', null, aiText('maxTokens', 'Max Tokens'))
+                            ),
+                            React.createElement('input', { type: 'number', value: maxTokensValue, disabled: !maxTokensEnabled, 'aria-label': aiText('maxTokens', 'Max Tokens'), onChange: (e) => { const v = parseInt(e.target.value) || 16000; setMaxTokensValue(v); setSetting('adv-maxTokens-value', v); } })
                         ),
-                        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px' } },
-                            React.createElement('input', { type: 'checkbox', checked: temperatureEnabled, onChange: (e) => { setTemperatureEnabled(e.target.checked); setSetting('adv-temperature-enabled', e.target.checked); } }),
-                            React.createElement('span', { style: { fontSize: '12px', minWidth: '110px' } }, 'Temperature'),
-                            React.createElement('input', { type: 'number', value: temperatureValue, disabled: !temperatureEnabled, style: { width: '80px', fontSize: '12px' }, step: '0.1', min: '0', max: '2', onChange: (e) => { const v = parseFloat(e.target.value) || 0.3; setTemperatureValue(v); setSetting('adv-temperature-value', v); } })
+                        React.createElement('div', { className: 'ai-addon-advanced-row' },
+                            React.createElement('label', { className: 'ai-addon-advanced-check' },
+                                React.createElement('input', { type: 'checkbox', checked: temperatureEnabled, onChange: (e) => { setTemperatureEnabled(e.target.checked); setSetting('adv-temperature-enabled', e.target.checked); } }),
+                                React.createElement('span', null, aiText('temperature', 'Temperature'))
+                            ),
+                            React.createElement('input', { type: 'number', value: temperatureValue, disabled: !temperatureEnabled, 'aria-label': aiText('temperature', 'Temperature'), step: '0.1', min: '0', max: '2', onChange: (e) => { const v = parseFloat(e.target.value) || 0.3; setTemperatureValue(v); setSetting('adv-temperature-value', v); } })
                         ),
-                        React.createElement('small', { style: { opacity: 0.5, fontSize: '11px' } }, 'Uncheck to exclude parameter from API request.')
+                        React.createElement('small', null, aiText('advancedParamsDesc', 'Uncheck to exclude parameter from API request.'))
                     )
                 );
             }

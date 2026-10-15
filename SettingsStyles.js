@@ -811,31 +811,48 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .ai-addon-settings > .ai-addon-setting:first-child, #${APP_NAME}-config-container .ai-addon-settings > :first-child { border-top: 0; }
 #${APP_NAME}-config-container .lyrics-provider-card-body .ai-addon-setting { padding: 10px 0; }
 #${APP_NAME}-config-container .ai-addon-setting > label, #${APP_NAME}-config-container .ai-addon-input-group > label { display: block; margin: 0 0 6px; font-size: 13px; font-weight: 500; color: var(--text); }
-#${APP_NAME}-config-container .ai-addon-setting > input[type="text"], #${APP_NAME}-config-container .ai-addon-setting > input[type="password"], #${APP_NAME}-config-container .ai-addon-setting > input[type="number"], #${APP_NAME}-config-container .ai-addon-setting > select, #${APP_NAME}-config-container .ai-addon-setting > textarea { width: 100%; max-width: 520px; }
+#${APP_NAME}-config-container .ai-addon-setting > input:not([type]), #${APP_NAME}-config-container .ai-addon-setting > input[type="text"], #${APP_NAME}-config-container .ai-addon-setting > input[type="password"], #${APP_NAME}-config-container .ai-addon-setting > input[type="number"], #${APP_NAME}-config-container .ai-addon-setting > select, #${APP_NAME}-config-container .ai-addon-setting > textarea, #${APP_NAME}-config-container .ai-addon-disclosure-body > input { width: 100%; max-width: 520px; }
 #${APP_NAME}-config-container .ai-addon-setting small, #${APP_NAME}-config-container .ai-addon-setting .ai-addon-description { display: block; margin-top: 6px; max-width: 640px; font-size: 12px; line-height: 1.55; color: var(--text-3); }
-#${APP_NAME}-config-container .ai-addon-input-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-width: 640px; }
+#${APP_NAME}-config-container .ai-addon-input-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; max-width: 640px; margin: 0; }
 #${APP_NAME}-config-container .ai-addon-input-group > input, #${APP_NAME}-config-container .ai-addon-input-group > select { flex: 1 1 220px; min-width: 0; }
 /* style.css styles these with !important; settings use the shared field look */
 #${APP_NAME}-config-container .ai-addon-input-group input[type="text"], #${APP_NAME}-config-container .ai-addon-input-group input[type="password"], #${APP_NAME}-config-container .ai-addon-input-group select { height: 32px; padding: 0 10px; border-radius: var(--r-sm) !important; background-color: var(--surface-2) !important; border: 1px solid var(--line-2) !important; color: var(--text) !important; }
 #${APP_NAME}-config-container .ai-addon-input-group select { padding-right: 30px; }
 #${APP_NAME}-config-container .ai-addon-input-group input:focus, #${APP_NAME}-config-container .ai-addon-input-group select:focus { background-color: var(--surface) !important; border-color: var(--accent-line) !important; box-shadow: 0 0 0 3px var(--accent-soft); }
-#${APP_NAME}-config-container .ai-addon-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: var(--surface-2); color: var(--text); font-size: 13px; font-weight: 500; white-space: nowrap; box-shadow: none; transition: background var(--t-fast), border-color var(--t-fast); }
-#${APP_NAME}-config-container .ai-addon-btn:hover:not(:disabled) { background: var(--surface-3); border-color: var(--line-3); }
-#${APP_NAME}-config-container .ai-addon-btn:disabled { opacity: .45; }
+/* third-party add-ons may use only the -primary / -secondary class */
+#${APP_NAME}-config-container :is(.ai-addon-btn, .ai-addon-btn-primary, .ai-addon-btn-secondary) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 32px; padding: 0 12px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: var(--surface-2); color: var(--text); font-size: 13px; font-weight: 500; white-space: nowrap; box-shadow: none; cursor: pointer; transition: background var(--t-fast), border-color var(--t-fast); }
+#${APP_NAME}-config-container :is(.ai-addon-btn, .ai-addon-btn-primary, .ai-addon-btn-secondary):hover:not(:disabled) { background: var(--surface-3); border-color: var(--line-3); }
+#${APP_NAME}-config-container :is(.ai-addon-btn, .ai-addon-btn-primary, .ai-addon-btn-secondary):disabled { opacity: .45; cursor: default; }
+#${APP_NAME}-config-container :is(.ai-addon-btn, .ai-addon-btn-primary, .ai-addon-btn-secondary):focus-visible { outline: none; box-shadow: var(--focus); }
 #${APP_NAME}-config-container .ai-addon-btn-primary { background: var(--ink); border-color: transparent; color: var(--ink-text); }
 #${APP_NAME}-config-container .ai-addon-btn-primary:hover:not(:disabled) { background: color-mix(in srgb, var(--ink) 86%, var(--bg)); border-color: transparent; }
 #${APP_NAME}-config-container .ai-addon-test-status { display: inline-flex; align-items: center; gap: 6px; margin-left: 0; font-size: 12.5px; line-height: 1.5; color: var(--text-2); }
 #${APP_NAME}-config-container .ai-addon-test-status.success { color: var(--ok); }
 #${APP_NAME}-config-container .ai-addon-test-status.error { color: var(--danger); }
+#${APP_NAME}-config-container .ai-addon-setting > :is(.ai-addon-btn, .ai-addon-btn-primary, .ai-addon-btn-secondary) + .ai-addon-test-status { margin-left: 10px; }
+#${APP_NAME}-config-container .ai-addon-setting > .ai-addon-input-group + .ai-addon-test-status { margin-top: 8px; }
 #${APP_NAME}-config-container .ai-addon-checkbox { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer; }
 #${APP_NAME}-config-container .ai-addon-info-box { margin: 0; padding: 10px 12px; border-radius: var(--r-md); border: 1px solid color-mix(in srgb, var(--info) 18%, transparent); background: var(--info-soft); color: var(--text); font-size: 12.5px; line-height: 1.6; }
 #${APP_NAME}-config-container .ai-addon-info-box p { margin: 0 0 4px; }
 #${APP_NAME}-config-container .ai-addon-info-box p:last-child { margin-bottom: 0; }
-#${APP_NAME}-config-container details.ai-addon-advanced-params { margin-top: 8px; border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface-2); }
-#${APP_NAME}-config-container details.ai-addon-advanced-params > summary { padding: 8px 12px; font-size: 12.5px; font-weight: 500; color: var(--text-2); cursor: pointer; }
-#${APP_NAME}-config-container details.ai-addon-advanced-params[open] > summary { border-bottom: 1px solid var(--line); }
-#${APP_NAME}-config-container details.ai-addon-advanced-params > :not(summary) { padding: 0 12px; }
 #${APP_NAME}-config-container .ai-addon-advanced-params label { color: var(--text-2); }
+/* collapsible "advanced API parameters" block and the Pollinations key disclosure */
+#${APP_NAME}-config-container :is(.ai-addon-advanced-toggle, .ai-addon-disclosure) { display: inline-flex; align-items: center; gap: 8px; margin: 0; padding: 2px 6px 2px 0; border: 0; border-radius: var(--r-xs); background: transparent; color: var(--text-2); font-size: 12.5px; font-weight: 500; cursor: pointer; user-select: none; }
+#${APP_NAME}-config-container :is(.ai-addon-advanced-toggle, .ai-addon-disclosure):hover { color: var(--text); }
+#${APP_NAME}-config-container :is(.ai-addon-advanced-toggle, .ai-addon-disclosure):focus-visible { outline: none; box-shadow: var(--focus); }
+#${APP_NAME}-config-container .ai-addon-disclosure > label { margin: 0; font-size: 13px; font-weight: 500; color: var(--text); cursor: pointer; }
+#${APP_NAME}-config-container .ai-addon-advanced-chevron { display: inline-block; font-size: 8px; line-height: 1; color: var(--text-3); transition: transform var(--t-fast); }
+#${APP_NAME}-config-container [aria-expanded="true"] > .ai-addon-advanced-chevron { transform: rotate(90deg); }
+#${APP_NAME}-config-container .ai-addon-advanced-body { display: grid; gap: 10px; margin-top: 10px; padding-left: 12px; border-left: 2px solid var(--line-2); }
+#${APP_NAME}-config-container .ai-addon-advanced-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+#${APP_NAME}-config-container .ai-addon-advanced-check { display: inline-flex; align-items: center; gap: 8px; min-width: 180px; margin: 0; font-size: 12.5px; cursor: pointer; }
+#${APP_NAME}-config-container .ai-addon-advanced-row input[type="number"] { width: 110px; font-variant-numeric: tabular-nums; }
+#${APP_NAME}-config-container .ai-addon-advanced-field { display: grid; gap: 6px; max-width: 640px; margin: 0; font-size: 12.5px; }
+#${APP_NAME}-config-container .ai-addon-advanced-body small { margin-top: 0; }
+#${APP_NAME}-config-container .ai-addon-advanced-body small + small { margin-top: -6px; }
+#${APP_NAME}-config-container .ai-addon-setting small.ai-addon-field-error { color: var(--danger); }
+#${APP_NAME}-config-container .ai-addon-disclosure-body { margin-top: 8px; }
+#${APP_NAME}-config-container .ai-addon-device-code { padding: 5px 10px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: var(--surface-2); color: var(--text); font: 600 13px/1.4 var(--mono); letter-spacing: .06em; }
 #${APP_NAME}-config-container .ai-addon-caps-container { display: flex; flex-wrap: wrap; gap: 6px; }
 #${APP_NAME}-config-container .ai-addon-cap-chip { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border-radius: var(--r-sm); border: 1px solid var(--line-2); background: transparent; color: var(--text-3); font-size: 12.5px; font-weight: 500; cursor: pointer; user-select: none; transition: background var(--t-fast), border-color var(--t-fast), color var(--t-fast); }
 #${APP_NAME}-config-container .ai-addon-cap-chip:hover { color: var(--text-2); border-color: var(--line-3); }
@@ -859,13 +876,24 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .ai-addon-connection-footer small { margin: 0; overflow-wrap: anywhere; }
 
 /* Local AI (markup owned by Addon_AI_LocalModel.js; styled through its classes) */
-#${APP_NAME}-config-container .local-model-settings .local-model-quality .slider-container { width: min(390px, 100%); }
-#${APP_NAME}-config-container .local-model-settings .local-model-quality [data-tier] { padding: 4px 2px; border-radius: var(--r-xs); }
-#${APP_NAME}-config-container .local-model-settings .local-model-quality [data-tier]:focus-visible { box-shadow: var(--focus); }
-#${APP_NAME}-config-container .local-model-settings .local-model-quality [data-tier][aria-pressed="true"] span:first-child { color: var(--accent-text) !important; }
-#${APP_NAME}-config-container .local-model-settings [role="progressbar"] { background: var(--surface-4) !important; }
+#${APP_NAME}-config-container .local-model-quality .slider-container { width: min(390px, 100%); }
+#${APP_NAME}-config-container .local-model-tiers { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; width: min(390px, 100%); margin-top: 4px; }
+#${APP_NAME}-config-container .local-model-tier { display: grid; gap: 1px; align-content: start; min-width: 0; padding: 3px 2px; border-radius: var(--r-xs); color: var(--text-3); text-align: center; cursor: pointer; transition: color var(--t-fast), opacity var(--t-fast); }
+#${APP_NAME}-config-container .local-model-tier:first-child { text-align: left; }
+#${APP_NAME}-config-container .local-model-tier:last-child { text-align: right; }
+#${APP_NAME}-config-container .local-model-tier:hover { color: var(--text-2); }
+#${APP_NAME}-config-container .local-model-tier:focus-visible { outline: none; box-shadow: var(--focus); }
+#${APP_NAME}-config-container .local-model-tier.is-selected { color: var(--text); }
+#${APP_NAME}-config-container .local-model-tier-name { font-size: 12.5px; font-weight: 500; line-height: 1.4; overflow-wrap: anywhere; }
+#${APP_NAME}-config-container .local-model-tier.is-selected .local-model-tier-name { font-weight: 600; }
+#${APP_NAME}-config-container .local-model-tier-size { font-size: 11px; line-height: 1.4; color: var(--text-3); font-variant-numeric: tabular-nums; }
+#${APP_NAME}-config-container .local-model-tiers.is-busy .local-model-tier { cursor: default; }
+#${APP_NAME}-config-container .local-model-tiers.is-busy .local-model-tier:not(.is-selected) { color: var(--text-3); opacity: .5; }
+#${APP_NAME}-config-container .local-model-quality .local-model-hint { margin-top: 8px; }
+#${APP_NAME}-config-container .local-model-progress { height: 4px; max-width: 520px; margin-top: 10px; border-radius: 2px; background: var(--surface-4); overflow: hidden; }
+#${APP_NAME}-config-container .local-model-progress-bar { height: 100%; background: var(--accent); transition: width .2s linear; }
 #${APP_NAME}-config-container .local-model-settings .ai-addon-input-group { margin-top: 10px; }
-#${APP_NAME}-config-container .local-model-settings > small { display: block; padding: 10px 16px 14px; border-top: 1px solid var(--line); color: var(--text-3); opacity: 1 !important; }
+#${APP_NAME}-config-container .local-model-privacy { display: block; margin: 0; padding: 10px 16px 14px; border-top: 1px solid var(--line); font-size: 12px; line-height: 1.55; color: var(--text-3); }
 
 /* AI translation style */
 #${APP_NAME}-config-container .ai-translation-style-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }

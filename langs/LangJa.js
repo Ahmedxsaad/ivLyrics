@@ -611,7 +611,29 @@ window.LANG_JA = {
       "pollinationsKeyStatus": "Pollinations アカウント · 有効: %s",
       "pollinationsDescription": "手動 API キーとアカウントのログイントークンに対応しています。トークンがある場合は優先して使用します。",
       "pollinationsInvalid": "APIキーが無効です。再接続するか、新しいキーを入力してください。",
-      "pollinationsExpires": "%d日後に期限切れ"
+      "pollinationsExpires": "%d日後に期限切れ",
+      "enterApiKeyFirst": "先にAPIキーを入力してください",
+      "emptyResponse": "応答が空でした",
+      "apiKeyRotationDesc": "キーを1つ入力するか、順番に使う複数のキーをJSON配列で入力してください。",
+      "advancedParams": "詳細なAPIパラメーター",
+      "advancedParamsDesc": "チェックを外したパラメーターはAPIリクエストに含まれません。",
+      "maxTokens": "最大トークン数",
+      "maxOutputTokens": "最大出力トークン数",
+      "temperature": "温度",
+      "thinking": "思考モード",
+      "thinkingBudget": "思考予算",
+      "thinkingStreamingHint": "思考モードをオフにすると、応答がリアルタイムでストリーミングされます。",
+      "customModel": "カスタムモデル",
+      "getFreeApiKey": "無料キーを取得",
+      "groqDesc": "Groqは超高速な推論を無料で提供しています。",
+      "sonarWebSearch": "Sonarモデルはリアルタイムのウェブ検索に対応しています。",
+      "geminiBaseUrlDesc": "Gemini互換APIを使う場合はこのURLを変更してください。",
+      "modelsAvailable": "利用可能なモデル: {count}",
+      "requestBodyMerge": "リクエスト本文にマージするJSON",
+      "requestBodyMergeDesc": "既定のリクエスト本文にマージされます。max_completion_tokens と temperature は既定で設定されます。値を null にするとそのキーは削除されます。",
+      "requestBodyMergeNotObject": "配列や単一の値ではなく、JSONオブジェクトを入力してください。",
+      "invalidJson": "JSONの形式が正しくありません",
+      "pollinationsLoginTimeout": "ログインがタイムアウトしました。もう一度お試しください。"
     },
     "lyricsProviders": {
       "title": "歌詞プロバイダー",
@@ -642,7 +664,15 @@ window.LANG_JA = {
         "synced": "同期",
         "unsynced": "非同期",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Spotify Premium の機能",
+        "desc": "Spotifyから歌詞を直接取得します。",
+        "premium": "Spotify Premium が必要",
+        "providers": "複数の歌詞プロバイダーに対応",
+        "quality": "高い精度と同期品質"
+      },
+      "attribution": "歌詞の提供元: {source}"
     }
   },
   "buttons": {

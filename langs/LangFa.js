@@ -611,7 +611,29 @@ window.LANG_FA = {
       "pollinationsKeyStatus": "حساب Pollinations · فعال: %s",
       "pollinationsDescription": "از کلیدهای API دستی و توکن ورود حساب پشتیبانی می‌کند. در صورت وجود، توکن ورود در اولویت است.",
       "pollinationsInvalid": "کلید API نامعتبر است. دوباره متصل شوید یا کلید جدیدی وارد کنید.",
-      "pollinationsExpires": "%d روز تا انقضا"
+      "pollinationsExpires": "%d روز تا انقضا",
+      "enterApiKeyFirst": "ابتدا کلید API خود را وارد کنید",
+      "emptyResponse": "پاسخ خالی بود",
+      "apiKeyRotationDesc": "یک کلید وارد کنید، یا آرایه‌ای JSON از کلیدها تا به‌نوبت استفاده شوند.",
+      "advancedParams": "پارامترهای پیشرفته API",
+      "advancedParamsDesc": "پارامترهایی که تیک ندارند در درخواست API ارسال نمی‌شوند.",
+      "maxTokens": "حداکثر توکن",
+      "maxOutputTokens": "حداکثر توکن خروجی",
+      "temperature": "دما",
+      "thinking": "تفکر",
+      "thinkingBudget": "بودجه تفکر",
+      "thinkingStreamingHint": "وقتی تفکر خاموش باشد، پاسخ‌ها به‌صورت هم‌زمان پخش می‌شوند.",
+      "customModel": "مدل سفارشی",
+      "getFreeApiKey": "دریافت کلید رایگان",
+      "groqDesc": "Groq استنتاج بسیار سریع را رایگان ارائه می‌دهد.",
+      "sonarWebSearch": "مدل‌های Sonar جست‌وجوی هم‌زمان در وب را دارند.",
+      "geminiBaseUrlDesc": "برای استفاده از API سازگار با Gemini، این نشانی را تغییر دهید.",
+      "modelsAvailable": "مدل‌های در دسترس: {count}",
+      "requestBodyMerge": "JSON برای ادغام با بدنه درخواست",
+      "requestBodyMergeDesc": "با بدنه پیش‌فرض درخواست ادغام می‌شود. max_completion_tokens و temperature به‌طور پیش‌فرض پر می‌شوند. برای حذف یک کلید، مقدار آن را null بگذارید.",
+      "requestBodyMergeNotObject": "یک شیء JSON وارد کنید، نه آرایه یا یک مقدار تکی.",
+      "invalidJson": "JSON نامعتبر است",
+      "pollinationsLoginTimeout": "مهلت ورود به پایان رسید. لطفاً دوباره تلاش کنید."
     },
     "lyricsProviders": {
       "title": "ارائه‌دهندگان متن آهنگ",
@@ -642,7 +664,15 @@ window.LANG_FA = {
         "synced": "هماهنگ",
         "unsynced": "ناهماهنگ",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "ویژگی‌های Spotify Premium",
+        "desc": "متن آهنگ‌ها را مستقیماً از Spotify دریافت می‌کند.",
+        "premium": "به Spotify Premium نیاز دارد",
+        "providers": "پشتیبانی از چند ارائه‌دهنده متن آهنگ",
+        "quality": "دقت بالا و کیفیت همگام‌سازی عالی"
+      },
+      "attribution": "متن آهنگ از {source}."
     }
   },
   "buttons": {

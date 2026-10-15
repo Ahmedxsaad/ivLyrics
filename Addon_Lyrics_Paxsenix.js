@@ -27,6 +27,14 @@
     const getEndpointLabel = value => String(value || '').split('://').pop().replace(/\/$/, '');
     const CATALOG_SEARCH_HOST = new URL(ENDPOINTS.catalogSearch).hostname;
     const ATTRIBUTION = `Lyrics via Lyrically API (${ENDPOINTS.homepage}).`;
+
+    function lyricsText(key, fallback, params) {
+        const path = `settings.lyricsProviders.${key}`;
+        const value = window.I18n?.t?.(path, params);
+        if (value && value !== path) return value;
+        return params ? String(fallback).replace(/\{(\w+)\}/g, (match, name) => params[name] ?? match) : fallback;
+    }
+
     const CACHE_VERSION = 'paxsenix-provider-v16';
     const REQUEST_TIMEOUT_MS = 9000;
     const PROVIDER_TIMEOUT_MS = 12000;
@@ -1068,7 +1076,7 @@
                     React.createElement('div', { className: 'ai-addon-setting', style: { marginTop: '16px' } },
                         React.createElement('div', { className: 'ai-addon-info-box' },
                             React.createElement('p', { style: { fontWeight: 700, marginBottom: '8px' } }, ADDON_INFO.name),
-                            React.createElement('p', { style: { marginBottom: '8px' } }, ATTRIBUTION),
+                            React.createElement('p', { style: { marginBottom: '8px' } }, lyricsText('attribution', ATTRIBUTION, { source: `Lyrically API (${ENDPOINTS.homepage})` })),
                             React.createElement('a', {
                                 href: ENDPOINTS.homepage,
                                 target: '_blank',

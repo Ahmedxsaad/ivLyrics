@@ -611,7 +611,29 @@ window.LANG_MS = {
       "pollinationsKeyStatus": "Akaun Pollinations · Diaktifkan: %s",
       "pollinationsDescription": "Menyokong kunci API manual dan token log masuk akaun. Token log masuk digunakan dahulu jika tersedia.",
       "pollinationsInvalid": "Kunci API tidak sah. Sambung semula atau masukkan kunci baharu.",
-      "pollinationsExpires": "Tamat tempoh dalam %d hari"
+      "pollinationsExpires": "Tamat tempoh dalam %d hari",
+      "enterApiKeyFirst": "Masukkan kunci API dahulu",
+      "emptyResponse": "Respons kosong",
+      "apiKeyRotationDesc": "Masukkan satu kunci, atau tatasusunan JSON berisi beberapa kunci untuk digunakan secara bergilir.",
+      "advancedParams": "Parameter API lanjutan",
+      "advancedParamsDesc": "Parameter yang tidak ditanda tidak disertakan dalam permintaan API.",
+      "maxTokens": "Token maksimum",
+      "maxOutputTokens": "Token output maksimum",
+      "temperature": "Suhu",
+      "thinking": "Penaakulan",
+      "thinkingBudget": "Bajet penaakulan",
+      "thinkingStreamingHint": "Apabila penaakulan dimatikan, respons distrim secara masa nyata.",
+      "customModel": "Model tersuai",
+      "getFreeApiKey": "Dapatkan Kunci Percuma",
+      "groqDesc": "Groq menyediakan inferens yang sangat pantas secara percuma.",
+      "sonarWebSearch": "Model Sonar disertakan dengan carian web masa nyata.",
+      "geminiBaseUrlDesc": "Tukar alamat ini untuk menggunakan API yang serasi dengan Gemini.",
+      "modelsAvailable": "Model tersedia: {count}",
+      "requestBodyMerge": "JSON untuk digabungkan ke dalam badan permintaan",
+      "requestBodyMergeDesc": "Digabungkan ke dalam badan permintaan lalai. max_completion_tokens dan temperature diisi secara lalai. Tetapkan kunci kepada null untuk membuangnya.",
+      "requestBodyMergeNotObject": "Masukkan objek JSON, bukan tatasusunan atau satu nilai.",
+      "invalidJson": "JSON tidak sah",
+      "pollinationsLoginTimeout": "Log masuk tamat masa. Sila cuba lagi."
     },
     "lyricsProviders": {
       "title": "Penyedia Lirik",
@@ -642,7 +664,15 @@ window.LANG_MS = {
         "synced": "Senada",
         "unsynced": "Biasa",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Ciri Spotify Premium",
+        "desc": "Mendapatkan lirik terus daripada Spotify.",
+        "premium": "Memerlukan Spotify Premium",
+        "providers": "Menyokong beberapa penyedia lirik",
+        "quality": "Ketepatan dan kualiti penyegerakan yang tinggi"
+      },
+      "attribution": "Lirik daripada {source}."
     }
   },
   "buttons": {

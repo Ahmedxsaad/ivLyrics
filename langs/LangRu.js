@@ -611,7 +611,29 @@ window.LANG_RU = {
       "pollinationsKeyStatus": "Учётная запись Pollinations · Включено: %s",
       "pollinationsDescription": "Поддерживаются ручные API-ключи и токены входа. При наличии токен входа используется первым.",
       "pollinationsInvalid": "Ключ API недействителен. Подключитесь заново или введите новый ключ.",
-      "pollinationsExpires": "Истекает через %d дн."
+      "pollinationsExpires": "Истекает через %d дн.",
+      "enterApiKeyFirst": "Сначала введите ключ API",
+      "emptyResponse": "Пустой ответ",
+      "apiKeyRotationDesc": "Введите один ключ или JSON-массив ключей, которые будут использоваться по очереди.",
+      "advancedParams": "Дополнительные параметры API",
+      "advancedParamsDesc": "Параметры без отметки не включаются в запрос к API.",
+      "maxTokens": "Макс. токенов",
+      "maxOutputTokens": "Макс. токенов в ответе",
+      "temperature": "Температура",
+      "thinking": "Режим размышлений",
+      "thinkingBudget": "Бюджет размышлений",
+      "thinkingStreamingHint": "Если режим размышлений выключен, ответы передаются в реальном времени.",
+      "customModel": "Своя модель",
+      "getFreeApiKey": "Получить бесплатный ключ",
+      "groqDesc": "Groq бесплатно предоставляет сверхбыстрый инференс.",
+      "sonarWebSearch": "Модели Sonar включают веб-поиск в реальном времени.",
+      "geminiBaseUrlDesc": "Измените адрес, чтобы использовать API, совместимый с Gemini.",
+      "modelsAvailable": "Доступно моделей: {count}",
+      "requestBodyMerge": "JSON для объединения с телом запроса",
+      "requestBodyMergeDesc": "Объединяется с телом запроса по умолчанию. max_completion_tokens и temperature заполняются автоматически. Чтобы удалить ключ, задайте ему значение null.",
+      "requestBodyMergeNotObject": "Введите JSON-объект, а не массив или отдельное значение.",
+      "invalidJson": "Некорректный JSON",
+      "pollinationsLoginTimeout": "Время ожидания входа истекло. Попробуйте ещё раз."
     },
     "lyricsProviders": {
       "title": "Поставщики текста",
@@ -642,7 +664,15 @@ window.LANG_RU = {
         "synced": "Синхр.",
         "unsynced": "Обычный",
         "ivLyricsSync": "ivLyrics Sync"
-      }
+      },
+      "spotifyInfo": {
+        "title": "Функции Spotify Premium",
+        "desc": "Получает тексты песен напрямую из Spotify.",
+        "premium": "Требуется Spotify Premium",
+        "providers": "Поддержка нескольких поставщиков текста",
+        "quality": "Высокая точность и качество синхронизации"
+      },
+      "attribution": "Источник текстов: {source}."
     }
   },
   "buttons": {

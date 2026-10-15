@@ -964,7 +964,7 @@
             const lastTier = QUALITY_TIERS.length - 1;
             const qualityControl = h('div', { className: 'ai-addon-setting local-model-quality' },
                 h('label', null, t('quality', 'Translation quality')),
-                h('div', { className: `slider-container${busy ? ' disabled' : ''}`, style: { gridTemplateColumns: '1fr' } },
+                h('div', { className: `slider-container${busy ? ' disabled' : ''}` },
                     h('input', {
                         type: 'range', min: 0, max: lastTier, step: 1, value: tierIndex, disabled: busy,
                         className: 'config-slider',
@@ -974,15 +974,15 @@
                         onChange: (event) => selectTier(QUALITY_TIERS[Number(event.target.value)]?.id)
                     })
                 ),
-                h('div', {
-                    style: { display: 'grid', gridTemplateColumns: `repeat(${QUALITY_TIERS.length}, minmax(0, 1fr))`, gap: '6px', width: 'min(390px, 100%)', marginTop: '4px' }
-                }, QUALITY_TIERS.map((candidate, index) => {
+                h('div', { className: `local-model-tiers${busy ? ' is-busy' : ''}` }, QUALITY_TIERS.map((candidate) => {
                     const selected = candidate.id === tier.id;
                     return h('div', {
                         key: candidate.id,
+                        className: `local-model-tier${selected ? ' is-selected' : ''}`,
                         role: 'button',
                         tabIndex: busy ? -1 : 0,
                         'aria-pressed': selected,
+                        'aria-disabled': busy || undefined,
                         'data-tier': candidate.id,
                         onClick: () => selectTier(candidate.id),
                         onKeyDown: (event) => {
@@ -990,20 +990,13 @@
                                 event.preventDefault();
                                 selectTier(candidate.id);
                             }
-                        },
-                        style: {
-                            cursor: busy ? 'default' : 'pointer',
-                            textAlign: index === 0 ? 'left' : (index === lastTier ? 'right' : 'center'),
-                            opacity: busy && !selected ? 0.5 : 1
                         }
                     },
-                    h('span', {
-                        style: { display: 'block', fontSize: '12px', fontWeight: selected ? 700 : 500, color: selected ? 'var(--text-primary)' : 'var(--text-secondary)' }
-                    }, tierLabel(candidate)),
-                    h('span', { style: { display: 'block', fontSize: '11px', marginTop: '2px', color: 'var(--text-tertiary, var(--text-secondary))' } },
+                    h('span', { className: 'local-model-tier-name' }, tierLabel(candidate)),
+                    h('span', { className: 'local-model-tier-size' },
                         formatGigabytes(candidate.size) + (downloadedTiers.includes(candidate.id) ? ` · ${t('tierDownloaded', 'Downloaded')}` : '')));
                 })),
-                h('small', { style: { display: 'block', marginTop: '6px', opacity: 0.7 } },
+                h('small', { className: 'local-model-hint' },
                     t('tierHint', 'Higher quality translates more accurately but uses more storage and memory.'))
             );
 
@@ -1024,9 +1017,9 @@
                         role: 'status'
                     }, statusText(snapshot)),
                     snapshot.phase === 'downloading' && h('div', {
+                        className: 'local-model-progress',
                         role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': Math.floor(percent),
-                        style: { height: '6px', marginTop: '8px', borderRadius: '3px', overflow: 'hidden', background: 'rgba(127, 127, 127, 0.25)' }
-                    }, h('div', { style: { width: `${percent}%`, height: '100%', background: 'var(--accent-primary, #1db954)', transition: 'width 0.25s ease' } })),
+                    }, h('div', { className: 'local-model-progress-bar', style: { width: `${percent}%` } })),
                     h('div', { className: 'ai-addon-input-group', style: { marginTop: '10px', flexWrap: 'wrap' } },
                         snapshot.phase === 'downloading'
                             ? h('button', { type: 'button', className: 'ai-addon-btn ai-addon-btn-secondary', onClick: cancelDownload }, t('cancel', 'Cancel'))
@@ -1060,7 +1053,7 @@
                         IDLE_UNLOAD_OPTIONS.map((minutes) => h('option', { key: minutes, value: String(minutes) },
                             idleLabel(minutes))))
                 ),
-                h('small', { style: { display: 'block', opacity: 0.7, lineHeight: 1.5 } },
+                h('small', { className: 'local-model-privacy' },
                     t('privacy', 'Lyrics are translated on this device and are never sent anywhere. The engine (jsDelivr) and the model (Hugging Face) are downloaded only once.'))
             );
         };
