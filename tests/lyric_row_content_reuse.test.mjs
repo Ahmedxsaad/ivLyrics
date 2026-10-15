@@ -7,8 +7,10 @@ import vm from 'node:vm';
 const repo = new URL('../', import.meta.url);
 const current = readFileSync(new URL('Pages.js', repo), 'utf8');
 const baseline = execFileSync('git', ['show', '3353a5d:Pages.js'], { cwd: repo, encoding: 'utf8' });
+// The seek tooltip text changed on purpose (localized "m:ss" label); it is
+// covered by its own test below, so the baseline comparison ignores it.
 const plain = value => JSON.parse(JSON.stringify(value, (key, entry) =>
-  key === 'data-lyrics-seek-time' ? undefined : typeof entry === 'function' ? { callback: entry.copyArguments || 'handler' } : entry));
+  key === 'data-lyrics-seek-time' || key === 'title' ? undefined : typeof entry === 'function' ? { callback: entry.copyArguments || 'handler' } : entry));
 
 function renderer(source) {
   const slots = [];
@@ -106,4 +108,16 @@ test('a settings revision refreshes vocal row detection after an in-place metada
   line.vocals.background.length = 0;
   assert.deepEqual(plain(next.render({ ...props, settingsRevision: 2 })),
     plain(old.render({ ...props, settingsRevision: 2 })));
+});
+
+test('seekable rows show a localized seek label with minutes and seconds', () => {
+  const next = renderer(current);
+  const line = { text: 'Line', interludeInfo: { isInterlude: false } };
+  const props = { line, mainText: line.text, isKara: false };
+  next.context.I18n = { t: (key, params) => (key === 'misc.seekToTime' ? `이동 ${params.time}` : '') };
+  assert.equal(next.render({ ...props, seekTime: 83400 }).props.title, '이동 1:23');
+  assert.equal(next.render({ ...props, seekTime: 4000 }).props.title, '이동 0:04');
+  delete next.context.I18n;
+  assert.equal(next.render({ ...props, seekTime: 600000 }).props.title, '10:00');
+  assert.equal(next.render({ ...props, seekTime: null }).props.title, undefined);
 });

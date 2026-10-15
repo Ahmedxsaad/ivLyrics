@@ -76,7 +76,8 @@ window.LANG_TH = {
       "auto": "ใช้ธีมของระบบ",
       "autoShort": "อัตโนมัติ",
       "selector": "ธีมการตั้งค่า"
-    }
+    },
+    "close": "ปิดการตั้งค่า"
   },
   "sections": {
     "language": "ภาษา",
@@ -681,7 +682,8 @@ window.LANG_TH = {
     "regenerateWordDetails": "รายละเอียดคำ",
     "regenerateAction": "สร้างใหม่",
     "fullscreen": "เต็มหน้าจอ",
-    "exitFullscreen": "ออกจากโหมดเต็มหน้าจอ"
+    "exitFullscreen": "ออกจากโหมดเต็มหน้าจอ",
+    "localLyricsApplying": "กำลังใช้…"
   },
   "messages": {
     "noLyrics": "ไม่มีเนื้อเพลงที่ใช้ได้",
@@ -782,7 +784,8 @@ window.LANG_TH = {
       "artist": "ศิลปิน",
       "collection": "เพลงที่ถูกใจ",
       "station": "วิทยุ"
-    }
+    },
+    "menuToggle": "เมนู ivLyrics"
   },
   "about": {
     "version": "เวอร์ชัน",
@@ -945,7 +948,8 @@ window.LANG_TH = {
     "seconds": "วินาที",
     "minutes": "นาที",
     "lyricsProvider": "ผู้ให้บริการเนื้อเพลง",
-    "syncContributor": "ผู้มีส่วนร่วมในการซิงค์"
+    "syncContributor": "ผู้มีส่วนร่วมในการซิงค์",
+    "seekToTime": "ข้ามไปที่ {time}"
   },
   "creatorProfile": {
     "title": "ผู้สร้างซิงก์",
@@ -1428,8 +1432,8 @@ window.LANG_TH = {
         "desc": "ดึงข้อมูลพื้นหลังวิดีโอของเพลงถัดไปล่วงหน้า"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "โหลดรายละเอียดคำล่วงหน้า",
+        "desc": "โหลดคำอ่านและคำแปลของแต่ละคำล่วงหน้าสำหรับคาราโอเกะแบบทีละคำ"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_TH = {
       "openDb": {
         "label": "แคชดัชนี OpenDB",
         "desc": "ดัชนี base + delta ที่ใช้ค้นหาผู้ให้บริการเนื้อเพลงที่มี sync-data",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "ฐาน {baseDate} + เปลี่ยนแปลง {deltaCount} รายการ",
         "coverageSummary": "ISRC {isrcCount} รายการ · ผู้ให้บริการ {providerCount} ราย",
         "notDownloaded": "ยังไม่ได้ดาวน์โหลดดัชนี",
         "lastChecked": "ตรวจสอบล่าสุด",
@@ -1947,7 +1951,7 @@ window.LANG_TH = {
         "button": "เปิดหน้ารับ API Key"
       },
       "geminiKey": {
-        "desc": "Gemini API Key",
+        "desc": "คีย์ API ของ Gemini",
         "info": "ต้องใช้ API Key เพื่อใช้งานฟีเจอร์แปลเนื้อเพลงด้วย Google Gemini AI"
       }
     },
@@ -2042,7 +2046,8 @@ window.LANG_TH = {
     "apiKeyError": "เกิดข้อผิดพลาดเกี่ยวกับ Gemini API Key โปรดตรวจสอบ API Key ในการตั้งค่า",
     "translationFailed": "การแปลล้มเหลว",
     "requestTimeout": "การร้องขอแปลหมดเวลา โปรดลองอีกครั้ง",
-    "failedPrefix": "แปลล้มเหลว"
+    "failedPrefix": "แปลล้มเหลว",
+    "noProviderConfigured": "ยังไม่ได้ตั้งค่าผู้ให้บริการ AI โปรดเลือกในการตั้งค่า"
   },
   "utils": {
     "allUrlsFailed": "ไม่สามารถดึงข้อมูลเวอร์ชันจากทุก URL ได้",
@@ -2399,7 +2404,7 @@ window.LANG_TH = {
     "getApiKeyInfo": "ใช้สำหรับโหลด TMI สามารถรับได้ฟรีที่ Google AI Studio",
     "viewInfo": "กดเพื่อดูข้อมูลหลากหลายเกี่ยวกับเพลงนี้",
     "requireKey": "ต้องตั้งค่าผู้ให้บริการ AI ในการตั้งค่า",
-    "settingTitle": "Gemini API Key",
+    "settingTitle": "คีย์ API ของ Gemini",
     "settingDesc": "จำเป็นสำหรับการโหลด TMI/ข้อมูลเพลง",
     "title": "เกร็ดความรู้ (TMI)",
     "didYouKnow": "รู้หรือไม่?",
@@ -2915,7 +2920,12 @@ window.LANG_TH = {
     "reverted": "คืนค่าการซิงค์ที่เผยแพร่แล้ว",
     "noPublishedSync": "ไม่มีการซิงค์ที่เผยแพร่",
     "unsubmittedChanges": "มีการเปลี่ยนแปลงที่ยังไม่ได้ส่ง",
-    "previewUnavailable": "ไม่สามารถแสดงตัวอย่างได้"
+    "previewUnavailable": "ไม่สามารถแสดงตัวอย่างได้",
+    "lrclibBadgeInstrumental": "บรรเลง",
+    "preview": "ตัวอย่าง",
+    "previewVocalCount": "เสียงร้อง {count} ส่วน",
+    "shortcutsTitle": "คีย์ลัดสร้างซิงค์คาราโอเกะ",
+    "markLineHint": "คลิกเพื่อทำเครื่องหมายหรือยกเลิกบรรทัดปัจจุบัน คลิกขวาเพื่อล้างเครื่องหมายทั้งหมด"
   },
   "marketplace": {
     "title": "ร้านค้าส่วนเสริม",

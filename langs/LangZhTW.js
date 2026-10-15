@@ -76,7 +76,8 @@ window.LANG_ZH_TW = {
       "auto": "跟隨系統主題",
       "autoShort": "自動",
       "selector": "設定主題"
-    }
+    },
+    "close": "關閉設定"
   },
   "sections": {
     "language": "語言",
@@ -681,7 +682,8 @@ window.LANG_ZH_TW = {
     "regenerateWordDetails": "單字詳情",
     "regenerateAction": "重新生成",
     "fullscreen": "全螢幕",
-    "exitFullscreen": "退出全螢幕"
+    "exitFullscreen": "退出全螢幕",
+    "localLyricsApplying": "正在套用…"
   },
   "messages": {
     "noLyrics": "無可用歌詞",
@@ -782,7 +784,8 @@ window.LANG_ZH_TW = {
       "artist": "藝人",
       "collection": "已按讚的歌曲",
       "station": "電台"
-    }
+    },
+    "menuToggle": "ivLyrics 選單"
   },
   "about": {
     "version": "版本",
@@ -945,7 +948,8 @@ window.LANG_ZH_TW = {
     "seconds": "秒",
     "minutes": "分",
     "lyricsProvider": "歌詞提供者",
-    "syncContributor": "同步貢獻者"
+    "syncContributor": "同步貢獻者",
+    "seekToTime": "跳至 {time}"
   },
   "creatorProfile": {
     "title": "同步製作者",
@@ -1428,8 +1432,8 @@ window.LANG_ZH_TW = {
         "desc": "預先取得下一首歌曲的影片背景資訊"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "預先載入單字詳情",
+        "desc": "為逐字卡拉OK預先取得每個單字的讀音與翻譯"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_ZH_TW = {
       "openDb": {
         "label": "OpenDB 索引快取",
         "desc": "用於尋找具有 sync-data 的歌詞提供者的 base + delta 索引。",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "基準 {baseDate} + 增量 {deltaCount} 筆",
         "coverageSummary": "ISRC {isrcCount} 筆 · 提供者 {providerCount} 個",
         "notDownloaded": "尚未下載索引。",
         "lastChecked": "上次檢查",
@@ -2042,7 +2046,8 @@ window.LANG_ZH_TW = {
     "apiKeyError": "發生 Gemini API 金鑰相關錯誤。請在設定中檢查 API 金鑰。",
     "translationFailed": "翻譯失敗",
     "requestTimeout": "翻譯請求逾時。請重試。",
-    "failedPrefix": "翻譯失敗"
+    "failedPrefix": "翻譯失敗",
+    "noProviderConfigured": "尚未設定 AI 提供者。請在設定中選擇 AI 提供者。"
   },
   "utils": {
     "allUrlsFailed": "無法從所有 URL 取得版本資訊",
@@ -2915,7 +2920,12 @@ window.LANG_ZH_TW = {
     "reverted": "已還原已發布的同步。",
     "noPublishedSync": "沒有已發布的同步。",
     "unsubmittedChanges": "有未提交的變更。",
-    "previewUnavailable": "無法使用預覽。"
+    "previewUnavailable": "無法使用預覽。",
+    "lrclibBadgeInstrumental": "純音樂",
+    "preview": "預覽",
+    "previewVocalCount": "{count} 個聲部",
+    "shortcutsTitle": "卡拉OK同步建立快捷鍵",
+    "markLineHint": "點擊可標記或取消標記目前這一行，按右鍵可清除所有標記。"
   },
   "marketplace": {
     "title": "外掛市集",

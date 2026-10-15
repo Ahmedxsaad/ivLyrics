@@ -10311,7 +10311,7 @@ class LyricsContainer extends react.Component {
             e.preventDefault();
             this.setState({ markedLines: new Set() });
           },
-          title: "Click to mark/unmark current line",
+          title: I18n.t("syncCreator.markLineHint") || undefined,
         },
         react.createElement("span", null, `${(this.state.currentLyricIndex || 0) + 1} / ${syncCreatorPlainLyrics.length || 0}`),
         react.createElement("span", {
@@ -10882,7 +10882,7 @@ class LyricsContainer extends react.Component {
             IvLyricsTooltip,
             { label: this.state.isFloatingMenuOpen
               ? (I18n.t("buttons.close") || "Close")
-              : "ivLyrics menu" },
+              : (I18n.t("fullscreen.menuToggle") || "ivLyrics") },
             react.createElement(
               "button",
               {
@@ -10890,7 +10890,7 @@ class LyricsContainer extends react.Component {
                 type: "button",
                 "aria-label": this.state.isFloatingMenuOpen
                   ? (I18n.t("buttons.close") || "Close")
-                  : "ivLyrics menu",
+                  : (I18n.t("fullscreen.menuToggle") || "ivLyrics"),
                 "aria-expanded": this.state.isFloatingMenuOpen,
                 onClick: (e) => {
                   e.stopPropagation();

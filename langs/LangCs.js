@@ -76,7 +76,8 @@ window.LANG_CS = {
       "auto": "Použít systémový motiv",
       "autoShort": "Automaticky",
       "selector": "Motiv nastavení"
-    }
+    },
+    "close": "Zavřít nastavení"
   },
   "sections": {
     "language": "Jazyk",
@@ -681,7 +682,8 @@ window.LANG_CS = {
     "regenerateWordDetails": "Podrobnosti slov",
     "regenerateAction": "Regenerovat",
     "fullscreen": "Celá obrazovka",
-    "exitFullscreen": "Ukončete celou obrazovku"
+    "exitFullscreen": "Ukončete celou obrazovku",
+    "localLyricsApplying": "Používá se…"
   },
   "messages": {
     "noLyrics": "Nejsou k dispozici žádné texty",
@@ -782,7 +784,8 @@ window.LANG_CS = {
       "artist": "Umělec",
       "collection": "Oblíbené skladby",
       "station": "Stanice"
-    }
+    },
+    "menuToggle": "Nabídka ivLyrics"
   },
   "about": {
     "version": "Verze",
@@ -945,7 +948,8 @@ window.LANG_CS = {
     "seconds": "sek",
     "minutes": "min",
     "lyricsProvider": "Poskytovatel textů",
-    "syncContributor": "Přispěvatel synchronizace"
+    "syncContributor": "Přispěvatel synchronizace",
+    "seekToTime": "Přejít na {time}"
   },
   "creatorProfile": {
     "title": "Tvůrce synchronizace",
@@ -1412,7 +1416,7 @@ window.LANG_CS = {
         "desc": "Pokud texty obsahují pouze synchronizované časování, syntetizujte časování karaoke ze zvukové analýzy Spotify. Korejské, japonské a čínské linie jsou rozděleny hustěji, když je důvěra vysoká."
       },
       "pseudoKaraokeRenderAdvance": {
-        "label": "Pseudo Karaoke Render Advance",
+        "label": "Předstih vykreslení virtuálního karaoke",
         "desc": "Použijte časový posun v době vykreslování pouze na pseudo karaoke. Kladné hodnoty způsobí, že se zvýraznění objeví dříve."
       }
     },
@@ -1428,8 +1432,8 @@ window.LANG_CS = {
         "desc": "Načtěte si předem informace o pozadí videa pro další skladbu"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "Předem načíst podrobnosti slov",
+        "desc": "Předem načte čtení a překlad každého slova pro karaoke po slovech"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_CS = {
       "openDb": {
         "label": "Mezipaměť indexu OpenDB",
         "desc": "Index base + delta používaný k vyhledání poskytovatelů textů se sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "Základ {baseDate} + změny: {deltaCount}",
         "coverageSummary": "{isrcCount} ISRC · poskytovatelé: {providerCount}",
         "notDownloaded": "Zatím nebyl stažen žádný index.",
         "lastChecked": "Naposledy zkontrolováno",
@@ -2042,7 +2046,8 @@ window.LANG_CS = {
     "apiKeyError": "Gemini Chyba klíče API. Zkontrolujte prosím svůj API klíč v nastavení.",
     "translationFailed": "Překlad se nezdařil",
     "requestTimeout": "Vypršel časový limit požadavku na překlad. Zkuste to znovu.",
-    "failedPrefix": "Překlad se nezdařil"
+    "failedPrefix": "Překlad se nezdařil",
+    "noProviderConfigured": "Není nastaven žádný poskytovatel AI. Vyberte ho v nastavení."
   },
   "utils": {
     "allUrlsFailed": "Nepodařilo se získat informace o verzi ze všech adres URL",
@@ -2915,7 +2920,12 @@ window.LANG_CS = {
     "reverted": "Zveřejněná synchronizace obnovena.",
     "noPublishedSync": "Žádná zveřejněná synchronizace není dostupná.",
     "unsubmittedChanges": "Neodeslané změny",
-    "previewUnavailable": "Náhled není dostupný."
+    "previewUnavailable": "Náhled není dostupný.",
+    "lrclibBadgeInstrumental": "Instrumentální",
+    "preview": "Náhled",
+    "previewVocalCount": "Vokální party: {count}",
+    "shortcutsTitle": "Klávesové zkratky synchronizace karaoke",
+    "markLineHint": "Kliknutím označíte nebo odznačíte aktuální řádek. Pravým tlačítkem zrušíte všechna označení."
   },
   "marketplace": {
     "title": "Tržiště doplňků",

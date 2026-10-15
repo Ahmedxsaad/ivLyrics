@@ -12066,7 +12066,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	);
 
 	const renderShortcutGuide = () => lyricsText && react.createElement('div', { className: 'sync-creator-section sync-creator-shortcut-section', style: s.panel },
-		react.createElement('div', { style: s.panelTitle }, 'Sync Creator 단축키'),
+		react.createElement('div', { style: s.panelTitle }, I18n.t('syncCreator.shortcutsTitle') || I18n.t('syncCreator.title')),
 		react.createElement('div', { style: s.panelSubtitle }, syncGranularityRecordingHint),
 		react.createElement('div', { style: { ...s.shortcutsContainer, marginTop: 0, padding: 0, background: 'transparent', border: 'none' } },
 			[
@@ -13633,7 +13633,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				}, I18n.t('syncCreator.preview') || 'Preview'),
 				react.createElement('div', {
 					style: { fontSize: '11px', color: 'var(--spice-subtext)', fontVariantNumeric: 'tabular-nums' }
-				}, livePreviewKaraokeLines.length > 0 ? `${previewLineIndex + 1} / ${livePreviewKaraokeLines.length}${previewVocalRowCount > 1 ? ` · ${previewVocalRowCount} vocals` : ''}` : '')
+				}, livePreviewKaraokeLines.length > 0 ? `${previewLineIndex + 1} / ${livePreviewKaraokeLines.length}${previewVocalRowCount > 1 ? ` · ${I18n.t('syncCreator.previewVocalCount', { count: previewVocalRowCount }) || previewVocalRowCount}` : ''}` : '')
 			),
 			react.createElement('div', {
 				className: 'sync-creator-live-preview-exact',

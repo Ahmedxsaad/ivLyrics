@@ -76,7 +76,8 @@ window.LANG_SV = {
       "auto": "Använd systemets tema",
       "autoShort": "Auto",
       "selector": "Inställningstema"
-    }
+    },
+    "close": "Stäng inställningar"
   },
   "sections": {
     "language": "Språk",
@@ -324,7 +325,7 @@ window.LANG_SV = {
       "desc": "Visa animationer för andra rader än karaokehöjdpunkten"
     },
     "karaoke": {
-      "label": "Karaoke Lead-in Countdown",
+      "label": "Nedräkning före karaoke",
       "desc": "Visa inledningsnedräkningen som siffror. Om det är inaktiverat kommer prickar att visas."
     },
     "blurInactive": {
@@ -681,7 +682,8 @@ window.LANG_SV = {
     "regenerateWordDetails": "Orddetaljer",
     "regenerateAction": "Återskapa",
     "fullscreen": "Helskärm",
-    "exitFullscreen": "Avsluta helskärm"
+    "exitFullscreen": "Avsluta helskärm",
+    "localLyricsApplying": "Tillämpar…"
   },
   "messages": {
     "noLyrics": "Inga texter tillgängliga",
@@ -782,7 +784,8 @@ window.LANG_SV = {
       "artist": "Konstnär",
       "collection": "Gillade låtar",
       "station": "Station"
-    }
+    },
+    "menuToggle": "ivLyrics-meny"
   },
   "about": {
     "version": "Version",
@@ -945,7 +948,8 @@ window.LANG_SV = {
     "seconds": "sek",
     "minutes": "min",
     "lyricsProvider": "Textleverantör",
-    "syncContributor": "Synkronisera bidragsgivare"
+    "syncContributor": "Synkronisera bidragsgivare",
+    "seekToTime": "Hoppa till {time}"
   },
   "creatorProfile": {
     "title": "Synkskapare",
@@ -1400,7 +1404,7 @@ window.LANG_SV = {
         "desc": "Använd Karaoke-fliken för låtar som stöds. Om den är inaktiverad är fliken Synkroniserad som standard."
       },
       "bounce": {
-        "label": "Character Bounce Effect",
+        "label": "Studseffekt för tecken",
         "desc": "Tillämpa en studsanimation på de nuvarande sjungande karaktärerna i karaokeläge"
       },
       "lineTransition": {
@@ -1412,7 +1416,7 @@ window.LANG_SV = {
         "desc": "När texter endast tillhandahåller linjesynkroniserad timing, syntetisera karaoke-timing från Spotify-ljudanalys. Koreanska, japanska och kinesiska linjer delas tätare när förtroendet är högt."
       },
       "pseudoKaraokeRenderAdvance": {
-        "label": "Pseudo Karaoke Render Advance",
+        "label": "Förskjutning för virtuell karaoke-rendering",
         "desc": "Tillämpa en renderingstidsförskjutning endast på pseudo-karaoke. Positiva värden gör att markeringen visas tidigare."
       }
     },
@@ -1428,8 +1432,8 @@ window.LANG_SV = {
         "desc": "Hämta videobakgrundsinformation för nästa låt i förväg"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "Förladda ordinformation",
+        "desc": "Förladdar uttal och översättning för varje ord i karaoke ord för ord"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_SV = {
       "openDb": {
         "label": "OpenDB-indexcache",
         "desc": "Indexet base + delta som används för att hitta textleverantörer med sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "Bas {baseDate} + {deltaCount} ändringar",
         "coverageSummary": "{isrcCount} ISRC · {providerCount} leverantörer",
         "notDownloaded": "Inget index har hämtats ännu.",
         "lastChecked": "Senast kontrollerad",
@@ -2042,7 +2046,8 @@ window.LANG_SV = {
     "apiKeyError": "Gemini API-nyckelfel. Kontrollera din API-nyckel i inställningarna.",
     "translationFailed": "Översättning misslyckades",
     "requestTimeout": "Översättningsbegäran tog timeout. Försök igen.",
-    "failedPrefix": "Översättningen misslyckades"
+    "failedPrefix": "Översättningen misslyckades",
+    "noProviderConfigured": "Ingen AI-leverantör är konfigurerad. Välj en i inställningarna."
   },
   "utils": {
     "allUrlsFailed": "Det gick inte att hämta versionsinformation från alla webbadresser",
@@ -2915,7 +2920,12 @@ window.LANG_SV = {
     "reverted": "Publicerad synkronisering återställd.",
     "noPublishedSync": "Ingen publicerad synkronisering finns.",
     "unsubmittedChanges": "Oskickade ändringar",
-    "previewUnavailable": "Förhandsvisning saknas."
+    "previewUnavailable": "Förhandsvisning saknas.",
+    "lrclibBadgeInstrumental": "Instrumental",
+    "preview": "Förhandsgranskning",
+    "previewVocalCount": "{count} sångstämmor",
+    "shortcutsTitle": "Kortkommandon för karaokesynk",
+    "markLineHint": "Klicka för att markera eller avmarkera den aktuella raden. Högerklicka för att rensa alla markeringar."
   },
   "marketplace": {
     "title": "Marknadsplats för tillägg",

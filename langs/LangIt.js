@@ -76,7 +76,8 @@ window.LANG_IT = {
       "auto": "Usa il tema di sistema",
       "autoShort": "Auto",
       "selector": "Tema delle impostazioni"
-    }
+    },
+    "close": "Chiudi impostazioni"
   },
   "sections": {
     "language": "Lingua",
@@ -681,7 +682,8 @@ window.LANG_IT = {
     "regenerateWordDetails": "Dettagli parole",
     "regenerateAction": "Rigenera",
     "fullscreen": "Schermo intero",
-    "exitFullscreen": "Esci da schermo intero"
+    "exitFullscreen": "Esci da schermo intero",
+    "localLyricsApplying": "Applicazione…"
   },
   "messages": {
     "noLyrics": "Nessun testo disponibile",
@@ -782,7 +784,8 @@ window.LANG_IT = {
       "artist": "Artista",
       "collection": "Brani che ti piacciono",
       "station": "Radio"
-    }
+    },
+    "menuToggle": "Menu di ivLyrics"
   },
   "about": {
     "version": "Versione",
@@ -945,7 +948,8 @@ window.LANG_IT = {
     "seconds": "sec",
     "minutes": "min",
     "lyricsProvider": "Fornitore testo",
-    "syncContributor": "Contributore sincr."
+    "syncContributor": "Contributore sincr.",
+    "seekToTime": "Vai a {time}"
   },
   "creatorProfile": {
     "title": "Creatore sync",
@@ -1428,8 +1432,8 @@ window.LANG_IT = {
         "desc": "Recupera in anticipo le informazioni sullo sfondo video del brano successivo"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "Precarica i dettagli delle parole",
+        "desc": "Precarica lettura e traduzione di ogni parola per il karaoke parola per parola"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_IT = {
       "openDb": {
         "label": "Cache dell’indice OpenDB",
         "desc": "L’indice base + delta usato per trovare i fornitori di testi con sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "Base {baseDate} + {deltaCount} modifiche",
         "coverageSummary": "{isrcCount} ISRC · {providerCount} fornitori",
         "notDownloaded": "Non è stato ancora scaricato alcun indice.",
         "lastChecked": "Ultimo controllo",
@@ -2042,7 +2046,8 @@ window.LANG_IT = {
     "apiKeyError": "Errore chiave API Gemini. Controlla le impostazioni.",
     "translationFailed": "Traduzione fallita",
     "requestTimeout": "Richiesta traduzione scaduta. Riprova.",
-    "failedPrefix": "Traduzione fallita"
+    "failedPrefix": "Traduzione fallita",
+    "noProviderConfigured": "Nessun provider di IA configurato. Scegline uno nelle impostazioni."
   },
   "utils": {
     "allUrlsFailed": "Impossibile ottenere info versione da tutti gli URL",
@@ -2915,7 +2920,12 @@ window.LANG_IT = {
     "reverted": "Sincronizzazione pubblicata ripristinata.",
     "noPublishedSync": "Nessuna sincronizzazione pubblicata disponibile.",
     "unsubmittedChanges": "Modifiche non inviate",
-    "previewUnavailable": "Anteprima non disponibile."
+    "previewUnavailable": "Anteprima non disponibile.",
+    "lrclibBadgeInstrumental": "Strumentale",
+    "preview": "Anteprima",
+    "previewVocalCount": "{count} voci",
+    "shortcutsTitle": "Scorciatoie per Sync Karaoke",
+    "markLineHint": "Fai clic per segnare o togliere il segno alla riga corrente. Clic destro per cancellare tutti i segni."
   },
   "marketplace": {
     "title": "Marketplace Addon",

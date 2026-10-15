@@ -76,7 +76,8 @@ window.LANG_TR = {
       "auto": "Sistem temasını kullan",
       "autoShort": "Otomatik",
       "selector": "Ayarlar teması"
-    }
+    },
+    "close": "Ayarları kapat"
   },
   "sections": {
     "language": "Dil",
@@ -681,7 +682,8 @@ window.LANG_TR = {
     "regenerateWordDetails": "Kelime ayrıntıları",
     "regenerateAction": "Yeniden Oluştur",
     "fullscreen": "Tam Ekran",
-    "exitFullscreen": "Tam Ekrandan Çık"
+    "exitFullscreen": "Tam Ekrandan Çık",
+    "localLyricsApplying": "Uygulanıyor…"
   },
   "messages": {
     "noLyrics": "Söz mevcut değil",
@@ -782,7 +784,8 @@ window.LANG_TR = {
       "artist": "Sanatçı",
       "collection": "Beğenilen Şarkılar",
       "station": "Radyo"
-    }
+    },
+    "menuToggle": "ivLyrics menüsü"
   },
   "about": {
     "version": "Sürüm",
@@ -945,7 +948,8 @@ window.LANG_TR = {
     "seconds": "sn",
     "minutes": "dk",
     "lyricsProvider": "Söz Sağlayıcı",
-    "syncContributor": "Senkronizasyon Sağlayıcı"
+    "syncContributor": "Senkronizasyon Sağlayıcı",
+    "seekToTime": "{time} konumuna git"
   },
   "creatorProfile": {
     "title": "Senkronizasyon Oluşturucu",
@@ -1428,8 +1432,8 @@ window.LANG_TR = {
       "desc": "Sonraki şarkı için video arka plan bilgisini önceden getir"
     },
     "wordDetailsEnabled": {
-      "label": "Preload Word Details",
-      "desc": "Preload per-word readings and translations for word-level karaoke"
+      "label": "Kelime ayrıntılarını önceden yükle",
+      "desc": "Kelime bazlı karaoke için her kelimenin okunuşunu ve çevirisini önceden yükler"
     }
   },
   "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_TR = {
     "openDb": {
       "label": "OpenDB Dizin Önbelleği",
       "desc": "sync-data içeren söz sağlayıcılarını bulmak için kullanılan base + delta dizini.",
-      "versionSummary": "base {baseDate} + delta {deltaCount}",
+      "versionSummary": "Temel {baseDate} + {deltaCount} değişiklik",
       "coverageSummary": "{isrcCount} ISRC · {providerCount} sağlayıcı",
       "notDownloaded": "Henüz bir dizin indirilmedi.",
       "lastChecked": "Son kontrol",
@@ -2042,7 +2046,8 @@ window.LANG_TR = {
     "apiKeyError": "Gemini API anahtarı hatası. Lütfen ayarlardaki API anahtarınızı kontrol edin.",
     "translationFailed": "Çeviri başarısız",
     "requestTimeout": "Çeviri isteği zaman aşımına uğradı. Lütfen tekrar deneyin.",
-    "failedPrefix": "Çeviri Başarısız"
+    "failedPrefix": "Çeviri Başarısız",
+    "noProviderConfigured": "Yapay zekâ sağlayıcısı ayarlanmadı. Ayarlar'dan bir sağlayıcı seçin."
   },
   "utils": {
     "allUrlsFailed": "Tüm URL'lerden sürüm bilgisi alınamadı",
@@ -2915,7 +2920,12 @@ window.LANG_TR = {
     "reverted": "Yayımlanan senkronizasyon geri yüklendi.",
     "noPublishedSync": "Yayımlanmış senkronizasyon yok.",
     "unsubmittedChanges": "Gönderilmemiş değişiklikler",
-    "previewUnavailable": "Önizleme kullanılamıyor."
+    "previewUnavailable": "Önizleme kullanılamıyor.",
+    "lrclibBadgeInstrumental": "Enstrümantal",
+    "preview": "Önizleme",
+    "previewVocalCount": "{count} vokal partisi",
+    "shortcutsTitle": "Karaoke senkronizasyon kısayolları",
+    "markLineHint": "Geçerli satırı işaretlemek veya işareti kaldırmak için tıklayın. Tüm işaretleri temizlemek için sağ tıklayın."
   },
   "marketplace": {
     "title": "Eklenti Mağazası",

@@ -76,7 +76,8 @@ window.LANG_FA = {
       "auto": "استفاده از پوسته سیستم",
       "autoShort": "خودکار",
       "selector": "پوسته تنظیمات"
-    }
+    },
+    "close": "بستن تنظیمات"
   },
   "sections": {
     "language": "زبان",
@@ -681,7 +682,8 @@ window.LANG_FA = {
     "regenerateWordDetails": "جزئیات واژه‌ها",
     "regenerateAction": "بازتولید",
     "fullscreen": "تمام صفحه",
-    "exitFullscreen": "خروج از تمام‌صفحه"
+    "exitFullscreen": "خروج از تمام‌صفحه",
+    "localLyricsApplying": "در حال اعمال…"
   },
   "messages": {
     "noLyrics": "متن آهنگی موجود نیست",
@@ -782,7 +784,8 @@ window.LANG_FA = {
       "artist": "هنرمند",
       "collection": "آهنگ‌های مورد علاقه",
       "station": "رادیو"
-    }
+    },
+    "menuToggle": "منوی ivLyrics"
   },
   "about": {
     "version": "نسخه",
@@ -945,7 +948,8 @@ window.LANG_FA = {
     "seconds": "ثانیه",
     "minutes": "دقیقه",
     "lyricsProvider": "ارائه‌دهنده متن",
-    "syncContributor": "مشارکت‌کننده هماهنگ‌سازی"
+    "syncContributor": "مشارکت‌کننده هماهنگ‌سازی",
+    "seekToTime": "رفتن به {time}"
   },
   "creatorProfile": {
     "title": "سازنده همگام‌سازی",
@@ -1428,8 +1432,8 @@ window.LANG_FA = {
         "desc": "دریافت اطلاعات پس‌زمینه ویدیویی آهنگ بعدی پیش از موعد"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "پیش‌بارگیری جزئیات واژه‌ها",
+        "desc": "تلفظ و ترجمه هر واژه را برای کارائوکه واژه‌به‌واژه از قبل بارگیری می‌کند"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_FA = {
       "openDb": {
         "label": "کش فهرست OpenDB",
         "desc": "فهرست base + delta برای یافتن ارائه‌دهندگان متن ترانه دارای sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "پایه {baseDate} + {deltaCount} تغییر",
         "coverageSummary": "{isrcCount} ISRC · {providerCount} ارائه‌دهنده",
         "notDownloaded": "هنوز هیچ فهرستی بارگیری نشده است.",
         "lastChecked": "آخرین بررسی",
@@ -2042,7 +2046,8 @@ window.LANG_FA = {
     "apiKeyError": "خطای مرتبط با کلید Gemini API رخ داد. کلید API را در تنظیمات بررسی کنید.",
     "translationFailed": "ترجمه ناموفق بود",
     "requestTimeout": "مهلت زمانی درخواست ترجمه تمام شد. دوباره تلاش کنید.",
-    "failedPrefix": "ترجمه ناموفق"
+    "failedPrefix": "ترجمه ناموفق",
+    "noProviderConfigured": "هیچ ارائه‌دهنده هوش مصنوعی تنظیم نشده است. در تنظیمات یکی را انتخاب کنید."
   },
   "utils": {
     "allUrlsFailed": "دریافت اطلاعات نسخه از تمام URLها ناموفق بود",
@@ -2915,7 +2920,12 @@ window.LANG_FA = {
     "reverted": "همگام‌سازی منتشرشده بازیابی شد.",
     "noPublishedSync": "همگام‌سازی منتشرشده‌ای موجود نیست.",
     "unsubmittedChanges": "تغییرات ارسال‌نشده",
-    "previewUnavailable": "پیش‌نمایش در دسترس نیست."
+    "previewUnavailable": "پیش‌نمایش در دسترس نیست.",
+    "lrclibBadgeInstrumental": "بی‌کلام",
+    "preview": "پیش‌نمایش",
+    "previewVocalCount": "{count} بخش آوازی",
+    "shortcutsTitle": "میانبرهای سینک کارائوکه",
+    "markLineHint": "برای علامت‌گذاری یا برداشتن علامت خط فعلی کلیک کنید. برای پاک کردن همه علامت‌ها راست‌کلیک کنید."
   },
   "marketplace": {
     "title": "فروشگاه افزونه‌ها",

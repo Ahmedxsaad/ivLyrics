@@ -5930,7 +5930,7 @@ const LyricsLineBlock = react.memo(({
 				  ...(!hiddenFromAccessibility && Number.isFinite(seekTime) ? {
 					  role: "button",
 					  tabIndex: 0,
-					  title: `Seek to ${Math.max(0, Math.round(seekTime / 1000))} seconds`,
+					  title: formatLyricsSeekTitle(seekTime),
 					  "data-lyrics-seek-time": seekTime,
 					  onKeyDown: handleKeyDown,
 				  } : {}),
@@ -5939,6 +5939,14 @@ const LyricsLineBlock = react.memo(({
 		...supplements
 	);
 });
+
+// Defined after LyricsLineBlock (used only at render time) so tests that
+// evaluate the component in isolation pick it up with the same source slice.
+const formatLyricsSeekTitle = (seekTimeMs) => {
+	const totalSeconds = Math.max(0, Math.round(seekTimeMs / 1000));
+	const time = `${Math.floor(totalSeconds / 60)}:${String(totalSeconds % 60).padStart(2, "0")}`;
+	return globalThis.I18n?.t?.("misc.seekToTime", { time }) || time;
+};
 
 const renderLyricsItems = ({ items, isKara, karaokeRenderGranularity = null, position = 0, liveClock = null, activeLineRef = null, settingsRevision = 0, cache = null }) => {
 	const karaokePosition = isKara ? position : 0;

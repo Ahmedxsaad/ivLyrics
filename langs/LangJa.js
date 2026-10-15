@@ -76,7 +76,8 @@ window.LANG_JA = {
       "auto": "システムテーマを使用",
       "autoShort": "自動",
       "selector": "設定テーマ"
-    }
+    },
+    "close": "設定を閉じる"
   },
   "sections": {
     "language": "言語",
@@ -681,7 +682,8 @@ window.LANG_JA = {
     "regenerateWordDetails": "単語詳細",
     "regenerateAction": "再生成",
     "fullscreen": "フルスクリーン",
-    "exitFullscreen": "フルスクリーンを終了"
+    "exitFullscreen": "フルスクリーンを終了",
+    "localLyricsApplying": "適用中…"
   },
   "messages": {
     "noLyrics": "利用可能な歌詞がありません",
@@ -782,7 +784,8 @@ window.LANG_JA = {
       "artist": "アーティスト",
       "collection": "お気に入りの曲",
       "station": "ラジオ"
-    }
+    },
+    "menuToggle": "ivLyrics メニュー"
   },
   "about": {
     "version": "バージョン",
@@ -945,7 +948,8 @@ window.LANG_JA = {
     "seconds": "秒",
     "minutes": "分",
     "lyricsProvider": "歌詞提供者",
-    "syncContributor": "同期作成者"
+    "syncContributor": "同期作成者",
+    "seekToTime": "{time} に移動"
   },
   "creatorProfile": {
     "title": "同期制作者",
@@ -1428,8 +1432,8 @@ window.LANG_JA = {
         "desc": "次の曲の動画背景情報を事前に取得します"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "単語の詳細を事前読み込み",
+        "desc": "単語単位カラオケ用に、単語ごとの読みと訳を事前に取得します"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_JA = {
       "openDb": {
         "label": "OpenDB インデックスキャッシュ",
         "desc": "sync-data がある歌詞プロバイダーを検索するための base + delta インデックスです。",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "ベース {baseDate} + 差分 {deltaCount}件",
         "coverageSummary": "ISRC {isrcCount}件 · プロバイダー {providerCount}件",
         "notDownloaded": "インデックスはまだダウンロードされていません。",
         "lastChecked": "最終確認",
@@ -2042,7 +2046,8 @@ window.LANG_JA = {
     "apiKeyError": "Gemini APIキー関連のエラーが発生しました。設定でAPIキーを確認してください。",
     "translationFailed": "翻訳に失敗しました",
     "requestTimeout": "翻訳リクエストがタイムアウトしました。再試行してください。",
-    "failedPrefix": "翻訳失敗"
+    "failedPrefix": "翻訳失敗",
+    "noProviderConfigured": "AIプロバイダーが設定されていません。設定でAIプロバイダーを選択してください。"
   },
   "utils": {
     "allUrlsFailed": "すべてのURLからバージョン情報を取得できませんでした",
@@ -2915,7 +2920,12 @@ window.LANG_JA = {
     "reverted": "公開済みの同期に戻しました。",
     "noPublishedSync": "公開済みの同期がありません。",
     "unsubmittedChanges": "未送信の変更があります。",
-    "previewUnavailable": "プレビューを利用できません。"
+    "previewUnavailable": "プレビューを利用できません。",
+    "lrclibBadgeInstrumental": "インスト",
+    "preview": "プレビュー",
+    "previewVocalCount": "ボーカルパート {count}",
+    "shortcutsTitle": "カラオケ同期作成のショートカット",
+    "markLineHint": "クリックで現在の行をマーク／解除、右クリックですべてのマークを消去します。"
   },
   "marketplace": {
     "title": "アドオンマーケットプレイス",

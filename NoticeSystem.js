@@ -446,7 +446,7 @@ const NoticeModal = ({ notices, onClose }) => {
     }, []);
 
     const react = getNoticeReact();
-    const closeLabel = window.I18n?.t("settingsUi.close") || "Close";
+    const closeLabel = window.I18n?.t("buttons.close") || "Close";
 
     const renderNoticeHeader = () => react.createElement(
         "div",

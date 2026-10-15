@@ -76,7 +76,8 @@ window.LANG_EN = {
       "auto": "Use system theme",
       "autoShort": "Auto",
       "selector": "Settings theme"
-    }
+    },
+    "close": "Close settings"
   },
   "sections": {
     "language": "Language",
@@ -681,7 +682,8 @@ window.LANG_EN = {
     "regenerateWordDetails": "Word details",
     "regenerateAction": "Regenerate",
     "fullscreen": "Fullscreen",
-    "exitFullscreen": "Exit Fullscreen"
+    "exitFullscreen": "Exit Fullscreen",
+    "localLyricsApplying": "Applying…"
   },
   "messages": {
     "noLyrics": "No lyrics available",
@@ -782,7 +784,8 @@ window.LANG_EN = {
       "artist": "Artist",
       "collection": "Liked Songs",
       "station": "Station"
-    }
+    },
+    "menuToggle": "ivLyrics menu"
   },
   "about": {
     "version": "Version",
@@ -945,7 +948,8 @@ window.LANG_EN = {
     "seconds": "sec",
     "minutes": "min",
     "lyricsProvider": "Lyrics Provider",
-    "syncContributor": "Sync Contributor"
+    "syncContributor": "Sync Contributor",
+    "seekToTime": "Seek to {time}"
   },
   "creatorProfile": {
     "title": "Sync Creator",
@@ -1470,7 +1474,7 @@ window.LANG_EN = {
       "openDb": {
         "label": "OpenDB Index Cache",
         "desc": "The base + delta index used to find lyric providers with sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "Base {baseDate} + {deltaCount} updates",
         "coverageSummary": "{isrcCount} ISRC · {providerCount} providers",
         "notDownloaded": "No index has been downloaded yet.",
         "lastChecked": "Last checked",
@@ -2042,7 +2046,8 @@ window.LANG_EN = {
     "apiKeyError": "Gemini API key error. Please check your API key in settings.",
     "translationFailed": "Translation failed",
     "requestTimeout": "Translation request timed out. Please try again.",
-    "failedPrefix": "Translation Failed"
+    "failedPrefix": "Translation Failed",
+    "noProviderConfigured": "No AI provider is set up. Choose an AI provider in Settings."
   },
   "utils": {
     "allUrlsFailed": "Failed to get version info from all URLs",
@@ -2915,7 +2920,12 @@ window.LANG_EN = {
     "reverted": "Restored the published sync.",
     "noPublishedSync": "No published sync is available.",
     "unsubmittedChanges": "Unsubmitted changes",
-    "previewUnavailable": "Preview is unavailable."
+    "previewUnavailable": "Preview is unavailable.",
+    "lrclibBadgeInstrumental": "Instrumental",
+    "preview": "Preview",
+    "previewVocalCount": "{count} vocal parts",
+    "shortcutsTitle": "Karaoke sync shortcuts",
+    "markLineHint": "Click to mark or unmark the current line. Right-click to clear all marks."
   },
   "marketplace": {
     "title": "Addon Marketplace",

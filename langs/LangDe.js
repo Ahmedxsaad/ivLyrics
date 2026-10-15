@@ -76,7 +76,8 @@ window.LANG_DE = {
       "auto": "Systemdesign verwenden",
       "autoShort": "Auto",
       "selector": "Einstellungsdesign"
-    }
+    },
+    "close": "Einstellungen schließen"
   },
   "sections": {
     "language": "Sprache",
@@ -681,7 +682,8 @@ window.LANG_DE = {
     "regenerateWordDetails": "Wortdetails",
     "regenerateAction": "Neu erzeugen",
     "fullscreen": "Vollbild",
-    "exitFullscreen": "Vollbild verlassen"
+    "exitFullscreen": "Vollbild verlassen",
+    "localLyricsApplying": "Wird angewendet…"
   },
   "messages": {
     "noLyrics": "Kein Songtext verfügbar",
@@ -782,7 +784,8 @@ window.LANG_DE = {
       "artist": "Künstler",
       "collection": "Lieblingssongs",
       "station": "Radio"
-    }
+    },
+    "menuToggle": "ivLyrics-Menü"
   },
   "about": {
     "version": "Version",
@@ -945,7 +948,8 @@ window.LANG_DE = {
     "seconds": "Sek",
     "minutes": "Min",
     "lyricsProvider": "Songtext-Anbieter",
-    "syncContributor": "Sync-Mitwirkender"
+    "syncContributor": "Sync-Mitwirkender",
+    "seekToTime": "Zu {time} springen"
   },
   "creatorProfile": {
     "title": "Sync-Ersteller",
@@ -1428,8 +1432,8 @@ window.LANG_DE = {
         "desc": "Lädt Video-Hintergrundinformationen für den nächsten Song vor"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "Wortdetails vorab laden",
+        "desc": "Lädt Lesung und Übersetzung jedes Wortes für das wortweise Karaoke vorab"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_DE = {
       "openDb": {
         "label": "OpenDB-Index-Cache",
         "desc": "Der Base- und Delta-Index zum Finden von Liedtextanbietern mit Sync-Daten.",
-        "versionSummary": "Base {baseDate} + Delta {deltaCount}",
+        "versionSummary": "Basis {baseDate} + {deltaCount} Änderungen",
         "coverageSummary": "{isrcCount} ISRC · Anbieter: {providerCount}",
         "notDownloaded": "Es wurde noch kein Index heruntergeladen.",
         "lastChecked": "Zuletzt geprüft",
@@ -2042,7 +2046,8 @@ window.LANG_DE = {
     "apiKeyError": "Fehler mit dem Gemini API-Schlüssel. Bitte in den Einstellungen prüfen.",
     "translationFailed": "Übersetzung fehlgeschlagen",
     "requestTimeout": "Zeitüberschreitung bei der Anfrage.",
-    "failedPrefix": "Fehler"
+    "failedPrefix": "Fehler",
+    "noProviderConfigured": "Kein KI-Anbieter eingerichtet. Wähle in den Einstellungen einen KI-Anbieter aus."
   },
   "utils": {
     "allUrlsFailed": "Versionsinformationen konnten nicht abgerufen werden",
@@ -2915,7 +2920,12 @@ window.LANG_DE = {
     "reverted": "Veröffentlichter Sync wiederhergestellt.",
     "noPublishedSync": "Kein veröffentlichter Sync verfügbar.",
     "unsubmittedChanges": "Nicht eingereichte Änderungen",
-    "previewUnavailable": "Vorschau nicht verfügbar."
+    "previewUnavailable": "Vorschau nicht verfügbar.",
+    "lrclibBadgeInstrumental": "Instrumental",
+    "preview": "Vorschau",
+    "previewVocalCount": "{count} Gesangsstimmen",
+    "shortcutsTitle": "Tastenkürzel für Karaoke-Sync",
+    "markLineHint": "Klicken, um die aktuelle Zeile zu markieren oder die Markierung aufzuheben. Rechtsklick entfernt alle Markierungen."
   },
   "marketplace": {
     "title": "Addon-Marktplatz",

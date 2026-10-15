@@ -76,7 +76,8 @@ window.LANG_AR = {
       "auto": "استخدام سمة النظام",
       "autoShort": "تلقائي",
       "selector": "سمة الإعدادات"
-    }
+    },
+    "close": "إغلاق الإعدادات"
   },
   "sections": {
     "language": "اللغة",
@@ -681,7 +682,8 @@ window.LANG_AR = {
     "regenerateWordDetails": "تفاصيل الكلمات",
     "regenerateAction": "إعادة الإنشاء",
     "fullscreen": "ملء الشاشة",
-    "exitFullscreen": "الخروج من ملء الشاشة"
+    "exitFullscreen": "الخروج من ملء الشاشة",
+    "localLyricsApplying": "جارٍ التطبيق…"
   },
   "messages": {
     "noLyrics": "لا توجد كلمات متاحة",
@@ -782,7 +784,8 @@ window.LANG_AR = {
       "artist": "فنان",
       "collection": "الأغاني المعجب بها",
       "station": "راديو"
-    }
+    },
+    "menuToggle": "قائمة ivLyrics"
   },
   "about": {
     "version": "الإصدار",
@@ -945,7 +948,8 @@ window.LANG_AR = {
     "seconds": "ثواني",
     "minutes": "دقائق",
     "lyricsProvider": "مقدم الكلمات",
-    "syncContributor": "مساهم المزامنة"
+    "syncContributor": "مساهم المزامنة",
+    "seekToTime": "الانتقال إلى {time}"
   },
   "creatorProfile": {
     "title": "صانع المزامنة",
@@ -1428,8 +1432,8 @@ window.LANG_AR = {
         "desc": "جلب معلومات خلفية الفيديو للأغنية التالية مسبقًا"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "تحميل تفاصيل الكلمات مسبقًا",
+        "desc": "يحمّل مسبقًا نطق كل كلمة وترجمتها لوضع الكاريوكي حسب الكلمة"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_AR = {
       "openDb": {
         "label": "ذاكرة التخزين المؤقت لفهرس OpenDB",
         "desc": "فهرس base + delta المستخدم للعثور على موفري كلمات الأغاني الذين لديهم sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "الأساس {baseDate} + {deltaCount} تغيير",
         "coverageSummary": "{isrcCount} ISRC · عدد الموفّرين: {providerCount}",
         "notDownloaded": "لم يتم تنزيل أي فهرس بعد.",
         "lastChecked": "آخر تحقق",
@@ -2042,7 +2046,8 @@ window.LANG_AR = {
     "apiKeyError": "حدث خطأ متعلق بمفتاح Gemini API. تحققه في الإعدادات.",
     "translationFailed": "فشل الترجمة",
     "requestTimeout": "انتهت مهلة طلب الترجمة. حاول مجددًا.",
-    "failedPrefix": "فشل الترجمة"
+    "failedPrefix": "فشل الترجمة",
+    "noProviderConfigured": "لم يتم إعداد مزوّد ذكاء اصطناعي. اختر مزوّدًا من الإعدادات."
   },
   "utils": {
     "allUrlsFailed": "فشل جلب معلومات الإصدار من جميع الروابط",
@@ -2915,7 +2920,12 @@ window.LANG_AR = {
     "reverted": "تمت استعادة المزامنة المنشورة.",
     "noPublishedSync": "لا توجد مزامنة منشورة.",
     "unsubmittedChanges": "تغييرات غير مرسلة",
-    "previewUnavailable": "المعاينة غير متاحة."
+    "previewUnavailable": "المعاينة غير متاحة.",
+    "lrclibBadgeInstrumental": "موسيقى بلا كلمات",
+    "preview": "معاينة",
+    "previewVocalCount": "أجزاء الغناء: {count}",
+    "shortcutsTitle": "اختصارات مزامنة الكاريوكي",
+    "markLineHint": "انقر لتعليم السطر الحالي أو إلغاء تعليمه. انقر بزر الفأرة الأيمن لمسح كل العلامات."
   },
   "marketplace": {
     "title": "متجر الإضافات",

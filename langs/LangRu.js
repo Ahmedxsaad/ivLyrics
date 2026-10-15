@@ -76,7 +76,8 @@ window.LANG_RU = {
       "auto": "Использовать системную тему",
       "autoShort": "Авто",
       "selector": "Тема настроек"
-    }
+    },
+    "close": "Закрыть настройки"
   },
   "sections": {
     "language": "Язык",
@@ -681,7 +682,8 @@ window.LANG_RU = {
     "regenerateWordDetails": "Детали слов",
     "regenerateAction": "Пересоздать",
     "fullscreen": "Полный экран",
-    "exitFullscreen": "Выйти из полноэкранного режима"
+    "exitFullscreen": "Выйти из полноэкранного режима",
+    "localLyricsApplying": "Применение…"
   },
   "messages": {
     "noLyrics": "Текст отсутствует",
@@ -782,7 +784,8 @@ window.LANG_RU = {
       "artist": "Исполнитель",
       "collection": "Любимые треки",
       "station": "Радио"
-    }
+    },
+    "menuToggle": "Меню ivLyrics"
   },
   "about": {
     "version": "Версия",
@@ -945,7 +948,8 @@ window.LANG_RU = {
     "seconds": "сек.",
     "minutes": "мин.",
     "lyricsProvider": "Поставщик текста",
-    "syncContributor": "Автор синхронизации"
+    "syncContributor": "Автор синхронизации",
+    "seekToTime": "Перейти к {time}"
   },
   "creatorProfile": {
     "title": "Автор синхронизации",
@@ -1428,8 +1432,8 @@ window.LANG_RU = {
         "desc": "Заранее получает информацию о видео-фоне для следующего трека"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "Предзагрузка сведений о словах",
+        "desc": "Заранее загружает чтение и перевод каждого слова для караоке по словам"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_RU = {
       "openDb": {
         "label": "Кеш индекса OpenDB",
         "desc": "Индекс base + delta для поиска поставщиков текстов с sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "База {baseDate} + изменений: {deltaCount}",
         "coverageSummary": "ISRC: {isrcCount} · провайдеры: {providerCount}",
         "notDownloaded": "Индекс ещё не загружен.",
         "lastChecked": "Последняя проверка",
@@ -2042,7 +2046,8 @@ window.LANG_RU = {
     "apiKeyError": "Ошибка ключа Gemini API. Проверьте настройки.",
     "translationFailed": "Ошибка перевода",
     "requestTimeout": "Тайм-аут запроса перевода. Попробуйте снова.",
-    "failedPrefix": "Ошибка перевода"
+    "failedPrefix": "Ошибка перевода",
+    "noProviderConfigured": "Поставщик ИИ не настроен. Выберите его в настройках."
   },
   "utils": {
     "allUrlsFailed": "Не удалось получить информацию о версии",
@@ -2915,7 +2920,12 @@ window.LANG_RU = {
     "reverted": "Опубликованная синхронизация восстановлена.",
     "noPublishedSync": "Опубликованная синхронизация отсутствует.",
     "unsubmittedChanges": "Неотправленные изменения",
-    "previewUnavailable": "Предпросмотр недоступен."
+    "previewUnavailable": "Предпросмотр недоступен.",
+    "lrclibBadgeInstrumental": "Инструментал",
+    "preview": "Превью",
+    "previewVocalCount": "Вокальных партий: {count}",
+    "shortcutsTitle": "Горячие клавиши синхронизации",
+    "markLineHint": "Нажмите, чтобы отметить текущую строку или снять отметку. Правый клик снимает все отметки."
   },
   "marketplace": {
     "title": "Магазин дополнений",

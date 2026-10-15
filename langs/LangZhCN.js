@@ -76,7 +76,8 @@ window.LANG_ZH_CN = {
       "auto": "跟随系统主题",
       "autoShort": "自动",
       "selector": "设置主题"
-    }
+    },
+    "close": "关闭设置"
   },
   "sections": {
     "language": "语言",
@@ -681,7 +682,8 @@ window.LANG_ZH_CN = {
     "regenerateWordDetails": "单词详情",
     "regenerateAction": "重新生成",
     "fullscreen": "全屏",
-    "exitFullscreen": "退出全屏"
+    "exitFullscreen": "退出全屏",
+    "localLyricsApplying": "正在应用…"
   },
   "messages": {
     "noLyrics": "暂无可用歌词",
@@ -782,7 +784,8 @@ window.LANG_ZH_CN = {
       "artist": "艺人",
       "collection": "已点赞的歌曲",
       "station": "电台"
-    }
+    },
+    "menuToggle": "ivLyrics 菜单"
   },
   "about": {
     "version": "版本",
@@ -945,7 +948,8 @@ window.LANG_ZH_CN = {
     "seconds": "秒",
     "minutes": "分",
     "lyricsProvider": "歌词提供者",
-    "syncContributor": "同步贡献者"
+    "syncContributor": "同步贡献者",
+    "seekToTime": "跳转到 {time}"
   },
   "creatorProfile": {
     "title": "同步制作者",
@@ -1428,8 +1432,8 @@ window.LANG_ZH_CN = {
         "desc": "预先获取下一首歌曲的视频背景信息"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "预加载单词详情",
+        "desc": "为逐词卡拉OK预先获取每个单词的读音和翻译"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_ZH_CN = {
       "openDb": {
         "label": "OpenDB 索引缓存",
         "desc": "用于查找拥有 sync-data 的歌词提供方的 base + delta 索引。",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "基准 {baseDate} + 增量 {deltaCount} 条",
         "coverageSummary": "ISRC {isrcCount} 个 · 提供方 {providerCount} 个",
         "notDownloaded": "尚未下载索引。",
         "lastChecked": "上次检查",
@@ -2042,7 +2046,8 @@ window.LANG_ZH_CN = {
     "apiKeyError": "发生 Gemini API 密钥相关错误。请在设置中检查 API 密钥。",
     "translationFailed": "翻译失败",
     "requestTimeout": "翻译请求超时。请重试。",
-    "failedPrefix": "翻译失败"
+    "failedPrefix": "翻译失败",
+    "noProviderConfigured": "尚未设置 AI 提供商。请在设置中选择 AI 提供商。"
   },
   "utils": {
     "allUrlsFailed": "无法从所有 URL 获取版本信息",
@@ -2915,7 +2920,12 @@ window.LANG_ZH_CN = {
     "reverted": "已恢复已发布的同步。",
     "noPublishedSync": "没有已发布的同步。",
     "unsubmittedChanges": "有未提交的更改。",
-    "previewUnavailable": "预览不可用。"
+    "previewUnavailable": "预览不可用。",
+    "lrclibBadgeInstrumental": "纯音乐",
+    "preview": "预览",
+    "previewVocalCount": "{count} 个声部",
+    "shortcutsTitle": "卡拉OK同步创建快捷键",
+    "markLineHint": "点击可标记或取消标记当前行，右键可清除所有标记。"
   },
   "marketplace": {
     "title": "插件市场",

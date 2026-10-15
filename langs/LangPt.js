@@ -76,7 +76,8 @@ window.LANG_PT = {
       "auto": "Usar o tema do sistema",
       "autoShort": "Automático",
       "selector": "Tema das configurações"
-    }
+    },
+    "close": "Fechar configurações"
   },
   "sections": {
     "language": "Idioma",
@@ -681,7 +682,8 @@ window.LANG_PT = {
     "regenerateWordDetails": "Detalhes das palavras",
     "regenerateAction": "Regenerar",
     "fullscreen": "Tela Cheia",
-    "exitFullscreen": "Sair da tela cheia"
+    "exitFullscreen": "Sair da tela cheia",
+    "localLyricsApplying": "Aplicando…"
   },
   "messages": {
     "noLyrics": "Nenhuma letra disponível",
@@ -782,7 +784,8 @@ window.LANG_PT = {
       "artist": "Artista",
       "collection": "Músicas Curtidas",
       "station": "Rádio"
-    }
+    },
+    "menuToggle": "Menu do ivLyrics"
   },
   "about": {
     "version": "Versão",
@@ -945,7 +948,8 @@ window.LANG_PT = {
     "seconds": "s",
     "minutes": "m",
     "lyricsProvider": "Provedor de letras",
-    "syncContributor": "Contribuidor de sincronia"
+    "syncContributor": "Contribuidor de sincronia",
+    "seekToTime": "Ir para {time}"
   },
   "creatorProfile": {
     "title": "Criador de sincronização",
@@ -1428,8 +1432,8 @@ window.LANG_PT = {
         "desc": "Busca informações de fundo de vídeo da próxima música antecipadamente"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "Pré-carregar detalhes das palavras",
+        "desc": "Pré-carrega a leitura e a tradução de cada palavra para o karaokê por palavra"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_PT = {
       "openDb": {
         "label": "Cache do índice OpenDB",
         "desc": "O índice base + delta usado para encontrar provedores de letras com sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "Base {baseDate} + {deltaCount} alterações",
         "coverageSummary": "{isrcCount} ISRC · {providerCount} provedores",
         "notDownloaded": "Nenhum índice foi baixado ainda.",
         "lastChecked": "Última verificação",
@@ -2042,7 +2046,8 @@ window.LANG_PT = {
     "apiKeyError": "Erro relacionado à chave API Gemini. Verifique nas configurações.",
     "translationFailed": "Tradução falhou",
     "requestTimeout": "Tempo limite da solicitação de tradução excedido. Tente novamente.",
-    "failedPrefix": "Falha na tradução"
+    "failedPrefix": "Falha na tradução",
+    "noProviderConfigured": "Nenhum provedor de IA configurado. Escolha um nas configurações."
   },
   "utils": {
     "allUrlsFailed": "Falha ao obter informações de versão de todas as URLs",
@@ -2915,7 +2920,12 @@ window.LANG_PT = {
     "reverted": "Sincronização publicada restaurada.",
     "noPublishedSync": "Nenhuma sincronização publicada disponível.",
     "unsubmittedChanges": "Alterações não enviadas",
-    "previewUnavailable": "Prévia indisponível."
+    "previewUnavailable": "Prévia indisponível.",
+    "lrclibBadgeInstrumental": "Instrumental",
+    "preview": "Prévia",
+    "previewVocalCount": "{count} vozes",
+    "shortcutsTitle": "Atalhos do Sync Karaokê",
+    "markLineHint": "Clique para marcar ou desmarcar a linha atual. Clique com o botão direito para limpar todas as marcações."
   },
   "marketplace": {
     "title": "Loja de Extensões",

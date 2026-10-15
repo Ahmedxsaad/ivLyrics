@@ -76,7 +76,8 @@ window.LANG_KO = {
       "auto": "시스템 테마 사용",
       "autoShort": "자동",
       "selector": "설정 테마"
-    }
+    },
+    "close": "설정 닫기"
   },
   "sections": {
     "language": "언어",
@@ -681,7 +682,8 @@ window.LANG_KO = {
     "regenerateWordDetails": "단어 상세",
     "regenerateAction": "재생성",
     "fullscreen": "전체화면",
-    "exitFullscreen": "전체화면 종료"
+    "exitFullscreen": "전체화면 종료",
+    "localLyricsApplying": "적용 중…"
   },
   "messages": {
     "noLyrics": "사용 가능한 가사가 없음",
@@ -782,7 +784,8 @@ window.LANG_KO = {
       "artist": "아티스트",
       "collection": "좋아요 표시한 곡",
       "station": "라디오"
-    }
+    },
+    "menuToggle": "ivLyrics 메뉴"
   },
   "about": {
     "version": "버전",
@@ -945,7 +948,8 @@ window.LANG_KO = {
     "seconds": "초",
     "minutes": "분",
     "lyricsProvider": "가사 제공자",
-    "syncContributor": "싱크 제작자"
+    "syncContributor": "싱크 제작자",
+    "seekToTime": "{time} 지점으로 이동"
   },
   "creatorProfile": {
     "title": "싱크 제작자",
@@ -1470,7 +1474,7 @@ window.LANG_KO = {
       "openDb": {
         "label": "OpenDB 인덱스 캐시",
         "desc": "sync-data가 있는 가사 제공자를 찾는 base + delta 인덱스입니다",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "기준 {baseDate} + 변경 {deltaCount}건",
         "coverageSummary": "ISRC {isrcCount}개 · 제공자 {providerCount}개",
         "notDownloaded": "아직 내려받은 인덱스가 없습니다",
         "lastChecked": "마지막 확인",
@@ -2042,7 +2046,8 @@ window.LANG_KO = {
     "apiKeyError": "Gemini API 키 관련 오류가 발생했습니다. 설정에서 API 키를 확인해주세요.",
     "translationFailed": "번역에 실패했습니다",
     "requestTimeout": "번역 요청이 시간 초과되었습니다. 다시 시도해주세요.",
-    "failedPrefix": "번역 실패"
+    "failedPrefix": "번역 실패",
+    "noProviderConfigured": "AI 제공자가 설정되지 않았습니다. 설정에서 AI 제공자를 선택해주세요."
   },
   "utils": {
     "allUrlsFailed": "모든 URL에서 버전 정보를 가져오지 못했습니다",
@@ -2915,7 +2920,12 @@ window.LANG_KO = {
     "reverted": "게시된 싱크로 되돌렸습니다.",
     "noPublishedSync": "게시된 싱크가 없습니다.",
     "unsubmittedChanges": "미제출 변경 사항이 있습니다.",
-    "previewUnavailable": "미리보기를 사용할 수 없습니다."
+    "previewUnavailable": "미리보기를 사용할 수 없습니다.",
+    "lrclibBadgeInstrumental": "연주곡",
+    "preview": "미리보기",
+    "previewVocalCount": "보컬 파트 {count}개",
+    "shortcutsTitle": "노래방 싱크 생성 단축키",
+    "markLineHint": "클릭하면 현재 줄을 표시하거나 해제합니다. 우클릭하면 모든 표시를 지웁니다."
   },
   "marketplace": {
     "title": "에드온 마켓플레이스",

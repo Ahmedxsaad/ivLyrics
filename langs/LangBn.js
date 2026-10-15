@@ -76,7 +76,8 @@ window.LANG_BN = {
       "auto": "সিস্টেম থিম ব্যবহার করুন",
       "autoShort": "স্বয়ংক্রিয়",
       "selector": "সেটিংস থিম"
-    }
+    },
+    "close": "সেটিংস বন্ধ করুন"
   },
   "sections": {
     "language": "ভাষা",
@@ -681,7 +682,8 @@ window.LANG_BN = {
     "regenerateWordDetails": "শব্দের বিবরণ",
     "regenerateAction": "পুনরায় তৈরি",
     "fullscreen": "ফুলস্ক্রিন",
-    "exitFullscreen": "ফুলস্ক্রিন থেকে বের হন"
+    "exitFullscreen": "ফুলস্ক্রিন থেকে বের হন",
+    "localLyricsApplying": "প্রয়োগ হচ্ছে…"
   },
   "messages": {
     "noLyrics": "কোনো লিরিক্স পাওয়া যায়নি",
@@ -782,7 +784,8 @@ window.LANG_BN = {
       "artist": "আর্টিস্ট",
       "collection": "পছন্দের গান",
       "station": "রেডিও"
-    }
+    },
+    "menuToggle": "ivLyrics মেনু"
   },
   "about": {
     "version": "সংস্করণ",
@@ -945,7 +948,8 @@ window.LANG_BN = {
     "seconds": "সেকেন্ড",
     "minutes": "মিনিট",
     "lyricsProvider": "লিরিক্স প্রদানকারী",
-    "syncContributor": "সিঙ্ক অবদানকারী"
+    "syncContributor": "সিঙ্ক অবদানকারী",
+    "seekToTime": "{time}-এ যান"
   },
   "creatorProfile": {
     "title": "সিঙ্ক নির্মাতা",
@@ -1428,8 +1432,8 @@ window.LANG_BN = {
         "desc": "পরবর্তী গানের ভিডিও ব্যাকগ্রাউন্ড তথ্য আগেই নিয়ে আসুন"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "শব্দের বিবরণ আগে থেকে লোড করুন",
+        "desc": "শব্দভিত্তিক কারাওকের জন্য প্রতিটি শব্দের উচ্চারণ ও অনুবাদ আগে থেকে লোড করে"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_BN = {
       "openDb": {
         "label": "OpenDB ইনডেক্স ক্যাশ",
         "desc": "sync-data-সহ লিরিক্স প্রদানকারী খুঁজে পেতে ব্যবহৃত base + delta ইনডেক্স।",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "ভিত্তি {baseDate} + {deltaCount}টি পরিবর্তন",
         "coverageSummary": "{isrcCount} ISRC · প্রদানকারী: {providerCount}",
         "notDownloaded": "এখনও কোনো ইনডেক্স ডাউনলোড করা হয়নি।",
         "lastChecked": "সর্বশেষ পরীক্ষা",
@@ -2042,7 +2046,8 @@ window.LANG_BN = {
     "apiKeyError": "Gemini API কি সম্পর্কিত ত্রুটি ঘটেছে। সেটিংসে API কি চেক করুন।",
     "translationFailed": "অনুবাদ ব্যর্থ হয়েছে",
     "requestTimeout": "অনুবাদ অনুরোধের সময় শেষ হয়ে গেছে। আবার চেষ্টা করুন।",
-    "failedPrefix": "অনুবাদ ব্যর্থ"
+    "failedPrefix": "অনুবাদ ব্যর্থ",
+    "noProviderConfigured": "কোনো AI প্রদানকারী সেট করা নেই। সেটিংসে একটি AI প্রদানকারী বেছে নিন।"
   },
   "utils": {
     "allUrlsFailed": "কোনো URL থেকেই সংস্করণ তথ্য পাওয়া যায়নি",
@@ -2915,7 +2920,12 @@ window.LANG_BN = {
     "reverted": "প্রকাশিত সিঙ্ক ফিরিয়ে আনা হয়েছে।",
     "noPublishedSync": "কোনো প্রকাশিত সিঙ্ক নেই।",
     "unsubmittedChanges": "না পাঠানো পরিবর্তন",
-    "previewUnavailable": "প্রিভিউ উপলব্ধ নয়।"
+    "previewUnavailable": "প্রিভিউ উপলব্ধ নয়।",
+    "lrclibBadgeInstrumental": "যন্ত্রসংগীত",
+    "preview": "প্রিভিউ",
+    "previewVocalCount": "{count}টি ভোকাল অংশ",
+    "shortcutsTitle": "কারাওকে সিঙ্ক শর্টকাট",
+    "markLineHint": "বর্তমান লাইন চিহ্নিত করতে বা চিহ্ন সরাতে ক্লিক করুন। সব চিহ্ন মুছতে রাইট-ক্লিক করুন।"
   },
   "marketplace": {
     "title": "অ্যাডঅন মার্কেটপ্লেস",

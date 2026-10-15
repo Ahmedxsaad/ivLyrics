@@ -76,7 +76,8 @@ window.LANG_HI = {
       "auto": "सिस्टम थीम का उपयोग करें",
       "autoShort": "ऑटो",
       "selector": "सेटिंग थीम"
-    }
+    },
+    "close": "सेटिंग्स बंद करें"
   },
   "sections": {
     "language": "भाषा",
@@ -681,7 +682,8 @@ window.LANG_HI = {
     "regenerateWordDetails": "शब्द विवरण",
     "regenerateAction": "फिर से बनाएँ",
     "fullscreen": "फुलस्क्रीन",
-    "exitFullscreen": "फुलस्क्रीन से बाहर निकलें"
+    "exitFullscreen": "फुलस्क्रीन से बाहर निकलें",
+    "localLyricsApplying": "लागू हो रहा है…"
   },
   "messages": {
     "noLyrics": "कोई लिरिक्स उपलब्ध नहीं",
@@ -782,7 +784,8 @@ window.LANG_HI = {
       "artist": "आर्टिस्ट",
       "collection": "पसंदीदा गीत",
       "station": "रेडियो"
-    }
+    },
+    "menuToggle": "ivLyrics मेनू"
   },
   "about": {
     "version": "संस्करण",
@@ -945,7 +948,8 @@ window.LANG_HI = {
     "seconds": "सेकंड",
     "minutes": "मिनट",
     "lyricsProvider": "गीत बोल प्रदाता",
-    "syncContributor": "सिंक योगदानकर्ता"
+    "syncContributor": "सिंक योगदानकर्ता",
+    "seekToTime": "{time} पर जाएँ"
   },
   "creatorProfile": {
     "title": "सिंक निर्माता",
@@ -1428,8 +1432,8 @@ window.LANG_HI = {
         "desc": "अगले गीत की वीडियो जानकारी पहले से प्राप्त करें"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "शब्द विवरण पहले से लोड करें",
+        "desc": "शब्द-स्तरीय कराओके के लिए हर शब्द का उच्चारण और अनुवाद पहले से लोड करता है"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_HI = {
       "openDb": {
         "label": "OpenDB इंडेक्स कैश",
         "desc": "sync-data वाले लिरिक्स प्रदाताओं को खोजने के लिए उपयोग किया जाने वाला base + delta इंडेक्स।",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "आधार {baseDate} + {deltaCount} बदलाव",
         "coverageSummary": "{isrcCount} ISRC · {providerCount} प्रदाता",
         "notDownloaded": "अभी तक कोई इंडेक्स डाउनलोड नहीं किया गया है।",
         "lastChecked": "अंतिम जाँच",
@@ -2042,7 +2046,8 @@ window.LANG_HI = {
     "apiKeyError": "Gemini API कुंजी त्रुटि। सेटिंग्स जाँचें।",
     "translationFailed": "अनुवाद विफल",
     "requestTimeout": "अनुवाद अनुरोध टाइमआउट। पुन: प्रयास करें।",
-    "failedPrefix": "अनुवाद विफल"
+    "failedPrefix": "अनुवाद विफल",
+    "noProviderConfigured": "कोई AI प्रदाता सेट नहीं है। सेटिंग्स में AI प्रदाता चुनें।"
   },
   "utils": {
     "allUrlsFailed": "संस्करण जानकारी प्राप्त करने में विफल",
@@ -2915,7 +2920,12 @@ window.LANG_HI = {
     "reverted": "प्रकाशित सिंक बहाल किया गया।",
     "noPublishedSync": "कोई प्रकाशित सिंक उपलब्ध नहीं है।",
     "unsubmittedChanges": "बिना भेजे बदलाव",
-    "previewUnavailable": "पूर्वावलोकन उपलब्ध नहीं है।"
+    "previewUnavailable": "पूर्वावलोकन उपलब्ध नहीं है।",
+    "lrclibBadgeInstrumental": "वाद्य संगीत",
+    "preview": "पूर्वावलोकन",
+    "previewVocalCount": "{count} वोकल पार्ट",
+    "shortcutsTitle": "कराओके सिंक शॉर्टकट",
+    "markLineHint": "मौजूदा पंक्ति को चिह्नित या अचिह्नित करने के लिए क्लिक करें। सभी चिह्न हटाने के लिए राइट-क्लिक करें।"
   },
   "marketplace": {
     "title": "ऐडऑन मार्केटप्लेस",

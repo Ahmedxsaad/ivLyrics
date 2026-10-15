@@ -76,7 +76,8 @@ window.LANG_MS = {
       "auto": "Gunakan tema sistem",
       "autoShort": "Auto",
       "selector": "Tema tetapan"
-    }
+    },
+    "close": "Tutup tetapan"
   },
   "sections": {
     "language": "Bahasa",
@@ -681,7 +682,8 @@ window.LANG_MS = {
     "regenerateWordDetails": "Perincian perkataan",
     "regenerateAction": "Jana semula",
     "fullscreen": "Skrin Penuh",
-    "exitFullscreen": "Keluar Skrin Penuh"
+    "exitFullscreen": "Keluar Skrin Penuh",
+    "localLyricsApplying": "Sedang digunakan…"
   },
   "messages": {
     "noLyrics": "Tiada lirik yang tersedia",
@@ -782,7 +784,8 @@ window.LANG_MS = {
       "artist": "Artis",
       "collection": "Lagu Disukai",
       "station": "Radio"
-    }
+    },
+    "menuToggle": "Menu ivLyrics"
   },
   "about": {
     "version": "Versi",
@@ -945,7 +948,8 @@ window.LANG_MS = {
     "seconds": "saat",
     "minutes": "minit",
     "lyricsProvider": "Penyedia Lirik",
-    "syncContributor": "Pembuat Senada"
+    "syncContributor": "Pembuat Senada",
+    "seekToTime": "Lompat ke {time}"
   },
   "creatorProfile": {
     "title": "Profil Pembuat Senada",
@@ -1428,8 +1432,8 @@ window.LANG_MS = {
         "desc": "Ambil maklumat latar belakang video untuk lagu seterusnya lebih awal"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "Pramuat butiran perkataan",
+        "desc": "Memuatkan lebih awal sebutan dan terjemahan setiap perkataan untuk karaoke mengikut perkataan"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_MS = {
       "openDb": {
         "label": "Cache Indeks OpenDB",
         "desc": "Indeks base + delta yang digunakan untuk mencari penyedia lirik dengan sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "Asas {baseDate} + {deltaCount} perubahan",
         "coverageSummary": "{isrcCount} ISRC · {providerCount} penyedia",
         "notDownloaded": "Belum ada indeks dimuat turun.",
         "lastChecked": "Terakhir disemak",
@@ -2042,7 +2046,8 @@ window.LANG_MS = {
     "apiKeyError": "Ralat berkaitan Kunci Gemini API telah berlaku. Sila semak kunci API anda dalam tetapan.",
     "translationFailed": "Terjemahan gagal",
     "requestTimeout": "Permintaan terjemahan telah tamat masa. Sila cuba lagi.",
-    "failedPrefix": "Gagal menterjemah"
+    "failedPrefix": "Gagal menterjemah",
+    "noProviderConfigured": "Tiada penyedia AI ditetapkan. Pilih penyedia AI dalam Tetapan."
   },
   "utils": {
     "allUrlsFailed": "Gagal mengambil maklumat versi dari semua URL",
@@ -2915,7 +2920,12 @@ window.LANG_MS = {
     "reverted": "Penyegerakan yang diterbitkan telah dipulihkan.",
     "noPublishedSync": "Tiada penyegerakan yang diterbitkan.",
     "unsubmittedChanges": "Perubahan belum dihantar",
-    "previewUnavailable": "Pratonton tidak tersedia."
+    "previewUnavailable": "Pratonton tidak tersedia.",
+    "lrclibBadgeInstrumental": "Instrumental",
+    "preview": "Pratonton",
+    "previewVocalCount": "{count} bahagian vokal",
+    "shortcutsTitle": "Pintasan senada karaoke",
+    "markLineHint": "Klik untuk menanda atau menyahtanda baris semasa. Klik kanan untuk mengosongkan semua tanda."
   },
   "marketplace": {
     "title": "Pasaran alat tambah",

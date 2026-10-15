@@ -76,7 +76,8 @@ window.LANG_ID = {
       "auto": "Gunakan tema sistem",
       "autoShort": "Otomatis",
       "selector": "Tema pengaturan"
-    }
+    },
+    "close": "Tutup pengaturan"
   },
   "sections": {
     "language": "Bahasa",
@@ -681,7 +682,8 @@ window.LANG_ID = {
     "regenerateWordDetails": "Detail kata",
     "regenerateAction": "Buat ulang",
     "fullscreen": "Layar Penuh",
-    "exitFullscreen": "Keluar dari layar penuh"
+    "exitFullscreen": "Keluar dari layar penuh",
+    "localLyricsApplying": "Menerapkan…"
   },
   "messages": {
     "noLyrics": "Lirik tidak tersedia",
@@ -782,7 +784,8 @@ window.LANG_ID = {
       "artist": "Artis",
       "collection": "Lagu yang Disukai",
       "station": "Radio"
-    }
+    },
+    "menuToggle": "Menu ivLyrics"
   },
   "about": {
     "version": "Versi",
@@ -945,7 +948,8 @@ window.LANG_ID = {
     "seconds": "detik",
     "minutes": "menit",
     "lyricsProvider": "Penyedia Lirik",
-    "syncContributor": "Kontributor Sinkronisasi"
+    "syncContributor": "Kontributor Sinkronisasi",
+    "seekToTime": "Lompat ke {time}"
   },
   "creatorProfile": {
     "title": "Pembuat Sinkronisasi",
@@ -1428,8 +1432,8 @@ window.LANG_ID = {
         "desc": "Mengambil info latar belakang video lagu berikutnya sebelumnya"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "Pramuat detail kata",
+        "desc": "Memuat lebih dulu bacaan dan terjemahan setiap kata untuk karaoke per kata"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_ID = {
       "openDb": {
         "label": "Cache Indeks OpenDB",
         "desc": "Indeks base + delta yang digunakan untuk menemukan penyedia lirik dengan sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "Dasar {baseDate} + {deltaCount} perubahan",
         "coverageSummary": "{isrcCount} ISRC · {providerCount} penyedia",
         "notDownloaded": "Belum ada indeks yang diunduh.",
         "lastChecked": "Terakhir diperiksa",
@@ -2042,7 +2046,8 @@ window.LANG_ID = {
     "apiKeyError": "Terjadi kesalahan terkait Kunci API Gemini. Periksa Kunci API di pengaturan.",
     "translationFailed": "Terjemahan gagal",
     "requestTimeout": "Waktu permintaan terjemahan habis. Silakan coba lagi.",
-    "failedPrefix": "Gagal Menerjemahkan"
+    "failedPrefix": "Gagal Menerjemahkan",
+    "noProviderConfigured": "Penyedia AI belum diatur. Pilih penyedia AI di Pengaturan."
   },
   "utils": {
     "allUrlsFailed": "Gagal mendapatkan info versi dari semua URL",
@@ -2915,7 +2920,12 @@ window.LANG_ID = {
     "reverted": "Sinkronisasi yang diterbitkan dipulihkan.",
     "noPublishedSync": "Tidak ada sinkronisasi yang diterbitkan.",
     "unsubmittedChanges": "Perubahan belum dikirim",
-    "previewUnavailable": "Pratinjau tidak tersedia."
+    "previewUnavailable": "Pratinjau tidak tersedia.",
+    "lrclibBadgeInstrumental": "Instrumental",
+    "preview": "Pratinjau",
+    "previewVocalCount": "{count} bagian vokal",
+    "shortcutsTitle": "Pintasan sinkronisasi karaoke",
+    "markLineHint": "Klik untuk menandai atau membatalkan tanda baris saat ini. Klik kanan untuk menghapus semua tanda."
   },
   "marketplace": {
     "title": "Toko Addon",

@@ -76,7 +76,8 @@ window.LANG_VI = {
       "auto": "Dùng giao diện hệ thống",
       "autoShort": "Tự động",
       "selector": "Giao diện cài đặt"
-    }
+    },
+    "close": "Đóng cài đặt"
   },
   "sections": {
     "language": "Ngôn ngữ",
@@ -681,7 +682,8 @@ window.LANG_VI = {
     "regenerateWordDetails": "Chi tiết từ",
     "regenerateAction": "Tạo lại",
     "fullscreen": "Toàn màn hình",
-    "exitFullscreen": "Thoát toàn màn hình"
+    "exitFullscreen": "Thoát toàn màn hình",
+    "localLyricsApplying": "Đang áp dụng…"
   },
   "messages": {
     "noLyrics": "Không có lời bài hát khả dụng",
@@ -782,7 +784,8 @@ window.LANG_VI = {
       "artist": "Nghệ sĩ",
       "collection": "Bài hát đã thích",
       "station": "Đài phát thanh"
-    }
+    },
+    "menuToggle": "Menu ivLyrics"
   },
   "about": {
     "version": "Phiên bản",
@@ -945,7 +948,8 @@ window.LANG_VI = {
     "seconds": "giây",
     "minutes": "phút",
     "lyricsProvider": "Nhà cung cấp lời bài hát",
-    "syncContributor": "Người đóng góp đồng bộ"
+    "syncContributor": "Người đóng góp đồng bộ",
+    "seekToTime": "Tua đến {time}"
   },
   "creatorProfile": {
     "title": "Người tạo đồng bộ",
@@ -1428,8 +1432,8 @@ window.LANG_VI = {
         "desc": "Lấy trước thông tin nền video cho bài tiếp theo"
       },
       "wordDetailsEnabled": {
-        "label": "Preload Word Details",
-        "desc": "Preload per-word readings and translations for word-level karaoke"
+        "label": "Tải trước chi tiết từ",
+        "desc": "Tải trước cách đọc và bản dịch của từng từ cho karaoke theo từ"
       }
     },
     "communitySync": {
@@ -1470,7 +1474,7 @@ window.LANG_VI = {
       "openDb": {
         "label": "Bộ nhớ đệm chỉ mục OpenDB",
         "desc": "Chỉ mục base + delta dùng để tìm các nhà cung cấp lời bài hát có sync-data.",
-        "versionSummary": "base {baseDate} + delta {deltaCount}",
+        "versionSummary": "Bản gốc {baseDate} + {deltaCount} thay đổi",
         "coverageSummary": "{isrcCount} ISRC · {providerCount} nhà cung cấp",
         "notDownloaded": "Chưa có chỉ mục nào được tải xuống.",
         "lastChecked": "Kiểm tra lần cuối",
@@ -1947,7 +1951,7 @@ window.LANG_VI = {
         "button": "Mở trang nhận API Key"
       },
       "geminiKey": {
-        "desc": "Gemini API Key",
+        "desc": "Khóa API Gemini",
         "info": "Cần API Key để sử dụng tính năng dịch lời bài hát bằng Google Gemini AI"
       }
     },
@@ -2042,7 +2046,8 @@ window.LANG_VI = {
     "apiKeyError": "Đã xảy ra lỗi liên quan đến Gemini API Key. Vui lòng kiểm tra API Key trong cài đặt.",
     "translationFailed": "Dịch thất bại",
     "requestTimeout": "Yêu cầu dịch đã hết thời gian chờ. Vui lòng thử lại.",
-    "failedPrefix": "Dịch thất bại"
+    "failedPrefix": "Dịch thất bại",
+    "noProviderConfigured": "Chưa thiết lập nhà cung cấp AI. Hãy chọn một nhà cung cấp trong Cài đặt."
   },
   "utils": {
     "allUrlsFailed": "Không thể lấy thông tin phiên bản từ tất cả các URL",
@@ -2399,7 +2404,7 @@ window.LANG_VI = {
     "getApiKeyInfo": "Dùng để tải TMI. Bạn có thể nhận miễn phí tại Google AI Studio.",
     "viewInfo": "Nhấn để xem thông tin thú vị về bài hát này",
     "requireKey": "Cần thiết lập nhà cung cấp AI trong cài đặt",
-    "settingTitle": "Gemini API Key",
+    "settingTitle": "Khóa API Gemini",
     "settingDesc": "Cần thiết để tải TMI/Thông tin bài hát.",
     "title": "Thông tin thú vị (TMI)",
     "didYouKnow": "Bạn có biết?",
@@ -2915,7 +2920,12 @@ window.LANG_VI = {
     "reverted": "Đã khôi phục đồng bộ đã đăng.",
     "noPublishedSync": "Không có đồng bộ đã đăng.",
     "unsubmittedChanges": "Thay đổi chưa gửi",
-    "previewUnavailable": "Không có bản xem trước."
+    "previewUnavailable": "Không có bản xem trước.",
+    "lrclibBadgeInstrumental": "Không lời",
+    "preview": "Xem trước",
+    "previewVocalCount": "{count} bè giọng",
+    "shortcutsTitle": "Phím tắt tạo đồng bộ Karaoke",
+    "markLineHint": "Nhấp để đánh dấu hoặc bỏ đánh dấu dòng hiện tại. Nhấp chuột phải để xóa mọi đánh dấu."
   },
   "marketplace": {
     "title": "Cửa hàng Addon",
