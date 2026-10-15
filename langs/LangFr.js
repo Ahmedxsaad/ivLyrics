@@ -2104,6 +2104,14 @@ window.LANG_FR = {
     "wordSupplements": "Détails des mots",
     "wordSupplementsLoading": "Chargement des lectures et gloses..."
   },
+  "videoSync": {
+    "title": "Timing de la vidéo",
+    "share": "Partager",
+    "shareInfo": "Partager ce timing comme point de départ de la vidéo pour tous",
+    "shared": "Timing de la vidéo partagé. Merci !",
+    "shareFailed": "Impossible de partager le timing de la vidéo.",
+    "cannotShare": "Ce timing ne peut pas être partagé : il faut des paroles synchronisées et un début dans la vidéo."
+  },
   "videoBackground": {
     "loading": "Chargement infos vidéo...",
     "notFound": "Vidéo introuvable.",

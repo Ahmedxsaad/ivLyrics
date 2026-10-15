@@ -2104,6 +2104,14 @@ window.LANG_TR = {
     "wordSupplements": "Kelime ayrıntıları",
     "wordSupplementsLoading": "Kelime okunuşları ve açıklamalar yükleniyor..."
   },
+  "videoSync": {
+    "title": "Video zamanlaması",
+    "share": "Paylaş",
+    "shareInfo": "Bu zamanlamayı herkes için videonun başlangıç noktası olarak paylaş",
+    "shared": "Video zamanlaması paylaşıldı. Teşekkürler!",
+    "shareFailed": "Video zamanlaması paylaşılamadı.",
+    "cannotShare": "Bu zamanlama paylaşılamaz: senkronize şarkı sözleri ve video içinde bir başlangıç noktası gerekir."
+  },
   "videoBackground": {
     "loading": "Video bilgileri yükleniyor...",
     "notFound": "Video bulunamadı.",

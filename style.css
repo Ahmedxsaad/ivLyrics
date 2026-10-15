@@ -663,6 +663,85 @@ body.ivlyrics-settings-open .lyrics-lyricsContainer-LyricsContainer * {
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
 }
 
+/* Lyrics/Video switch at the start of the sync pill, shown while a background
+   video plays: the steps then adjust the selected timing. */
+.lyrics-track-sync-mode {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  margin-right: 4px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(var(--spice-rgb-text), 0.07);
+}
+
+.lyrics-track-sync-mode-button,
+.lyrics-track-sync-share {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(var(--spice-rgb-text), 0.56);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color var(--iv-motion-duration-fast) ease,
+    background var(--iv-motion-duration-fast) ease;
+}
+
+.lyrics-track-sync-mode-button {
+  width: 28px;
+  height: 24px;
+}
+
+.lyrics-track-sync-mode-button:hover,
+.lyrics-track-sync-share:hover:not(:disabled) {
+  color: var(--spice-text, #fff);
+}
+
+.lyrics-track-sync-mode-button[aria-pressed="true"] {
+  color: var(--spice-text, #fff);
+  background: rgba(var(--spice-rgb-text), 0.16);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+/* Appears once the video timing changed: share it as the community start. */
+.lyrics-track-sync-share {
+  width: 28px;
+  height: 28px;
+  margin-left: 2px;
+  color: rgba(var(--spice-rgb-text), 0.76);
+  animation: lyrics-track-sync-share-in var(--iv-motion-duration-medium) var(--iv-motion-ease-standard) both;
+}
+
+.lyrics-track-sync-share:hover:not(:disabled) {
+  background: rgba(var(--spice-rgb-text), 0.08);
+}
+
+.lyrics-track-sync-share:disabled {
+  opacity: 0.52;
+  cursor: wait;
+}
+
+.lyrics-track-sync-mode-button:focus-visible,
+.lyrics-track-sync-share:focus-visible {
+  outline: 2px solid var(--spice-button-active, #fff);
+  outline-offset: -2px;
+}
+
+@keyframes lyrics-track-sync-share-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
 .lyrics-track-sync-controls {
   position: relative;
   isolation: isolate;

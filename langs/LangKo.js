@@ -2104,6 +2104,14 @@ window.LANG_KO = {
     "wordSupplements": "단어 상세",
     "wordSupplementsLoading": "단어 읽기와 뜻을 불러오는 중..."
   },
+  "videoSync": {
+    "title": "영상 싱크",
+    "share": "공유",
+    "shareInfo": "이 싱크를 모두를 위한 영상 시작 지점으로 공유합니다",
+    "shared": "영상 싱크를 공유했습니다. 감사합니다!",
+    "shareFailed": "영상 싱크를 공유하지 못했습니다.",
+    "cannotShare": "이 싱크는 공유할 수 없습니다. 싱크 가사가 있고 시작 지점이 영상 안에 있어야 합니다."
+  },
   "videoBackground": {
     "loading": "동영상 정보를 불러오는 중...",
     "notFound": "동영상을 찾을 수 없습니다.",

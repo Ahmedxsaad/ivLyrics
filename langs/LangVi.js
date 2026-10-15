@@ -2104,6 +2104,14 @@ window.LANG_VI = {
     "wordSupplements": "Chi tiết từ",
     "wordSupplementsLoading": "Đang tải cách đọc & nghĩa..."
   },
+  "videoSync": {
+    "title": "Thời gian video",
+    "share": "Chia sẻ",
+    "shareInfo": "Chia sẻ thời gian này làm điểm bắt đầu của video cho mọi người",
+    "shared": "Đã chia sẻ thời gian video. Cảm ơn!",
+    "shareFailed": "Không thể chia sẻ thời gian video.",
+    "cannotShare": "Không thể chia sẻ thời gian này: cần lời bài hát đồng bộ và điểm bắt đầu nằm trong video."
+  },
   "videoBackground": {
     "loading": "Đang tải thông tin video...",
     "notFound": "Không tìm thấy video.",

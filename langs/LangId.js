@@ -2104,6 +2104,14 @@ window.LANG_ID = {
     "wordSupplements": "Detail kata",
     "wordSupplementsLoading": "Memuat bacaan & glosa..."
   },
+  "videoSync": {
+    "title": "Waktu video",
+    "share": "Bagikan",
+    "shareInfo": "Bagikan waktu ini sebagai titik awal video untuk semua orang",
+    "shared": "Waktu video dibagikan. Terima kasih!",
+    "shareFailed": "Gagal membagikan waktu video.",
+    "cannotShare": "Waktu ini tidak dapat dibagikan: memerlukan lirik tersinkron dan titik awal di dalam video."
+  },
   "videoBackground": {
     "loading": "Memuat info video...",
     "notFound": "Video tidak ditemukan.",

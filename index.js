@@ -10858,12 +10858,20 @@ class LyricsContainer extends react.Component {
         Boolean(renderTrackUri);
       const quickSyncControlsEnabled =
         CONFIG.visual["quick-sync-controls-enabled"] !== false;
-      const trackSyncAdjustPill = canAdjustTrackSync &&
+      // The same pill adjusts the background video's timing (Lyrics/Video
+      // switch), so it also shows for a video without synced lyrics.
+      const canAdjustVideoSync = shouldUseVideoBackground &&
+        Boolean(this.state.uri) &&
+        !this.state.showMarketplace;
+      const trackSyncAdjustPill = (canAdjustTrackSync || canAdjustVideoSync) &&
         quickSyncControlsEnabled &&
+        Boolean(renderTrackUri) &&
         typeof TrackSyncAdjustPill !== "undefined"
         ? react.createElement(TrackSyncAdjustPill, {
           key: renderTrackUri,
           trackUri: renderTrackUri,
+          lyricsAdjustable: canAdjustTrackSync,
+          videoTrackUri: canAdjustVideoSync ? this.state.uri : null,
         })
         : null;
       return { canAdjustTrackSync, quickSyncControlsEnabled, trackSyncAdjustPill };

@@ -2104,6 +2104,14 @@ window.LANG_ZH_TW = {
     "wordSupplements": "單字詳情",
     "wordSupplementsLoading": "正在載入單字發音和釋義..."
   },
+  "videoSync": {
+    "title": "影片同步",
+    "share": "分享",
+    "shareInfo": "將此同步作為影片起點分享給所有人",
+    "shared": "已分享影片同步。謝謝！",
+    "shareFailed": "無法分享影片同步。",
+    "cannotShare": "無法分享此同步：需要同步歌詞，且起點位於影片內。"
+  },
   "videoBackground": {
     "loading": "正在載入影片資訊...",
     "notFound": "找不到影片。",

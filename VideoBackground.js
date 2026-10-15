@@ -255,6 +255,81 @@ const getYouTubeVideoCandidates = (responseData, communityVideos) => {
     return responseData?.youtubeVideoId ? [responseData, ...alternatives] : alternatives;
 };
 
+// Quick video sync: timing nudges the user made for a song's video, applied on
+// top of its start point. Each records the start point it adjusted and stops
+// applying once that changes (for example after it was shared and the
+// community start point now includes it), so a nudge never counts twice.
+const VIDEO_SYNC_ADJUSTMENTS_KEY = "ivLyrics:video-sync-adjustments";
+const VIDEO_SYNC_ADJUSTMENT_LIMIT = 500;
+const VIDEO_SYNC_ADJUSTMENT_MAX_MS = 120000;
+
+// The registered start point (video second of the first lyric), or null when
+// the video is only assumed to start with the song.
+const getVideoStartBase = (videoInfo) => {
+    const start = Number(videoInfo?.captionStartTime);
+    if (videoInfo?.captionStartTime === null || videoInfo?.captionStartTime === undefined || !Number.isFinite(start)) {
+        return null;
+    }
+    if (isAutoMatchedVideoInfo(videoInfo) && Math.abs(start) < 0.001) return null;
+    return Math.round(start * 1000) / 1000;
+};
+
+const getVideoSyncAdjustmentKey = (trackUri, videoId) => {
+    const trackId = (typeof Utils !== "undefined" && Utils.extractTrackId?.(trackUri)) || trackUri;
+    return trackId && videoId ? `${trackId}:${videoId}` : "";
+};
+
+const readVideoSyncAdjustments = () => {
+    try {
+        const parsed = JSON.parse(StorageManager.getItem(VIDEO_SYNC_ADJUSTMENTS_KEY) || "{}");
+        return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+    } catch (error) {
+        return {};
+    }
+};
+
+const getVideoSyncAdjustmentMs = (trackUri, videoInfo) => {
+    const key = getVideoSyncAdjustmentKey(trackUri, videoInfo?.youtubeVideoId);
+    const record = key ? readVideoSyncAdjustments()[key] : null;
+    if (!record || !Number.isFinite(record.offsetMs)) return 0;
+    return (record.base ?? null) === getVideoStartBase(videoInfo) ? record.offsetMs : 0;
+};
+
+const setVideoSyncAdjustmentMs = (trackUri, videoInfo, offsetMs) => {
+    const key = getVideoSyncAdjustmentKey(trackUri, videoInfo?.youtubeVideoId);
+    if (!key) return 0;
+    const safeOffset = Math.max(-VIDEO_SYNC_ADJUSTMENT_MAX_MS,
+        Math.min(VIDEO_SYNC_ADJUSTMENT_MAX_MS, Math.round(Number(offsetMs) || 0)));
+    const adjustments = readVideoSyncAdjustments();
+    delete adjustments[key];
+    if (safeOffset !== 0) {
+        adjustments[key] = { offsetMs: safeOffset, base: getVideoStartBase(videoInfo) };
+    }
+    const keys = Object.keys(adjustments);
+    for (const staleKey of keys.slice(0, Math.max(0, keys.length - VIDEO_SYNC_ADJUSTMENT_LIMIT))) {
+        delete adjustments[staleKey];
+    }
+    try {
+        StorageManager.setItem(VIDEO_SYNC_ADJUSTMENTS_KEY, JSON.stringify(adjustments));
+    } catch (error) {
+        console.warn("[VideoBackground] Failed to save video timing:", error);
+    }
+    window.dispatchEvent(new CustomEvent("ivLyrics:video-sync-adjusted", {
+        detail: { trackUri, videoId: videoInfo.youtubeVideoId, offsetMs: safeOffset },
+    }));
+    return safeOffset;
+};
+
+// The start point to share for the timing the user sees now: the registered
+// start (or the first lyric, for a video assumed to start with the song) moved
+// by the nudge. Null without lyrics or before the video begins.
+const getSharedVideoStartTime = (videoInfo, lyricsStartSeconds, adjustmentMs) => {
+    if (!Number.isFinite(lyricsStartSeconds)) return null;
+    const base = getVideoStartBase(videoInfo);
+    const start = (base ?? lyricsStartSeconds) + (Number(adjustmentMs) || 0) / 1000;
+    return start >= 0 ? Math.round(start * 10) / 10 : null;
+};
+
 const createVideoDriftState = () => ({
     samples: [],
     leadSeconds: 0,
@@ -262,6 +337,9 @@ const createVideoDriftState = () => ({
     measureLeadAfterSeek: false,
     softCorrectionTimes: [],
     softThresholdSeconds: VIDEO_DRIFT_SOFT_THRESHOLD_SECONDS,
+    // Set when the user nudges the video timing: the next check lands on the
+    // new position at once instead of waiting for steady drift.
+    seekRequested: false,
 });
 
 // A new video starts with fresh samples; the learned seek lead depends on the
@@ -273,6 +351,7 @@ const resetVideoDriftState = (state) => {
     state.measureLeadAfterSeek = false;
     state.softCorrectionTimes = [];
     state.softThresholdSeconds = VIDEO_DRIFT_SOFT_THRESHOLD_SECONDS;
+    state.seekRequested = false;
 };
 
 const noteVideoDriftSeek = (state, now, measureLead) => {
@@ -305,7 +384,8 @@ const planVideoDriftCorrection = (state, {
     if (!state || !Number.isFinite(targetTime)) return { type: "none" };
     const lead = isPlaying ? state.leadSeconds : 0;
     const drift = Number.isFinite(currentTime) ? currentTime - targetTime : Infinity;
-    if (Math.abs(drift) > VIDEO_SYNC_SEEK_THRESHOLD_SECONDS) {
+    if (state.seekRequested || Math.abs(drift) > VIDEO_SYNC_SEEK_THRESHOLD_SECONDS) {
+        state.seekRequested = false;
         noteVideoDriftSeek(state, now, isPlaying);
         return { type: "seek", time: Math.max(0, targetTime + lead) };
     }
@@ -538,7 +618,10 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
             return false;
         }
     });
-    const [trackOffsetMs, setTrackOffsetMs] = useState(0);
+    const [lyricTrackOffsetMs, setTrackOffsetMs] = useState(0);
+    // Quick video sync nudge for this song's video, on top of the track offset.
+    const [videoSyncAdjustmentMs, setVideoSyncAdjustmentState] = useState(0);
+    const trackOffsetMs = lyricTrackOffsetMs + videoSyncAdjustmentMs;
     // 헬퍼 모드 관련 상태
     const [useHelper, setUseHelper] = useState(false);
     const [helperVideoUrl, setHelperVideoUrl] = useState(null);
@@ -701,15 +784,36 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
     }, [videoInfo]);
 
     useEffect(() => {
+        // playerReady: the video is actually showing (not loading, not failed
+        // back to the artwork). Video timing controls only appear then.
         window.ivLyricsActiveCommunityVideoInfo = videoInfo?.youtubeVideoId
-            ? { trackUri, ...videoInfo }
+            ? { trackUri, ...videoInfo, playerReady: isPlayerReady === true }
             : null;
+        // The quick video sync pill follows the playing video.
+        window.dispatchEvent(new CustomEvent("ivLyrics:active-video-changed", {
+            detail: { trackUri, videoInfo: window.ivLyricsActiveCommunityVideoInfo },
+        }));
 
         return () => {
             if (window.ivLyricsActiveCommunityVideoInfo?.trackUri === trackUri) {
                 window.ivLyricsActiveCommunityVideoInfo = null;
+                window.dispatchEvent(new CustomEvent("ivLyrics:active-video-changed", {
+                    detail: { trackUri, videoInfo: null },
+                }));
             }
         };
+    }, [trackUri, videoInfo, isPlayerReady]);
+
+    useEffect(() => {
+        setVideoSyncAdjustmentState(videoInfo?.youtubeVideoId ? getVideoSyncAdjustmentMs(trackUri, videoInfo) : 0);
+        const handleVideoSyncAdjusted = (event) => {
+            if (event?.detail?.trackUri === trackUri && event.detail.videoId === videoInfo?.youtubeVideoId) {
+                getVideoDriftState().seekRequested = true;
+                setVideoSyncAdjustmentState(Number(event.detail.offsetMs) || 0);
+            }
+        };
+        window.addEventListener("ivLyrics:video-sync-adjusted", handleVideoSyncAdjusted);
+        return () => window.removeEventListener("ivLyrics:video-sync-adjusted", handleVideoSyncAdjusted);
     }, [trackUri, videoInfo]);
 
     const reportVideoBackgroundStatus = useCallback((phase, details = {}) => {

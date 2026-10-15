@@ -4051,7 +4051,23 @@ const queueTrackSyncOffsetWrite = (trackUri, offset) => {
   startTrackSyncOffsetWriteLoop();
 };
 
-const TrackSyncAdjustPill = react.memo(({ trackUri }) => {
+// Quick video sync: the same pill adjusts the background video's timing when
+// its Lyrics/Video switch is on Video. Positive moves the video later (use it
+// when the video is behind the song). Saved per song video, see
+// setVideoSyncAdjustmentMs in VideoBackground.js.
+const VIDEO_SYNC_STEPS_MS = [-2000, -500, -100, "current", 100, 500, 2000];
+const VIDEO_SYNC_KEY_STEP_MS = 100;
+const VIDEO_SYNC_KEY_LARGE_STEP_MS = 2000;
+// The switch keeps its position from one song to the next.
+let lastTrackSyncPillMode = "lyrics";
+
+const formatVideoSyncOffset = (offsetMs) => {
+  const value = (Number(offsetMs) || 0) / 1000;
+  const magnitude = Number(Math.abs(value).toFixed(2)).toString();
+  return `${value > 0 ? "+" : value < 0 ? "−" : ""}${magnitude}s`;
+};
+
+const TrackSyncAdjustPill = react.memo(({ trackUri, lyricsAdjustable = true, videoTrackUri = trackUri }) => {
   const [offset, setOffset] = useState(0);
   const [loadedTrackUri, setLoadedTrackUri] = useState(null);
   const [interactionFeedback, setInteractionFeedback] = useState(null);
@@ -4126,6 +4142,106 @@ const TrackSyncAdjustPill = react.memo(({ trackUri }) => {
     };
   }, [trackUri]);
 
+  // Video timing is offered only while video is the chosen background
+  // (videoTrackUri is null otherwise) and its video is actually showing.
+  const readActiveVideo = () => {
+    const info = window.ivLyricsActiveCommunityVideoInfo;
+    return videoTrackUri && info?.trackUri === videoTrackUri && info.youtubeVideoId && info.playerReady === true
+      ? info
+      : null;
+  };
+  const [video, setVideo] = useState(readActiveVideo);
+  const [videoOffset, setVideoOffset] = useState(() => {
+    const active = readActiveVideo();
+    return active ? getVideoSyncAdjustmentMs(videoTrackUri, active) : 0;
+  });
+  const [mode, setMode] = useState(lastTrackSyncPillMode);
+  const [isSharing, setIsSharing] = useState(false);
+  const videoRef = useRef(video);
+  const videoOffsetRef = useRef(videoOffset);
+  videoRef.current = video;
+  videoOffsetRef.current = videoOffset;
+  const showsVideo = Boolean(video) && (!lyricsAdjustable || mode === "video");
+
+  useEffect(() => {
+    const syncActiveVideo = () => {
+      const active = readActiveVideo();
+      setVideo(active);
+      setVideoOffset(active ? getVideoSyncAdjustmentMs(videoTrackUri, active) : 0);
+    };
+    const handleVideoAdjusted = (event) => {
+      const active = videoRef.current;
+      if (active && event.detail?.trackUri === videoTrackUri && event.detail.videoId === active.youtubeVideoId) {
+        setVideoOffset(Number(event.detail.offsetMs) || 0);
+      }
+    };
+    syncActiveVideo();
+    window.addEventListener("ivLyrics:active-video-changed", syncActiveVideo);
+    window.addEventListener("ivLyrics:video-sync-adjusted", handleVideoAdjusted);
+    return () => {
+      window.removeEventListener("ivLyrics:active-video-changed", syncActiveVideo);
+      window.removeEventListener("ivLyrics:video-sync-adjusted", handleVideoAdjusted);
+    };
+  }, [videoTrackUri]);
+
+  const selectMode = (nextMode) => {
+    lastTrackSyncPillMode = nextMode;
+    setMode(nextMode);
+  };
+
+  const applyVideoOffset = (nextOffset) => {
+    const active = videoRef.current;
+    if (!active) return;
+    setVideoOffset(setVideoSyncAdjustmentMs(videoTrackUri, active, nextOffset));
+  };
+
+  // [ and ] nudge the video (Shift: 2 s) and show the video side of the pill.
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.code !== "BracketLeft" && event.code !== "BracketRight") return;
+      if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+      const target = event.target;
+      const tagName = target?.tagName?.toLowerCase?.();
+      if (tagName === "input" || tagName === "textarea" || tagName === "select" || target?.isContentEditable) return;
+      if (!videoRef.current) return;
+      event.preventDefault();
+      const step = event.shiftKey ? VIDEO_SYNC_KEY_LARGE_STEP_MS : VIDEO_SYNC_KEY_STEP_MS;
+      selectMode("video");
+      applyVideoOffset(videoOffsetRef.current + (event.code === "BracketLeft" ? -step : step));
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [videoTrackUri]);
+
+  const shareVideoTiming = async () => {
+    const active = videoRef.current;
+    if (!active || isSharing) return;
+    const startTime = getSharedVideoStartTime(
+      active,
+      getLyricsStartTimeSeconds(window.ivLyrics_firstLyricTime),
+      videoOffsetRef.current
+    );
+    if (startTime === null) {
+      Toast.error(I18n.t("videoSync.cannotShare"));
+      return;
+    }
+    setIsSharing(true);
+    try {
+      await Utils.submitCommunityVideo(
+        videoTrackUri,
+        active.youtubeVideoId,
+        active.youtubeTitle || "",
+        startTime,
+        active.skipSegments || []
+      );
+      Toast.success(I18n.t("videoSync.shared"));
+    } catch (error) {
+      Toast.error(error?.message || I18n.t("videoSync.shareFailed"));
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   const handleOffsetChange = (newOffset) => {
     if (
       !isOffsetLoaded ||
@@ -4189,32 +4305,38 @@ const TrackSyncAdjustPill = react.memo(({ trackUri }) => {
 
   const renderStepButton = (step) => {
     const absoluteStep = Math.abs(step);
-    const displayValue = `${step > 0 ? "+" : "−"}${absoluteStep}ms`;
+    const displayValue = showsVideo
+      ? formatVideoSyncOffset(step)
+      : `${step > 0 ? "+" : "−"}${absoluteStep}ms`;
     return react.createElement(
       "button",
       {
         key: step,
         type: "button",
         className: "lyrics-track-sync-step",
-        disabled: !isOffsetLoaded,
+        disabled: showsVideo ? false : !isOffsetLoaded,
         "data-step-size": absoluteStep,
         "data-feedback-source": interactionFeedback?.kind === "step"
           && interactionFeedback.step === step
           ? "true"
           : undefined,
         onClick: (event) => {
-          handleOffsetChange(optimisticOffsetRef.current + step);
+          if (showsVideo) applyVideoOffset(videoOffsetRef.current + step);
+          else handleOffsetChange(optimisticOffsetRef.current + step);
           showInteractionFeedback("step", event, step);
         },
         onPointerUp: (event) => event.currentTarget.blur(),
-        "aria-label": `${I18n.t("menu.syncAdjustTitle")} ${displayValue}`,
+        "aria-label": `${I18n.t(showsVideo ? "videoSync.title" : "menu.syncAdjustTitle")} ${displayValue}`,
       },
       displayValue
     );
   };
 
+  const shownOffset = showsVideo ? videoOffset : offset;
+  const formatShownOffset = showsVideo ? formatVideoSyncOffset : formatSyncOffset;
+  const isShownOffsetLoaded = showsVideo || isOffsetLoaded;
   const compactControls = [];
-  [-100, -50, -10, "current", 10, 50, 100].forEach((control, index) => {
+  (showsVideo ? VIDEO_SYNC_STEPS_MS : [-100, -50, -10, "current", 10, 50, 100]).forEach((control, index) => {
     if (index > 0) {
       compactControls.push(react.createElement("span", {
         key: `separator-${index}`,
@@ -4230,23 +4352,27 @@ const TrackSyncAdjustPill = react.memo(({ trackUri }) => {
           key: "current-offset",
           type: "button",
           className: "lyrics-track-sync-value",
-          disabled: !isOffsetLoaded,
-          "data-active": offset !== 0 ? "true" : "false",
+          disabled: !isShownOffsetLoaded,
+          "data-active": shownOffset !== 0 ? "true" : "false",
           "data-feedback-kind": interactionFeedback?.kind || undefined,
           onClick: (event) => {
-            if (optimisticOffsetRef.current !== 0) handleOffsetChange(0);
+            if (showsVideo) {
+              if (videoOffsetRef.current !== 0) applyVideoOffset(0);
+            } else if (optimisticOffsetRef.current !== 0) {
+              handleOffsetChange(0);
+            }
             showInteractionFeedback("reset", event);
           },
           onPointerUp: (event) => event.currentTarget.blur(),
           title: I18n.t("syncAdjust.reset"),
-          "aria-label": isOffsetLoaded
-            ? `${formatSyncOffset(offset)}, ${I18n.t("syncAdjust.reset")}`
+          "aria-label": isShownOffsetLoaded
+            ? `${formatShownOffset(shownOffset)}, ${I18n.t("syncAdjust.reset")}`
             : I18n.t("syncAdjust.loading"),
         },
         react.createElement(
           "span",
           {
-            key: `current-${interactionFeedback?.id || 0}-${isOffsetLoaded}-${offset}`,
+            key: `current-${interactionFeedback?.id || 0}-${isShownOffsetLoaded}-${showsVideo ? "video" : "lyrics"}-${shownOffset}`,
             className: "lyrics-track-sync-value-current",
             "data-change-direction": interactionFeedback?.kind === "step"
               ? interactionFeedback.direction
@@ -4254,7 +4380,7 @@ const TrackSyncAdjustPill = react.memo(({ trackUri }) => {
             "aria-live": "polite",
             "aria-atomic": "true",
           },
-          isOffsetLoaded ? formatSyncOffset(offset) : "…"
+          isShownOffsetLoaded ? formatShownOffset(shownOffset) : "…"
         ),
         react.createElement(
           "span",
@@ -4270,7 +4396,7 @@ const TrackSyncAdjustPill = react.memo(({ trackUri }) => {
             className: "lyrics-track-sync-value-reset-done",
             "aria-hidden": "true",
           },
-          "✓ 0ms"
+          showsVideo ? "✓ 0s" : "✓ 0ms"
         )
       ));
       return;
@@ -4310,22 +4436,60 @@ const TrackSyncAdjustPill = react.memo(({ trackUri }) => {
     : null;
 
   if (!trackUri) return null;
+  if (!lyricsAdjustable && !video) return null;
+
+  // Lyrics/Video switch, only while a background video plays.
+  const renderModeButton = (buttonMode, icon, label) => react.createElement(
+    "button",
+    {
+      key: buttonMode,
+      type: "button",
+      className: "lyrics-track-sync-mode-button",
+      "aria-pressed": (buttonMode === "video") === showsVideo ? "true" : "false",
+      onClick: () => selectMode(buttonMode),
+      onPointerUp: (event) => event.currentTarget.blur(),
+      title: label,
+      "aria-label": label,
+    },
+    react.createElement(IvLyricsToolbarIcon, { name: icon, size: 15 })
+  );
+  const modeSwitch = video ? react.createElement(
+    "div",
+    { className: "lyrics-track-sync-mode", role: "group" },
+    lyricsAdjustable ? renderModeButton("lyrics", "synced", I18n.t("menu.syncAdjustTitle")) : null,
+    renderModeButton("video", "communityVideo", I18n.t("videoSync.title"))
+  ) : null;
+  const shareButton = showsVideo && videoOffset !== 0 ? react.createElement(
+    "button",
+    {
+      type: "button",
+      className: "lyrics-track-sync-share",
+      disabled: isSharing,
+      onClick: shareVideoTiming,
+      onPointerUp: (event) => event.currentTarget.blur(),
+      title: I18n.t("videoSync.shareInfo"),
+      "aria-label": I18n.t("videoSync.share"),
+    },
+    react.createElement(IvLyricsToolbarIcon, { name: "shareImage", size: 14 })
+  ) : null;
 
   return react.createElement(
     "div",
     {
-      className: "lyrics-track-sync-pill",
+      className: `lyrics-track-sync-pill${showsVideo ? " is-video-mode" : ""}`,
       role: "group",
-      "aria-label": I18n.t("menu.syncAdjustTitle"),
-      "aria-busy": !isOffsetLoaded,
-      "data-offset-active": offset !== 0 ? "true" : "false",
+      "aria-label": I18n.t(showsVideo ? "videoSync.title" : "menu.syncAdjustTitle"),
+      "aria-busy": !isShownOffsetLoaded,
+      "data-offset-active": shownOffset !== 0 ? "true" : "false",
     },
+    modeSwitch,
     react.createElement(
       "div",
       { className: "lyrics-track-sync-controls" },
       movementFeedback,
       compactControls
-    )
+    ),
+    shareButton
   );
 });
 

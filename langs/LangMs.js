@@ -2104,6 +2104,14 @@ window.LANG_MS = {
     "wordSupplements": "Perincian perkataan",
     "wordSupplementsLoading": "Memuatkan bacaan & glosa..."
   },
+  "videoSync": {
+    "title": "Pemasaan video",
+    "share": "Kongsi",
+    "shareInfo": "Kongsi pemasaan ini sebagai titik mula video untuk semua orang",
+    "shared": "Pemasaan video dikongsi. Terima kasih!",
+    "shareFailed": "Tidak dapat berkongsi pemasaan video.",
+    "cannotShare": "Pemasaan ini tidak boleh dikongsi: ia memerlukan lirik segerak dan titik mula di dalam video."
+  },
   "videoBackground": {
     "loading": "Memuatkan maklumat video...",
     "notFound": "Video tidak ditemui.",

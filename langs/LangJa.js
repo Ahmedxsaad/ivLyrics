@@ -2104,6 +2104,14 @@ window.LANG_JA = {
     "wordSupplements": "単語詳細",
     "wordSupplementsLoading": "単語の読みと意味を読み込み中..."
   },
+  "videoSync": {
+    "title": "動画のタイミング",
+    "share": "共有",
+    "shareInfo": "このタイミングを動画の開始位置としてみんなと共有します",
+    "shared": "動画のタイミングを共有しました。ありがとうございます！",
+    "shareFailed": "動画のタイミングを共有できませんでした。",
+    "cannotShare": "このタイミングは共有できません。同期歌詞と、動画内にある開始位置が必要です。"
+  },
   "videoBackground": {
     "loading": "動画情報を読み込み中...",
     "notFound": "動画が見つかりません。",

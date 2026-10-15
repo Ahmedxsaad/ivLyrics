@@ -2104,6 +2104,14 @@ window.LANG_ES = {
     "wordSupplements": "Detalles de palabras",
     "wordSupplementsLoading": "Cargando lecturas y glosas..."
   },
+  "videoSync": {
+    "title": "Sincronización del video",
+    "share": "Compartir",
+    "shareInfo": "Compartir esta sincronización como punto de inicio del video para todos",
+    "shared": "Sincronización del video compartida. ¡Gracias!",
+    "shareFailed": "No se pudo compartir la sincronización del video.",
+    "cannotShare": "Esta sincronización no se puede compartir: requiere letras sincronizadas y un inicio dentro del video."
+  },
   "videoBackground": {
     "loading": "Cargando info de video...",
     "notFound": "Video no encontrado.",

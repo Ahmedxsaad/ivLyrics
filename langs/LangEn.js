@@ -2104,6 +2104,14 @@ window.LANG_EN = {
     "wordSupplements": "Word details",
     "wordSupplementsLoading": "Loading word readings & glosses..."
   },
+  "videoSync": {
+    "title": "Video timing",
+    "share": "Share",
+    "shareInfo": "Share this timing as the video's start point for everyone",
+    "shared": "Video timing shared. Thanks!",
+    "shareFailed": "Couldn't share the video timing.",
+    "cannotShare": "This timing can't be shared: it needs synced lyrics and a start point inside the video."
+  },
   "videoBackground": {
     "loading": "Loading video info...",
     "notFound": "Video not found.",

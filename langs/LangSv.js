@@ -2104,6 +2104,14 @@ window.LANG_SV = {
     "wordSupplements": "Orddetaljer",
     "wordSupplementsLoading": "Läser in uttal och glosor..."
   },
+  "videoSync": {
+    "title": "Videotiming",
+    "share": "Dela",
+    "shareInfo": "Dela den här timingen som videons startpunkt för alla",
+    "shared": "Videotimingen har delats. Tack!",
+    "shareFailed": "Det gick inte att dela videotimingen.",
+    "cannotShare": "Den här timingen kan inte delas: den kräver synkade låttexter och en startpunkt inuti videon."
+  },
   "videoBackground": {
     "loading": "Laddar videoinformation...",
     "notFound": "Videon hittades inte.",
