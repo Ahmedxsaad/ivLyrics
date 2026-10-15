@@ -215,6 +215,81 @@ test("romanized lyrics report the language they are written in", () => {
     assert.equal(detector(stubModel(() => [{ lang: "tl", accuracy: 0.5 }]))(arabizi), "ar");
 });
 
+test("Japanese written in Latin letters (romaji) is Japanese, even beside English lines", () => {
+    const english = stubModel(() => [{ lang: "en", accuracy: 0.6 }, { lang: "it", accuracy: 0.3 }]);
+    const romaji = [
+        "Kimi no koe ga kikoeru yoru ni",
+        "Boku wa itsumo yume wo miteru",
+        "Sora ni hikaru hoshi wo miageta",
+        "Namida ga koboreru mae ni",
+        "Take my hand and never let go",
+        "Ashita mo kitto aeru kara",
+        "Futari de aruita michi wo wasurenai",
+    ];
+    assert.equal(detector(english)(romaji), "ja");
+    assert.equal(detector()(romaji), "ja", "no model needed");
+    // Stylized romaji with few listed words still has romaji's syllable shape
+    // and Japanese verb endings throughout.
+    assert.equal(detector(english)([
+        "Machi no akari ga kieta tokoro de",
+        "Hashiridashita kodou wo osaete",
+        "Tsumetai kaze ni fukarenagara",
+        "Utaitai uta wo sagashiteiru",
+        "Tooi hibi wo omoidashita",
+        "Wasuretakunai to negatta",
+    ]), "ja");
+    // Lyric sites spell long vowels several ways (Hepburn macrons, "ou",
+    // plain "o") and some shout in capitals.
+    const hepburn = ["Kimi no koe ga kikoeru yoru ni", "Bokura wa kyō mo tōku e aruku", "Sora ni hikaru hoshi wo miageta",
+        "Ashita mo kitto aeru kara", "Kokoro no naka de yūki wo sagasu", "Futari de aruita michi wo wasurenai"];
+    const spellings = {
+        hepburn,
+        "ou/uu": hepburn.map((line) => line.replace(/ō/g, "ou").replace(/ū/g, "uu")),
+        "plain vowels": hepburn.map((line) => line.normalize("NFD").replace(/[\u0300-\u036f]/g, "")),
+        capitals: hepburn.map((line) => line.toUpperCase()),
+        "o for wo": hepburn.map((line) => line.replace(/\bwo\b/g, "o")),
+    };
+    for (const [style, lines] of Object.entries(spellings)) {
+        assert.equal(detector(english)(lines), "ja", style);
+    }
+});
+
+test("pinyin and romanized Korean are recognized too", () => {
+    const english = stubModel(() => [{ lang: "en", accuracy: 0.5 }]);
+    assert.equal(detector(english)(["wǒ xiǎng nǐ měi yī tiān", "nǐ shì wǒ de xīn", "yè wǎn de xīng xīng hěn liàng", "wǒ men yì qǐ zǒu ba"]), "zh");
+    assert.equal(detector(english)(["wo xiang ni mei yi tian", "ni shi wo de xin shang ren", "ye wan de xing xing hen liang", "wo men yi qi zou xia qu ba"]), "zh",
+        "also without tone marks");
+    assert.equal(detector(english)(["neoui moksoriga deullyeo", "naneun eonjena neol gidaryeo", "uri hamkke geotdeon geu gil",
+        "nunmuri heulleodo gwaenchana", "jigeum i sungan neoreul saranghae"]), "ko");
+});
+
+test("romanized checks do not fire on Romance, French or hook-heavy lyrics", () => {
+    const portuguese = stubModel(() => [{ lang: "pt", accuracy: 0.9 }]);
+    // Every word here is also a legal romaji syllable string.
+    assert.equal(detector(portuguese)(["Ai se eu te vejo hoje", "Nossa menina bonita", "Ai ai se eu te tenho", "Vem dançar comigo agora"]), "pt");
+    const french = stubModel(() => [{ lang: "fr", accuracy: 0.95 }]);
+    // "eu" and "ui" are as common in French as in romanized Korean.
+    assert.equal(detector(french)(Array.from({ length: 6 }, () => "Plus lui, plus elle et tous ceux qui sont seuls")
+        .concat(["Être heureux ou malheureux", "Les fleurs fanées meurent un jour"])), "fr");
+    // "la" is a pinyin syllable, but a line of "la la la" is a hook.
+    const hook = Array.from({ length: 8 }, () => "La la la la la la la");
+    assert.equal(detector(portuguese)([...hook, "Eu canto para ti", "Canto a noite inteira"]), "pt");
+    const italian = stubModel(() => [{ lang: "it", accuracy: 0.9 }]);
+    assert.equal(detector(italian)(["Amore mio sei tutto per me", "Dove sono le notte di luna", "Sono qui a pensare a te", "Tutto il mondo dorme ancora"]), "it");
+    // Real cases from testing on real lyrics. Edurne, "Gracioso": one accent
+    // is not a pinyin tone mark, however often the line repeats.
+    const spanish = stubModel(() => [{ lang: "es", accuracy: 0.9 }]);
+    assert.equal(detector(spanish)([...Array(7).fill("Ven ya, ya, ya a mí"), "Dale ya, ya, ya a mí", "Toma ya, ya, ya a mí",
+        "Qué gracia tienes", "Siempre llegas tarde", "Y te ríes de todo lo que digo", "No tienes vergüenza, qué valor"]), "es");
+    // Yasmin K., "Du hast den schönsten Arsch der Welt": a scat intro made of
+    // pinyin syllables.
+    const german = stubModel(() => [{ lang: "de", accuracy: 0.97 }]);
+    assert.equal(detector(german)(["Dei da-dan, da-da-da", "Dei da-dan da", "Die Stadt ist leise, nur der Regen spricht",
+        "Ich warte auf ein Zeichen von dir", "Die Lichter gehen langsam aus", "Und ich zähle jeden Schritt",
+        "Wir tanzen bis der Morgen kommt", "Die Straßen sind noch nass", "Ich halte deine Hand ganz fest",
+        "Bleib noch eine Nacht", "Nur noch eine Nacht", "Dai da-dan da"]), "de");
+});
+
 test("romanized checks do not fire on ordinary lyrics", () => {
     const english = stubModel(() => [{ lang: "en", accuracy: 0.98 }]);
     assert.equal(detector(english)(["I hum along in the main street", "the trash bin is full tonight",
