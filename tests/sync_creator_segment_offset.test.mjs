@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import vm from 'node:vm';
 
@@ -28,6 +29,7 @@ const callbacks = [
     slice('\tconst buildSyncCreatorSessionRecord =', '\tconst syncSessionUiFromRecord ='),
     slice('\tconst buildScoreSnapshot =', '\tconst scoreCurrentSnapshot ='),
     slice('\tconst applySyncCreatorSessionRecord =', '\tconst saveSessionCheckpoint ='),
+    slice('\tconst handleSubmit =', '\t// 싱크 데이터 내보내기'),
     slice('\tconst exportSyncData =', '\t// 싱크 데이터 불러오기'),
     slice('\tconst importSyncData =', '\t// 가사 전체 복사'),
 ].join('\n');
@@ -47,10 +49,11 @@ function createEditor({ rows = ['PRE', 'ABCD', 'TAIL'], data = null } = {}) {
         granularity: 'character', speaker: 'NORMAL', kind: 'vocal',
     })) };
     let savedFile;
+    let submittedFile;
     let input;
     let revision = 100;
     const context = vm.createContext({
-        console, structuredClone, Blob, window: {}, clearTimeout() {},
+        console, structuredClone, Blob, window: {}, clearTimeout() {}, setTimeout() {},
         useCallback: fn => fn, useMemo: fn => fn(),
         syncCreatorDraftStore: draftStore,
         syncData: structuredClone(fixture), lyricsLines: rows, lyricsText: rows.join('\n'),
@@ -64,6 +67,7 @@ function createEditor({ rows = ['PRE', 'ABCD', 'TAIL'], data = null } = {}) {
         currentLineCharRefs: [], currentLineMeta: { speaker: 'NORMAL', kind: 'vocal' },
         currentLineStyleRanges: [], activeParallelTargetId: 'full', hasCurrentParallelParts: false,
         currentNextMergeLineIndex: 2, canMergeCurrentLineWithNext: true, isCurrentSyncTargetMetaComplete: true,
+        isLineCoveredByMergedPrevious: (index, linesByStart) => context.api.findMergedOwnerLineIndex(index, linesByStart) >= 0,
         showMissingMetaToast() { throw new Error('fixture unexpectedly required vocal metadata'); },
         currentLineDirection: 'ltr', currentSpeakerTextColor: '#fff', currentSpeakerMutedColor: '#777',
         useCurrentLineTextRun: false, lastPaintedPlaybackIndexRef: { current: -2 },
@@ -75,6 +79,13 @@ function createEditor({ rows = ['PRE', 'ABCD', 'TAIL'], data = null } = {}) {
         trackId: 'fixture', trackUri: 'spotify:track:fixture', trackIsrc: '',
         trackName: 'Fixture', artistName: 'Fixture', albumName: '', trackDurationMs: 120000,
         provider: 'lrclib', addonId: 'lrclib', sessionTrackKey: 'fixture', lyrics: {},
+        trackInfo: {}, onClose: null, ensureScoreTracker: () => null,
+        clearLyricsCachesAfterSyncSubmit() {}, deleteActiveSyncCreatorDraft() {},
+        confirm() { throw new Error('fixture unexpectedly required incomplete submission confirmation'); },
+        SyncDataService: { submitSyncData: async (_trackId, _provider, data) => {
+            submittedFile = plain(data);
+            return true;
+        } },
         selectedLrclibCandidateKey: '', selectedLrclibSource: null, activeSessionDraftKey: '',
         claimSessionForLocalEditing() {}, resetCurrentSyncInput() {}, clearRecordingLock() {},
         setRecordingProgressIndex() {}, syncSessionUiFromRecord() {}, announceHistoryStatus() {},
@@ -123,14 +134,14 @@ function createEditor({ rows = ['PRE', 'ABCD', 'TAIL'], data = null } = {}) {
     vm.runInContext(`${callbacks}
         globalThis.api = {
             buildManualParallelTemplate, buildParentheticalParallelTemplate, mergeSyncCreatorParallelTemplate,
-            getParallelTemplateForLineData, getMergedLineIndexesForStart, getAutoMergeSplitPointsForLine,
+            getParallelTemplateForLineData, getMergedLineIndexesForStart, findMergedOwnerLineIndex, getAutoMergeSplitPointsForLine,
             adjustCurrentLineOffset, adjustGlobalOffset, resetCurrentLineManualSplit,
             toggleManualParallelSplitPoint, unmergeCurrentLine, materializeSyncCreatorParallelDrafts,
             mergeCurrentLineWithNext, commitCurrentLineSync,
             sanitizeSyncCreatorSyncData, compactSyncCreatorSyncData, assertValidSyncCreatorSyncData,
             getSyncCreatorRejoinedLineChars, inheritSyncCreatorParallelPartChars,
             getSyncCreatorParallelPreviewChars, buildSyncCreatorSessionRecord, applySyncCreatorSessionRecord,
-            exportSyncData, importSyncData, buildScoreSnapshot, repairScoreSnapshot,
+            exportSyncData, importSyncData, handleSubmit, buildScoreSnapshot, repairScoreSnapshot,
         };`, context);
     const render = (selected = context.activeParallelPartId) => {
         context.currentLineStart = lineCharOffsets[context.currentLineIndex];
@@ -188,6 +199,13 @@ function createEditor({ rows = ['PRE', 'ABCD', 'TAIL'], data = null } = {}) {
         record: () => plain(context.api.buildSyncCreatorSessionRecord()),
         recover: record => { context.api.applySyncCreatorSessionRecord(record, { announce: false }); render(); },
         export: async () => { await context.api.exportSyncData(); return JSON.parse(savedFile); },
+        submit: async () => {
+            context.trackIsrc = 'USFIX1234567';
+            submittedFile = null;
+            await context.api.handleSubmit();
+            assert.ok(submittedFile, 'the production submit callback must reach the intercepted transport');
+            return submittedFile;
+        },
         import: async file => {
             context.api.importSyncData();
             await input.onchange({ target: { files: [{ text: async () => JSON.stringify(file) }] } });
@@ -417,6 +435,9 @@ test('overlapping vocals retain exact timing through remove/re-split, compact sa
     editor.split(2);
     editor.render('b'); assert.deepEqual(editor.times(), expected.slice(2));
     await editor.import(wire);
+    assert.equal(editor.context.activeParallelPart, null, 'saved timing runs do not restore a removed manual boundary');
+    assert.deepEqual(editor.times(), expected);
+    editor.split(2);
     editor.render('b'); assert.deepEqual(editor.times(), expected.slice(2));
     const vocals = editor.livePreview()[1].vocals;
     assert.deepEqual(vocals.lead.syllables.map(char => char.startTime), [11000, 11250]);
@@ -615,4 +636,287 @@ test('offsetting an existing part preserves custom speaker styling and inline ef
     assert.deepEqual(plain(editor.line().styleRanges), [{ start: 4, end: 4, kind: 'whisper' }]);
     assert.deepEqual(plain(editor.line().parallel.parts[1]), metadata);
     editor.api.assertValidSyncCreatorSyncData(editor.materialize());
+});
+
+for (const [row, points] of [['ABC', [1, 2]], ['ABCDEF', [2, 4]], ['ONE TWO END', [4, 8]]]) {
+    for (const edit of ['offset', 'record']) {
+        test(`three-part ${JSON.stringify(row)} ${edit}: a merged middle part stays joined through save/reload and sequential merges`, async () => {
+            const rows = ['PRE', row, 'TAIL'];
+            const editor = createEditor({ rows });
+            for (const point of points) editor.split(point);
+            editor.render('b');
+            if (edit === 'offset') editor.shift(-1000);
+            else {
+                editor.api.commitCurrentLineSync(editor.times().map(time => time - 1));
+                editor.render('b');
+            }
+            const expected = plain(editor.api.getSyncCreatorRejoinedLineChars(editor.line()));
+            const tail = plain(editor.context.syncData.lines[2]);
+            editor.split(points[0]);
+            editor.render('a');
+            assert.equal(editor.context.currentParallelParts.length, 2);
+            assert.deepEqual(editor.times(), expected.slice(0, row.slice(0, points[1]).trimEnd().length),
+                'the selected joined target retains its exact visible marks');
+            const file = await editor.export();
+            assert.deepEqual((await editor.submit()).lines, file.lines, 'publish serializes the same exact groups and timings as export');
+            const reopened = createEditor({ rows });
+            await reopened.import(file);
+            assert.equal(reopened.context.currentParallelParts.length, 2, 'timing runs are not editor split boundaries');
+            assert.deepEqual(plain(reopened.api.getSyncCreatorRejoinedLineChars(reopened.line())), expected);
+            reopened.split(points[1]);
+            assert.equal(reopened.context.activeParallelPart, null);
+            const joined = await reopened.export();
+            await reopened.import(joined);
+            assert.equal(reopened.context.activeParallelPart, null, 'removing the next boundary must not restore the previous one');
+            assert.deepEqual(reopened.times(), expected);
+            assert.deepEqual(plain(reopened.context.syncData.lines[2]), tail, 'an unrelated source row is untouched');
+            const recovered = createEditor({ rows });
+            recovered.recover(reopened.record());
+            assert.equal(recovered.context.activeParallelPart, null);
+            assert.deepEqual(recovered.times(), expected);
+        });
+    }
+}
+
+test('merging another source row does not restore a previously removed split boundary', async () => {
+    const rows = ['PRE', 'ABCDEF', 'TAIL'];
+    const editor = createEditor({ rows });
+    editor.split(2); editor.split(4);
+    editor.render('b'); editor.shift(-1000);
+    const expected = plain(editor.api.getSyncCreatorRejoinedLineChars(editor.line()));
+    editor.split(2);
+    editor.api.mergeCurrentLineWithNext(); editor.render();
+    assert.equal(editor.context.currentParallelParts.length, 3, 'two edited groups plus the next source row');
+    const reopened = createEditor({ rows });
+    await reopened.import(await editor.export());
+    assert.equal(reopened.context.currentParallelParts.length, 3);
+    assert.deepEqual(plain(reopened.api.getSyncCreatorRejoinedLineChars(reopened.line())).slice(0, 6), expected);
+    editor.api.unmergeCurrentLine(); editor.render();
+    assert.equal(editor.context.currentParallelParts.length, 2, 'unmerging source rows keeps the earlier manual join');
+    assert.deepEqual(plain(editor.api.getSyncCreatorRejoinedLineChars(editor.line())), expected);
+});
+
+test('an independent concurrent vocal using the same character range keeps its own recorded times', async () => {
+    const editor = createEditor();
+    editor.line().parallel = { layout: 'stack', parts: [
+        { id: 'lead', role: 'lead', ranges: [{ start: 3, end: 6 }], chars: [11, 11.25, 11.5, 11.75] },
+        { id: 'echo', role: 'background', ranges: [{ start: 3, end: 6 }], chars: [11.1, 11.35, 11.6, 11.85] },
+    ] };
+    const before = plain(editor.line().parallel.parts);
+    editor.render();
+    assert.deepEqual(plain(editor.context.currentParallelParts.map(part => part.chars)), before.map(part => part.chars));
+    await editor.import(await editor.export());
+    assert.deepEqual(plain(editor.line().parallel.parts.map(part => part.chars)), before.map(part => part.chars));
+});
+
+test('persisted manual boundaries are validated and mark grouping changes as unsubmitted', () => {
+    const editor = createEditor({ rows: ['PRE', 'ABCDEF', 'TAIL'] });
+    editor.split(2); editor.split(4);
+    editor.render('b'); editor.shift(-1000);
+    const saved = plain(editor.materialize());
+    editor.api.assertValidSyncCreatorSyncData(saved);
+    for (const points of ['2', [-1], [0], [6], [2, 2], [4, 2], [1.5], Array(16).fill(1)]) {
+        const invalid = structuredClone(saved);
+        invalid.lines[1].parallel.manualSplitPoints = points;
+        assert.throws(() => editor.api.assertValidSyncCreatorSyncData(invalid), /manualSplitPoints/);
+    }
+    editor.context.originalBody = saved;
+    editor.context.joinedBody = structuredClone(saved);
+    editor.context.joinedBody.lines[1].parallel.manualSplitPoints = [];
+    assert.equal(vm.runInContext('areSyncCreatorSyncBodiesEqual(originalBody, joinedBody)', editor.context), false);
+});
+
+test('joining an edited row with a concurrent source row preserves the other vocal and its original ranges', async () => {
+    const rows = ['PRE', 'ABCDEF', 'TAIL'];
+    const editor = createEditor({ rows });
+    editor.context.syncData.lines[2].parallel = { layout: 'stack', parts: [
+        { id: 'lead', role: 'lead', ranges: [{ start: 9, end: 12 }], join: [], chars: [21, 21.25, 21.5, 21.75] },
+        { id: 'echo', role: 'background', ranges: [{ start: 9, end: 12 }], join: [], chars: [21.1, 21.35, 21.6, 21.85] },
+    ] };
+    editor.split(2); editor.split(4);
+    editor.render('b'); editor.shift(-1000);
+    editor.split(2);
+    editor.api.mergeCurrentLineWithNext(); editor.render();
+    const file = await editor.export();
+    const voices = file.lines[1].parallel.parts.filter(part => part.ranges.length === 1
+        && part.ranges[0].start === 9 && part.ranges[0].end === 12);
+    assert.deepEqual(voices.map(part => part.chars), [[21, 21.25, 21.5, 21.75], [21.1, 21.35, 21.6, 21.85]],
+        'manual grouping cannot replace an independent concurrent vocal with the lead timing');
+    await editor.import(file);
+    assert.deepEqual(plain(editor.line().parallel.parts.filter(part => part.ranges[0].start === 9).map(part => part.chars)),
+        voices.map(part => part.chars));
+});
+
+test('manual joins survive the backend validator, storage normalizer, public GET and editor reload', {
+    skip: !process.env.SYNC_CREATOR_BACKEND_ROOT,
+}, async () => {
+    const backendUrl = pathToFileURL(`${process.env.SYNC_CREATOR_BACKEND_ROOT}/src/routes/sync_data.js`).href;
+    const { normalizeSyncDataForStorage, validateSyncData, handleSyncData } = await import(backendUrl);
+    const rows = ['PRE', 'ABCDEF', 'TAIL'];
+    const editor = createEditor({ rows });
+    const source = {
+        provider: 'lrclib', lrclibId: '123', preferredLyricsSource: 'plain', duration: 120,
+        lyricsFingerprint: vm.runInContext('getSyncCreatorLyricsFingerprintFromText(lyricsText)', editor.context),
+        lineCharCounts: rows.map(row => Array.from(row).length), lineCount: rows.length,
+        textCharCount: rows.reduce((count, row) => count + Array.from(row).length, 0),
+    };
+    editor.context.attachSelectedLrclibSource = data => ({ ...data, source });
+    editor.context.providerRef.current = 'lrclib';
+    editor.split(2); editor.split(4);
+    editor.render('b'); editor.shift(-1000);
+    editor.split(2);
+    for (const boundaries of [[4], []]) {
+        if (!boundaries.length) editor.split(4);
+        const submitted = await editor.submit();
+        assert.deepEqual(submitted.lines[1].parallel.manualSplitPoints, boundaries);
+        const normalized = normalizeSyncDataForStorage(submitted);
+        assert.deepEqual(validateSyncData(normalized, 'lrclib'), { valid: true }, 'the actual server schema must accept the field');
+        const storedJson = JSON.stringify(normalized);
+        const env = { DB: { prepare(sql) { return { bind() { return {
+            async first() {
+                assert.match(sql, /FROM sync_data/);
+                return { isrc: 'USFIX1234567', provider: 'lrclib', sync_data: storedJson };
+            },
+            async all() {
+                assert.match(sql, /FROM sync_contributors/);
+                return { results: [] };
+            },
+        }; } }; } } };
+        const response = await handleSyncData(new Request('https://fixture.invalid/lyrics/sync-data?isrc=USFIX1234567&provider=lrclib'), env, {});
+        assert.equal(response.status, 200);
+        const publicData = (await response.json()).data.syncData;
+        assert.deepEqual(publicData.lines[1].parallel.manualSplitPoints, boundaries);
+        assert.deepEqual(publicData.lines[1].parallel.parts, submitted.lines[1].parallel.parts,
+            'storage and public decode preserve every independent timing target and its ranges');
+        const reopened = createEditor({ rows });
+        await reopened.import(publicData);
+        assert.equal(reopened.context.currentParallelParts.length, boundaries.length ? 2 : 0);
+        assert.deepEqual(plain(reopened.api.getSyncCreatorRejoinedLineChars(reopened.line())),
+            plain(editor.api.getSyncCreatorRejoinedLineChars(editor.line())));
+    }
+});
+
+test('published merged groups render once with exact edited timing marks in the real lyric decoder', async () => {
+    const { KaraokeWordTiming, SyncDataSourceCompatibility } = createRequire(import.meta.url)('../LyricsService.js');
+    const playbackSource = readFileSync(new URL('../LyricsService.js', import.meta.url), 'utf8');
+    const playback = vm.createContext({ window: {}, Spicetify: {}, console, KaraokeWordTiming, SyncDataSourceCompatibility });
+    const addonSource = readFileSync(new URL('../Addon_Lyrics_Lrclib.js', import.meta.url), 'utf8');
+    vm.runInContext(addonSource.slice(addonSource.indexOf('    function buildLrclibSyncDataParallelParts('),
+        addonSource.indexOf('    function stripLrcTimestamps(', addonSource.indexOf('    function buildLrclibSyncDataParallelParts('))), playback);
+    vm.runInContext(playbackSource.slice(playbackSource.indexOf('const SyncDataService = (() => {'),
+        playbackSource.indexOf('window.SyncDataService = SyncDataService;'))
+        + '\nglobalThis.apply = SyncDataService.applySyncDataToLyrics;', playback);
+    const rows = ['PRE', 'ABCDEF', 'TAIL'];
+    const editor = createEditor({ rows });
+    editor.split(2); editor.split(4);
+    editor.render('b'); editor.shift(-1000);
+    editor.split(2);
+    for (const expectedText of [['ABCD', 'EF'], ['ABCDEF']]) {
+        if (expectedText.length === 1) editor.split(4);
+        const published = await editor.submit();
+        const result = plain(playback.apply(rows.map(text => ({ text })), { provider: 'lrclib', syncData: published }))[1];
+        const vocals = result.vocals ? [result.vocals.lead, ...result.vocals.background] : [result];
+        assert.deepEqual(vocals.map(part => part.text), expectedText,
+            'ordered wire timing targets must not become separate visible vocal rows');
+        assert.deepEqual(vocals.flatMap(part => part.syllables.map(char => char.startTime)),
+            [11000, 11250, 10500, 10750, 12000, 12250], 'render grouping preserves every manual mark');
+    }
+    const decode = (sourceRows, data) => plain(playback.apply(sourceRows.map(text => ({ text })), { provider: 'lrclib', syncData: data }))[1];
+    const vocalsOf = line => line.vocals ? [line.vocals.lead, ...line.vocals.background] : [line];
+    const published = await editor.submit();
+    const legacy = structuredClone(published);
+    delete legacy.lines[1].parallel.manualSplitPoints;
+    for (const invalid of [null, '4', [6], [4, 2], [2, 2], [-1], [1.5]]) {
+        const data = structuredClone(published);
+        data.lines[1].parallel.manualSplitPoints = invalid;
+        assert.deepEqual(decode(rows, data), decode(rows, legacy), 'invalid grouping metadata retains legacy rendering');
+    }
+    published.lines[1].parallel.parts.splice(1, 0, {
+        id: 'echo', role: 'background', granularity: 'character', speaker: 'CUSTOM',
+        'speaker-color': '#dd00ee', 'speaker-fallback': 'FEMALE 1', kind: 'whisper',
+        ranges: [{ start: 3, end: 8 }], join: [], chars: [9, 9.1, 9.2, 9.3, 9.4, 9.5],
+    });
+    const concurrent = vocalsOf(decode(rows, published));
+    assert.deepEqual(concurrent.map(part => part.text), ['ABCDEF', 'ABCDEF']);
+    assert.deepEqual(concurrent[0].syllables.map(char => char.startTime), [11000, 11250, 10500, 10750, 12000, 12250]);
+    assert.deepEqual(concurrent[1].syllables.map(char => char.startTime), [9000, 9100, 9200, 9300, 9400, 9500]);
+    assert.equal(concurrent[1]['speaker-color'], '#dd00ee');
+    assert.equal(concurrent[1]['speaker-fallback'], 'FEMALE 1');
+    assert.equal(concurrent[1].kind, 'whisper');
+    Object.assign(published.lines[1].parallel.parts[2], {
+        speaker: 'CUSTOM', 'speaker-color': '#00ff00', 'speaker-fallback': 'DUET 1', kind: 'echo',
+    });
+    published.lines[1].styleRanges = [{ start: 6, end: 6, kind: 'glow', speaker: 'FEMALE 1' }];
+    const before = JSON.stringify(published);
+    const styled = vocalsOf(decode(rows, published))[0].syllables;
+    assert.equal(styled[2].styleSpeaker, 'CUSTOM');
+    assert.equal(styled[2].styleSpeakerColor, '#00ff00');
+    assert.equal(styled[2].styleSpeakerFallback, 'DUET 1');
+    assert.equal(styled[2].styleKind, 'echo');
+    assert.equal(styled[3].styleSpeaker, 'FEMALE 1');
+    assert.equal(styled[3].styleKind, 'glow');
+    assert.equal(styled[3].styleSpeakerColor, undefined, 'explicit inline speaker overrides do not inherit another speaker color');
+    assert.equal(JSON.stringify(published), before, 'the public decoder preserves wire ranges, hidden data and marks');
+
+    const gapRows = ['PRE', 'AB CD EF', 'TAIL'];
+    const gapEditor = createEditor({ rows: gapRows });
+    gapEditor.split(3); gapEditor.split(6);
+    gapEditor.render('b'); gapEditor.shift(-1000);
+    gapEditor.split(3);
+    for (const expectedText of [['AB CD', 'EF'], ['AB CD EF']]) {
+        if (expectedText.length === 1) gapEditor.split(6);
+        const data = await gapEditor.submit();
+        const original = JSON.stringify(data);
+        const groups = vocalsOf(decode(gapRows, data));
+        assert.deepEqual(groups.map(part => part.text), expectedText);
+        assert.deepEqual(groups.flatMap(part => part.syllables.filter(char => char.text.trim()).map(char => char.startTime)),
+            [11000, 11250, 10750, 11000, 12500, 12750], 'hidden split whitespace never moves a sung mark');
+        assert.equal(JSON.stringify(data), original);
+    }
+});
+
+// Opt-in local evidence: the downloaded attachment stays outside the repository.
+// Only its character counts, ranges and timing structure enter the editor; text
+// and track identity are replaced before running any production callbacks.
+test('reported full attachment preserves every vocal and merged group after local export/import', {
+    skip: !process.env.SYNC_CREATOR_REGRESSION_JSON,
+}, async () => {
+    const input = JSON.parse(readFileSync(process.env.SYNC_CREATOR_REGRESSION_JSON, 'utf8'));
+    const counts = input.source.lineCharCounts;
+    const flat = Array(counts.reduce((total, count) => total + count, 0)).fill('X');
+    for (const line of input.lines) {
+        for (const range of [...(line.hiddenRanges || []), ...(line.parallel?.hiddenRanges || [])]) {
+            for (let index = range.start; index <= range.end; index++) flat[index] = ' ';
+        }
+    }
+    let cursor = 0;
+    const rows = counts.map(count => {
+        const row = flat.slice(cursor, cursor + count).join('');
+        cursor += count;
+        return row;
+    });
+    const data = { version: input.version, lines: input.lines };
+    const editor = createEditor({ rows, data });
+    const before = plain(data);
+    const wire = await editor.export();
+    await editor.import(wire);
+    for (const [index, line] of before.lines.entries()) {
+        assert.deepEqual(plain(editor.api.getSyncCreatorRejoinedLineChars(editor.context.syncData.lines[index])),
+            plain(editor.api.getSyncCreatorRejoinedLineChars(line)), `all timing marks survive row ${index + 1}`);
+        assert.deepEqual(plain(editor.context.syncData.lines[index].parallel?.parts.map(part => part.chars) || null),
+            line.parallel?.parts.map(part => part.chars) || null, `independent vocals survive row ${index + 1}`);
+    }
+    for (const index of [26, 30, 39, 41, 50, 51, 57, 62, 63, 66, 74]) {
+        editor.context.currentLineIndex = index - 1;
+        editor.render();
+        const parts = editor.context.currentParallelParts;
+        if (parts.length < 2 || parts.some(part => part.ranges.length !== 1)) continue;
+        const boundaries = parts.slice(1).map(part => part.ranges[0].start - editor.context.currentLineStart);
+        for (const boundary of boundaries) editor.split(boundary);
+        const expected = plain(editor.times());
+        assert.equal(editor.context.activeParallelPart, null, `reported row ${index} is joined before saving`);
+        await editor.import(await editor.export());
+        assert.equal(editor.context.activeParallelPart, null, `reported row ${index} stays joined when reopened`);
+        assert.deepEqual(editor.times(), expected, `reported row ${index} keeps exact edited times`);
+    }
 });

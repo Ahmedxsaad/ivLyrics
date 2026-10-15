@@ -5610,9 +5610,12 @@
                     };
                 };
 
-                const parallelParts = Array.isArray(lineData.parallel?.parts)
+                const groupedParallelParts = window.IvLyricsLrclibSyncGroups?.buildParallelParts(
+                    lineData, fullTextChars, buildParallelPart
+                );
+                const parallelParts = groupedParallelParts ?? (Array.isArray(lineData.parallel?.parts)
                     ? lineData.parallel.parts.map(buildParallelPart).filter(Boolean)
-                    : [];
+                    : []);
 
                 if (parallelParts.length > 1) {
                     const leadPart = parallelParts.find(part => part.role === 'lead') || parallelParts[0];
@@ -5648,6 +5651,19 @@
 	                                syllables: part.syllables
 	                            }))
                         }
+                    });
+                    continue;
+                }
+
+                if (groupedParallelParts?.length === 1) {
+                    const joined = groupedParallelParts[0];
+                    result.push({
+                        text: joined.text, startTime: joined.startTime, endTime: joined.endTime,
+                        speaker: joined.speaker || lineData.speaker || '',
+                        'speaker-color': joined['speaker-color'] || lineData['speaker-color'] || '',
+                        'speaker-fallback': joined['speaker-fallback'] || lineData['speaker-fallback'] || '',
+                        kind: joined.kind || lineData.kind || 'vocal',
+                        syllables: joined.syllables,
                     });
                     continue;
                 }

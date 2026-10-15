@@ -593,6 +593,16 @@ const getSyncCreatorSyncDataValidationError = (data) => {
 		if (parts.length > SYNC_CREATOR_MAX_PARALLEL_PARTS) {
 			return `Line ${lineIndex + 1}: parallel.parts cannot exceed ${SYNC_CREATOR_MAX_PARALLEL_PARTS}`;
 		}
+		if (line?.parallel?.manualSplitPoints !== undefined) {
+			const points = line.parallel.manualSplitPoints;
+			if (!Array.isArray(points) || points.length >= SYNC_CREATOR_MAX_PARALLEL_PARTS) {
+				return `Line ${lineIndex + 1}: parallel.manualSplitPoints must contain at most ${SYNC_CREATOR_MAX_PARALLEL_PARTS - 1} boundaries`;
+			}
+			if (points.some((point, index) => !Number.isInteger(point) || point <= 0 || point >= expectedLength
+				|| (index > 0 && point <= points[index - 1]))) {
+				return `Line ${lineIndex + 1}: parallel.manualSplitPoints must be ordered boundaries inside the parent line`;
+			}
+		}
 		for (let partIndex = 0; partIndex < parts.length; partIndex++) {
 			const part = parts[partIndex];
 			const partLabel = String(part?.id || partIndex + 1);
@@ -661,6 +671,7 @@ const canonicalSyncCreatorSyncLineForUnsubmittedCompare = (line) => {
 		speakerColor: normalizeSyncCreatorSpeakerColor(line?.['speaker-color']),
 		speakerFallback: normalizeSyncCreatorSpeakerFallback(line?.['speaker-fallback']),
 		hiddenRanges: canonicalRanges(line?.hiddenRanges),
+		manualSplitPoints: Array.isArray(line?.parallel?.manualSplitPoints) ? line.parallel.manualSplitPoints : null,
 		styleRanges: (Array.isArray(line?.styleRanges) ? line.styleRanges : []).map(range => ([
 			Number(range?.start),
 			Number(range?.end),
@@ -737,10 +748,23 @@ const countSyncCreatorParallelRangeOverlap = (leftRanges, rightRanges) => {
 	}
 	return overlap;
 };
+const getSyncCreatorConcurrentParallelParts = (parallel) => {
+	const parts = Array.isArray(parallel?.parts) ? parallel.parts : [];
+	return parts.filter((part, index) => parts.slice(0, index).some(previous => (
+		countSyncCreatorParallelRangeOverlap(previous?.ranges, part?.ranges) > 0
+	)));
+};
 const getSyncCreatorPersistedParallelSplitPoints = (parallel, lineStart, lineLength) => {
 	const numericLineStart = Number(lineStart);
 	const numericLineLength = Number(lineLength);
 	if (!Number.isInteger(numericLineStart) || !Number.isInteger(numericLineLength) || numericLineLength < 2) return [];
+	// Ordered timing runs can outnumber the groups the user chose to keep.
+	// An explicit empty list means that every manual boundary was removed.
+	if (Array.isArray(parallel?.manualSplitPoints)) {
+		return [...new Set(parallel.manualSplitPoints
+			.filter(point => Number.isInteger(point) && point > 0 && point < numericLineLength))]
+			.sort((left, right) => left - right);
+	}
 	const parts = Array.isArray(parallel?.parts) ? parallel.parts : [];
 	if (parts.length < 2 || parts.some(part => !Array.isArray(part?.ranges) || part.ranges.length !== 1)) return [];
 	const orderedRanges = parts
@@ -907,7 +931,7 @@ const rejoinSyncCreatorParallelLine = (line, options = {}) => {
 	if (!hasOrderedSyncCreatorTimes(chars) && options.preview !== true) {
 		// The wire format requires ordered targets. Retain the independent vocal
 		// timings as provenance when a joined row contains overlapping vocals.
-		return line;
+		return { ...line, parallel: { ...line.parallel, manualSplitPoints: [] } };
 	}
 	const granularity = normalizeSyncCreatorGranularity(line?.granularity);
 	const joined = {
@@ -951,7 +975,12 @@ const sliceSyncCreatorLineTiming = (line, start, end) => {
 	const sliced = {
 		...line, start, end, chars, granularity: 'character',
 		hiddenRanges: sliceRanges(line?.hiddenRanges), styleRanges: sliceRanges(line?.styleRanges),
-		...(parts.length ? { parallel: { ...line.parallel, parts, hiddenRanges: sliceRanges(line.parallel.hiddenRanges) } } : {})
+		...(parts.length ? { parallel: {
+			...line.parallel, parts, hiddenRanges: sliceRanges(line.parallel.hiddenRanges),
+			...(Array.isArray(line.parallel.manualSplitPoints) ? { manualSplitPoints: line.parallel.manualSplitPoints
+				.map(point => Number(line.start) + point - start)
+				.filter(point => point > 0 && point <= end - start) } : {})
+		} } : {})
 	};
 	delete sliced.mergedLineContinuationStarts;
 	if (!sliced.hiddenRanges.length) delete sliced.hiddenRanges;
@@ -1057,11 +1086,16 @@ const encodeSyncCreatorWorkSnapshot = (expanded, original) => {
 };
 const resolveSyncCreatorParallelTemplateParts = (templateParts, existingLine) => {
 	const existingParts = Array.isArray(existingLine?.parallel?.parts) ? existingLine.parallel.parts : [];
-	return (Array.isArray(templateParts) ? templateParts : []).map(part => ({
-		part,
-		sourcePart: findSyncCreatorParallelSourcePart(part, existingParts),
-		chars: inheritSyncCreatorParallelPartChars(part, existingLine)
-	}));
+	return (Array.isArray(templateParts) ? templateParts : []).map(part => {
+		const sourcePart = findSyncCreatorParallelSourcePart(part, existingParts);
+		return {
+			part, sourcePart,
+			// Concurrent vocals can share lyric indexes but have distinct marks.
+			chars: hasReusableSyncCreatorParallelChars(part, sourcePart)
+				? sourcePart.chars
+				: inheritSyncCreatorParallelPartChars(part, existingLine)
+		};
+	});
 };
 const hasExplicitSyncCreatorGroupedBackground = (parallel) => (
 	Array.isArray(parallel?.parts)
@@ -3132,8 +3166,9 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	const mergeSyncCreatorParallelTemplate = (template, existingLine) => {
 		if (!template) return null;
 		const existingParallel = existingLine?.parallel;
-		return sanitizeSyncCreatorParallel({
+		const parallel = sanitizeSyncCreatorParallel({
 			layout: existingParallel?.layout || template.layout || 'stack',
+			...(Array.isArray(template.manualSplitPoints) ? { manualSplitPoints: template.manualSplitPoints } : {}),
 			hiddenRanges: Array.isArray(template.hiddenRanges) ? template.hiddenRanges : [],
 			parts: resolveSyncCreatorParallelTemplateParts(template.parts, existingLine).map(({ part, sourcePart: existing, chars: reusableChars }) => {
 				const sourceSpeaker = existing?.speaker || part.speaker;
@@ -3161,6 +3196,20 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 					};
 				})
 		});
+		// Partitioning the main lyric text must not discard a second voice that
+		// sings the same source indexes with its own timing, ranges and styling.
+		for (const part of getSyncCreatorConcurrentParallelParts(existingParallel)) {
+			if (parallel.parts.some(target => target.id === part.id
+				&& areSyncCreatorParallelRangesEqual(target.ranges, part.ranges))) continue;
+			const usedIds = new Set(parallel.parts.map(target => target.id));
+			let id = part.id;
+			for (let suffix = 1; usedIds.has(id); suffix++) {
+				const ending = `_${suffix}`;
+				id = `${String(part.id).slice(0, SYNC_CREATOR_MAX_PART_ID_LENGTH - ending.length)}${ending}`;
+			}
+			parallel.parts.push({ ...part, id });
+		}
+		return parallel;
 	};
 
 	// 상태 관리
@@ -4441,10 +4490,20 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			getAutoMergeSplitPointsForLine(lineStart)
 		);
 		const textTemplate = getParallelTemplateForLine(lineChars, lineStart, splitState.manualSplitPoints);
-		return selectSyncCreatorParallelTemplate(lineData?.parallel, textTemplate, {
-			hasManualDraft: splitState.hasManualDraft,
+		const hasManualSplitState = splitState.hasManualDraft || Array.isArray(lineData?.parallel?.manualSplitPoints);
+		let template = selectSyncCreatorParallelTemplate(lineData?.parallel, textTemplate, {
+			hasManualDraft: hasManualSplitState,
 			isMergedWithNext
 		});
+		if (!template && hasManualSplitState && getSyncCreatorConcurrentParallelParts(lineData?.parallel).length) {
+			template = { layout: 'stack', parts: [{
+				id: 'full', role: 'lead', speaker: lineData.speaker, kind: lineData.kind,
+				ranges: [{ start: lineStart, end: lineStart + lineChars.length - 1 }], join: []
+			}] };
+		}
+		return template && hasManualSplitState
+			? { ...template, manualSplitPoints: splitState.manualSplitPoints }
+			: template;
 	}, [getAutoMergeSplitPointsForLine, getParallelTemplateForLine, manualParallelSplitDrafts]);
 	const currentParallelTemplate = useMemo(() => {
 		if (!multiVocalMode) return null;
@@ -6026,6 +6085,23 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			.slice(0, SYNC_CREATOR_MAX_MERGED_LINES);
 		const mergedEnd = getLineEndAtIndex(nextMergedLineIndexes[nextMergedLineIndexes.length - 1]);
 		const partIds = 'abcdefghijklmnopqrstuvwxyz'.split('');
+		const sourceLinesByStart = new Map((syncData?.lines || []).map(line => [line.start, line]));
+		const ownerLine = sourceLinesByStart.get(currentStart);
+		let hasManualSplitState = false;
+		const mergedManualSplitPoints = [...new Set(nextMergedLineIndexes.flatMap(index => {
+			const start = lineCharOffsets[index];
+			const end = getLineEndAtIndex(index);
+			const sourceLine = sourceLinesByStart.get(start) || ownerLine;
+			const sourceStart = Number(sourceLine?.start ?? start);
+			hasManualSplitState ||= Object.prototype.hasOwnProperty.call(manualParallelSplitDrafts, sourceStart)
+				|| Array.isArray(sourceLine?.parallel?.manualSplitPoints);
+			return resolveSyncCreatorManualSplitState(
+				manualParallelSplitDrafts, sourceStart, Number(sourceLine?.end ?? end) - sourceStart + 1, sourceLine?.parallel
+			).manualSplitPoints
+				.map(point => sourceStart + point)
+				.filter(point => point > start && point <= end)
+				.map(point => point - currentStart);
+		}))].sort((left, right) => left - right);
 
 		setSyncData(prev => {
 			if (!prev || !Array.isArray(prev.lines)) return prev;
@@ -6107,6 +6183,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 					mergedLineContinuationStarts: nextMergedLineIndexes.slice(1).map(index => lineCharOffsets[index]),
 					parallel: sanitizeSyncCreatorParallel(preserveSyncCreatorParallelTimingRuns({
 						layout: 'stack',
+						...(hasManualSplitState ? { manualSplitPoints: mergedManualSplitPoints } : {}),
 						hiddenRanges: snapshots.flatMap(snapshot => snapshot.parallel?.hiddenRanges || []),
 						parts: snapshots.flatMap((snapshot, index) => snapshot.parallel?.parts || [{
 							role: index === 0 ? 'lead' : 'background',
@@ -6143,6 +6220,9 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			...prev,
 			[currentStart]: nextMergedLineIndexes.slice(1).map(index => lineCharOffsets[index])
 		}));
+		if (hasManualSplitState) {
+			setManualParallelSplitDrafts(prev => ({ ...prev, [currentStart]: mergedManualSplitPoints }));
+		}
 		setMode(prev => prev === 'record' ? prev : 'idle');
 		setRecordingProgressIndex(-1);
 		charTimesRef.current = [];
@@ -6157,8 +6237,10 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		getLineEndAtIndex,
 		lineCharOffsets,
 		lyricsLines,
+		manualParallelSplitDrafts,
 		normalizeCommittedLineChars,
-		setRecordingProgressIndex
+		setRecordingProgressIndex,
+		syncData
 	]);
 
 	const commitCurrentLineSync = useCallback((rawChars, options = {}) => {
@@ -6349,6 +6431,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 					: normalizeSyncCreatorGranularity(parts[0]?.granularity || lineData.granularity);
 				lineData.parallel = sanitizeSyncCreatorParallel(preserveSyncCreatorParallelTimingRuns({
 					layout: currentParallelData.layout || 'stack',
+					...(Array.isArray(currentParallelData.manualSplitPoints) ? { manualSplitPoints: currentParallelData.manualSplitPoints } : {}),
 					hiddenRanges: currentParallelData.hiddenRanges || [],
 					parts
 				}));
@@ -9319,7 +9402,8 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			);
 			const parallel = mergeSyncCreatorParallelTemplate(template, line);
 			if (!parallel || !Array.isArray(parallel.parts) || parallel.parts.length <= 1) {
-				if (!Object.prototype.hasOwnProperty.call(manualParallelSplitDrafts, line.start) || !line.parallel) {
+				if ((!Object.prototype.hasOwnProperty.call(manualParallelSplitDrafts, line.start)
+					&& !Array.isArray(line.parallel?.manualSplitPoints)) || !line.parallel) {
 					return line;
 				}
 				return rejoinSyncCreatorParallelLine(line, options);
@@ -9444,14 +9528,15 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 					: Array.from(lineText);
 				const template = getParallelTemplateForLineData(lineData, lineChars, lineStart, isMergedWithNext);
 				if (template?.parts?.length > 1) {
-					const existingParts = Array.isArray(lineData.parallel?.parts) ? lineData.parallel.parts : [];
-					for (const part of template.parts) {
-						const existingPart = existingParts.find(item => item.id === part.id);
-						if (!existingPart || !hasReusableSyncCreatorParallelChars(part, existingPart)) {
+					// Saved ordered timing runs may be finer than an explicitly
+					// joined editor target. Validate its resolved marks, not run IDs.
+					const resolvedParts = mergeSyncCreatorParallelTemplate(template, lineData)?.parts || [];
+					for (const part of resolvedParts) {
+						if (!hasReusableSyncCreatorParallelChars(part, part)) {
 							Toast.error(I18n.t('syncCreator.lineAllPartsMissingSync', { line: index + 1 }) || `Sync every vocal part on line ${index + 1}.`);
 							return false;
 						}
-						if (!isSyncCreatorSpeakerMetaComplete(existingPart) || !(normalizeSyncCreatorKind(existingPart.kind) || SYNC_CREATOR_DEFAULT_KIND)) {
+						if (!isSyncCreatorSpeakerMetaComplete(part) || !(normalizeSyncCreatorKind(part.kind) || SYNC_CREATOR_DEFAULT_KIND)) {
 							Toast.error(I18n.t('syncCreator.linePartMetaRequired', { line: index + 1 }) || `Select SPEAKER and text effect for every vocal part on line ${index + 1}.`);
 							return false;
 						}

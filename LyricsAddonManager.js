@@ -62,7 +62,7 @@
         }
         return normalized;
     };
-    const SYNC_DATA_RENDERER_VERSION = '2026-05-23-source-line-shape-1';
+    const SYNC_DATA_RENDERER_VERSION = '2026-10-16-manual-merge-groups-1';
 
     // 가사 유형. Karaoke 데이터는 타이밍의 최소 단위를 기준으로 다시
     // 나눈다. 렌더러는 같은 `result.karaoke` 배열을 사용하지만 선택 정책과
