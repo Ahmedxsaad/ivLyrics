@@ -309,8 +309,8 @@
     // ============================================
     // API Endpoints (API 엔드포인트)
     // ============================================
-    // 공식 LRCLIB API 주소입니다. 검색/싱크 제작은 항상 이 주소를 쓰며,
-    // 일반 가사 로딩만 별도의 커스텀 /get 조회를 먼저 시도할 수 있습니다.
+    // 공식 LRCLIB API 주소입니다. 생성기의 수동 검색/싱크 제작은 항상 이 주소를 쓰며,
+    // 일반 재생은 커스텀 서버의 조회/검색 전체를 끝낸 뒤 공식 서버로 넘어갑니다.
     //
     // 【사용 가능한 엔드포인트】
     // - GET /api/search?track_name=...&artist_name=... : 구조화된 검색
@@ -319,11 +319,12 @@
 
     const LRCLIB_API_BASE = 'https://lrclib.net/api';
     const LRCLIB_CUSTOM_API_TIMEOUT_MS = 5000;
+    const LRCLIB_CUSTOM_API_BUDGET_MS = 20000;
     const LRCLIB_DURATION_TOLERANCE_SEC = 15;
     const LRCLIB_ARTIST_MATCH_THRESHOLD = 0.9;
     const LRCLIB_FALLBACK_TITLE_MATCH_THRESHOLD = 0.98;
     const LRCLIB_ENABLE_INEXACT_SEARCH = true;
-    const LRCLIB_CACHE_VERSION_BASE = '2026-08-11-sync-source-identity-1';
+    const LRCLIB_CACHE_VERSION_BASE = '2026-10-16-host-fallback-2';
     const LRCLIB_ENGLISH_ACCEPT_LANGUAGE = 'en-US,en;q=0.9';
     const LRCLIB_LYRICSFILE_VERSION = '1.0';
     const LRCLIB_LYRICSFILE_MAX_LENGTH = 2 * 1024 * 1024;
@@ -1840,11 +1841,11 @@
         return String(id).trim();
     }
 
-    async function fetchLrclibCandidateById(source, headers) {
+    async function fetchLrclibCandidateById(source, headers, { baseUrl = LRCLIB_API_BASE, request = fetchWithTimeout } = {}) {
         const lrclibId = getSyncDataLrclibId(source);
         if (!lrclibId) return null;
 
-        const response = await fetchWithTimeout(`${LRCLIB_API_BASE}/get/${encodeURIComponent(lrclibId)}`, { headers }, 35000);
+        const response = await request(`${baseUrl}/get/${encodeURIComponent(lrclibId)}`, { headers }, 35000);
         if (!response || !response.ok) {
             window.__ivLyricsDebugLog?.(`[LR-DEBUG] Direct LRCLIB get failed for id=${lrclibId}: ${response?.status || 'network'}`);
             return null;
@@ -1949,23 +1950,51 @@
         return !!(result.karaoke || result.synced || result.unsynced);
     }
 
-    function buildPlaybackOnlyResult(candidate, info, cacheVersion, apiSource) {
+    function buildPlaybackOnlyResult(candidate, info, cacheVersion, apiSource, { syncDataSource = null, syncDataLineCharCounts = null } = {}) {
         if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return null;
-        const { title, trackDurationSec, expectedArtists } = parseLrclibTrackMetadata(info);
-        const duration = Number(candidate.duration);
-        if (!Number.isFinite(duration) || duration <= 0 || Math.abs(duration - trackDurationSec) > LRCLIB_DURATION_TOLERANCE_SEC
-            || getTitleScore(title, candidate.trackName || candidate.name || '') < LRCLIB_FALLBACK_TITLE_MATCH_THRESHOLD
-            || getBestArtistScore(expectedArtists, splitArtists(candidate.artistName)) <= LRCLIB_ARTIST_MATCH_THRESHOLD) return null;
         if ((candidate.syncedLyrics != null && typeof candidate.syncedLyrics !== 'string')
             || (candidate.plainLyrics != null && typeof candidate.plainLyrics !== 'string')) return null;
+        const { title, trackDurationSec, expectedArtists } = parseLrclibTrackMetadata(info);
+        const sourceId = getSyncDataLrclibId(syncDataSource);
+        const sourceCounts = syncDataSource?.lineCharCounts?.length ? syncDataSource.lineCharCounts : syncDataLineCharCounts;
+        const lineMatch = getCandidateSyncLineMatch(candidate, sourceCounts);
+        let preferredLyricsSource = syncDataSource?.preferredLyricsSource || lineMatch.preferredLyricsSource || candidate.preferredLyricsSource;
+        if (syncDataSource?.lyricsFingerprint) {
+            // Plain and timed lyrics can have different revisions in one row.
+            // Find the version matching the saved source, not merely one with
+            // equal character counts, before deciding to contact the next host.
+            preferredLyricsSource = [...new Set([preferredLyricsSource, 'synced', 'plain'])].find(preference => {
+                const text = getComparableCandidateText(candidate, preference);
+                return getLyricsTextFingerprint(text) === syncDataSource.lyricsFingerprint
+                    && (!sourceCounts?.length || hasExactLineCharCountMatch(sourceCounts, getLineCharCounts(getComparableLyricsLines(text))));
+            }) || preferredLyricsSource;
+        }
+        const sourceTextMatches = !syncDataSource?.lyricsFingerprint
+            || getLyricsTextFingerprint(getComparableCandidateText(candidate, preferredLyricsSource)) === syncDataSource.lyricsFingerprint;
+        const sourceShapeMatches = !sourceCounts?.length || hasExactLineCharCountMatch(sourceCounts,
+            getLineCharCounts(getComparableLyricsLines(getComparableCandidateText(candidate, preferredLyricsSource))));
+        // A mirror's arbitrary ID is not an official identity. An already saved
+        // canonical source can be reused only if its available content evidence
+        // agrees; an ID alone never overrides a contradictory fingerprint.
+        const sourceMatches = !!sourceId && sourceTextMatches && sourceShapeMatches
+            && (String(candidate.id ?? '') === sourceId || !!syncDataSource?.lyricsFingerprint);
+        if (sourceId && !sourceMatches) return null;
+        const duration = Number(candidate.duration);
+        if (!sourceMatches && (!Number.isFinite(duration) || duration <= 0 || Math.abs(duration - trackDurationSec) > LRCLIB_DURATION_TOLERANCE_SEC
+            || getTitleScore(title, candidate.trackName || candidate.name || '') < LRCLIB_FALLBACK_TITLE_MATCH_THRESHOLD
+            || (getBestArtistScore(expectedArtists, splitArtists(candidate.artistName)) <= LRCLIB_ARTIST_MATCH_THRESHOLD
+                && !(candidate.titleDrivenMatch && hasExactDurationMatch(trackDurationSec, duration))))) return null;
         const parsedSynced = candidate.syncedLyrics ? parseLRC(candidate.syncedLyrics) : null;
         const playbackCandidate = { ...candidate, id: undefined, instrumental: candidate.instrumental === true,
             syncedLyrics: parsedSynced?.synced?.some(line => String(line?.text || '').trim()) ? candidate.syncedLyrics : null };
         const result = { uri: info.uri, provider: ADDON_INFO.id, cacheVersion, lrclibApiSource: apiSource,
             karaoke: null, synced: null, unsynced: null, copyright: null, error: null };
-        const lineMatch = getCandidateSyncLineMatch(playbackCandidate, null);
         // A local/mirror record is for playback, not an official editor source.
-        applyCandidateLyricsToResult(result, { ...playbackCandidate, preferredLyricsSource: lineMatch.preferredLyricsSource });
+        applyCandidateLyricsToResult(result, { ...playbackCandidate, preferredLyricsSource });
+        if (sourceMatches) {
+            result.lrclibId = sourceId;
+            result.lrclibSource = { ...syncDataSource };
+        }
         return [result.karaoke, result.synced, result.unsynced]
             .some(lines => Array.isArray(lines) && lines.some(line => String(line?.text || '').trim())) ? result : null;
     }
@@ -1983,39 +2012,57 @@
         }
     }
 
-    // Playback-only accelerator. Keep the public/exported transport strictly
-    // official: editor search, source identity and submissions must not use this.
-    async function getCustomApiLyrics(info, cacheVersion) {
-        const endpoint = info?.lrclibOfficialOnly ? '' : getCustomApiEndpoint();
-        if (!endpoint) return null;
-        const { title, artist, album, trackDurationSec, expectedArtists } = parseLrclibTrackMetadata(info);
-        if (!title || !artist || !trackDurationSec) return null;
-        const query = new URLSearchParams({ track_name: title, artist_name: artist, duration: String(trackDurationSec) });
-        if (album && album !== 'undefined') query.set('album_name', album);
-        const controller = new AbortController();
-        let timeoutId;
-        const timeout = new Promise(resolve => {
-            timeoutId = setTimeout(() => {
-                controller.abort();
-                resolve(null);
-            }, LRCLIB_CUSTOM_API_TIMEOUT_MS);
-        });
-        const load = async () => {
-            const response = await fetch(`${endpoint}/get?${query}`, {
-                method: 'GET', headers: { Accept: 'application/json' },
-                credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal: controller.signal
+    // Private requests never use the exported official-only transport or a
+    // third-party CORS proxy. Each URL is read once per host stage, including
+    // its JSON body, with a five-second deadline and no caller credentials.
+    function createCustomApiRequest(endpoint) {
+        const requests = new Map(), cancellations = new Set();
+        const deadline = Date.now() + LRCLIB_CUSTOM_API_BUDGET_MS;
+        let closed = false;
+        const request = (url) => {
+            if (closed || !String(url).startsWith(`${endpoint}/`)) return Promise.resolve(null);
+            const remaining = deadline - Date.now();
+            if (remaining <= 0) return Promise.resolve(null);
+            const suffix = String(url).slice(endpoint.length);
+            if (!/^\/(?:get(?:\/[1-9]\d*)?|search)(?:\?|$)/.test(suffix)) return Promise.resolve(null);
+            if (requests.has(url)) return requests.get(url);
+            const controller = new AbortController();
+            let timeoutId, cancel;
+            const timeout = new Promise(resolve => {
+                cancel = () => { clearTimeout(timeoutId); controller.abort(); resolve(null); };
+                timeoutId = setTimeout(cancel, Math.min(LRCLIB_CUSTOM_API_TIMEOUT_MS, remaining));
             });
-            if (!response?.ok || controller.signal.aborted) return null;
-            const candidate = await response.json();
-            return controller.signal.aborted ? null : buildPlaybackOnlyResult(candidate, info, cacheVersion, 'custom');
+            cancellations.add(cancel);
+            const load = async () => {
+                const response = await fetch(url, {
+                    method: 'GET', headers: { Accept: 'application/json' }, credentials: 'omit',
+                    referrerPolicy: 'no-referrer', redirect: 'error', signal: controller.signal
+                });
+                if (!response || closed || controller.signal.aborted) return null;
+                if (!response.ok) return { ok: false, status: response.status };
+                const data = await response.json();
+                return closed || controller.signal.aborted ? null : { ok: true, status: response.status, json: async () => data };
+            };
+            const pending = Promise.race([load(), timeout]).catch(() => null).finally(() => {
+                clearTimeout(timeoutId); cancellations.delete(cancel);
+            });
+            requests.set(url, pending);
+            return pending;
         };
+        return { request, close() { closed = true; for (const cancel of cancellations) cancel(); cancellations.clear(); } };
+    }
+
+    async function getCustomApiLyrics(info, cacheVersion, context, endpoint) {
+        const transport = createCustomApiRequest(endpoint);
+        let timeoutId;
         try {
-            return await Promise.race([load(), timeout]);
-        } catch {
-            window.__ivLyricsDebugLog?.('[LR-DEBUG] Custom playback API unavailable; falling back to official LRCLIB');
-            return null;
+            return await Promise.race([
+                LrclibLyricsAddon._getPlaybackFromApi(info, { cacheVersion, context, baseUrl: endpoint,
+                    request: transport.request, isCustom: true, fullLookup: true }),
+                new Promise(resolve => { timeoutId = setTimeout(() => resolve(null), LRCLIB_CUSTOM_API_BUDGET_MS); })
+            ]);
         } finally {
-            clearTimeout(timeoutId);
+            clearTimeout(timeoutId); transport.close();
         }
     }
 
@@ -2148,8 +2195,9 @@
 
     // 검색 실행/후보 랭킹/검색 흐름 로직은 searchCandidates()와 getLyrics()에서
     // 동일하게 사용되므로, 호출별 컨텍스트를 받아 runSearchFlow를 돌려주는
-    // 팩토리로 공유한다. 반환되는 클로저 및 그 안의 로직은 원본과 완전히 동일하다.
-    function createLrclibSearchFlowRunner({ headers, searchSettings, trackDurationSec, syncDataLineCharCounts, syncDataSource }) {
+    // 팩토리로 공유한다. 기본값은 공식 API이며 재생에서만 호스트/전송을 지정한다.
+    function createLrclibSearchFlowRunner({ headers, searchSettings, trackDurationSec, syncDataLineCharCounts, syncDataSource,
+        baseUrl = LRCLIB_API_BASE, request = fetchWithTimeout, tryWithoutAlbum = false, candidateFilter = () => true }) {
                 const runSearch = async (params, label) => {
                     const query = new URLSearchParams();
                     if (params.track_name) query.set('track_name', params.track_name);
@@ -2157,8 +2205,8 @@
                     if (params.album_name && params.album_name !== 'undefined') query.set('album_name', params.album_name);
                     if (params.q) query.set('q', params.q);
 
-                    const searchUrl = `${LRCLIB_API_BASE}/search?${query.toString()}`;
-                    const response = await fetchWithTimeout(searchUrl, { headers }, 35000);
+                    const searchUrl = `${baseUrl}/search?${query.toString()}`;
+                    const response = await request(searchUrl, { headers }, 35000);
 
                     if (!response) {
                         return {
@@ -2262,6 +2310,7 @@
                         })
                         .filter(item => {
                             if (!item?.syncedLyrics && !item?.plainLyrics && !item?.instrumental) return false;
+                            if (!candidateFilter(item, metadata)) return false;
                             if (item.artistMatched) return true;
                             if (allowTitleDrivenMatch && item.titleDrivenMatch) return true;
                             return false;
@@ -2314,6 +2363,15 @@
                     let resolvedSearch = structuredSearch;
                     let rankedCandidates = rankCandidates(structuredSearch.candidates, metadata);
                     let usedFallbackQuery = false;
+
+                    if (rankedCandidates.length === 0 && tryWithoutAlbum && includeAlbum && metadata.album) {
+                        const withoutAlbum = await runSearch({ track_name: metadata.title, artist_name: metadata.artist }, 'structured:no-album');
+                        resolvedSearch = withoutAlbum;
+                        if (withoutAlbum.fatal) {
+                            return { fatal: true, error: withoutAlbum.error, resolvedSearch, rankedCandidates: [], usedFallbackQuery: false };
+                        }
+                        rankedCandidates = rankCandidates(withoutAlbum.candidates, metadata);
+                    }
 
                     if (rankedCandidates.length === 0 && LRCLIB_ENABLE_INEXACT_SEARCH) {
                         const fallbackAttempts = [];
@@ -2401,7 +2459,8 @@
     // body/selectedFlow/selectedSource 후보 선택 사다리는 searchCandidates()와
     // getLyrics()에서 완전히 동일하게 사용된다. 호출별 컨텍스트를 받아 선택 결과와
     // 영어 재검색 상태를 그대로 돌려주는 헬퍼로 공유한다.
-    async function selectLrclibCandidate({ primarySearchFlow, runSearchFlow, syncDataLineCharCounts, syncDataSource, info }) {
+    async function selectLrclibCandidate({ primarySearchFlow, runSearchFlow, syncDataLineCharCounts, syncDataSource, info,
+        getEnglishMetadata = () => getTrackMetadataForAcceptLanguage(info?.uri, LRCLIB_ENGLISH_ACCEPT_LANGUAGE) }) {
                 let body = null;
                 let selectedFlow = primarySearchFlow;
                 let selectedSource = 'primary-none';
@@ -2414,7 +2473,7 @@
                 const ensureEnglishSearchFlow = async () => {
                     if (englishSearchAttempted) return englishSearchFlow;
                     englishSearchAttempted = true;
-                    englishMetadata = await getTrackMetadataForAcceptLanguage(info?.uri, LRCLIB_ENGLISH_ACCEPT_LANGUAGE);
+                    englishMetadata = await getEnglishMetadata();
 
                     if (englishMetadata?.title && englishMetadata?.artist) {
                         englishMetadata = {
@@ -2498,9 +2557,15 @@
                 const trackId = window.LyricsService?.extractTrackId?.(info?.uri)
                     || window.ivLyricsTrackIdentity?.extractTrackId?.(info?.uri)
                     || '';
-                const trackIsrc = await window.SyncDataService?.resolveTrackIsrc?.(trackId, info)
-                    || window.SyncDataService?.getTrackIsrc?.(trackId, info)
-                    || window.SyncDataService?.normalizeSyncDataIsrc?.(info?.isrc || info?.external_ids?.isrc || info?.externalIds?.isrc);
+                let trackIsrc;
+                try {
+                    trackIsrc = await window.SyncDataService?.resolveTrackIsrc?.(trackId, info)
+                        || window.SyncDataService?.getTrackIsrc?.(trackId, info)
+                        || window.SyncDataService?.normalizeSyncDataIsrc?.(info?.isrc || info?.external_ids?.isrc || info?.externalIds?.isrc);
+                } catch {
+                    // Missing community metadata must not skip both lyric hosts.
+                    window.__ivLyricsDebugLog?.('[LR-DEBUG] ISRC context unavailable; using track metadata');
+                }
                 let syncDataLineCharCounts = null;
                 let syncDataSource = null;
 
@@ -2920,9 +2985,9 @@
                             onKeyDown: event => { if (event.key === 'Enter') { event.preventDefault(); saveCustomApiEndpoint(); } }
                         }),
                         React.createElement('small', { id: 'ivlyrics-lrclib-custom-api-desc' },
-                            getCustomApiText('desc', 'Optional. Try this LRCLIB-compatible server first when loading lyrics. If it has no matching lyrics or cannot be reached, use the official LRCLIB API.')),
+                            getCustomApiText('desc', 'Optional, for faster lyric loading during playback. Complete ID/metadata lookups and automatic searches on this LRCLIB-compatible server first. If no suitable lyrics are found or it is unreachable, repeat with official LRCLIB. Try other providers only if both fail.')),
                         React.createElement('small', { id: 'ivlyrics-lrclib-custom-api-official' },
-                            getCustomApiText('officialOnly', 'Only used to load lyrics. Sync Creator, lyrics search, and sync submissions always use official LRCLIB data.')),
+                            getCustomApiText('officialOnly', 'Manual lyric searches in Sync Creator, sync generation, and sync submissions always use the official LRCLIB API and data.')),
                         endpointInvalid && React.createElement('small', {
                             id: 'ivlyrics-lrclib-custom-api-error', className: 'ai-addon-field-error', role: 'alert'
                         }, getCustomApiText('invalid', 'Enter an HTTP or HTTPS API base URL without a username, password, query parameters, or fragment.'))
@@ -2973,13 +3038,25 @@
          * 구조화 검색 + 자유검색 폴백 + 아티스트/재생시간 검증
          */
         async getLyrics(info) {
-            const startTotal = performance.now();
             await LrclibLyricsAddon.prepareLyricsLookup(info);
             const cacheVersion = syncAddonCacheVersion();
             const localResult = await getLocalDatabaseLyrics(info, cacheVersion);
             if (localResult) return localResult;
-            const customResult = await getCustomApiLyrics(info, cacheVersion);
-            if (customResult) return customResult;
+            // Resolve the pinned source BEFORE either network stage, and reuse
+            // it for both. Never interleave official lyrics with mirror search.
+            const context = await resolveLrclibTrackContext(info);
+            const endpoint = info?.lrclibOfficialOnly ? '' : getCustomApiEndpoint();
+            if (endpoint) {
+                const customResult = await getCustomApiLyrics(info, cacheVersion, context, endpoint);
+                if (customResult && !customResult.error) return customResult;
+                window.__ivLyricsDebugLog?.('[LR-DEBUG] Custom lookup/search exhausted; starting official LRCLIB stage');
+            }
+            return LrclibLyricsAddon._getPlaybackFromApi(info, { cacheVersion, context, fullLookup: !!endpoint });
+        },
+
+        async _getPlaybackFromApi(info, { cacheVersion, context, baseUrl = LRCLIB_API_BASE,
+            request = fetchWithTimeout, isCustom = false, fullLookup = false }) {
+            const startTotal = performance.now();
             const result = {
                 uri: info.uri,
                 provider: 'lrclib',
@@ -3014,16 +3091,30 @@
                     return result;
                 }
 
-                const { headers, syncDataLineCharCounts, syncDataSource } = await resolveLrclibTrackContext(info);
+                const { headers, syncDataLineCharCounts, syncDataSource } = context;
+                const mirrorResults = new Map();
+                const mirrorResult = (candidate, metadata) => {
+                    if (mirrorResults.has(candidate)) return mirrorResults.get(candidate);
+                    const lookupInfo = metadata ? { ...info, title: metadata.title, artist: metadata.artist } : info;
+                    const found = buildPlaybackOnlyResult(candidate, lookupInfo, cacheVersion, 'custom', {
+                        syncDataSource, syncDataLineCharCounts
+                    });
+                    if (found) mirrorResults.set(candidate, found);
+                    return found;
+                };
 
                 if (getSyncDataLrclibId(syncDataSource)) {
-                    const directCandidate = decorateDirectCandidate(
-                        await fetchLrclibCandidateById(syncDataSource, headers),
-                        syncDataSource,
-                        trackDurationSec
-                    );
+                    let directCandidate = null;
+                    try {
+                        directCandidate = decorateDirectCandidate(
+                            await fetchLrclibCandidateById(syncDataSource, headers, { baseUrl, request }),
+                            syncDataSource, trackDurationSec
+                        );
+                    } catch { /* An unsupported/malformed direct lookup can still be found by search. */ }
 
-                    if (directCandidate && applyCandidateLyricsToResult(result, directCandidate)) {
+                    const directMirrorResult = isCustom && mirrorResult(directCandidate);
+                    if (directMirrorResult) return directMirrorResult;
+                    if (!isCustom && directCandidate && applyCandidateLyricsToResult(result, directCandidate)) {
                         logDebug('Success', {
                             directLrclibId: getSyncDataLrclibId(syncDataSource),
                             hasSynced: !!result.synced,
@@ -3039,7 +3130,31 @@
                     }
                 }
 
-                const runSearchFlow = createLrclibSearchFlowRunner({ headers, searchSettings, trackDurationSec, syncDataLineCharCounts, syncDataSource });
+                if (fullLookup) {
+                    const query = new URLSearchParams({ track_name: title, artist_name: artist, duration: String(trackDurationSec) });
+                    if (album && album !== 'undefined') query.set('album_name', album);
+                    try {
+                        const response = await request(`${baseUrl}/get?${query}`, { headers }, 35000);
+                        if (response?.ok) {
+                            const candidate = await response.json();
+                            if (isCustom) {
+                                const found = mirrorResult(candidate);
+                                if (found) return found;
+                            } else {
+                                // Metadata lookup is not a pinned-source shortcut.
+                                // Validate it before trusting its official source ID.
+                                const valid = buildPlaybackOnlyResult(candidate, info, cacheVersion, 'official', {
+                                    syncDataSource, syncDataLineCharCounts
+                                });
+                                if (valid && applyCandidateLyricsToResult(result, candidate)) return result;
+                            }
+                        }
+                    } catch { /* Continue the same host's complete search ladder. */ }
+                }
+
+                const runSearchFlow = createLrclibSearchFlowRunner({ headers, searchSettings, trackDurationSec, syncDataLineCharCounts,
+                    syncDataSource, baseUrl, request, tryWithoutAlbum: fullLookup,
+                    candidateFilter: isCustom ? (candidate, metadata) => !!mirrorResult(candidate, metadata) : () => true });
 
                 const primaryMetadata = {
                     title,
@@ -3059,7 +3174,12 @@
                     return result;
                 }
 
-                let { body, selectedFlow, selectedSource, englishSearchFlow, englishMetadata, englishSearchError } = await selectLrclibCandidate({ primarySearchFlow, runSearchFlow, syncDataLineCharCounts, syncDataSource, info });
+                let { body, selectedFlow, selectedSource, englishSearchFlow, englishMetadata, englishSearchError } = await selectLrclibCandidate({
+                    primarySearchFlow, runSearchFlow, syncDataLineCharCounts, syncDataSource, info,
+                    // The second host reuses this load's Spotify metadata read.
+                    getEnglishMetadata: () => context.englishMetadataPromise
+                        || (context.englishMetadataPromise = getTrackMetadataForAcceptLanguage(info?.uri, LRCLIB_ENGLISH_ACCEPT_LANGUAGE))
+                });
 
                 if (!body) {
                     if (englishSearchError) {
@@ -3092,6 +3212,13 @@
                         usedFallbackQuery: selectedFlow.usedFallbackQuery,
                         selectedSource
                     });
+                    return result;
+                }
+
+                if (isCustom) {
+                    const found = mirrorResult(body);
+                    if (found) return found;
+                    result.error = 'No compatible lyrics from custom LRCLIB';
                     return result;
                 }
 

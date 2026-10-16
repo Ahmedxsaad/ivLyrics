@@ -656,8 +656,8 @@ window.LANG_ID = {
       "lrclibCustomApi": {
         "label": "Alamat API kustom",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Opsional. Saat memuat lirik, server yang kompatibel dengan LRCLIB ini akan dicoba terlebih dahulu. Jika tidak ada lirik yang cocok atau server tidak dapat diakses, API resmi LRCLIB akan digunakan.",
-        "officialOnly": "Hanya digunakan untuk memuat lirik. Pembuat sinkronisasi, pencarian lirik, dan pengiriman sinkronisasi selalu menggunakan data resmi LRCLIB.",
+        "desc": "Opsional, untuk memuat lirik lebih cepat saat lagu diputar. Pencarian berdasarkan ID atau metadata dan pencarian otomatis diselesaikan di server yang kompatibel dengan LRCLIB ini terlebih dahulu. Jika tidak ada lirik yang sesuai atau server tidak dapat diakses, proses diulangi di LRCLIB resmi. Penyedia lain baru dicoba jika keduanya gagal.",
+        "officialOnly": "Pencarian lirik manual di pembuat sinkronisasi, pembuatan sinkronisasi, dan pengirimannya selalu menggunakan API dan data resmi LRCLIB.",
         "invalid": "Masukkan URL dasar API HTTP atau HTTPS tanpa nama pengguna, kata sandi, parameter kueri, atau fragmen."
       },
       "lrclibLocal": {

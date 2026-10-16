@@ -35,17 +35,70 @@ const deferred = () => {
 const flush = () => new Promise(resolve => setImmediate(resolve));
 const plain = value => JSON.parse(JSON.stringify(value));
 const texts = lines => Array.from(lines || [], line => line.text);
+const CUSTOM_REQUEST_BUDGET_MS = 5000;
+const CUSTOM_STAGE_BUDGET_MS = 20000;
+const OLD_CACHE_SCHEMA = '2026-08-11-sync-source-identity-1';
+const notFound = () => new Response('Not found', { status: 404 });
+const noMatch = url => new URL(url).pathname.endsWith('/search') ? Response.json([]) : notFound();
+const apiUrl = (base, path, params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return `${base}/${path}${query ? `?${query}` : ''}`;
+};
+const metadataGet = (base = CUSTOM, info = track) => apiUrl(base, 'get', {
+    track_name: info.title, artist_name: info.artist, duration: String(info.duration / 1000),
+    ...(info.album ? { album_name: info.album } : {})
+});
+const searchSequence = (base, info = track, { noAlbum = false } = {}) => {
+    const urls = [apiUrl(base, 'search', {
+        track_name: info.title, artist_name: info.artist,
+        ...(info.album ? { album_name: info.album } : {})
+    })];
+    if (noAlbum && info.album) urls.push(apiUrl(base, 'search', { track_name: info.title, artist_name: info.artist }));
+    urls.push(apiUrl(base, 'search', { q: `${info.title} ${info.artist}` }), apiUrl(base, 'search', { q: info.title }));
+    return urls;
+};
+const customSequence = (info = track, { sourceId, english } = {}) => [
+    ...(sourceId ? [apiUrl(CUSTOM, `get/${sourceId}`)] : []),
+    metadataGet(CUSTOM, info), ...searchSequence(CUSTOM, info, { noAlbum: true }),
+    ...(english ? searchSequence(CUSTOM, { ...info, ...english, album: '' }) : [])
+];
+const officialSequence = (info = track, options) => customSequence(info, options).map(url => url.replace(CUSTOM, OFFICIAL));
+const canonicalUrl = url => {
+    const parsed = new URL(url);
+    parsed.searchParams.sort();
+    return parsed.href;
+};
+const assertRequests = (h, expected) => assert.deepEqual(
+    h.requests.map(request => canonicalUrl(request.url)), expected.map(canonicalUrl)
+);
+function assertPrivateSafety(h, base = CUSTOM) {
+    const requests = h.requests.filter(request => request.url.startsWith(`${base}/`));
+    assert.equal(new Set(requests.map(request => canonicalUrl(request.url))).size, requests.length, 'no duplicate private queries');
+    assert.ok(h.requests.every(request => !request.url.startsWith(`${PROXY}${base}`)), 'private requests never use a third-party proxy');
+    for (const { url, options } of requests) {
+        const parsed = new URL(url);
+        assert.equal(parsed.username, '');
+        assert.equal(parsed.password, '');
+        assert.ok([...parsed.searchParams.values()].every(value => value.trim()), 'never send empty query values');
+        assert.equal(options.method, 'GET');
+        assert.deepEqual([...new Headers(options.headers)], [['accept', 'application/json']]);
+        assert.equal(options.credentials, 'omit');
+        assert.equal(options.referrerPolicy, 'no-referrer');
+        assert.equal(options.redirect, 'error');
+        assert.equal(options.body, undefined);
+    }
+}
 
 function officialResponse(url) {
     return Response.json(new URL(url.replace(PROXY, '')).pathname.endsWith('/search') ? [officialRecord] : officialRecord);
 }
 
 // Run both complete production modules. Only storage, React, time and network are synthetic.
-function setup({ endpoint, custom = () => Response.json(record), official = officialResponse, savedSyncData, local,
+function setup({ endpoint, custom = () => Response.json(record), official = officialResponse, savedSyncData, local, englishMetadata,
     managed = true, storedValues = [], cache = new Map() } = {}) {
     const stored = new Map(storedValues);
     if (endpoint !== undefined) stored.set(STORAGE_KEY, endpoint);
-    const requests = [], writes = [], syncReads = [], cacheReads = [], reloadCalls = [];
+    const requests = [], writes = [], syncReads = [], cacheReads = [], reloadCalls = [], metadataReads = [];
     const timers = new Map();
     let now = 0, nextTimer = 0, registeredAddon, reloads = 0;
     class FakeDate extends Date {
@@ -54,7 +107,7 @@ function setup({ endpoint, custom = () => Response.json(record), official = offi
     }
     const fetch = async (url, options = {}) => {
         url = String(url);
-        const request = { url, options, at: now };
+        const request = { url, options, at: now, syncReadCount: syncReads.length };
         requests.push(request);
         return (url.startsWith(`${OFFICIAL}/`) || url.startsWith(`${PROXY}${OFFICIAL}/`)
             ? official : custom)(url, options, requests.length);
@@ -79,6 +132,16 @@ function setup({ endpoint, custom = () => Response.json(record), official = offi
             set: (key, value) => { writes.push([key, value]); stored.set(key, value); }
         }
     };
+    if (englishMetadata) Spicetify.GraphQL = {
+        Definitions: { lookupEntity: {} },
+        async Request(definition, { uri }) {
+            metadataReads.push({ uri, at: now });
+            return { data: { lookup: [{ data: {
+                __typename: 'Track', name: englishMetadata.title,
+                artists: { items: [{ profile: { name: englishMetadata.artist } }] }
+            } }] } };
+        }
+    };
     const context = vm.createContext({
         window, Spicetify, fetch, URL, URLSearchParams, Headers, AbortController, Date: FakeDate,
         console: { log() {}, info() {}, warn() {}, error() {} }, performance: { now: () => now },
@@ -96,7 +159,7 @@ function setup({ endpoint, custom = () => Response.json(record), official = offi
     const addon = registeredAddon || manager.getAddon('lrclib');
     assert.equal(addon?.id, 'lrclib', 'the production addon registered');
     return {
-        addon, manager, window, Spicetify, requests, writes, stored, timers, cache, cacheReads, syncReads, reloadCalls,
+        addon, manager, window, Spicetify, requests, writes, stored, timers, cache, cacheReads, syncReads, reloadCalls, metadataReads,
         get reloads() { return reloads; },
         get endpointWrites() { return writes.filter(([key]) => key === STORAGE_KEY); },
         async advance(ms) {
@@ -182,6 +245,32 @@ function assertOfficial(result) {
     assert.deepEqual(texts(result.synced), ['Official first line', 'Official second line']);
 }
 
+async function canonicalSyncData() {
+    const h = setup({ savedSyncData: syncData });
+    const result = await h.addon.getLyrics(track);
+    assertOfficial(result);
+    return { source: plain(result.lrclibSource) };
+}
+
+function assertCanonicalCustom(result, source) {
+    assert.equal(result.error, null);
+    assert.equal(result.lrclibApiSource, 'custom');
+    assert.equal(result.lrclibId, source.lrclibId, 'only the validated saved official ID is retained for sync application');
+    assert.deepEqual(texts(result.synced || result.unsynced), ['Official first line', 'Official second line']);
+    if (result.lrclibSource) {
+        assert.equal(result.lrclibSource.lrclibId, source.lrclibId);
+        assert.equal(result.lrclibSource.lyricsFingerprint, source.lyricsFingerprint);
+    }
+}
+
+test('unavailable ISRC lookup cannot skip both lyric hosts', async () => {
+    const h = setup({ endpoint: CUSTOM });
+    h.window.SyncDataService.resolveTrackIsrc = async () => { throw new Error('ISRC unavailable'); };
+    assertCustom(await h.addon.getLyrics(track));
+    assertRequests(h, [metadataGet()]);
+    assert.equal(h.timers.size, 0);
+});
+
 test('unset endpoint defaults to blank and keeps official playback unchanged', async () => {
     const h = setup();
     assert.equal(h.manager.getAddonSetting('lrclib', SETTING, ''), '');
@@ -207,7 +296,7 @@ function localDatabase(candidate = record) {
 
 test('local database playback precedes configured custom API and never trusts its IDs as official sources', async () => {
     const local = localDatabase({ ...record, id: 123, lrclibId: '123', lrclibSource: syncData.source });
-    const h = setup({ endpoint: CUSTOM, local });
+    const h = setup({ endpoint: CUSTOM, local, savedSyncData: syncData });
     const result = await h.addon.getLyrics(track);
     assert.equal(result.lrclibApiSource, 'local');
     assert.equal(Object.hasOwn(result, 'lrclibId'), false);
@@ -226,10 +315,11 @@ test('local miss, invalid data or failure proceeds to the custom API then offici
         assertCustom(await h.addon.getLyrics(track));
         assert.equal(h.requests.length, 1);
         assert.equal(new URL(h.requests[0].url).origin, new URL(CUSTOM).origin);
-        const fallback = setup({ endpoint: CUSTOM, local: localDatabase(candidate), custom: () => Response.json(null) });
+        const fallback = setup({ endpoint: CUSTOM, local: localDatabase(candidate), custom: noMatch });
         assertOfficial(await fallback.addon.getLyrics(track));
-        assert.equal(fallback.requests.length, 2);
-        assert.equal(fallback.requests[1].url.startsWith(OFFICIAL), true);
+        assertRequests(fallback, [...customSequence(), metadataGet(OFFICIAL)]);
+        assert.equal(fallback.syncReads.length, 1);
+        assertPrivateSafety(fallback);
     }
 });
 
@@ -308,7 +398,7 @@ test('custom GET normalizes bases, encodes track metadata and returns lyrics bef
         ['https://lyrics.example.test/nested/lrclib///', 'https://lyrics.example.test/nested/lrclib'],
         ['http://127.0.0.1:8088/', 'http://127.0.0.1:8088/api']
     ]) await t.test(endpoint, async () => {
-        const h = setup({ endpoint, savedSyncData: syncData });
+        const h = setup({ endpoint });
         const result = await h.addon.getLyrics(track);
         assertCustom(result);
         assert.equal(result.cacheVersion, h.addon.cacheVersion);
@@ -326,7 +416,8 @@ test('custom GET normalizes bases, encodes track metadata and returns lyrics bef
         assert.equal(options.redirect, 'error');
         assert.equal(options.body, undefined);
         assert.equal(options.signal.aborted, false);
-        assert.equal(h.syncReads.length, 0, 'custom success precedes saved official source resolution');
+        assert.equal(h.syncReads.length, 1, 'saved source context is resolved before private lookup');
+        assert.equal(h.requests[0].syncReadCount, 1);
         assert.equal(h.timers.size, 0);
     });
 });
@@ -354,7 +445,7 @@ test('stored endpoint is honored through direct storage before the full manager 
     assert.equal(h.requests.length, 1);
 });
 
-test('network, HTTP and JSON failures each fall back once without private search, retries or a proxy', async t => {
+test('failed private hosts fall back to official metadata lookup without duplicate requests or a proxy', async t => {
     const failures = [
         ['network', () => { throw new TypeError('Failed to fetch'); }],
         ['redirect rejection', () => { throw new TypeError('Redirect is not allowed'); }],
@@ -371,10 +462,13 @@ test('network, HTTP and JSON failures each fall back once without private search
         const result = await h.addon.getLyrics(track);
         assertOfficial(result);
         assert.deepEqual({ ...plain(result), cacheVersion: expected.cacheVersion }, expected);
-        assert.deepEqual(h.requests.map(request => request.url), [
-            h.requests[0].url, ...baseline.requests.map(request => request.url)
-        ]);
-        assert.equal(new URL(h.requests[0].url).pathname, '/api/get');
+        const privateRequests = h.requests.filter(request => request.url.startsWith(`${CUSTOM}/`));
+        assert.ok(privateRequests.length > 0 && privateRequests.length <= customSequence().length);
+        assertRequests({ requests: privateRequests }, customSequence().slice(0, privateRequests.length));
+        assertRequests({ requests: h.requests.slice(privateRequests.length) }, [metadataGet(OFFICIAL)]);
+        if (name === '404') assertRequests(h, [...customSequence(), metadataGet(OFFICIAL)]);
+        assert.equal(h.syncReads.length, 1);
+        assertPrivateSafety(h);
         assert.equal(h.timers.size, 0);
     });
 });
@@ -402,42 +496,290 @@ test('malformed, empty, unparseable and mismatched records cannot short-circuit 
         ['truthy instrumental string', { ...record, syncedLyrics: null, plainLyrics: null, instrumental: 'true' }],
         ['mismatched instrumental', { ...record, syncedLyrics: null, plainLyrics: null, instrumental: true, duration: 900 }]
     ]) await t.test(name, async () => {
-        const h = setup({ endpoint: CUSTOM, custom: () => Response.json(value) });
+        const h = setup({ endpoint: CUSTOM, custom: url => new URL(url).pathname.endsWith('/search')
+            ? Response.json([]) : Response.json(value) });
         assertOfficial(await h.addon.getLyrics(track));
-        assert.equal(h.requests.length, 2, 'one private GET then the ordinary official search');
-        assert.equal(h.requests[1].url.startsWith(`${OFFICIAL}/search?`), true);
+        assertRequests(h, [...customSequence(), metadataGet(OFFICIAL)]);
+        assert.equal(h.syncReads.length, 1);
+        assertPrivateSafety(h);
         assert.equal(h.timers.size, 0);
     });
 });
 
-test('custom failure preserves saved official ID loading and official CORS recovery', async () => {
+test('the whole custom stage precedes saved official ID loading and official CORS recovery', async () => {
     const h = setup({
-        endpoint: CUSTOM, savedSyncData: syncData, custom: () => new Response('Not found', { status: 404 }),
+        endpoint: CUSTOM, savedSyncData: syncData, custom: noMatch,
         official: url => {
             if (!url.startsWith(PROXY)) throw new TypeError('Failed to fetch');
             return Response.json(officialRecord);
         }
     });
     assertOfficial(await h.addon.getLyrics(track));
-    assert.deepEqual(h.requests.slice(1).map(request => request.url), [
+    assertRequests(h, [
+        ...customSequence(track, { sourceId: officialRecord.id }),
         `${OFFICIAL}/get/${officialRecord.id}`, `${PROXY}${OFFICIAL}/get/${officialRecord.id}`
     ]);
-    assert.equal(new URL(h.requests[0].url).origin, new URL(CUSTOM).origin);
-    assert.equal(h.requests.length, 3);
+    assert.equal(h.syncReads.length, 1);
+    assert.ok(h.requests.every(request => request.syncReadCount === 1));
+    assertPrivateSafety(h);
     assert.equal(h.timers.size, 0);
 });
 
-test('custom miss preserves the existing official free-text fallback sequence', async () => {
+test('custom miss runs the full official metadata, no-album and free-text fallback sequence', async () => {
     const official = url => Response.json(new URL(url).searchParams.has('q') ? [officialRecord] : []);
     const baseline = setup({ official });
     const expected = await baseline.addon.getLyrics(track);
     assertOfficial(expected);
     assert.ok(baseline.requests.some(request => new URL(request.url).searchParams.has('q')));
-    const h = setup({ endpoint: CUSTOM, custom: () => Response.json(null), official });
+    const h = setup({ endpoint: CUSTOM, custom: noMatch, official });
     const result = await h.addon.getLyrics(track);
     assert.deepEqual({ ...plain(result), cacheVersion: expected.cacheVersion }, plain(expected));
-    assert.deepEqual(h.requests.slice(1).map(request => request.url), baseline.requests.map(request => request.url));
-    assert.equal(h.requests.filter(request => new URL(request.url).origin === new URL(CUSTOM).origin).length, 1);
+    assertRequests(h, [...customSequence(), ...officialSequence().slice(0, 4)]);
+    assertPrivateSafety(h);
+});
+
+test('custom metadata 404 continues through each search fallback before contacting official LRCLIB', async t => {
+    const sequence = customSequence();
+    for (let hit = 1; hit < sequence.length; hit++) await t.test(sequence[hit], async () => {
+        const h = setup({ endpoint: CUSTOM, custom: url => canonicalUrl(url) === canonicalUrl(sequence[hit])
+            ? Response.json([record]) : noMatch(url) });
+        assertCustom(await h.addon.getLyrics(track));
+        assertRequests(h, sequence.slice(0, hit + 1));
+        assert.equal(h.syncReads.length, 1);
+        assertPrivateSafety(h);
+        assert.equal(h.timers.size, 0);
+    });
+});
+
+test('a saved ivSync source ID is resolved once before custom ID lookup and never requires official lyrics on a hit', async () => {
+    const saved = await canonicalSyncData();
+    const h = setup({ endpoint: CUSTOM, savedSyncData: saved, custom: () => Response.json(officialRecord) });
+    const sourceReady = deferred();
+    h.window.SyncDataService.getSyncData = async (...args) => { h.syncReads.push(args); return sourceReady.promise; };
+    const pending = h.addon.getLyrics(track);
+    await flush();
+    assert.equal(h.syncReads.length, 1);
+    assert.equal(h.requests.length, 0, 'no private request may race ahead of saved-source resolution');
+    sourceReady.resolve(saved);
+    assertCanonicalCustom(await pending, saved.source);
+    assertRequests(h, [`${CUSTOM}/get/${officialRecord.id}`]);
+    assert.equal(h.requests[0].syncReadCount, 1);
+    assert.equal(h.syncReads.length, 1);
+    assertPrivateSafety(h);
+});
+
+test('a missing custom source ID falls through to metadata without losing validated canonical identity', async () => {
+    const saved = await canonicalSyncData();
+    const h = setup({ endpoint: CUSTOM, savedSyncData: saved, custom: url =>
+        new URL(url).pathname.endsWith(`/get/${officialRecord.id}`) ? notFound() : Response.json(officialRecord) });
+    assertCanonicalCustom(await h.addon.getLyrics(track), saved.source);
+    assertRequests(h, [`${CUSTOM}/get/${officialRecord.id}`, metadataGet()]);
+    assert.equal(h.syncReads.length, 1);
+    assertPrivateSafety(h);
+});
+
+test('a mirror with a different private ID preserves only the canonical ID when its saved fingerprint matches', async () => {
+    const saved = await canonicalSyncData();
+    const h = setup({ endpoint: CUSTOM, savedSyncData: saved, custom: () => Response.json({
+        ...officialRecord, id: record.id, lrclibId: String(record.id),
+        lrclibSource: { provider: 'lrclib', lrclibId: String(record.id), lyricsFingerprint: 'forged' }
+    }) });
+    const result = await h.addon.getLyrics(track);
+    assertCanonicalCustom(result, saved.source);
+    assertRequests(h, [`${CUSTOM}/get/${officialRecord.id}`]);
+    assert.notEqual(result.lrclibId, String(record.id));
+    assert.equal(result.lrclibSource.lyricsFingerprint, saved.source.lyricsFingerprint);
+    assertPrivateSafety(h);
+});
+
+test('a legacy saved source without text evidence accepts only its exact ID on the custom host', async t => {
+    for (const sameId of [true, false]) await t.test(sameId ? 'same ID' : 'foreign ID', async () => {
+        const candidate = { ...officialRecord, id: sameId ? officialRecord.id : record.id };
+        const h = setup({ endpoint: CUSTOM, savedSyncData: syncData, custom: url => Response.json(
+            new URL(url).pathname.endsWith('/search') ? [candidate] : candidate
+        ) });
+        const result = await h.addon.getLyrics(track);
+        if (sameId) {
+            assertCanonicalCustom(result, syncData.source);
+            assertRequests(h, [`${CUSTOM}/get/${officialRecord.id}`]);
+        } else {
+            assertOfficial(result);
+            assertRequests(h, [...customSequence(track, { sourceId: officialRecord.id }), `${OFFICIAL}/get/${officialRecord.id}`]);
+        }
+        assert.equal(h.syncReads.length, 1);
+        assertPrivateSafety(h);
+    });
+});
+
+test('canonical fingerprint validation selects the matching timed or plain revision before leaving the custom host', async t => {
+    for (const matching of ['synced', 'plain']) await t.test(matching, async () => {
+        const saved = await canonicalSyncData();
+        saved.source.preferredLyricsSource = 'plain';
+        const candidate = { ...officialRecord, ...(matching === 'plain' ? {
+            syncedLyrics: officialRecord.syncedLyrics.replaceAll('Official', 'Tampered')
+        } : { plainLyrics: officialRecord.plainLyrics.replaceAll('Official', 'Tampered') }) };
+        const h = setup({ endpoint: CUSTOM, savedSyncData: saved, custom: () => Response.json(candidate) });
+        const result = await h.addon.getLyrics(track);
+        assertCanonicalCustom(result, saved.source);
+        if (matching === 'plain') assert.equal(result.synced, null, 'a different timed revision must not replace the validated plain text');
+        else assert.deepEqual(texts(result.synced), ['Official first line', 'Official second line']);
+        assertRequests(h, [`${CUSTOM}/get/${officialRecord.id}`]);
+        assert.equal(h.syncReads.length, 1);
+        assertPrivateSafety(h);
+    });
+});
+
+test('matching row lengths in the wrong revision cannot validate the saved preferred plain source', async () => {
+    const saved = await canonicalSyncData();
+    saved.source.preferredLyricsSource = 'plain';
+    delete saved.source.lyricsFingerprint;
+    const candidate = { ...officialRecord, plainLyrics: 'Official first line Official second line' };
+    const h = setup({ endpoint: CUSTOM, savedSyncData: saved, custom: url => Response.json(
+        new URL(url).pathname.endsWith('/search') ? [candidate] : candidate
+    ) });
+    const result = await h.addon.getLyrics(track);
+    assert.equal(result.error, null);
+    assert.notEqual(result.lrclibApiSource, 'custom');
+    assert.equal(result.lrclibId, saved.source.lrclibId);
+    assert.deepEqual(texts(result.synced || result.unsynced), ['Official first line', 'Official second line']);
+    assertRequests(h, [...customSequence(track, { sourceId: officialRecord.id }), `${OFFICIAL}/get/${officialRecord.id}`]);
+    assertPrivateSafety(h);
+});
+
+test('a missing known ID exhausts private metadata and searches before the official ID lookup', async () => {
+    const saved = await canonicalSyncData();
+    const h = setup({ endpoint: CUSTOM, savedSyncData: saved, custom: noMatch });
+    assertOfficial(await h.addon.getLyrics(track));
+    assertRequests(h, [...customSequence(track, { sourceId: officialRecord.id }), `${OFFICIAL}/get/${officialRecord.id}`]);
+    assert.equal(h.syncReads.length, 1);
+    assertPrivateSafety(h);
+});
+
+test('mismatched IDs, line counts or fingerprints cannot replace the pinned official source', async t => {
+    const saved = await canonicalSyncData();
+    for (const [name, candidate] of [
+        ['different record', record],
+        ['same ID, different fingerprint with identical row lengths', {
+            ...officialRecord, syncedLyrics: officialRecord.syncedLyrics.replaceAll('Official', 'Tampered'),
+            plainLyrics: officialRecord.plainLyrics.replaceAll('Official', 'Tampered')
+        }],
+        ['same ID, changed row boundaries', {
+            ...officialRecord, syncedLyrics: '[00:01.00]Official first line Official second line',
+            plainLyrics: 'Official first line Official second line'
+        }]
+    ]) await t.test(name, async () => {
+        const h = setup({ endpoint: CUSTOM, savedSyncData: saved, custom: url => Response.json(
+            new URL(url).pathname.endsWith('/search') ? [candidate] : candidate
+        ) });
+        assertOfficial(await h.addon.getLyrics(track));
+        assertRequests(h, [...customSequence(track, { sourceId: officialRecord.id }), `${OFFICIAL}/get/${officialRecord.id}`]);
+        assert.equal(h.syncReads.length, 1);
+        assertPrivateSafety(h);
+    });
+});
+
+test('a poisoned direct-ID response cannot hide a later validated custom search result', async () => {
+    const saved = await canonicalSyncData();
+    const h = setup({ endpoint: CUSTOM, savedSyncData: saved, custom: url => {
+        const path = new URL(url).pathname;
+        if (path.endsWith(`/get/${officialRecord.id}`)) return Response.json({ ...record, id: officialRecord.id });
+        return path.endsWith('/search') ? Response.json([officialRecord]) : notFound();
+    } });
+    assertCanonicalCustom(await h.addon.getLyrics(track), saved.source);
+    assertRequests(h, [`${CUSTOM}/get/${officialRecord.id}`, metadataGet(), searchSequence(CUSTOM)[0]]);
+    assert.equal(h.syncReads.length, 1);
+    assertPrivateSafety(h);
+});
+
+test('English metadata search completes on the custom host before any official lyric request', async () => {
+    const english = { title: 'English Fixture Title', artist: 'English Fixture Artist' };
+    const candidate = { ...record, trackName: english.title, artistName: english.artist };
+    const sequence = customSequence(track, { english });
+    const h = setup({ endpoint: CUSTOM, englishMetadata: english, custom: url =>
+        canonicalUrl(url) === canonicalUrl(sequence.at(-1)) ? Response.json([candidate]) : noMatch(url) });
+    assertCustom(await h.addon.getLyrics(track));
+    assertRequests(h, sequence);
+    assert.equal(h.syncReads.length, 1);
+    assert.equal(h.metadataReads.length, 1);
+    assertPrivateSafety(h);
+});
+
+test('both complete host ladders share one lazy English metadata lookup', async () => {
+    const english = { title: 'English Fixture Title', artist: 'English Fixture Artist' };
+    const officialQueries = officialSequence(track, { english });
+    const candidate = { ...officialRecord, trackName: english.title, artistName: english.artist };
+    const h = setup({ endpoint: CUSTOM, englishMetadata: english, custom: noMatch, official: url =>
+        canonicalUrl(url) === canonicalUrl(officialQueries.at(-1)) ? Response.json([candidate]) : noMatch(url) });
+    assertOfficial(await h.addon.getLyrics(track));
+    assertRequests(h, [...customSequence(track, { english }), ...officialQueries]);
+    assert.equal(h.metadataReads.length, 1, 'the second host reuses the first host stage\'s metadata');
+    assert.equal(h.syncReads.length, 1);
+    assertPrivateSafety(h);
+    assert.equal(h.timers.size, 0);
+});
+
+test('empty albums and unchanged English metadata never cause empty or duplicate private queries', async t => {
+    for (const info of [track, { ...track, album: '' }]) await t.test(info.album || 'no album', async () => {
+        const h = setup({ endpoint: CUSTOM, englishMetadata: { title: info.title, artist: info.artist }, custom: noMatch });
+        assertOfficial(await h.addon.getLyrics(info));
+        assertRequests(h, [...customSequence(info), metadataGet(OFFICIAL, info)]);
+        assert.equal(h.syncReads.length, 1);
+        assertPrivateSafety(h);
+    });
+});
+
+test('private fallbacks honor disabled free-text settings without skipping structured no-album search', async () => {
+    const h = setup({ endpoint: CUSTOM, custom: noMatch, storedValues: [
+        ['ivLyrics:lyrics:addon:lrclib:enable_fallback_title_artist', 'false'],
+        ['ivLyrics:lyrics:addon:lrclib:enable_fallback_title_only', 'false']
+    ] });
+    assertOfficial(await h.addon.getLyrics(track));
+    assertRequests(h, [...customSequence().slice(0, 3), metadataGet(OFFICIAL)]);
+    assertPrivateSafety(h);
+});
+
+test('the next provider starts only after both complete LRCLIB host stages are exhausted', async t => {
+    for (const pinned of [false, true]) await t.test(pinned ? 'with saved source ID' : 'without saved source ID', async () => {
+        const options = pinned ? { sourceId: officialRecord.id } : {};
+        const lastOfficialResponse = deferred();
+        const privateQueries = customSequence(track, options);
+        const officialQueries = officialSequence(track, options);
+        const h = setup({ endpoint: CUSTOM, custom: noMatch, savedSyncData: pinned ? syncData : undefined, official: url =>
+            canonicalUrl(url) === canonicalUrl(officialQueries.at(-1)) ? lastOfficialResponse.promise : noMatch(url) });
+        let nextCalls = 0;
+        assert.equal(h.manager.register({
+            id: 'next-fixture', name: 'Next fixture', author: 'Tests', description: 'Fallback fixture', version: '1',
+            supports: { synced: true, unsynced: true },
+            async getLyrics(info) {
+                nextCalls++;
+                assertRequests(h, [...privateQueries, ...officialQueries]);
+                return { uri: info.uri, provider: 'next-fixture', synced: [{ startTime: 0, text: 'Next provider' }], error: null };
+            }
+        }), true);
+        h.manager.setProviderOrder(['lrclib', 'next-fixture']);
+        const pending = h.manager.getLyrics(track);
+        await flush();
+        assertRequests(h, [...privateQueries, ...officialQueries]);
+        assert.equal(nextCalls, 0, 'the next provider must wait for the last official response');
+        lastOfficialResponse.resolve(Response.json([]));
+        const result = await pending;
+        assert.equal(result.provider, 'next-fixture');
+        assert.equal(nextCalls, 1);
+        assert.equal(h.syncReads.filter(([, provider]) => provider === 'lrclib').length, 1);
+        assert.ok(h.requests.every(request => request.syncReadCount === 1));
+        assertPrivateSafety(h);
+        assert.equal(h.timers.size, 0);
+    });
+});
+
+test('redirect responses across the private stage cannot leak requests, cookies or credentials to another host', async () => {
+    const h = setup({ endpoint: CUSTOM, custom: () => new Response(null, {
+        status: 302, headers: { Location: 'https://redirect-target.example.test/collect' }
+    }) });
+    assertOfficial(await h.addon.getLyrics(track));
+    assertPrivateSafety(h);
+    assert.ok(h.requests.every(request => [new URL(CUSTOM).origin, new URL(OFFICIAL).origin].includes(new URL(request.url).origin)));
+    assert.equal(h.timers.size, 0);
 });
 
 test('invalid persisted URLs are ignored and equivalent official URLs skip the custom step', async t => {
@@ -589,6 +931,18 @@ test('cache versions follow normalized endpoints, including changes and clearing
     assert.equal(h.addon.cacheVersion, blank);
 });
 
+test('the old metadata-only cache schema cannot hide the new full custom lookup stage', async () => {
+    const seed = setup({ endpoint: CUSTOM });
+    const previous = plain(await seed.addon.getLyrics(track));
+    previous.cacheVersion = previous.cacheVersion.replace(/^[^:]+/, OLD_CACHE_SCHEMA);
+    previous.synced = [{ startTime: 0, text: 'Stale metadata-only cache' }];
+    const h = setup({ endpoint: CUSTOM, cache: new Map([['fixture:lrclib', previous]]) });
+    assert.notEqual(h.addon.cacheVersion, previous.cacheVersion, 'the lookup semantics require a cache schema bump');
+    assertCustom(await h.manager.getLyrics(track, 'lrclib'));
+    assertRequests(h, [metadataGet()]);
+    assert.equal(h.cache.get('fixture:lrclib').cacheVersion, h.addon.cacheVersion);
+});
+
 test('manager cache reuses the same endpoint, refetches after editing it and returns to official after clearing', async () => {
     const cache = new Map([['unrelated:translation', { text: 'keep me' }]]);
     const h = setup({ endpoint: CUSTOM, cache, custom: url => Response.json({
@@ -673,35 +1027,45 @@ test('invalid UI addresses leave the previous endpoint and cache version intact'
     });
 });
 
-test('five-second budget falls back even when fetch ignores abort, and late success cannot replace official lyrics', async () => {
+test('an unresponsive private host times out each request and exits within the twenty-second stage ceiling', async () => {
     const network = deferred();
     const h = setup({ endpoint: CUSTOM, custom: () => network.promise });
     let result, failure;
     const pending = h.addon.getLyrics(track).then(value => { result = value; }, error => { failure = error; });
-    await h.advance(4999);
+    await h.advance(CUSTOM_REQUEST_BUDGET_MS - 1);
     assert.equal(h.requests.length, 1);
     assert.equal(h.requests[0].options.signal.aborted, false);
     assert.equal(result, undefined);
     await h.advance(1);
     assert.equal(failure, undefined);
-    assert.ok(result, 'the overall operation settled without waiting for fetch to acknowledge abort');
+    assert.equal(result, undefined, 'search fallbacks remain available after metadata times out');
+    assert.equal(h.requests[0].options.signal.aborted, true);
+    assert.equal(h.requests[1].at, CUSTOM_REQUEST_BUDGET_MS);
+    await h.advance(CUSTOM_REQUEST_BUDGET_MS - 1);
+    assert.equal(result, undefined);
+    assert.equal(h.requests.length, 2);
+    await h.advance(1);
+    assert.ok(result, 'the stage settles even when fetch ignores abort');
     await pending;
     assertOfficial(result);
-    assert.equal(h.requests[0].options.signal.aborted, true);
-    assert.equal(h.requests[1].at, 5000);
-    assert.equal(h.requests.length, 2);
+    assertRequests(h, [...customSequence().slice(0, 2), metadataGet(OFFICIAL)]);
+    assert.deepEqual(h.requests.map(request => request.at), [0, CUSTOM_REQUEST_BUDGET_MS, CUSTOM_REQUEST_BUDGET_MS * 2]);
+    assert.ok(h.requests.at(-1).at <= CUSTOM_STAGE_BUDGET_MS);
+    assert.ok(h.requests.slice(0, 2).every(request => request.options.signal.aborted));
+    assertPrivateSafety(h);
     assert.equal(h.timers.size, 0);
     network.resolve(Response.json(record));
     await flush();
     assertOfficial(result);
-    assert.equal(h.requests.length, 2);
+    assert.equal(h.requests.length, 3);
     assert.equal(h.timers.size, 0);
 });
 
-test('header time and JSON body time share one five-second budget, even when body reading ignores abort', async () => {
+test('headers and JSON body share the request budget and a timed-out body still permits custom search', async () => {
     const headers = deferred(), body = deferred();
     let readingBody = false, result, failure;
-    const h = setup({ endpoint: CUSTOM, custom: () => headers.promise });
+    const h = setup({ endpoint: CUSTOM, custom: url => new URL(url).pathname.endsWith('/search')
+        ? Response.json([record]) : headers.promise });
     const pending = h.addon.getLyrics(track).then(value => { result = value; }, error => { failure = error; });
     await h.advance(3000);
     headers.resolve({ ok: true, json() { readingBody = true; return body.promise; } });
@@ -715,14 +1079,55 @@ test('header time and JSON body time share one five-second budget, even when bod
     assert.equal(failure, undefined);
     assert.ok(result, 'body consumption is bounded by the original deadline');
     await pending;
-    assertOfficial(result);
+    assertCustom(result);
     assert.equal(h.requests[0].options.signal.aborted, true);
-    assert.equal(h.requests[1].at, 5000, 'receiving headers did not restart the timeout');
+    assert.equal(h.requests[1].at, CUSTOM_REQUEST_BUDGET_MS, 'receiving headers did not restart the timeout');
+    assertRequests(h, [metadataGet(), searchSequence(CUSTOM)[0]]);
+    assertPrivateSafety(h);
     assert.equal(h.requests.length, 2);
     assert.equal(h.timers.size, 0);
     body.resolve(record);
     await flush();
-    assertOfficial(result);
+    assertCustom(result);
     assert.equal(h.requests.length, 2);
     assert.equal(h.timers.size, 0);
+});
+
+test('the remaining private-stage budget clips the last request rather than granting another five seconds', async () => {
+    const responses = [];
+    const h = setup({ endpoint: CUSTOM, custom: () => {
+        const response = deferred();
+        responses.push(response);
+        return response.promise;
+    } });
+    let result;
+    const pending = h.addon.getLyrics(track).then(value => { result = value; });
+    await flush();
+    for (let attempt = 0; attempt < 4; attempt++) {
+        assert.equal(h.requests.length, attempt + 1);
+        await h.advance(4500);
+        responses[attempt].resolve(noMatch(h.requests[attempt].url));
+        await flush();
+    }
+    assertRequests(h, customSequence());
+    assert.equal(h.requests.at(-1).at, 18000);
+    const body = deferred();
+    let readingBody = false;
+    responses.at(-1).resolve({ ok: true, status: 200, json() { readingBody = true; return body.promise; } });
+    await flush();
+    assert.equal(readingBody, true);
+    await h.advance(1999);
+    assert.equal(result, undefined);
+    await h.advance(1);
+    await pending;
+    assertOfficial(result);
+    assertRequests(h, [...customSequence(), metadataGet(OFFICIAL)]);
+    assert.equal(h.requests.at(-1).at, CUSTOM_STAGE_BUDGET_MS);
+    assert.equal(h.requests.at(-2).options.signal.aborted, true);
+    assert.equal(h.timers.size, 0);
+    body.resolve([record]);
+    await flush();
+    assertOfficial(result);
+    assert.equal(h.requests.length, 6, 'late private responses cannot restart an exhausted stage');
+    assertPrivateSafety(h);
 });

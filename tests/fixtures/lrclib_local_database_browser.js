@@ -70,8 +70,9 @@ async (page) => {
         seen.push(url);
         if (String(url).startsWith('https://custom.example/api')) return new Response(null, { status: 404 });
         if (!String(url).startsWith('https://lrclib.net/api/')) throw new Error('Unexpected destination');
-        return Response.json([{ id: 777, trackName: info.title, artistName: info.artist, albumName: info.album,
-          duration: 180, syncedLyrics: '[00:01.00]Official fixture', plainLyrics: 'Official fixture' }]);
+        const record = { id: 777, trackName: info.title, artistName: info.artist, albumName: info.album,
+          duration: 180, syncedLyrics: '[00:01.00]Official fixture', plainLyrics: 'Official fixture' };
+        return Response.json(new URL(url).pathname.endsWith('/search') ? [record] : record);
       };
       try {
         const result = await addon.getLyrics(info);
@@ -83,8 +84,8 @@ async (page) => {
         window.LyricsAddonManager.setAddonSetting('lrclib', 'custom_api_endpoint', '');
       }
     }, { ...track, title: 'Missing Local Song' });
-    assert(fallback.firstRequests.length === 2 && fallback.firstRequests[0].startsWith('https://custom.example/api/get?') &&
-      fallback.firstRequests[1].startsWith('https://lrclib.net/api/search?') && fallback.result.lrclibId === '777', 'missing local data follows custom then official fallback');
+    assert(fallback.firstRequests.length === 6 && fallback.firstRequests.slice(0, 5).every(url => url.startsWith('https://custom.example/api/')) &&
+      fallback.firstRequests[5].startsWith('https://lrclib.net/api/get?') && fallback.result.lrclibId === '777', 'missing local data exhausts custom lookup/search before official lookup');
     assert(fallback.officialRequests.length === 1 && fallback.officialRequests[0].startsWith('https://lrclib.net/api/') &&
       fallback.official.lrclibId === '777', 'official-only loading bypasses both local and custom');
     const views = [];

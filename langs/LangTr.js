@@ -656,8 +656,8 @@ window.LANG_TR = {
       "lrclibCustomApi": {
         "label": "Özel API adresi",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "İsteğe bağlı. Şarkı sözleri yüklenirken önce LRCLIB ile uyumlu bu sunucu denenir. Eşleşen şarkı sözü yoksa veya sunucuya ulaşılamıyorsa resmi LRCLIB API’si kullanılır.",
-        "officialOnly": "Yalnızca şarkı sözlerini yüklemek için kullanılır. Senkronizasyon oluşturucu, şarkı sözü araması ve senkronizasyon gönderimleri her zaman resmi LRCLIB verilerini kullanır.",
+        "desc": "İsteğe bağlı; çalma sırasında sözlerin yüklenmesini hızlandırmak için kullanılır. Önce LRCLIB ile uyumlu bu sunucuda kimlik veya meta veri sorguları ve otomatik aramalar tamamlanır. Uygun söz bulunamazsa veya sunucuya ulaşılamazsa aynı işlemler resmi LRCLIB’de tekrarlanır. Diğer sağlayıcılar yalnızca ikisi de başarısız olursa denenir.",
+        "officialOnly": "Senkronizasyon oluşturucudaki elle yapılan şarkı sözü aramaları, senkronizasyon oluşturma ve gönderme işlemleri her zaman resmi LRCLIB API’sini ve verilerini kullanır.",
         "invalid": "Kullanıcı adı, parola, sorgu parametreleri veya parça tanımlayıcısı içermeyen bir HTTP ya da HTTPS API temel URL’si girin."
       },
       "lrclibLocal": {

@@ -656,8 +656,8 @@ window.LANG_IT = {
       "lrclibCustomApi": {
         "label": "Endpoint API personalizzato",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Facoltativo. Durante il caricamento dei testi viene provato prima questo server compatibile con LRCLIB. Se non contiene testi corrispondenti o non è raggiungibile, viene usata l’API ufficiale di LRCLIB.",
-        "officialOnly": "Usato solo per caricare i testi. Lo strumento di creazione della sincronizzazione, la ricerca dei testi e l’invio delle sincronizzazioni usano sempre i dati ufficiali di LRCLIB.",
+        "desc": "Facoltativo, per caricare i testi più rapidamente durante la riproduzione. Prima si completano le richieste per ID o metadati e le ricerche automatiche su questo server compatibile con LRCLIB. Se non ci sono testi adatti o il server non è raggiungibile, si ripete tutto su LRCLIB ufficiale. Gli altri fornitori vengono provati solo se entrambi falliscono.",
+        "officialOnly": "Le ricerche manuali dei testi nello strumento di creazione della sincronizzazione, la generazione e l’invio delle sincronizzazioni usano sempre l’API e i dati ufficiali di LRCLIB.",
         "invalid": "Inserisci un URL di base API HTTP o HTTPS senza nome utente, password, parametri di query o frammento."
       },
       "lrclibLocal": {

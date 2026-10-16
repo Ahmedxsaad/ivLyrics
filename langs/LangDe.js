@@ -656,8 +656,8 @@ window.LANG_DE = {
       "lrclibCustomApi": {
         "label": "Benutzerdefinierter API-Endpunkt",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Optional. Beim Laden von Songtexten wird zuerst dieser mit LRCLIB kompatible Server ausprobiert. Wenn er keine passenden Songtexte hat oder nicht erreichbar ist, wird die offizielle LRCLIB-API verwendet.",
-        "officialOnly": "Wird nur zum Laden von Songtexten verwendet. Der Synchronisierungseditor, die Songtextsuche und das Einreichen von Synchronisierungen verwenden immer offizielle LRCLIB-Daten.",
+        "desc": "Optional, um Songtexte bei der Wiedergabe schneller zu laden. Zuerst werden auf diesem LRCLIB-kompatiblen Server alle ID-/Metadatenabfragen und automatischen Suchen abgeschlossen. Fehlen passende Songtexte oder ist der Server nicht erreichbar, wird dies beim offiziellen LRCLIB wiederholt. Erst wenn beides erfolglos bleibt, folgen andere Anbieter.",
+        "officialOnly": "Die manuelle Songtextsuche im Synchronisierungseditor sowie das Erstellen und Einreichen von Synchronisierungen nutzen immer die offizielle LRCLIB-API und offizielle LRCLIB-Daten.",
         "invalid": "Geben Sie eine HTTP- oder HTTPS-Basis-URL für die API ohne Benutzernamen, Passwort, Abfrageparameter oder Fragment ein."
       },
       "lrclibLocal": {

@@ -656,8 +656,8 @@ window.LANG_KO = {
       "lrclibCustomApi": {
         "label": "커스텀 API 주소",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "선택 사항입니다. 가사를 불러올 때 LRCLIB와 호환되는 이 서버를 먼저 시도합니다. 일치하는 가사가 없거나 서버에 연결할 수 없으면 공식 LRCLIB API를 사용합니다.",
-        "officialOnly": "가사를 불러오는 데만 사용합니다. 노래방 싱크 생성, 가사 검색, 싱크 제출에는 항상 공식 LRCLIB 데이터를 사용합니다.",
+        "desc": "재생 중 가사를 더 빠르게 불러오기 위한 선택 사항입니다. 이 LRCLIB 호환 서버에서 ID·메타데이터 조회와 자동 검색을 먼저 마칩니다. 적합한 가사가 없거나 연결할 수 없으면 공식 LRCLIB에서 같은 조회와 검색을 시도합니다. 양쪽 모두 실패한 뒤에만 다른 제공자를 시도합니다.",
+        "officialOnly": "노래방 싱크 생성 화면의 수동 가사 검색과 싱크 생성·제출에는 항상 공식 LRCLIB API와 데이터를 사용합니다.",
         "invalid": "사용자 이름, 비밀번호, 쿼리 매개변수, 프래그먼트가 없는 HTTP 또는 HTTPS API 기본 URL을 입력해 주세요."
       },
       "lrclibLocal": {

@@ -656,8 +656,8 @@ window.LANG_FR = {
       "lrclibCustomApi": {
         "label": "Point d’accès API personnalisé",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Facultatif. Lors du chargement des paroles, ce serveur compatible avec LRCLIB est essayé en premier. S’il ne contient pas de paroles correspondantes ou est inaccessible, l’API officielle de LRCLIB est utilisée.",
-        "officialOnly": "Utilisé uniquement pour charger les paroles. Le créateur de synchronisation, la recherche de paroles et l’envoi de synchronisations utilisent toujours les données officielles de LRCLIB.",
+        "desc": "Facultatif, pour charger les paroles plus vite pendant la lecture. Les requêtes par identifiant ou métadonnées et les recherches automatiques sont d’abord menées à terme sur ce serveur compatible avec LRCLIB. Sans paroles adaptées ou si le serveur est inaccessible, elles sont répétées sur LRCLIB officiel. Les autres fournisseurs ne sont essayés qu’après l’échec des deux.",
+        "officialOnly": "Les recherches manuelles de paroles dans le créateur de synchronisation, la génération de synchronisations et leur envoi utilisent toujours l’API et les données officielles de LRCLIB.",
         "invalid": "Saisissez une URL de base d’API HTTP ou HTTPS sans nom d’utilisateur, mot de passe, paramètres de requête ni fragment."
       },
       "lrclibLocal": {

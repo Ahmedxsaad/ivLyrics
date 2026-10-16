@@ -656,8 +656,8 @@ window.LANG_MS = {
       "lrclibCustomApi": {
         "label": "Alamat API tersuai",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Pilihan. Semasa memuatkan lirik, pelayan yang serasi dengan LRCLIB ini akan dicuba dahulu. Jika tiada lirik yang sepadan atau pelayan tidak dapat dicapai, API rasmi LRCLIB akan digunakan.",
-        "officialOnly": "Hanya digunakan untuk memuatkan lirik. Alat penciptaan penyegerakan, carian lirik dan penghantaran penyegerakan sentiasa menggunakan data rasmi LRCLIB.",
+        "desc": "Tetapan pilihan untuk mempercepat pemuatan lirik semasa main balik. Carian mengikut ID atau metadata dan carian automatik diselesaikan pada pelayan yang serasi dengan LRCLIB ini dahulu. Jika tiada lirik yang sesuai atau pelayan tidak dapat dicapai, proses diulang pada LRCLIB rasmi. Penyedia lain hanya dicuba jika kedua-duanya gagal.",
+        "officialOnly": "Carian lirik manual dalam alat penciptaan penyegerakan, penjanaan dan penghantaran penyegerakan sentiasa menggunakan API dan data rasmi LRCLIB.",
         "invalid": "Masukkan URL asas API HTTP atau HTTPS tanpa nama pengguna, kata laluan, parameter pertanyaan atau fragmen."
       },
       "lrclibLocal": {

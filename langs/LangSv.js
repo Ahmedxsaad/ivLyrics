@@ -656,8 +656,8 @@ window.LANG_SV = {
       "lrclibCustomApi": {
         "label": "Anpassad API-adress",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Valfritt. När låttexter läses in provas först den här servern som är kompatibel med LRCLIB. Om den saknar matchande låttexter eller inte kan nås används det officiella LRCLIB-API:et.",
-        "officialOnly": "Används endast för att läsa in låttexter. Verktyget för att skapa synkroniseringar, låttextsökning och inskickning av synkroniseringar använder alltid officiella LRCLIB-data.",
+        "desc": "Valfritt, för snabbare inläsning av låttexter vid uppspelning. Först slutförs hämtning via ID eller metadata och automatiska sökningar på den här LRCLIB-kompatibla servern. Om lämpliga låttexter saknas eller servern inte kan nås upprepas detta hos officiella LRCLIB. Andra leverantörer provas bara om båda misslyckas.",
+        "officialOnly": "Manuella låttextsökningar i verktyget för att skapa synkroniseringar samt skapande och inskickning av synkroniseringar använder alltid LRCLIB:s officiella API och data.",
         "invalid": "Ange en bas-URL för API:et med HTTP eller HTTPS utan användarnamn, lösenord, frågeparametrar eller fragment."
       },
       "lrclibLocal": {

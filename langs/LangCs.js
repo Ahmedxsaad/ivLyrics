@@ -656,8 +656,8 @@ window.LANG_CS = {
       "lrclibCustomApi": {
         "label": "Vlastní koncový bod API",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Volitelné. Při načítání textů se nejprve vyzkouší tento server kompatibilní s LRCLIB. Pokud neobsahuje odpovídající texty nebo není dostupný, použije se oficiální API LRCLIB.",
-        "officialOnly": "Používá se pouze k načítání textů. Nástroj pro tvorbu synchronizace, vyhledávání textů a odesílání synchronizací vždy používají oficiální data LRCLIB.",
+        "desc": "Volitelné zrychlení načítání textů při přehrávání. Nejprve se na tomto serveru kompatibilním s LRCLIB dokončí načítání podle ID či metadat a automatické vyhledávání. Pokud se nenajdou vhodné texty nebo server není dostupný, vše se zopakuje u oficiálního LRCLIB. Ostatní poskytovatelé se zkusí až po neúspěchu u obou.",
+        "officialOnly": "Ruční vyhledávání textů v nástroji pro tvorbu synchronizace, tvorba synchronizace a její odesílání vždy používají oficiální API a data LRCLIB.",
         "invalid": "Zadejte základní URL rozhraní API s protokolem HTTP nebo HTTPS bez uživatelského jména, hesla, parametrů dotazu nebo fragmentu."
       },
       "lrclibLocal": {

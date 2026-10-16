@@ -656,8 +656,8 @@ window.LANG_ZH_TW = {
       "lrclibCustomApi": {
         "label": "自訂 API 位址",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "選用。載入歌詞時，會優先嘗試此相容 LRCLIB 的伺服器。若沒有符合的歌詞或無法連線至伺服器，則使用 LRCLIB 官方 API。",
-        "officialOnly": "僅用於載入歌詞。建立卡拉 OK 同步、搜尋歌詞和送出同步資料時，一律使用 LRCLIB 官方資料。",
+        "desc": "選用，可加快播放時載入歌詞的速度。先在此相容 LRCLIB 的伺服器上完成依 ID 或中繼資料查詢及自動搜尋。若無合適歌詞或無法連線，再透過 LRCLIB 官方 API 重複查詢與搜尋。兩者皆未能取得歌詞後，才會嘗試其他提供者。",
+        "officialOnly": "在「建立卡拉 OK 同步」中手動搜尋歌詞，以及產生和送出同步資料時，一律使用 LRCLIB 官方 API 和資料。",
         "invalid": "請輸入使用 HTTP 或 HTTPS 的 API 基底 URL，且不包含使用者名稱、密碼、查詢參數或片段識別碼。"
       },
       "lrclibLocal": {

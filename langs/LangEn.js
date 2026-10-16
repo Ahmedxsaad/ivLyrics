@@ -656,8 +656,8 @@ window.LANG_EN = {
       "lrclibCustomApi": {
         "label": "Custom API endpoint",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Optional. Try this LRCLIB-compatible server first when loading lyrics. If it has no matching lyrics or cannot be reached, use the official LRCLIB API.",
-        "officialOnly": "Only used to load lyrics. Sync Creator, lyrics search, and sync submissions always use official LRCLIB data.",
+        "desc": "Optional, for faster lyric loading during playback. Complete ID/metadata lookups and automatic searches on this LRCLIB-compatible server first. If no suitable lyrics are found or it is unreachable, repeat with official LRCLIB. Try other providers only if both fail.",
+        "officialOnly": "Manual lyric searches in Sync Creator, sync generation, and sync submissions always use the official LRCLIB API and data.",
         "invalid": "Enter an HTTP or HTTPS API base URL without a username, password, query parameters, or fragment."
       },
       "lrclibLocal": {

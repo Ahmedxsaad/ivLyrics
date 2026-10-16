@@ -656,8 +656,8 @@ window.LANG_ES = {
       "lrclibCustomApi": {
         "label": "Punto de conexión de API personalizado",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Opcional. Al cargar letras, se probará primero este servidor compatible con LRCLIB. Si no tiene letras que coincidan o no se puede acceder a él, se usará la API oficial de LRCLIB.",
-        "officialOnly": "Solo se usa para cargar letras. El creador de sincronización, la búsqueda de letras y el envío de sincronizaciones siempre usan datos oficiales de LRCLIB.",
+        "desc": "Opcional, para cargar letras más rápido durante la reproducción. Primero se completan las consultas por ID o metadatos y las búsquedas automáticas en este servidor compatible con LRCLIB. Si no hay letras adecuadas o el servidor no responde, se repiten en LRCLIB oficial. Solo si ambos fallan se prueban otros proveedores.",
+        "officialOnly": "Las búsquedas manuales de letras en el creador de sincronización, la generación de sincronizaciones y su envío siempre usan la API y los datos oficiales de LRCLIB.",
         "invalid": "Introduce una URL base de API HTTP o HTTPS sin nombre de usuario, contraseña, parámetros de consulta ni fragmento."
       },
       "lrclibLocal": {

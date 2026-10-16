@@ -656,8 +656,8 @@ window.LANG_VI = {
       "lrclibCustomApi": {
         "label": "Địa chỉ API tùy chỉnh",
         "placeholder": "https://your-lrclib-server.example/api",
-        "desc": "Không bắt buộc. Khi tải lời bài hát, hệ thống sẽ thử máy chủ tương thích với LRCLIB này trước. Nếu không có lời phù hợp hoặc không thể kết nối đến máy chủ, API chính thức của LRCLIB sẽ được sử dụng.",
-        "officialOnly": "Chỉ dùng để tải lời bài hát. Công cụ tạo đồng bộ, tính năng tìm lời bài hát và việc gửi dữ liệu đồng bộ luôn sử dụng dữ liệu chính thức của LRCLIB.",
+        "desc": "Không bắt buộc, giúp tải lời bài hát nhanh hơn khi phát nhạc. Hệ thống hoàn tất việc tra cứu theo ID hoặc siêu dữ liệu và tìm kiếm tự động trên máy chủ tương thích với LRCLIB này trước. Nếu không có lời phù hợp hoặc không thể kết nối, các bước này được lặp lại trên LRCLIB chính thức. Chỉ thử các nhà cung cấp khác khi cả hai đều không có kết quả.",
+        "officialOnly": "Việc tìm lời bài hát thủ công trong công cụ tạo đồng bộ, tạo và gửi dữ liệu đồng bộ luôn sử dụng API và dữ liệu chính thức của LRCLIB.",
         "invalid": "Nhập URL cơ sở API dùng HTTP hoặc HTTPS, không chứa tên người dùng, mật khẩu, tham số truy vấn hoặc mã định danh phân đoạn."
       },
       "lrclibLocal": {
