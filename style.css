@@ -21738,9 +21738,9 @@ a.research-media-item:hover {
 }
 
 .ivlyrics-fluent-shell.ivl-tb-dialog[data-ui-theme] .share-image-modal-lyric-line {
-  border: 1px solid transparent !important;
+  border: 1px solid var(--ivl-tb-line-2) !important;
   border-radius: var(--ivl-tb-r-md) !important;
-  background: transparent !important;
+  background: var(--ivl-tb-surface-2) !important;
 }
 
 .ivlyrics-fluent-shell.ivl-tb-dialog[data-ui-theme] .share-image-modal-lyric-line:hover {
