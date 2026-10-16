@@ -10,8 +10,12 @@ function shift(data, delta) {
         claimSessionForLocalEditing() {}, resetCurrentSyncInput() {},
         roundSyncTime: value => Math.round(value * 1000) / 1000,
         SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC: 0.001,
+        mode: 'idle', Toast: { error() {} }, I18n: { t: key => key },
+        offsetSelectionRangeRef: { current: null },
+        get syncData() { return data; },
         setSyncData: update => { data = update(data); } };
     vm.runInNewContext(`${section('\tconst getSyncCreatorLineTimes =', '\tconst SYNC_CREATOR_SHORTCUTS =')}
+        ${section('const shiftSyncCreatorSelectionTimes =', 'const getSyncCreatorLockedPlaybackProgressIndex =')}
         ${section('\tconst adjustCurrentLineOffset =', '\tconst resetFromStart =')}
         globalThis.adjust = adjustCurrentLineOffset;`, context);
     context.adjust(delta);
@@ -58,7 +62,8 @@ test('committing a vocal preserves overlapping earlier and later lines', () => {
     data.lines[2].chars = [86, 87];
     const context = { nextLines: structuredClone(data.lines), lineStart: 3, lineEnd: 7,
         lineData: structuredClone(data.lines[1]), currentLineMergedWithNext: false,
-        currentParallelData: null, SYNC_CREATOR_SYNC_DATA_VERSION: 10 };
+		currentParallelData: null, activeParallelPart: null, getActiveRecordingLockRange: () => null,
+		SYNC_CREATOR_SYNC_DATA_VERSION: 10 };
     vm.runInNewContext(source.slice(0, source.indexOf('const SyncDataCreator =')) + '\n'
         + section('\t\tconst committedLineIndex = nextLines.findIndex', '\t\tconst scoreInput = scoreInputRef.current;')
         + '\nglobalThis.result = nextSyncData;', context);

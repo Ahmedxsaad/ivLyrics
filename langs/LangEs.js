@@ -2114,7 +2114,12 @@ window.LANG_ES = {
     "trackInfo": "Se aplica solo a la pista en reproducción.",
     "globalTitle": "Sincronización global",
     "globalInfo": "Se aplica a todas las canciones solo en este dispositivo. Nunca se envía a la comunidad.",
-    "communityUnavailableLocal": "No se pueden enviar offsets de la comunidad para pistas locales sin Spotify trackId."
+    "communityUnavailableLocal": "No se pueden enviar offsets de la comunidad para pistas locales sin Spotify trackId.",
+    "noVideo": "No se está reproduciendo ningún video",
+    "quickLyricsLabel": "Desfase de letra",
+    "quickVideoLabel": "Desfase de video",
+    "videoTitle": "Video actual",
+    "videoInfo": "Ajusta con precisión el tiempo de la primera letra del video actual tras el emparejamiento automático."
   },
   "playbarButton": {
     "label": "Letras Plus"
@@ -2861,6 +2866,7 @@ window.LANG_ES = {
     "globalOffset": "Desfase global",
     "lineOffset": "Desfase de línea",
     "lineOffsetUnavailable": "Disponible después de sincronizar",
+    "selectionOffsetRequiresTiming": "Los caracteres seleccionados necesitan temporización primero - sincroniza la línea antes de desplazar una parte.",
     "synced": "Registrado",
     "notSynced": "No registrado",
     "deleteLine": "Eliminar línea",

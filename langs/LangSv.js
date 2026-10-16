@@ -2114,7 +2114,12 @@ window.LANG_SV = {
     "trackInfo": "Gäller endast spåret som spelas just nu.",
     "globalTitle": "Global synk",
     "globalInfo": "Gäller alla låtar endast på den här enheten. Skickas aldrig till communityn.",
-    "communityUnavailableLocal": "Community-offsets kan inte skickas för lokala spår utan Spotify trackId."
+    "communityUnavailableLocal": "Community-offsets kan inte skickas för lokala spår utan Spotify trackId.",
+    "noVideo": "Ingen video spelas upp",
+    "quickLyricsLabel": "Textförskjutning",
+    "quickVideoLabel": "Videoförskjutning",
+    "videoTitle": "Aktuell video",
+    "videoInfo": "Finjustera det aktuella videoklippets första textrad efter automatisk matchning."
   },
   "playbarButton": {
     "label": "Låttext Plus"
@@ -2861,6 +2866,7 @@ window.LANG_SV = {
     "globalOffset": "Global förskjutning",
     "lineOffset": "Radförskjutning",
     "lineOffsetUnavailable": "Tillgängligt efter synkning",
+    "selectionOffsetRequiresTiming": "De valda tecknen behöver tajmning först - synka raden innan du förskjuter en del av den.",
     "synced": "Registrerad",
     "notSynced": "Oregistrerad",
     "deleteLine": "Ta bort den här raden",

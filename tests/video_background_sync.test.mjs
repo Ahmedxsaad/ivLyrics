@@ -354,6 +354,7 @@ test("Spotify playback effects preserve a pending frame refresh across pause and
         },
     };
     const effectContext = vm.createContext({
+        trackUri: 'spotify:track:fixture',
         useHelper: false,
         isPlaying: false,
         isPlayerReady: true,
@@ -448,6 +449,7 @@ for (const [stateName, playerState] of [["PLAYING", 1], ["BUFFERING", 3]]) {
             setPlaybackQualityRange: () => { qualityWrites += 1; },
         };
         const effectContext = vm.createContext({
+            trackUri: 'spotify:track:fixture',
             useHelper: false,
             isPlayerReady: true,
             isPlaying: true,

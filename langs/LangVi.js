@@ -2114,7 +2114,12 @@ window.LANG_VI = {
     "trackInfo": "Chỉ áp dụng cho bài hát đang phát.",
     "globalTitle": "Đồng bộ toàn cục",
     "globalInfo": "Chỉ áp dụng cho mọi bài hát trên thiết bị này. Không bao giờ được gửi lên cộng đồng.",
-    "communityUnavailableLocal": "Không thể gửi độ lệch cộng đồng cho bài hát cục bộ không có Spotify trackId."
+    "communityUnavailableLocal": "Không thể gửi độ lệch cộng đồng cho bài hát cục bộ không có Spotify trackId.",
+    "noVideo": "Không có video nào đang phát",
+    "quickLyricsLabel": "Offset lời bài hát",
+    "quickVideoLabel": "Offset video",
+    "videoTitle": "Video hiện tại",
+    "videoInfo": "Tinh chỉnh thời gian câu hát đầu tiên của video hiện tại sau khi khớp tự động."
   },
   "playbarButton": {
     "label": "Lời bài hát Plus"
@@ -2861,6 +2866,7 @@ window.LANG_VI = {
     "globalOffset": "Offset tổng thể",
     "lineOffset": "Offset dòng",
     "lineOffsetUnavailable": "Khả dụng sau khi đồng bộ",
+    "selectionOffsetRequiresTiming": "Các ký tự đã chọn cần có thời gian trước - hãy đồng bộ dòng trước khi dịch chuyển một phần.",
     "synced": "Đã ghi",
     "notSynced": "Chưa ghi",
     "deleteLine": "Xóa dòng này",

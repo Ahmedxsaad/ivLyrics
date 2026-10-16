@@ -2114,7 +2114,12 @@ window.LANG_JA = {
     "trackInfo": "現在再生中の曲にのみ適用されます。",
     "globalTitle": "グローバル同期",
     "globalInfo": "このデバイス上のすべての曲にのみ適用されます。コミュニティには送信されません。",
-    "communityUnavailableLocal": "Spotify trackId がないローカルトラックでは、コミュニティオフセットを送信できません。"
+    "communityUnavailableLocal": "Spotify trackId がないローカルトラックでは、コミュニティオフセットを送信できません。",
+    "noVideo": "再生中の動画がありません",
+    "quickLyricsLabel": "歌詞オフセット",
+    "quickVideoLabel": "動画オフセット",
+    "videoTitle": "現在の動画",
+    "videoInfo": "自動マッチング後の現在の動画の最初の歌詞タイミングを微調整します。"
   },
   "playbarButton": {
     "label": "歌詞プラス"
@@ -2861,6 +2866,7 @@ window.LANG_JA = {
     "globalOffset": "全体オフセット",
     "lineOffset": "行オフセット",
     "lineOffsetUnavailable": "同期後に調整可能",
+    "selectionOffsetRequiresTiming": "選択した文字には先にタイミングが必要です - 一部をオフセットする前に行を同期してください。",
     "synced": "登録済み",
     "notSynced": "未登録",
     "deleteLine": "この行を削除",

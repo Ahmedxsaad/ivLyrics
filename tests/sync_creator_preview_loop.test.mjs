@@ -360,6 +360,7 @@ const createSelectedPartPreview = ({ savedLine, targetPart, text = "ABCD", initi
 		currentWordBoundaryStartIndexes: new Set(),
 		usePrimaryCharacterPronunciation: false, useFixedPrimaryCharacterCells: false,
 		currentRecordingCharIndex: -1, isRecordingLockArmed: false, recordingLockIndex: -1,
+		recordingLockRange: null, offsetSelectionRange: null, mode: 'preview',
 		currentLockedPlaybackIndex: null, syncGranularity: "character",
 		formatSeconds: (value) => `${value.toFixed(1)}s`,
 		charElementsRef: { current: [] },

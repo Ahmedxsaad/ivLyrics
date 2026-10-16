@@ -2440,7 +2440,12 @@ const ToolbarNote = ({ children, actions = null }) =>
     )
   );
 
-const formatToolbarOffsetStep = (step) => (step > 0 ? "+" : "\u2212") + Math.abs(step) + "ms";
+const formatToolbarOffsetStep = (step) => {
+  const sign = step > 0 ? "+" : "\u2212";
+  const absoluteMs = Math.abs(step);
+  if (absoluteMs >= 1000 && absoluteMs % 1000 === 0) return `${sign}${absoluteMs / 1000}s`;
+  return `${sign}${absoluteMs}ms`;
+};
 
 const ToolbarOffsetSteps = ({ steps, onStep, label, disabled = false, unit = true }) =>
   react.createElement(
@@ -4071,6 +4076,238 @@ const queueTrackSyncOffsetWrite = (trackUri, offset) => {
   startTrackSyncOffsetWriteLoop();
 };
 
+const COMMUNITY_VIDEO_SYNC_MAX_SECONDS = 3600;
+
+const normalizeCommunityVideoSyncSeconds = (value) => {
+  const parsed = Number.parseFloat(String(value ?? "").trim().replace(",", "."));
+  if (!Number.isFinite(parsed)) return 0;
+  const clamped = Math.max(0, Math.min(COMMUNITY_VIDEO_SYNC_MAX_SECONDS, parsed));
+  return Math.round(clamped * 1000) / 1000;
+};
+
+const clampCommunityVideoSyncSeconds = (value, videoDurationSeconds) => {
+  const normalized = normalizeCommunityVideoSyncSeconds(value);
+  const parsedDuration = Number(videoDurationSeconds);
+  const maxSeconds = Number.isFinite(parsedDuration) && parsedDuration > 0
+    ? Math.min(COMMUNITY_VIDEO_SYNC_MAX_SECONDS, parsedDuration)
+    : COMMUNITY_VIDEO_SYNC_MAX_SECONDS;
+  return Math.max(0, Math.min(maxSeconds, normalized));
+};
+
+const formatCommunityVideoSyncSeconds = (value) => {
+  const normalized = normalizeCommunityVideoSyncSeconds(value);
+  return `${normalized.toFixed(3)}s`;
+};
+
+const pendingCommunityVideoSyncWrites = new Map();
+const communityVideoSyncWriteChains = new Map();
+
+// Quick adjustments are local preferences, not implicit community submissions.
+// Serialize/coalesce them; the atomic store update also checks the video ID.
+const queueCommunityVideoSyncWrite = (trackUri, info) => {
+  if (!trackUri || !info?.youtubeVideoId) return Promise.resolve();
+  pendingCommunityVideoSyncWrites.set(trackUri, { ...info });
+  if (communityVideoSyncWriteChains.has(trackUri)) return communityVideoSyncWriteChains.get(trackUri);
+  const write = (async () => {
+    while (pendingCommunityVideoSyncWrites.has(trackUri)) {
+      const next = pendingCommunityVideoSyncWrites.get(trackUri);
+      pendingCommunityVideoSyncWrites.delete(trackUri);
+      try {
+        await Utils.updateSelectedVideoSyncOffset(trackUri, next);
+      } catch (error) {
+        console.error("[ivLyrics] Failed to save the local video offset:", error);
+      }
+    }
+  })().finally(() => communityVideoSyncWriteChains.delete(trackUri));
+  communityVideoSyncWriteChains.set(trackUri, write);
+  return write;
+};
+
+const readActiveCommunityVideoInfo = (trackUri) => {
+  const active = window.ivLyricsActiveCommunityVideoInfo;
+  if (!active || !active.youtubeVideoId) return null;
+  if (trackUri && active.trackUri !== trackUri) return null;
+  return active;
+};
+
+const useCurrentVideoSync = (trackUri) => {
+  const [activeInfo, setActiveInfo] = useState(() => readActiveCommunityVideoInfo(trackUri));
+  const activeInfoRef = useRef(activeInfo);
+
+  useEffect(() => {
+    activeInfoRef.current = activeInfo;
+  }, [activeInfo]);
+
+  useEffect(() => {
+    setActiveInfo(readActiveCommunityVideoInfo(trackUri));
+    const handleChange = (event) => {
+      if (trackUri && event?.detail?.trackUri && event.detail.trackUri !== trackUri) return;
+      const next = readActiveCommunityVideoInfo(trackUri);
+      activeInfoRef.current = next;
+      setActiveInfo(next);
+    };
+    const handleStartChange = (event) => {
+      if (trackUri && event?.detail?.trackUri && event.detail.trackUri !== trackUri) return;
+      const current = activeInfoRef.current;
+      if (!current?.youtubeVideoId) return;
+      if (event.detail.youtubeVideoId !== current.youtubeVideoId) return;
+      const nextStart = clampCommunityVideoSyncSeconds(
+        event.detail.captionStartTime,
+        event.detail.videoDurationSeconds ?? current.videoDurationSeconds
+      );
+      if (Math.abs(Number(current.captionStartTime || 0) - nextStart) < 0.0005) return;
+      const next = { ...current, captionStartTime: nextStart };
+      if (event.detail.videoDurationSeconds != null) {
+        next.videoDurationSeconds = event.detail.videoDurationSeconds;
+      }
+      activeInfoRef.current = next;
+      setActiveInfo(next);
+    };
+    window.addEventListener("ivLyrics:communityVideoChanged", handleChange);
+    window.addEventListener("ivLyrics:community-video-start-changed", handleStartChange);
+    return () => {
+      window.removeEventListener("ivLyrics:communityVideoChanged", handleChange);
+      window.removeEventListener("ivLyrics:community-video-start-changed", handleStartChange);
+    };
+  }, [trackUri]);
+
+  const handleStep = (stepMs) => {
+    const current = readActiveCommunityVideoInfo(trackUri);
+    if (!current?.youtubeVideoId || !trackUri) return;
+    const deltaSeconds = Number(stepMs) / 1000;
+    if (!Number.isFinite(deltaSeconds)) return;
+    const baseSeconds = Number(current.captionStartTime || 0);
+    const nextStart = clampCommunityVideoSyncSeconds(
+      normalizeCommunityVideoSyncSeconds(baseSeconds + deltaSeconds),
+      current.videoDurationSeconds
+    );
+    if (Math.abs(baseSeconds - nextStart) < 0.0005 && deltaSeconds !== 0) return;
+    const next = { ...current, captionStartTime: nextStart, isAutoGenerated: false };
+    activeInfoRef.current = next;
+    window.ivLyricsActiveCommunityVideoInfo = next;
+    setActiveInfo(next);
+    window.dispatchEvent(new CustomEvent("ivLyrics:community-video-start-changed", {
+      detail: {
+        trackUri,
+        youtubeVideoId: next.youtubeVideoId,
+        captionStartTime: nextStart,
+        isAutoGenerated: false,
+        videoDurationSeconds: current.videoDurationSeconds ?? null,
+      },
+    }));
+    void queueCommunityVideoSyncWrite(trackUri, next);
+  };
+
+  return { activeInfo, handleStep };
+};
+
+const CurrentVideoSyncPill = react.memo(({ trackUri, hideWhenEmpty = false }) => {
+  const { activeInfo, handleStep } = useCurrentVideoSync(trackUri);
+
+  if (!trackUri) return null;
+  if (!activeInfo?.youtubeVideoId) {
+    if (hideWhenEmpty) return null;
+    return react.createElement(
+      "div",
+      { className: "lyrics-track-sync-pill", "data-video-sync": "empty" },
+      react.createElement(
+        "div",
+        { className: "lyrics-sync-adjust-current", style: { padding: "8px 12px" } },
+        I18n.t("syncAdjust.noVideo") || "No video playing"
+      )
+    );
+  }
+
+  const currentSeconds = normalizeCommunityVideoSyncSeconds(activeInfo.captionStartTime);
+  const stepDefs = [-1000, -100, -10, "current", 10, 100, 1000];
+  const controls = stepDefs.map((step, index) => {
+    const parts = [];
+    if (index > 0) {
+      parts.push(react.createElement("span", {
+        key: `separator-${index}`,
+        className: "lyrics-track-sync-separator",
+        "aria-hidden": "true",
+      }));
+    }
+    if (step === "current") {
+      parts.push(react.createElement(
+        "span",
+        {
+          key: "current-video-sync",
+          className: "lyrics-track-sync-value lyrics-track-sync-value-static",
+          "data-active": currentSeconds !== 0 ? "true" : "false",
+          title: activeInfo.youtubeTitle || activeInfo.youtubeVideoId,
+          "aria-live": "polite",
+          "aria-atomic": "true",
+        },
+        react.createElement(
+          "span",
+          { className: "lyrics-track-sync-value-current" },
+          formatCommunityVideoSyncSeconds(currentSeconds)
+        )
+      ));
+      return parts;
+    }
+    const absoluteMs = Math.abs(step);
+    const displayValue = `${step > 0 ? "+" : "−"}${absoluteMs >= 1000 ? `${absoluteMs / 1000}s` : `${absoluteMs}ms`}`;
+    parts.push(react.createElement(
+      "button",
+      {
+        key: step,
+        type: "button",
+        className: "lyrics-track-sync-step",
+        onClick: () => handleStep(step),
+        onPointerUp: (event) => event.currentTarget.blur(),
+        "aria-label": `${I18n.t("syncAdjust.videoTitle") || "Current video"} ${displayValue}`,
+      },
+      displayValue
+    ));
+    return parts;
+  });
+
+  return react.createElement(
+    "div",
+    {
+      className: "lyrics-track-sync-pill",
+      role: "group",
+      "aria-label": I18n.t("syncAdjust.videoTitle") || "Current video",
+      "data-video-sync": "active",
+    },
+    react.createElement(
+      "div",
+      { className: "lyrics-track-sync-controls" },
+      controls
+    )
+  );
+});
+
+// Panel variant of the video sync control. It follows the same
+// value-plus-steps structure as the track and global sync rows
+// instead of reusing the floating pill markup.
+const CurrentVideoSyncPanelControl = react.memo(({ trackUri }) => {
+  const { activeInfo, handleStep } = useCurrentVideoSync(trackUri);
+  if (!trackUri || !activeInfo?.youtubeVideoId) return null;
+  const currentSeconds = normalizeCommunityVideoSyncSeconds(activeInfo.captionStartTime);
+  return react.createElement(
+    "div",
+    { className: "ivl-tb-offset" },
+    react.createElement(
+      "output",
+      {
+        className: "ivl-tb-offset-value",
+        "aria-live": "polite",
+        title: activeInfo.youtubeTitle || activeInfo.youtubeVideoId,
+      },
+      formatCommunityVideoSyncSeconds(currentSeconds)
+    ),
+    react.createElement(ToolbarOffsetSteps, {
+      steps: [-1000, -100, -10, 10, 100, 1000],
+      label: I18n.t("syncAdjust.videoTitle") || "Current video",
+      onStep: handleStep,
+    })
+  );
+});
+
 const TrackSyncAdjustPill = react.memo(({ trackUri }) => {
   const [offset, setOffset] = useState(0);
   const [loadedTrackUri, setLoadedTrackUri] = useState(null);
@@ -4481,9 +4718,31 @@ const SyncAdjustButtonFluent = react.memo(({
   includeTrackOffset = false,
   quickSyncEnabled = true,
   onQuickSyncChange,
+  trackUri = null,
 }) => {
   const trackTitle = I18n.t("syncAdjust.trackTitle");
   const globalTitle = I18n.t("syncAdjust.globalTitle");
+  // The Current-video section renders only while a video is active for this
+  // track, and follows live video changes like the quick-sync bubble.
+  const [hasActiveVideo, setHasActiveVideo] = useState(
+    () => !!readActiveCommunityVideoInfo(trackUri)?.youtubeVideoId
+  );
+  useEffect(() => {
+    setHasActiveVideo(!!readActiveCommunityVideoInfo(trackUri)?.youtubeVideoId);
+    const handleVideoChange = (event) => {
+      if (trackUri && event?.detail?.trackUri && event.detail.trackUri !== trackUri) return;
+      setHasActiveVideo(!!readActiveCommunityVideoInfo(trackUri)?.youtubeVideoId);
+    };
+    window.addEventListener("ivLyrics:communityVideoChanged", handleVideoChange);
+    return () => {
+      window.removeEventListener("ivLyrics:communityVideoChanged", handleVideoChange);
+    };
+  }, [trackUri]);
+  const hasVideoSyncControls = Boolean(
+    trackUri &&
+    hasActiveVideo &&
+    typeof CurrentVideoSyncPill !== "undefined"
+  );
   return react.createElement(
     "div",
     { className: "ivl-tb-stack" },
@@ -4549,6 +4808,27 @@ const SyncAdjustButtonFluent = react.memo(({
             })
           ),
         })
+      )
+    ),
+    hasVideoSyncControls && react.createElement(
+      "div",
+      { "data-section": "video-sync" },
+      react.createElement(
+      ToolbarPanelSection,
+      { title: I18n.t("syncAdjust.videoTitle") || "Current video" },
+      react.createElement(
+        ToolbarPanelGroup,
+        null,
+        react.createElement(ToolbarPanelRow, {
+          stack: true,
+          className: "ivl-tb-offset-row",
+          desc: I18n.t("syncAdjust.videoInfo") || "Fine-tune the current video's first-lyric time after auto-match.",
+          control: react.createElement(CurrentVideoSyncPanelControl, {
+            key: `video-${trackUri}`,
+            trackUri,
+          }),
+        })
+      )
       )
     ),
     react.createElement(
@@ -6388,6 +6668,7 @@ const IvLyricsFloatingToolbar = react.memo((toolbar) => {
           offsets,
           includeTrackOffset: !!toolbar.canAdjustTrackSync,
           quickSyncEnabled: toolbar.quickSyncEnabled !== false,
+          trackUri: toolbar.syncTrackUri,
           onQuickSyncChange: (value) => actions?.onVisualConfigChange?.("quick-sync-controls-enabled", value),
         }),
         footer: react.createElement(

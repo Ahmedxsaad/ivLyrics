@@ -2114,7 +2114,12 @@ window.LANG_DE = {
     "trackInfo": "Gilt nur für den aktuell wiedergegebenen Track.",
     "globalTitle": "Globale Synchronisierung",
     "globalInfo": "Gilt nur auf diesem Gerät für alle Songs. Wird niemals an die Community gesendet.",
-    "communityUnavailableLocal": "Community-Offsets können für lokale Titel ohne Spotify trackId nicht übermittelt werden."
+    "communityUnavailableLocal": "Community-Offsets können für lokale Titel ohne Spotify trackId nicht übermittelt werden.",
+    "noVideo": "Kein Video wird abgespielt",
+    "quickLyricsLabel": "Songtext-Offset",
+    "quickVideoLabel": "Video-Offset",
+    "videoTitle": "Aktuelles Video",
+    "videoInfo": "Feinjustierung der Startzeit des aktuellen Videos nach dem automatischen Abgleich."
   },
   "playbarButton": {
     "label": "Songtexte Plus"
@@ -2861,6 +2866,7 @@ window.LANG_DE = {
     "globalOffset": "Globaler Offset",
     "lineOffset": "Zeilen-Offset",
     "lineOffsetUnavailable": "Nach dem Synchronisieren verfügbar",
+    "selectionOffsetRequiresTiming": "Die ausgewählten Zeichen brauchen zuerst Timing - synchronisiere die Zeile, bevor du einen Teil verschiebst.",
     "synced": "Registriert",
     "notSynced": "Nicht registriert",
     "deleteLine": "Zeile löschen",

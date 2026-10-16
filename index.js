@@ -10924,9 +10924,43 @@ class LyricsContainer extends react.Component {
           trackUri: renderTrackUri,
         })
         : null;
-      return { canAdjustTrackSync, quickSyncControlsEnabled, trackSyncAdjustPill };
+      const videoSyncAdjustPill = quickSyncControlsEnabled &&
+        shouldUseVideoBackground &&
+        Boolean(renderTrackUri) &&
+        (() => {
+          const active = window.ivLyricsActiveCommunityVideoInfo;
+          return !!active?.youtubeVideoId && active.trackUri === renderTrackUri;
+        })() &&
+        typeof CurrentVideoSyncPill !== "undefined"
+        ? react.createElement(CurrentVideoSyncPill, {
+          key: `video-${renderTrackUri}`,
+          trackUri: renderTrackUri,
+          hideWhenEmpty: true,
+        })
+        : null;
+      const renderQuickSyncRow = (label, pill) => react.createElement(
+        "div",
+        { className: "lyrics-quick-sync-row", key: label },
+        react.createElement("span", { className: "lyrics-quick-sync-label" }, label),
+        pill
+      );
+      const quickSyncStack = (trackSyncAdjustPill || videoSyncAdjustPill)
+        ? react.createElement(
+          "div",
+          { className: "lyrics-quick-sync-stack" },
+          trackSyncAdjustPill && renderQuickSyncRow(
+            I18n.t("syncAdjust.quickLyricsLabel") || "Lyrics offset",
+            trackSyncAdjustPill
+          ),
+          videoSyncAdjustPill && renderQuickSyncRow(
+            I18n.t("syncAdjust.quickVideoLabel") || "Video offset",
+            videoSyncAdjustPill
+          )
+        )
+        : null;
+      return { canAdjustTrackSync, quickSyncControlsEnabled, trackSyncAdjustPill, videoSyncAdjustPill, quickSyncStack };
     };
-    const { canAdjustTrackSync, quickSyncControlsEnabled, trackSyncAdjustPill } = computeTrackSyncAdjustPill();
+    const { canAdjustTrackSync, quickSyncControlsEnabled, trackSyncAdjustPill, videoSyncAdjustPill, quickSyncStack } = computeTrackSyncAdjustPill();
 
     const renderFullscreenOverlayChild = () => (
         this.state.isFullscreen && !this.state.showMarketplace && !isSyncCreatorActive && window.FullscreenOverlay && react.createElement(window.FullscreenOverlay, {
@@ -11116,7 +11150,7 @@ class LyricsContainer extends react.Component {
         className: "lyrics-lyricsContainer-LyricsBackground",
       }),
       generationStatusStack,
-      trackSyncAdjustPill,
+      quickSyncStack ?? trackSyncAdjustPill,
       // ===== 플로팅 바 (일반 모드: 전체 표시, 전체화면: 메뉴 토글 방식) =====
       renderFloatingToolbar(),
       cacheEditModal,

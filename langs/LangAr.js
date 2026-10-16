@@ -2114,7 +2114,12 @@ window.LANG_AR = {
     "trackInfo": "تُطبّق على المسار قيد التشغيل فقط.",
     "globalTitle": "مزامنة عامة",
     "globalInfo": "تطبق على كل الأغاني على هذا الجهاز فقط. لا يتم إرسالها إلى المجتمع أبداً.",
-    "communityUnavailableLocal": "لا يمكن إرسال إزاحات المجتمع للمسارات المحلية التي لا تحتوي على Spotify trackId."
+    "communityUnavailableLocal": "لا يمكن إرسال إزاحات المجتمع للمسارات المحلية التي لا تحتوي على Spotify trackId.",
+    "noVideo": "لا يوجد فيديو قيد التشغيل",
+    "quickLyricsLabel": "إزاحة الكلمات",
+    "quickVideoLabel": "إزاحة الفيديو",
+    "videoTitle": "الفيديو الحالي",
+    "videoInfo": "اضبط وقت أول كلمات للفيديو الحالي بدقة بعد المطابقة التلقائية."
   },
   "playbarButton": {
     "label": "كلمات بلس"
@@ -2861,6 +2866,7 @@ window.LANG_AR = {
     "globalOffset": "الإزاحة الكلية",
     "lineOffset": "إزاحة السطر",
     "lineOffsetUnavailable": "متاح بعد المزامنة",
+    "selectionOffsetRequiresTiming": "الأحرف المحددة تحتاج إلى توقيت أولاً - زامن السطر قبل إزاحة جزء منه.",
     "synced": "مسجل",
     "notSynced": "غير مسجل",
     "deleteLine": "حذف هذا السطر",

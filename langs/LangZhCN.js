@@ -2114,7 +2114,12 @@ window.LANG_ZH_CN = {
     "trackInfo": "仅应用于当前播放的曲目。",
     "globalTitle": "全局同步",
     "globalInfo": "仅在此设备上应用到所有歌曲，绝不会提交到社区。",
-    "communityUnavailableLocal": "没有 Spotify trackId 的本地曲目无法提交社区偏移。"
+    "communityUnavailableLocal": "没有 Spotify trackId 的本地曲目无法提交社区偏移。",
+    "noVideo": "当前没有播放视频",
+    "quickLyricsLabel": "歌词偏移",
+    "quickVideoLabel": "视频偏移",
+    "videoTitle": "当前视频",
+    "videoInfo": "在自动匹配后微调当前视频首句歌词的时间。"
   },
   "playbarButton": {
     "label": "歌词 Plus"
@@ -2861,6 +2866,7 @@ window.LANG_ZH_CN = {
     "globalOffset": "全局偏移",
     "lineOffset": "行偏移",
     "lineOffsetUnavailable": "同步后可调整",
+    "selectionOffsetRequiresTiming": "所选字符需要先有时间轴 - 在偏移其中一部分之前请先同步该行。",
     "synced": "已注册",
     "notSynced": "未注册",
     "deleteLine": "删除此行",
