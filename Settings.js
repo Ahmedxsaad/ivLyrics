@@ -7652,6 +7652,13 @@ const writeSettingsDockPreferences = (preferences) => {
   }
 };
 
+const SettingsWordmark = () => react.createElement(
+  "h1",
+  { className: "settings-wordmark", "aria-label": "ivLyrics", lang: "en", dir: "ltr" },
+  react.createElement("span", { className: "settings-wordmark-iv", "aria-hidden": "true" }, "iv"),
+  react.createElement("span", { className: "settings-wordmark-lyrics", "aria-hidden": "true" }, "Lyrics")
+);
+
 const SettingsCrumbs = ({ menuLabel, sections, signal }) => {
   const activeKey = useSettingsSignal(signal);
   const section = (sections || []).find((candidate) => candidate.key === activeKey);
@@ -11181,7 +11188,7 @@ const ConfigModal = ({
       react.createElement(
         "div",
         { className: "settings-topbar-title" },
-        react.createElement("h1", null, getSettingsText("menu.settings", "Settings")),
+        react.createElement(SettingsWordmark),
         react.createElement(SettingsCrumbs, {
           menuLabel: changedView ? getSettingsText("settingsUi.changed.button", "Changed") : activeTabMeta.label,
           sections: activeSections,

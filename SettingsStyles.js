@@ -200,6 +200,9 @@ const SETTINGS_MODAL_CSS = `
 #${APP_NAME}-config-container .settings-topbar { position: relative; z-index: 20; flex: 0 0 auto; display: grid; grid-template-columns: minmax(180px, 1fr) minmax(260px, 480px) minmax(180px, 1fr); align-items: center; gap: 14px; height: 52px; padding: 0 12px 0 18px; border-bottom: 1px solid var(--line); background: var(--bg-2); }
 #${APP_NAME}-config-container .settings-topbar-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
 #${APP_NAME}-config-container .settings-topbar-title h1 { margin: 0; font-size: 14px; font-weight: 600; line-height: 1; white-space: nowrap; color: var(--text); }
+#${APP_NAME}-config-container .settings-topbar-title .settings-wordmark { display: inline-flex; align-items: baseline; gap: 0; flex: 0 0 auto; font-size: 18px; letter-spacing: -.025em; direction: ltr; unicode-bidi: isolate; font-synthesis: none; }
+#${APP_NAME}-config-container .settings-wordmark-iv { font-weight: 800; }
+#${APP_NAME}-config-container .settings-wordmark-lyrics { font-weight: 250; }
 #${APP_NAME}-config-container .settings-crumbs { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 12.5px; color: var(--text-3); }
 #${APP_NAME}-config-container .settings-crumbs span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 #${APP_NAME}-config-container .settings-crumbs svg { width: 12px; height: 12px; flex: 0 0 auto; opacity: .6; }
