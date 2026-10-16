@@ -3898,7 +3898,10 @@ const Prefetcher = {
       this._inflightRequests.get(versionedCacheKeyBase) === requestToken.promise &&
       Array.from(generationOptions).every(([mode, options]) => getDisplayModeGenerationOptions(mode) === options);
     const cacheResult = (mode, mapped) => {
-      if (isCurrentRequest()) CacheManager.set(displayModeCacheKeys.get(mode), mapped);
+      const key = displayModeCacheKeys.get(mode);
+      // A foreground request or regeneration may have completed while this
+      // background request was pending. Its current result takes precedence.
+      if (isCurrentRequest() && !CacheManager.get(key)) CacheManager.set(key, mapped);
     };
 
     // Publish ownership before any setup/provider callback can fail or reenter.
@@ -7026,6 +7029,15 @@ class LyricsContainer extends react.Component {
       const targetLanguage = this.getTranslationTargetLanguage();
       const displayModeCacheKeys = [mode1, mode2].map((mode) => getDisplayModeCacheKey(lyricsState, mode));
       const generationOptions = [mode1, mode2].map(getDisplayModeGenerationOptions);
+      // A selected regeneration may follow a locale/style change before the
+      // next presentation pass. Do not relabel the other slot's old output.
+      generationOptions.forEach((options, index) => {
+        const slot = index + 1;
+        if (requestResults[`lastGenerationOptions${slot}`] !== options) {
+          requestResults[`mode${slot}`] = null;
+        }
+        requestResults[`lastGenerationOptions${slot}`] = options;
+      });
       const isCurrentRequest = () =>
         this.isCurrentLyricsState(lyricsState) &&
         this._dmResults?.[currentUri] === requestResults &&
@@ -7085,6 +7097,11 @@ class LyricsContainer extends react.Component {
       let streamedLyrics2 = initialStreamedLyrics2;
       const ownsMode = mode => (mode === "gemini_romaji" && needPhonetic)
         || (mode === "gemini_ko" && needTranslation);
+      // The prior foreground request must also lose ownership of memory and
+      // streamed results when this slot is explicitly regenerated.
+      [mode1, mode2].forEach((mode, index) => {
+        if (ownsMode(mode)) this._inflightGemini?.delete(displayModeCacheKeys[index]);
+      });
       const streamedPhoneticLines = [];
       const streamedTranslationLines = [];
 
@@ -8024,9 +8041,11 @@ class LyricsContainer extends react.Component {
     if (!lyricsState) return;
     if (!this.isCurrentLyricsState(lyricsState)) return;
     const presentationSeq = ++this._lyricsPresentationSeq;
+    let generationSettingsCurrent = () => true;
     const isActivePresentation = () =>
       presentationSeq === this._lyricsPresentationSeq &&
-      this.isCurrentLyricsState(lyricsState);
+      this.isCurrentLyricsState(lyricsState) &&
+      generationSettingsCurrent();
 
     const lyrics = this.resolveLyricsForMode(lyricsState, mode);
     if (!lyrics) {
@@ -8107,6 +8126,11 @@ class LyricsContainer extends react.Component {
 
     const displayMode1 = CONFIG.visual[`translation-mode:${modeKey}`];
     const displayMode2 = CONFIG.visual[`translation-mode-2:${modeKey}`];
+    const generationOptions1 = getDisplayModeGenerationOptions(displayMode1);
+    const generationOptions2 = getDisplayModeGenerationOptions(displayMode2);
+    generationSettingsCurrent = () =>
+      generationOptions1 === getDisplayModeGenerationOptions(displayMode1) &&
+      generationOptions2 === getDisplayModeGenerationOptions(displayMode2);
 
     this.language = originalLanguage;
     this.displayMode = displayMode1; // Keep for legacy compatibility
@@ -8264,10 +8288,12 @@ class LyricsContainer extends react.Component {
           cached.mode2 = null;
         }
         // If mode settings changed, invalidate cache for that mode
-        if (cached.lastMode1 !== displayMode1) {
+        if (cached.lastMode1 !== displayMode1
+          || cached.lastGenerationOptions1 !== generationOptions1) {
           cached.mode1 = null;
         }
-        if (cached.lastMode2 !== displayMode2) {
+        if (cached.lastMode2 !== displayMode2
+          || cached.lastGenerationOptions2 !== generationOptions2) {
           cached.mode2 = null;
         }
         if (cached.lastPronunciationNotation !== currentPronunciationNotation) {
@@ -8284,6 +8310,8 @@ class LyricsContainer extends react.Component {
     };
     this._dmResults[currentUri].lastMode1 = displayMode1;
     this._dmResults[currentUri].lastMode2 = displayMode2;
+    this._dmResults[currentUri].lastGenerationOptions1 = generationOptions1;
+    this._dmResults[currentUri].lastGenerationOptions2 = generationOptions2;
     this._dmResults[currentUri].lastProvider = currentProvider;
     this._dmResults[currentUri].lastRendererVersion = currentRendererVersion;
     this._dmResults[currentUri].lastLyricsShapeSignature = currentLyricsShapeSignature;
@@ -10471,8 +10499,12 @@ class LyricsContainer extends react.Component {
     const culturalAnnotationsMode = this.isCulturalAnnotationsEnabled()
       ? `culture-${this.getTranslationTargetLanguage()}`
       : "culture-off";
-    const currentModeKey = `${mode}_${displayMode1 || "none"}_${displayMode2 || "none"
-      }_${culturalAnnotationsMode}`;
+    const currentModeKey = [
+      mode,
+      `${displayMode1 || "none"}${getDisplayModeGenerationOptions(displayMode1)}`,
+      `${displayMode2 || "none"}${getDisplayModeGenerationOptions(displayMode2)}`,
+      culturalAnnotationsMode,
+    ].join("_");
 
     // Only call lyricsSource on state/mode/translation changes, not every render
     if (

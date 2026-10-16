@@ -66,6 +66,54 @@ function load(uri = localA) {
 
 const request = { text: 'Hello\nWorld', title: 'Song', artist: 'Artist', provider: 'local' };
 
+for (const phonetic of [false, true]) {
+    test(`${phonetic ? 'pronunciation' : 'translation'} readers join regeneration ahead of an older stored result`, async () => {
+        const h = load();
+        const field = phonetic ? 'phonetic' : 'translation';
+        const params = { ...request, wantSmartPhonetic: phonetic };
+        await h.api.callGemini(params);
+        let finish;
+        h.window.AIAddonManager.translateLyrics = () => new Promise(resolve => { finish = resolve; });
+        const regeneration = h.api.callGemini({ ...params, ignoreCache: true });
+        const joined = h.api.callGemini(params);
+        finish({ [field]: ['새 결과', '새 결과'] });
+        await regeneration;
+        assert.equal((await joined)[field][0], '새 결과');
+    });
+
+    for (const order of ['old-first', 'regeneration-first']) {
+        test(`${phonetic ? 'pronunciation' : 'translation'} regeneration owns persistent cache and pending cleanup (${order})`, async () => {
+            const h = load();
+            const pending = [];
+            const field = phonetic ? 'phonetic' : 'translation';
+            h.window.AIAddonManager.translateLyrics = () => new Promise(resolve => pending.push(resolve));
+            const params = { ...request, wantSmartPhonetic: phonetic };
+            const flush = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
+            const old = h.api.callGemini(params);
+            await flush();
+            const regeneration = h.api.callGemini({ ...params, ignoreCache: true });
+            await flush();
+            assert.equal(pending.length, 2);
+            const settleOld = async () => { pending[0]({ [field]: ['obsolete', 'obsolete'] }); await old; };
+            const settleRegeneration = async () => { pending[1]({ [field]: ['새 결과', '새 결과'] }); await regeneration; };
+            if (order === 'old-first') {
+                await settleOld();
+                assert.equal(h.writes.length, 0, 'an obsolete request cannot persist over a running regeneration');
+                const joined = h.api.callGemini(params);
+                await flush();
+                assert.equal(pending.length, 2, 'old cleanup must retain regeneration deduplication');
+                await settleRegeneration();
+                assert.equal((await joined)[field][0], '새 결과');
+            } else {
+                await settleRegeneration();
+                await settleOld();
+            }
+            assert.equal((await h.api.callGemini(params))[field][0], '새 결과');
+            assert.equal(h.writes.length, 1, 'only the current generation is saved');
+        });
+    }
+}
+
 test('local translation identities retain the whole URI and do not become Spotify IDs', () => {
     const { identity } = load();
     assert.equal(identity.extractTrackId(localA), null);

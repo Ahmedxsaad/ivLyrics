@@ -9672,11 +9672,19 @@
                     return 'auto';
                 }
             })();
+            const requestKey = getTranslatorRequestKey(finalTrackId, wantSmartPhonetic, userLang, provider, sourceHash);
+            // Regeneration supersedes the stored result as soon as it starts.
+            if (!ignoreCache && _translatorInflightRequests.has(requestKey)) {
+                return _translatorInflightRequests.get(requestKey);
+            }
 
             // 로컬 캐시 확인
             if (!ignoreCache) {
                 try {
                     const localCached = await LyricsCache.getTranslation(finalTrackId, userLang, wantSmartPhonetic, provider, sourceHash);
+                    if (_translatorInflightRequests.has(requestKey)) {
+                        return _translatorInflightRequests.get(requestKey);
+                    }
                     if (localCached && isCachedTranslationStructurallyValid(localCached, text, wantSmartPhonetic)) {
                         if (window.ApiTracker) {
                             window.ApiTracker.logCacheHit(
@@ -9699,7 +9707,6 @@
             if (window.AIAddonManager) {
                 serviceDebug(`[Translator] Using AIAddonManager for lyrics`);
 
-                const requestKey = getTranslatorRequestKey(finalTrackId, wantSmartPhonetic, userLang, provider, sourceHash);
                 if (!ignoreCache && _translatorInflightRequests.has(requestKey)) {
                     return _translatorInflightRequests.get(requestKey);
                 }
@@ -9720,7 +9727,7 @@
                             onStreamReset
                         });
 
-                        if (result) {
+                        if (result && _translatorInflightRequests.get(requestKey) === addonPromise) {
                             await LyricsCache.setTranslation(
                                 finalTrackId,
                                 userLang,
@@ -9729,15 +9736,16 @@
                                 provider,
                                 sourceHash
                             ).catch(() => { });
-                            return result;
                         }
+                        return result || null;
                     } catch (e) {
                         console.warn('[Translator] AIAddonManager lyrics translation failed:', e);
                         throw e;
                     }
-                    return null;
                 })().finally(() => {
-                    _translatorInflightRequests.delete(requestKey);
+                    if (_translatorInflightRequests.get(requestKey) === addonPromise) {
+                        _translatorInflightRequests.delete(requestKey);
+                    }
                 });
 
                 _translatorInflightRequests.set(requestKey, addonPromise);

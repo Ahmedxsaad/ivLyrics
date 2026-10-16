@@ -133,6 +133,37 @@ function harness(mode = "gemini_ko") {
 
 for (const mode of modes) {
   for (const order of ["old-first", "new-first"]) {
+    test(`${mode}: regeneration supersedes an already running page request (${order})`, async () => {
+      const h = harness(mode);
+      const oldPromise = h.request();
+      await flush();
+      const regeneration = h.app.regenerateTranslation();
+      await flush();
+      assert.equal(h.calls.length, 2);
+      h.calls[0].params.onLine(0, "obsolete Chinese stream");
+      assert.equal(h.progress.length, 0, "the original page request no longer owns streaming");
+      const settleOld = async () => { h.resolve(h.calls[0], "obsolete Chinese"); await oldPromise; };
+      const settleNew = async () => { h.resolve(h.calls[1], "새 결과"); await regeneration; };
+      if (order === "old-first") { await settleOld(); await settleNew(); }
+      else { await settleNew(); await settleOld(); }
+      assert.equal((await h.request())[0].text, "새 결과");
+      assert.equal(h.calls.length, 2);
+    });
+
+    test(`${mode}: late prefetch cannot replace a regenerated memory result (${order})`, async () => {
+      const h = harness(mode);
+      const oldPromise = h.prefetch();
+      await flush();
+      const regeneration = h.app.regenerateTranslation();
+      await flush();
+      const settleOld = async () => { h.resolve(h.calls[0], "obsolete prefetch"); await oldPromise; };
+      const settleNew = async () => { h.resolve(h.calls[1], "새 결과"); await regeneration; };
+      if (order === "old-first") { await settleOld(); await settleNew(); }
+      else { await settleNew(); await settleOld(); }
+      assert.equal((await h.request())[0].text, "새 결과");
+      assert.equal(h.calls.length, 2);
+    });
+
     test(`${mode}: target switch and reload preserve Korean cache (${order})`, async () => {
       const h = harness(mode);
       const oldKey = h.key();
