@@ -1,25 +1,189 @@
-<img width="2208" height="512" alt="en" src="https://github.com/ivLis-Studio/ivLyrics/blob/main/preview_readme_en.png?raw=true" /><br>
-PLATFORM : <a href="https://github.com/ivLis-Studio/ivLyrics">PC</a> | <a href="https://github.com/ivLis-Studio/ivLyrics-Android">Android</a> | <a href="https://github.com/ivLis-Studio/ivLyrics-IOS">IOS</a><br>
-MODULE : <a href="https://github.com/ivLis-Studio/ivLyrics-overlay">Overlay</a> | <a href="https://github.com/ivLis-Studio/ivLyrics-helper">Helper</a>
+<img width="2208" height="512" alt="ivLyrics — Enjoy music in your language" src="https://github.com/ivLis-Studio/ivLyrics/blob/main/preview_readme_en.png?raw=true" />
 
----
+[한국어](README.md) · [English](README_EN.md)
 
-<p align="center">
-  <a href="README.md">한국어</a> |
-  <a href="README_EN.md">English</a>
-</p>
+# ivLyrics
 
----
+Enjoy music in your language.
 
-### ivLyrics - Enjoy music in your language.
+Read lyrics, follow the pronunciation, and understand the meaning inside Spotify on your PC. Choose the combination of original lyrics, pronunciation, and translation that works for you, then make the screen your own—from a quiet lyrics view to video backgrounds and a vinyl player.
 
-A lyrics extension for Spicetify. It supports pronunciation guides and translations for multiple languages using the AI API.
+[Get started](#get-started) · [Latest release](https://github.com/ivLis-Studio/ivLyrics/releases/latest) · [Get help](https://discord.gg/2fu36fUzdE)
 
-For bug reports and feature suggestions, please contact us through GitHub Issues or [Discord](https://discord.gg/2fu36fUzdE).
+![ivLyrics lyrics view](https://github.com/user-attachments/assets/0596a769-76aa-49c5-970c-85897fe8d260)
 
-![preview](https://github.com/user-attachments/assets/0596a769-76aa-49c5-970c-85897fe8d260)
+## Make more of the songs you love
 
----
+- **Sing along in another language.** Show pronunciation guides and Japanese furigana.
+- **Understand what you are hearing.** Read a translation alongside the lyrics, with optional cultural context, Research, and Learning features through compatible AI providers.
+- **Set the mood.** Choose fullscreen, TV, or vinyl layouts, album artwork, and video backgrounds.
+- **Make the text comfortable.** Adjust fonts, sizes, and colors separately for the original, pronunciation, and translation layers, and tune the screen's motion effects.
+- **Fix lyrics that run early or late.** Adjust a song's timing or use community sync data.
+
+Lyrics and timing availability depend on the song and provider. AI-generated translations, pronunciation, and explanations can be incorrect.
+
+## Choose the right ivLyrics
+
+This guide is for **Spotify desktop on Windows, macOS, and Linux**. Use the dedicated apps on mobile.
+
+| Where or how you want to listen | What to use |
+| --- | --- |
+| Lyrics inside Spotify on your PC | **ivLyrics** — install below |
+| Lyrics on Android | [ivLyrics Android](https://github.com/ivLis-Studio/ivLyrics-Android) |
+| Lyrics on iPhone or iPad | [ivLyrics iOS](https://github.com/ivLis-Studio/ivLyrics-IOS) |
+| Lyrics floating above other windows | [Overlay](https://github.com/ivLis-Studio/ivLyrics-overlay) — optional companion |
+| Video playback assistance or external app integrations | [Helper](https://github.com/ivLis-Studio/ivLyrics-helper) — only for the features you need |
+
+You do not need to install every companion or run a server to use the basic lyrics screen.
+
+## Get started
+
+### 1. Prepare Spotify and Spicetify
+
+You need the Spotify desktop app and [Spicetify](https://spicetify.app/docs/getting-started). Check that Spotify can play music before continuing.
+
+On Linux, also install Bash, `curl`, `unzip`, and either `sha256sum` or `shasum` for file verification.
+
+If you just installed Spicetify, close and reopen PowerShell or your terminal. These commands are not for the web player or mobile apps.
+
+### 2. Install ivLyrics
+
+Run the command for your operating system. The same command also updates an existing installation.
+
+**Windows — PowerShell**
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/install.ps1 | iex
+```
+
+**macOS / Linux — Terminal**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/install.sh | bash
+```
+
+These commands download and run the installer from the official repository. You can inspect the [Windows script](updater/install.ps1) or [macOS / Linux script](updater/install.sh) first.
+
+<details>
+<summary>Prefer to install manually?</summary>
+
+1. Open the [latest release](https://github.com/ivLis-Studio/ivLyrics/releases/latest) and download **ivLyrics.zip** from **Assets**.
+2. Extract it and name the folder containing `index.js` and `manifest.json` directly `ivLyrics`. Avoid nesting one `ivLyrics` folder inside another.
+3. Copy it into Spicetify's `CustomApps` folder.
+   - Windows: run `spicetify -c` and use the `CustomApps` folder beside the reported `config-xpui.ini`.
+   - macOS / Linux default: `~/.config/spicetify/CustomApps`
+4. Run these commands and reopen Spotify.
+
+```shell
+spicetify config custom_apps ivLyrics
+spicetify apply
+```
+
+For future manual updates, download and replace the app from a new release. See [Spicetify's custom app guide](https://spicetify.app/docs/customization/custom-apps) for folder details.
+
+</details>
+
+### 3. Play your first song
+
+Reopen Spotify and select **ivLyrics** in the sidebar. Follow the first-run guide to choose your language, appearance, and playback preferences, then play a song. You can change these choices later.
+
+Move your mouse over the screen to open its menu and enter settings. Use **settings search** if you cannot find an option.
+
+## Turn on translation and pronunciation
+
+Translation and pronunciation are separate features. You can read just the translation, or display pronunciation to help you sing along.
+
+1. In **General → Language**, choose the app language and the language used for pronunciation and translation.
+2. In **AI Providers → Connections**, enter any API key, model, or other details required by your chosen provider.
+3. Enable the provider and the **Translation / Pronunciation** capabilities you want. Supported capabilities vary by provider.
+4. Choose translation and pronunciation in the current song's conversion settings. If an existing result remains after a change, regenerate that result.
+
+Google Translate and Bing Translate are **translation-only**. Pronunciation requires a provider that supports it. A Gemini key is not required for every feature.
+
+### Prefer Local AI instead of an external translation API?
+
+In **AI Providers → Local AI**, download a model, enable the provider, and move it above other translation providers if you want it tried first. It is off by default. Choose **Local Light, Local Medium, or Local High**.
+
+- Local AI supports **translation only** and does not need an API key.
+- The model download is roughly 1–2GB, with additional memory needed while running. Try a lighter quality if it is slow or memory is limited.
+- Translation runs on your device. Downloading the engine and model still requires internet access; other app functions, such as fetching lyrics, are not made offline.
+- Providers are tried from the top of the list, so an online provider placed earlier can receive the request first; failures can fall through to later providers. Disable other translation providers if you want translation processing to stay on your device.
+
+## Make it comfortable
+
+| What you want to change | Where to look |
+| --- | --- |
+| Fonts, sizes, and spacing for each text layer | Appearance → Lyric layers |
+| Artwork, video, background brightness, and motion | Appearance |
+| Fullscreen, TV, and vinyl layouts | Fullscreen |
+| Lyrics in the right-hand sidebar | Panel Lyrics |
+| Lyric sources and lookup order | Lyrics Providers |
+| Effects that feel too demanding | Performance |
+
+You do not need to configure everything at once. Start with the defaults, listen to a few songs, and adjust what gets in your way.
+
+## Updates and removal
+
+Use the update controls in **About**, or run the installation command again. Automatic installation also registers a local updater for the in-app update button. If the button does not respond, rerun the installer. [Updater help](updater/README.md)
+
+To keep a backup, search settings for **Export Settings** before making major changes. Check exported files for sensitive information before sharing them.
+
+<details>
+<summary>Uninstall ivLyrics</summary>
+
+**Windows — PowerShell**
+
+```powershell
+iwr -useb https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/uninstall.ps1 | iex
+```
+
+**macOS / Linux — Terminal**
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/uninstall.sh | bash
+```
+
+Read the confirmation prompts before continuing. If you are also asked to remove Spicetify completely, decline if you want to keep other themes and extensions.
+
+</details>
+
+## When something does not work
+
+| What you see | What to check first |
+| --- | --- |
+| ivLyrics is missing from the sidebar | Reopen Spotify and run `spicetify apply`. For a manual install, check for a nested app folder. |
+| No lyrics appear | Try another song, then check enabled sources and their order in **Lyrics Providers**. Not every song has lyrics available. |
+| Translation works, but pronunciation does not | Enable **Pronunciation** for a compatible provider. Google and Bing translation alone cannot generate it. |
+| Results are in the wrong language | Check the pronunciation / translation language in **General → Language**, then regenerate the current result. |
+| An API request fails | Check the key, selected model, provider quota, and billing limits, then run a connection test. |
+| Lyrics or video are out of sync | Adjust the current song's lyric and video offsets separately. |
+| Video fails or the view stutters | Compare with an album-art background and reduce video, blur, or motion effects. If using Helper, check that it is running and connected. |
+| Spotify stops working after an update | Follow [Spicetify's official guide](https://spicetify.app/docs/getting-started) to update Spicetify and apply it again. |
+
+For NVIDIA NIM, check the default Base URL, `https://integrate.api.nvidia.com/v1`, and choose a chat model. A listed model can still return 404 for chat requests; try another model and test the connection.
+
+Treat resets and reinstalls as a last resort. Export settings first, then contact us with the details below.
+
+## Help, costs, and data
+
+Use the bug-report or feature-request channels on [Discord](https://discord.gg/2fu36fUzdE), or open a [GitHub issue](https://github.com/ivLis-Studio/ivLyrics/issues).
+
+Include:
+
+- Your OS and Spotify, Spicetify, and ivLyrics versions.
+- The song link and steps that reproduce the issue.
+- A screenshot or error message, with **API keys and account tokens removed**.
+
+External AI features may send lyrics or song information to the provider you choose. Charges, usage limits, and data handling depend on that provider and model. Connections such as NVIDIA NIM may route API keys and requests through the configured Spicetify CORS proxy when a browser connection needs a workaround.
+
+## Support and credits
+
+[Support development](https://buymeacoffee.com/ivlis) · [Original Lyrics-Plus project](https://github.com/spicetify/cli/tree/main/CustomApps/lyrics-plus) · [License](LICENSE)
+
+[<img width="400" height="200" alt="Support ivLis Studio" src="https://github.com/user-attachments/assets/130c5bf8-f8c3-493b-bbdb-b748e77babcd" />](https://buymeacoffee.com/ivlis)
+
+<details>
+<summary>Unofficial project, copyright, and terms</summary>
 
 > [!IMPORTANT]
 > ⚠️ Disclaimer
@@ -40,113 +204,4 @@ For bug reports and feature suggestions, please contact us through GitHub Issues
 >
 > This project does not claim ownership of any lyrics, translations, videos, or other third-party content, nor does it grant licenses to such content. Users are solely responsible for reviewing and complying with all applicable copyright laws, platform policies, API terms of service, and local regulations. Any responsibility for storing, reproducing, distributing, transmitting, or commercially using content through this project rests entirely with the user.
 
-## Key Features
-
-### Lyrics Translation and Pronunciation Guides
-- Real-time lyric translation through the Google Gemini API
-- Romanization support for various languages, including Japanese, Korean, and Chinese
-- Furigana display support for Japanese lyrics
-
-### User Interface
-- Karaoke-style lyric display with word-by-word highlighting
-- Fullscreen mode support
-- YouTube music video background playback
-- Per-song sync offset adjustment
-- Community sync offset sharing
-- Extensive font, color, and layout customization
-
-### Supported Languages
-Korean, English, Japanese, Chinese (Simplified/Traditional), Spanish, French, German, Czech, Italian, Russian, Swedish, Portuguese, Arabic, Persian, Hindi, Bengali, Thai, Turkish, Vietnamese, Indonesian, Malay
-
----
-
-## Guide
-
-#### Automatic Installation (Recommended)
-
-If you have just installed Spicetify, restart PowerShell or your terminal before continuing.
-
-##### Windows
-```powershell
-iwr -useb https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/install.ps1 | iex
-```
-
-##### macOS / Linux
-```bash
-curl -fsSL https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/install.sh | bash
-```
-
-You can use the same command to update the app.
-Automatic installation also registers the `ivlyrics-updater://` helper on Windows, macOS, and Linux so the in-app update button can run the updater.
-
-#### Uninstall
-
-##### Windows
-```powershell
-iwr -useb https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/uninstall.ps1 | iex
-```
-
-##### macOS / Linux
-```bash
-curl -fsSL https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/uninstall.sh | bash
-```
-
-#### Manual Installation
-
-1. Download the latest version from [GitHub Releases](https://github.com/ivLis-Studio/ivLyrics/releases).
-2. Extract the archive and rename the folder to `ivLyrics`.
-3. Copy the folder to the Spicetify `CustomApps` directory:
-   - Windows: run `spicetify -c`, then use the `CustomApps` directory next to the printed `config-xpui.ini` file.
-   - macOS/Linux: `~/.config/spicetify/CustomApps`
-4. Run the following commands in your terminal:
-   ```
-   spicetify config custom_apps ivLyrics
-   spicetify apply
-   ```
-
----
-
-## Initial Setup
-
-1. Launch the player and select ivLyrics from the menu on the left.
-2. Click the settings button in the bottom-right corner.
-3. Enter your Gemini API key in the Advanced tab.
-   - You can get a free API key from [Google AI Studio](https://aistudio.google.com/apikey?hl=en).
-4. Start playing music, then hover over the lyrics area and click the conversion button to enable translation or pronunciation mode.
-
----
-
-## Troubleshooting
-
-### NVIDIA NIM connection
-
-If NVIDIA's hosted API blocks a browser CORS request, ivLyrics retries through Spicetify's CORS proxy. This works for both model discovery and chat requests while preserving streaming responses. The default is `https://cors-proxy.spicetify.app`, operated by the [official Spicetify service](https://github.com/spicetify/services); a configured Spicetify CORS proxy takes precedence. API keys and requests pass through the selected proxy on their way to NVIDIA.
-
-In **Settings → AI Providers → NVIDIA NIM**, enter your API key and use the default Base URL, `https://integrate.api.nvidia.com/v1`. Refresh the model list, choose a chat model, and press **Test Connection**. Some listed models can return 404 for actual requests; try another model in that case. Enable the NVIDIA NIM provider to use it for translation.
-
-### Resetting the App
-
-If you experience problems with settings or lyric display:
-
-1. Run `spicetify enable-devtools` in your terminal.
-2. In the app window, right-click and choose "Inspect Element" or open Developer Tools.
-3. Go to the Application tab > Storage, then click "Clear site data".
-4. Focus the music app and press `Ctrl+Shift+R` on Windows/Linux or `Cmd+Shift+R` on macOS to refresh.
-
-### Common Issues
-
-- **Lyrics are not showing**: Check your internet connection or try another song.
-- **Translation is not working**: Make sure your Gemini API key was entered correctly.
-- **Spicetify does not launch**: Run `spicetify restore`, then run `spicetify apply` again.
-
----
-
-## Support
-
-If you would like to support development, buy me a coffee.
-
-[<img width="400" height="200" alt="ivlisstudio-Sharable-Membership)-Horizontal" src="https://github.com/user-attachments/assets/130c5bf8-f8c3-493b-bbdb-b748e77babcd" />](https://buymeacoffee.com/ivlis)
-
-## Credits
-
-Original <a href="https://github.com/spicetify/cli/tree/main/CustomApps/lyrics-plus">Lyrics-Plus</a> project by Spicetify
+</details>

@@ -1,47 +1,61 @@
-# ivLyrics updater protocol
+# ivLyrics Update Helper
 
-ivLyrics can register a safe local protocol handler:
+[한국어 설치 안내](../README.md) · [English installation guide](../README_EN.md)
+
+The update helper lets the update button inside ivLyrics open the official installer on your computer. You do not need to run a separate app or keep a terminal open.
+
+It is part of the PC installer, **not** the separate [ivLyrics Helper companion](https://github.com/ivLis-Studio/ivLyrics-helper) used for video and external integrations.
+
+## Start here
+
+1. Install ivLyrics using the command in the [main guide](../README_EN.md#get-started).
+2. When an update is available, use the update controls in ivLyrics **About**.
+3. Allow your operating system to open **ivLyrics Updater** if asked.
+4. Wait for the installer to finish, then reopen Spotify if needed.
+
+The helper fetches the published release through the official installer; it does not install unreleased commits from `main`.
+
+## If the update button does not respond
+
+Run the installation command from the main guide again. This also registers the helper if registration was missing. If you only installed by copying files manually, the protocol handler may not be registered yet.
+
+If GitHub cannot be reached, the helper can try a GitHub proxy. The installer can also use its configured download mirror. Do not replace these URLs with a source you do not trust.
+
+An update log can help explain a failed download or installation:
+
+| System | Log location |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\ivLyrics\Updater\updater.log` |
+| macOS | `~/Library/Logs/ivLyrics/updater.log` |
+| Linux | `$XDG_STATE_HOME/ivLyrics/updater.log`, or `~/.local/state/ivLyrics/updater.log` when unset |
+
+Share the relevant error through [Discord](https://discord.gg/2fu36fUzdE) or a [GitHub issue](https://github.com/ivLis-Studio/ivLyrics/issues), with your OS and app versions. Review logs for personal information before posting.
+
+## What it opens on your computer
+
+The registered `ivlyrics-updater` protocol supports two fixed actions:
 
 ```text
 ivlyrics-updater://update
 ivlyrics-updater://open-log
 ```
 
-The handler ignores external command text and only allows the fixed actions above. The `update` action downloads and runs the official installer:
+The first runs the installer; the second opens the update log. It is not a general-purpose command runner. Only approve updater prompts when you intend to update ivLyrics or open its log.
 
-- Windows: `https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/install.ps1`
-- macOS/Linux: `https://raw.githubusercontent.com/ivLis-Studio/ivLyrics/main/updater/install.sh`
+To remove ivLyrics and the registered helper, use the [uninstall instructions](../README_EN.md#updates-and-removal). Removing only the app files may leave the protocol registration behind.
 
-The install and uninstall bootstrap scripts are maintained in this directory:
+<details>
+<summary>Installer and integration reference</summary>
 
-```text
-updater/install.ps1
-updater/install.sh
-updater/uninstall.ps1
-updater/uninstall.sh
-```
+The public install/update scripts are [install.ps1](install.ps1) and [install.sh](install.sh). Removal uses [uninstall.ps1](uninstall.ps1) and [uninstall.sh](uninstall.sh).
 
-Public install, update, and uninstall commands intentionally download these scripts from GitHub Raw instead of executing the copies inside the installed app. This keeps first-time installation available before the app directory exists and lets the uninstaller remove the installed `ivLyrics` directory without depending on a script running from inside that directory.
+Registration and removal scripts:
 
-## Platform handlers
+- Windows: [register](windows/register-updater-protocol.ps1) / [unregister](windows/unregister-updater-protocol.ps1)
+- macOS and Linux: [register](unix/register-updater-protocol.sh) / [unregister](unix/unregister-updater-protocol.sh)
 
-- Windows: registers `ivlyrics-updater` under `HKCU:\Software\Classes`.
-  It derives the active config directory from the config file reported by `spicetify -c`. If the installer directory differs, registration creates a directory junction from Spicetify's configured `CustomApps\ivLyrics` path to the installed app. An existing real ivLyrics directory is synchronized without deleting destination-only files, and the uninstaller records enough state to clean either mode safely.
-- macOS: creates `~/.config/spicetify/CustomApps/ivLyrics/updater/macos/ivLyrics Updater.app` and registers `CFBundleURLTypes`. The app runs the updater in the background instead of automating Terminal.
-- Linux: creates `~/.local/share/applications/ivlyrics-updater.desktop` and points it to `~/.config/spicetify/CustomApps/ivLyrics/updater/unix/ivlyrics-updater.sh` through `xdg-mime`.
+Windows registers the protocol for the current user. macOS registers an updater app in the installed app's `updater/macos` folder. Linux registers a desktop entry with the protocol handler.
 
-## Installer hooks
+The public commands download their bootstrap scripts rather than relying on an already installed copy, so they also work for first-time installation and removal.
 
-After the app folder has been copied to the Spicetify CustomApps directory, installers can register the updater with:
-
-```text
-Windows: updater/windows/register-updater-protocol.ps1
-macOS/Linux: updater/unix/register-updater-protocol.sh
-```
-
-Uninstallers can remove the protocol with:
-
-```text
-Windows: updater/windows/unregister-updater-protocol.ps1
-macOS/Linux: updater/unix/unregister-updater-protocol.sh
-```
+</details>
