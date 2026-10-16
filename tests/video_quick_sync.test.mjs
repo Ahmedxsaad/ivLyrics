@@ -5,6 +5,7 @@ import vm from "node:vm";
 
 const optionsSource = readFileSync(new URL("../OptionsMenu.js", import.meta.url), "utf8");
 const videoSource = readFileSync(new URL("../VideoBackground.js", import.meta.url), "utf8");
+const styleSource = readFileSync(new URL("../style.css", import.meta.url), "utf8");
 const pillStart = optionsSource.indexOf("const clampSyncOffset");
 const pillEnd = optionsSource.indexOf("const SYNC_ADJUST_PANEL_GAP");
 assert.ok(pillStart > 0 && pillEnd > pillStart);
@@ -394,4 +395,54 @@ test("controls use no second relative store or obsolete video-change event", () 
     }
     assert.ok(pillSource.includes("useCurrentVideoSync(videoTrackUri)"));
     assert.ok(pillSource.includes("Utils.updateSelectedVideoSyncOffset(trackUri, next)"));
+});
+
+test("quick-sync shell clips its nested surfaces at both responsive sizes", () => {
+    const shell = styleSource.match(/\n\.lyrics-track-sync-pill\s*\{([^}]+)\}/)?.[1];
+    assert.ok(shell, "missing quick-sync shell styles");
+    assert.match(shell, /overflow:\s*hidden\s*;/, "hover and feedback surfaces must stay inside the rounded shell");
+    assert.match(shell, /isolation:\s*isolate\s*;/, "nested feedback must stay in the pill's stacking context");
+    assert.match(shell, /background-clip:\s*padding-box\s*;/, "the shell fill must not paint beneath its rounded border");
+    const interactive = styleSource.match(/\.lyrics-track-sync-pill:focus-within\s*\{([^}]+)\}/)?.[1];
+    assert.match(interactive, /background-color:\s*rgba\(/,
+        "hover and keyboard focus must preserve the shell's background clipping");
+    assert.doesNotMatch(interactive, /(?:^|;)\s*background\s*:/,
+        "the background shorthand resets background-clip when the pill is interactive");
+    assert.match(shell, /--iv-track-sync-pill-radius:\s*999px\s*;/);
+    assert.match(shell, /border-radius:\s*var\(--iv-track-sync-pill-radius\)\s*;/);
+    for (const width of [480, 260]) {
+        const compact = styleSource.split(`@container ivl-quick-sync (max-width: ${width}px) {`)[1]?.split("\n}\n")[0];
+        assert.ok(compact, `missing ${width}px pane layout`);
+        assert.match(compact, /--iv-track-sync-pill-radius:\s*16px\s*;/,
+            "compact outer and nested radii must use the same radius value");
+    }
+});
+
+test("quick-sync clipping preserves inset focus rings and movement feedback", () => {
+    for (const selector of ["mode-button", "share", "step", "value"]) {
+        const focus = styleSource.match(new RegExp(`\\.lyrics-track-sync-${selector}:focus-visible[^{}]*\\{([^}]+)\\}`))?.[1];
+        assert.ok(focus, `missing ${selector} keyboard focus styles`);
+        assert.match(focus, /outline:\s*2px\s+solid/);
+        assert.match(focus, /outline-offset:\s*-2px\s*;/, "focus rings must remain inside the clipped shell");
+    }
+    assert.match(styleSource, /\.lyrics-track-sync-mode\s*\{[^}]*border-radius:\s*min\(14px,\s*calc\(var\(--iv-track-sync-pill-radius\)\s*-\s*5px\)\)/);
+    assert.match(styleSource, /\.lyrics-track-sync-mode-button\s*\{[^}]*border-radius:\s*min\(12px,\s*calc\(var\(--iv-track-sync-pill-radius\)\s*-\s*7px\)\)/);
+    assert.match(styleSource, /\.lyrics-track-sync-movement-feedback\s*\{[^}]*overflow:\s*visible\s*;/,
+        "clip at the shell while allowing feedback to travel between its controls");
+    for (const animation of ["hover-transfer", "reset-impact", "reset-confirm", "share-in"]) {
+        assert.ok(styleSource.includes(`@keyframes lyrics-track-sync-${animation}`), `missing ${animation} feedback`);
+    }
+});
+
+test("mobile quick-sync widths reserve the toolbar and an 8px gap", () => {
+    const mobile = styleSource.split("@media (max-width: 680px) {")[1]?.split("\n}\n")[0];
+    assert.ok(mobile, "missing mobile quick-sync styles");
+    const stack = mobile.match(/\.lyrics-quick-sync-stack\s*\{([^}]+)\}/)?.[1];
+    const pill = mobile.match(/\.lyrics-track-sync-pill\s*\{([^}]+)\}/)?.[1];
+    // 12px left edge + 68px toolbar + 16px right edge + 8px clear gap.
+    for (const block of [stack, pill]) {
+        assert.match(block, /--iv-track-sync-pill-edge:\s*12px\s*;/);
+        assert.match(block, /max-width:\s*calc\(100%\s*-\s*104px\)\s*;/);
+    }
+    assert.match(stack, /(?:^|\n)\s*width:\s*calc\(100%\s*-\s*104px\)\s*;/);
 });
