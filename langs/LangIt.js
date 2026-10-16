@@ -2109,7 +2109,12 @@ window.LANG_IT = {
     "trackInfo": "Si applica solo alla traccia in riproduzione.",
     "globalTitle": "Sincronizzazione globale",
     "globalInfo": "Si applica a tutti i brani solo su questo dispositivo. Non viene mai inviata alla community.",
-    "communityUnavailableLocal": "Non è possibile inviare offset della community per brani locali senza Spotify trackId."
+    "communityUnavailableLocal": "Non è possibile inviare offset della community per brani locali senza Spotify trackId.",
+    "noVideo": "Nessun video in riproduzione",
+    "quickLyricsLabel": "Offset testo",
+    "quickVideoLabel": "Offset video",
+    "videoTitle": "Video corrente",
+    "videoInfo": "Regola con precisione l'inizio del testo del video corrente dopo l'abbinamento automatico."
   },
   "playbarButton": {
     "label": "Testi Plus"

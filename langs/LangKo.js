@@ -2109,7 +2109,12 @@ window.LANG_KO = {
     "trackInfo": "현재 재생 중인 곡에만 적용됩니다.",
     "globalTitle": "전역 싱크",
     "globalInfo": "이 기기에서만 모든 곡에 적용됩니다. 커뮤니티에는 절대 제출되지 않습니다.",
-    "communityUnavailableLocal": "Spotify trackId가 없는 로컬 곡은 커뮤니티 오프셋을 등록할 수 없습니다."
+    "communityUnavailableLocal": "Spotify trackId가 없는 로컬 곡은 커뮤니티 오프셋을 등록할 수 없습니다.",
+    "noVideo": "재생 중인 영상이 없습니다",
+    "quickLyricsLabel": "가사 오프셋",
+    "quickVideoLabel": "영상 오프셋",
+    "videoTitle": "현재 영상",
+    "videoInfo": "자동 매칭 후 현재 영상의 첫 가사 시점을 미세 조정합니다."
   },
   "playbarButton": {
     "label": "가사 플러스"

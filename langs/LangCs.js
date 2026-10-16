@@ -2109,7 +2109,12 @@ window.LANG_CS = {
     "trackInfo": "Platí pouze pro právě přehrávanou skladbu.",
     "globalTitle": "Globální synchronizace",
     "globalInfo": "Platí pouze pro každou skladbu na tomto zařízení. Nikdy se nepředkládá komunitě.",
-    "communityUnavailableLocal": "Komunitní offsety nelze odeslat pro místní stopy bez Spotify trackId."
+    "communityUnavailableLocal": "Komunitní offsety nelze odeslat pro místní stopy bez Spotify trackId.",
+    "noVideo": "Nepřehrává se žádné video",
+    "quickLyricsLabel": "Posun textu",
+    "quickVideoLabel": "Posun videa",
+    "videoTitle": "Aktuální video",
+    "videoInfo": "Po automatickém spárování jemně dolaďte čas prvního textu aktuálního videa."
   },
   "playbarButton": {
     "label": "Texty Plus"

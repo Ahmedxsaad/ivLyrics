@@ -2109,7 +2109,12 @@ window.LANG_ID = {
     "trackInfo": "Hanya berlaku untuk trek yang sedang diputar.",
     "globalTitle": "Sinkronisasi Global",
     "globalInfo": "Berlaku untuk semua lagu hanya di perangkat ini. Tidak pernah dikirim ke komunitas.",
-    "communityUnavailableLocal": "Offset komunitas tidak dapat dikirim untuk lagu lokal tanpa Spotify trackId."
+    "communityUnavailableLocal": "Offset komunitas tidak dapat dikirim untuk lagu lokal tanpa Spotify trackId.",
+    "noVideo": "Tidak ada video yang diputar",
+    "quickLyricsLabel": "Offset lirik",
+    "quickVideoLabel": "Offset video",
+    "videoTitle": "Video saat ini",
+    "videoInfo": "Sesuaikan waktu lirik pertama video saat ini setelah pencocokan otomatis."
   },
   "playbarButton": {
     "label": "Lirik Plus"

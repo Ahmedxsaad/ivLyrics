@@ -2109,7 +2109,12 @@ window.LANG_ZH_CN = {
     "trackInfo": "仅应用于当前播放的曲目。",
     "globalTitle": "全局同步",
     "globalInfo": "仅在此设备上应用到所有歌曲，绝不会提交到社区。",
-    "communityUnavailableLocal": "没有 Spotify trackId 的本地曲目无法提交社区偏移。"
+    "communityUnavailableLocal": "没有 Spotify trackId 的本地曲目无法提交社区偏移。",
+    "noVideo": "当前没有播放视频",
+    "quickLyricsLabel": "歌词偏移",
+    "quickVideoLabel": "视频偏移",
+    "videoTitle": "当前视频",
+    "videoInfo": "在自动匹配后微调当前视频首句歌词的时间。"
   },
   "playbarButton": {
     "label": "歌词 Plus"

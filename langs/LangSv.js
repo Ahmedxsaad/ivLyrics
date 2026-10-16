@@ -2109,7 +2109,12 @@ window.LANG_SV = {
     "trackInfo": "Gäller endast spåret som spelas just nu.",
     "globalTitle": "Global synk",
     "globalInfo": "Gäller alla låtar endast på den här enheten. Skickas aldrig till communityn.",
-    "communityUnavailableLocal": "Community-offsets kan inte skickas för lokala spår utan Spotify trackId."
+    "communityUnavailableLocal": "Community-offsets kan inte skickas för lokala spår utan Spotify trackId.",
+    "noVideo": "Ingen video spelas upp",
+    "quickLyricsLabel": "Textförskjutning",
+    "quickVideoLabel": "Videoförskjutning",
+    "videoTitle": "Aktuell video",
+    "videoInfo": "Finjustera det aktuella videoklippets första textrad efter automatisk matchning."
   },
   "playbarButton": {
     "label": "Låttext Plus"

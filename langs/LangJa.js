@@ -2109,7 +2109,12 @@ window.LANG_JA = {
     "trackInfo": "現在再生中の曲にのみ適用されます。",
     "globalTitle": "グローバル同期",
     "globalInfo": "このデバイス上のすべての曲にのみ適用されます。コミュニティには送信されません。",
-    "communityUnavailableLocal": "Spotify trackId がないローカルトラックでは、コミュニティオフセットを送信できません。"
+    "communityUnavailableLocal": "Spotify trackId がないローカルトラックでは、コミュニティオフセットを送信できません。",
+    "noVideo": "再生中の動画がありません",
+    "quickLyricsLabel": "歌詞オフセット",
+    "quickVideoLabel": "動画オフセット",
+    "videoTitle": "現在の動画",
+    "videoInfo": "自動マッチング後の現在の動画の最初の歌詞タイミングを微調整します。"
   },
   "playbarButton": {
     "label": "歌詞プラス"

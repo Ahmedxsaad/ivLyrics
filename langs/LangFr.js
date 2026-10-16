@@ -2109,7 +2109,12 @@ window.LANG_FR = {
     "trackInfo": "S’applique uniquement au titre en cours de lecture.",
     "globalTitle": "Synchronisation globale",
     "globalInfo": "S'applique à tous les titres sur cet appareil uniquement. Elle n'est jamais envoyée à la communauté.",
-    "communityUnavailableLocal": "Les offsets communautaires ne peuvent pas être envoyés pour les titres locaux sans Spotify trackId."
+    "communityUnavailableLocal": "Les offsets communautaires ne peuvent pas être envoyés pour les titres locaux sans Spotify trackId.",
+    "noVideo": "Aucune vidéo en cours de lecture",
+    "quickLyricsLabel": "Décalage des paroles",
+    "quickVideoLabel": "Décalage de la vidéo",
+    "videoTitle": "Vidéo actuelle",
+    "videoInfo": "Ajustez précisément le début des paroles de la vidéo actuelle après la correspondance automatique."
   },
   "playbarButton": {
     "label": "Paroles Plus"

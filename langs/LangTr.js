@@ -2109,7 +2109,12 @@ window.LANG_TR = {
     "trackInfo": "Yalnızca çalmakta olan parçaya uygulanır.",
     "globalTitle": "Genel Senkronizasyon",
     "globalInfo": "Yalnızca bu cihazdaki her şarkı için geçerlidir. Asla topluluğa gönderilmez.",
-    "communityUnavailableLocal": "Yerel parçalar için Spotify trackId olmadan topluluk ofsetleri gönderilemez."
+    "communityUnavailableLocal": "Yerel parçalar için Spotify trackId olmadan topluluk ofsetleri gönderilemez.",
+    "noVideo": "Oynatılan video yok",
+    "quickLyricsLabel": "Söz ofseti",
+    "quickVideoLabel": "Video ofseti",
+    "videoTitle": "Mevcut video",
+    "videoInfo": "Otomatik eşleşmeden sonra mevcut videonun ilk söz zamanını ince ayarlayın."
   },
   "playbarButton": {
     "label": "ivLyrics"

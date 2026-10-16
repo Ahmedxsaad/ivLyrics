@@ -2109,7 +2109,12 @@ window.LANG_MS = {
     "trackInfo": "Digunakan pada trek yang sedang dimainkan sahaja.",
     "globalTitle": "Segerak Global",
     "globalInfo": "Digunakan pada semua lagu hanya pada peranti ini. Tidak akan dihantar kepada komuniti.",
-    "communityUnavailableLocal": "Ofset komuniti tidak boleh dihantar untuk lagu setempat tanpa Spotify trackId."
+    "communityUnavailableLocal": "Ofset komuniti tidak boleh dihantar untuk lagu setempat tanpa Spotify trackId.",
+    "noVideo": "Tiada video sedang dimainkan",
+    "quickLyricsLabel": "Offset lirik",
+    "quickVideoLabel": "Offset video",
+    "videoTitle": "Video semasa",
+    "videoInfo": "Laraskan masa lirik pertama video semasa selepas padanan automatik."
   },
   "playbarButton": {
     "label": "Lirik Plus"
