@@ -1408,6 +1408,10 @@ window.LANG_ES = {
         "label": "Mostrar controles rápidos de sincronización de pista",
         "info": "Muestra los controles de desfase de sincronización específicos de la pista en la esquina inferior izquierda de las páginas de letras y el modo de pantalla completa. Si se ocultan, siguen disponibles en «Ajustar sincronización de letras», en el menú derecho."
       },
+      "seekFadeCompensation": {
+        "label": "Empezar un poco antes al hacer clic en una línea",
+        "info": "Spotify aplica un fundido de entrada tras saltar a otra posición, lo que puede ocultar la primera sílaba. Si se activa, al hacer clic en una línea se salta 0,3 segundos antes de su inicio."
+      },
       "fullscreenShortcut": {
         "label": "Atajo de pantalla completa",
         "desc": "Atajo de teclado para el modo de pantalla completa de letras"
@@ -1520,6 +1524,14 @@ window.LANG_ES = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Adelanto de renderizado de karaoke virtual",
         "desc": "Aplica un desplazamiento de tiempo en el renderizado solo al karaoke virtual. Los valores positivos hacen que el resaltado aparezca antes."
+      },
+      "motionStyle": {
+        "label": "Estilo de movimiento del karaoke",
+        "desc": "Clásico mantiene el rebote sutil. Expresivo usa física de resortes: las palabras cantadas crecen, se elevan y brillan, las que aún no se cantan esperan un poco más pequeñas y las notas largas se animan letra por letra.",
+        "options": {
+          "classic": "Clásico",
+          "expressive": "Expresivo"
+        }
       }
     },
     "prefetch": {

@@ -5062,7 +5062,7 @@ const wrapKaraokeInlineStyleRuns = (
 const buildKaraokeWordElements = (
 	timedChars,
 	charElements,
-	{ position = 0, isActive = false, isComplete = false, globalCharOffset = 0, activeGlobalCharIndex = -1, wordTimed = false, wordRenderCache = null, presentationCache = null, elementCache = null, wordSupplementByKey = null, livePaint = false } = {}
+	{ position = 0, isActive = false, isComplete = false, globalCharOffset = 0, activeGlobalCharIndex = -1, wordTimed = false, wordRenderCache = null, presentationCache = null, elementCache = null, wordSupplementByKey = null, livePaint = false, motionStyle = null, expressiveWordStarts = null } = {}
 ) => {
 	if (!Array.isArray(timedChars) || !Array.isArray(charElements) || timedChars.length !== charElements.length) {
 		return charElements;
@@ -5114,19 +5114,29 @@ const buildKaraokeWordElements = (
 			wordRenderCache?.set(cacheKey, wordData);
 		}
 		const { wordChars, startTime, endTime } = wordData;
-		const bounce = wordTimed && Number.isFinite(startTime) && Number.isFinite(endTime)
-			? getKaraokeWordBounceValues(position, isActive, startTime, endTime, 1,
-				getKaraokeMotionProfile(timedChars, currentWordStart, currentWord.length))
-			: { active: false };
-		const cachedWord = wordData.output;
+		// In expressive mode a character-timed word can also move as one unit.
+		const expressiveUnit = motionStyle === "expressive" && !wordTimed
+			&& expressiveWordStarts?.has(currentWordStart) === true;
 		// Live rows receive bounce values from KaraokeLivePainter; only the
 		// discrete bouncing state belongs to the element here.
-		const livePaintWord = livePaint && wordTimed;
+		const livePaintWord = livePaint && (wordTimed || expressiveUnit);
+		const bounce = (wordTimed || expressiveUnit) && Number.isFinite(startTime) && Number.isFinite(endTime)
+			? (motionStyle === "expressive"
+				? (livePaintWord
+					? getKaraokeExpressivePhase(position, startTime, endTime)
+					: getKaraokeExpressiveMotion(wordData, position, startTime, endTime, false))
+				: getKaraokeWordBounceValues(position, isActive, startTime, endTime, 1,
+					getKaraokeMotionProfile(timedChars, currentWordStart, currentWord.length)))
+			: { active: false };
+		const restPending = bounce.rest === "pending";
+		const cachedWord = wordData.output;
 		if (cachedWord && cachedWord.live === livePaintWord
 			&& cachedWord.wordTimed === wordTimed && cachedWord.isComplete === isComplete
 			&& cachedWord.presentationCache === presentationCache
 			&& (livePaintWord || (cachedWord.offsetY === bounce.offsetY && cachedWord.scale === bounce.scale
 				&& cachedWord.glow === bounce.glow)) && cachedWord.bouncing === bounce.active
+			&& cachedWord.restPending === restPending
+			&& cachedWord.expressiveUnit === expressiveUnit
 			&& cachedWord.stacked === wantStack
 			&& cachedWord.gloss === (supplement?.gloss || "") && cachedWord.reading === (supplement?.reading || "")
 			&& cachedWord.children.length === currentWord.length
@@ -5137,7 +5147,7 @@ const buildKaraokeWordElements = (
 			return;
 		}
 		const style = bounce.active && !livePaintWord ? {
-			"--karaoke-bounce-y": `${bounce.offsetY}px`,
+			"--karaoke-bounce-y": `${bounce.offsetY}${bounce.unit || "px"}`,
 			"--karaoke-bounce-scale": bounce.scale,
 			"--karaoke-motion-glow": bounce.glow,
 		} : undefined;
@@ -5150,7 +5160,7 @@ const buildKaraokeWordElements = (
 		const wordMain = react.createElement(
 			"span",
 			{
-				className: `lyrics-karaoke-word${wordTimed ? " is-word-timed" : ""}${bounce.active ? " is-bouncing" : ""}${isComplete ? " is-complete" : ""}`,
+				className: `lyrics-karaoke-word${wordTimed ? " is-word-timed" : ""}${expressiveUnit ? " is-expressive-unit" : ""}${bounce.active ? " is-bouncing" : ""}${restPending ? " is-expressive-pending" : ""}${isComplete ? " is-complete" : ""}`,
 				style,
 				key: `karaoke-word-${currentWordStart}`,
 				...(livePaintWord ? { "data-karaoke-live": `w:${currentWordStart}:${currentWord.length}` } : {}),
@@ -5197,7 +5207,7 @@ const buildKaraokeWordElements = (
 		}
 		wordData.output = {
 			live: livePaintWord, wordTimed, isComplete, presentationCache, offsetY: bounce.offsetY, scale: bounce.scale,
-			glow: bounce.glow, bouncing: bounce.active, children: currentWord, element,
+			glow: bounce.glow, bouncing: bounce.active, restPending, expressiveUnit, children: currentWord, element,
 			stacked: wantStack,
 			gloss: supplement?.gloss || "", reading: supplement?.reading || "",
 		};
@@ -5423,10 +5433,12 @@ const buildKaraokeTextRunElements = (
 	presentationCache = null,
 	elementCache = null,
 	livePaint = false,
-	readings = null
+	readings = null,
+	motionStyle = null
 ) => {
 	const segments = preparedSegments || buildKaraokeTextRunSegments(timedChars, wordTimed, preserveInlineStyles);
 	const renderSegments = textDirection === "rtl" ? [...segments].reverse() : segments;
+	const expressiveMotion = motionStyle === "expressive";
 
 	return renderSegments.map((segment) => {
 		if (segment.type === "space") {
@@ -5444,12 +5456,14 @@ const buildKaraokeTextRunElements = (
 			return element;
 		}
 
+		const segmentDirection = segment.textDirection || getKaraokeTextDirection(segment.text) || textDirection;
+		// Shaped runs (including Latin combining marks and ligatures) keep the
+		// same text node, source fill window, readings and selection range.
 		// Live rows paint the continuous fill and bounce per display frame.
 		const liveFill = livePaint && !wordTimed;
 		const fillValue = wordTimed
 			? getKaraokeInstantWordFill(segment, position, isActive, isComplete)
 			: liveFill ? NaN : getKaraokeSegmentFill(segment, position, isActive, isComplete);
-		const segmentDirection = segment.textDirection || getKaraokeTextDirection(segment.text) || textDirection;
 		const gradientDirection = segmentDirection === "rtl" ? "to left" : "to right";
 		const segmentState = liveFill
 			? getKaraokeLiveState(position,
@@ -5460,8 +5474,12 @@ const buildKaraokeTextRunElements = (
 		const segmentCharCount = Number.isFinite(segment.charCount)
 			? segment.charCount
 			: splitKaraokeGraphemes(segment.text).length;
-		const bounce = getKaraokeBounceValues(position, isActive, segment.startTime, segment.endTime, 1,
-			getKaraokeMotionProfile(timedChars, segment.startIndex, segmentCharCount));
+		const bounce = expressiveMotion
+			? (livePaint
+				? getKaraokeExpressivePhase(position, segment.startTime, segment.endTime)
+				: getKaraokeExpressiveMotion(segment, position, segment.startTime, segment.endTime, false))
+			: getKaraokeBounceValues(position, isActive, segment.startTime, segment.endTime, 1,
+				getKaraokeMotionProfile(timedChars, segment.startIndex, segmentCharCount));
 		const cached = elementCache?.get(segment);
 		const reading = readings?.get(segment.startIndex) || '';
 		if (cached && cached.live === livePaint
@@ -5484,7 +5502,7 @@ const buildKaraokeTextRunElements = (
 			segmentStyle["--karaoke-char-fill-soft-end"] = `${Math.min(100, fillValue + softEdge)}%`;
 		}
 		if (bounce.active && !livePaint) {
-			segmentStyle["--karaoke-bounce-y"] = `${bounce.offsetY}px`;
+			segmentStyle["--karaoke-bounce-y"] = `${bounce.offsetY}${bounce.unit || "px"}`;
 			segmentStyle["--karaoke-bounce-scale"] = bounce.scale;
 			segmentStyle["--karaoke-motion-glow"] = bounce.glow;
 		}
@@ -5875,7 +5893,11 @@ const LyricsLineBlock = react.memo(({
 	const handleClick = useCallback((event) => {
 		if (Number.isFinite(seekTime)) {
 			window.Utils?.clearSafePlayerProgressCorrection?.();
-			Spicetify.Player.seek(seekTime);
+			// Spotify fades audio in after a seek, which can swallow the first
+			// syllable. When enabled, land 300 ms before the line instead.
+			const seekFadeCompensation = typeof CONFIG !== "undefined"
+				&& CONFIG?.visual?.["seek-fade-compensation"] === true;
+			Spicetify.Player.seek(seekFadeCompensation ? Math.max(0, seekTime - 300) : seekTime);
 			playLyricsLineSelectionFeedback(event?.currentTarget, isKara, event?.repeat === true);
 		}
 	}, [seekTime, isKara]);
@@ -7883,6 +7905,208 @@ const getKaraokeWordBounceValues = (position, isActive, startTime, endTime, atte
 	getKaraokeBounceValues(position, isActive, startTime, endTime, attenuation, motionProfile)
 );
 
+// Expressive motion (opt-in "karaoke-motion-style": "expressive"). Each timing
+// unit follows keyframe targets through damped springs, so sung words swell,
+// lift and glow with a small overshoot. Pending units rest slightly smaller
+// (see the is-motion-expressive CSS) and sung units settle at full size.
+// Spring state lives outside React, keyed by the line's stable objects (glyph
+// info, text-run segment or word data), and only exists while
+// a unit is inside its motion window.
+const KARAOKE_EXPRESSIVE_MOTION_STYLE = "expressive";
+const KARAOKE_EXPRESSIVE_SETTLE_MS = 820;
+const KARAOKE_EXPRESSIVE_EMPHASIS_MIN_MS = 1000;
+const KARAOKE_EXPRESSIVE_PENDING_SCALE = 0.95;
+const KARAOKE_EXPRESSIVE_PENDING_OFFSET_EM = 0.012;
+const KARAOKE_EXPRESSIVE_MAX_STEP_SECONDS = 0.25;
+// [progress, value] keyframes, eased with smoothstep between points.
+const KARAOKE_EXPRESSIVE_CURVES = Object.freeze({
+	word: Object.freeze({
+		scale: [[0, KARAOKE_EXPRESSIVE_PENDING_SCALE], [0.7, 1.05], [1, 1]],
+		offsetY: [[0, KARAOKE_EXPRESSIVE_PENDING_OFFSET_EM], [0.9, -0.03], [1, 0]],
+		glow: [[0, 0], [0.15, 0.5], [0.6, 0.5], [1, 0]],
+	}),
+	// Long held notes swell letter by letter.
+	emphasis: Object.freeze({
+		scale: [[0, KARAOKE_EXPRESSIVE_PENDING_SCALE], [0.7, 1.14], [1, 1]],
+		offsetY: [[0, KARAOKE_EXPRESSIVE_PENDING_OFFSET_EM], [0.9, -0.05], [1, 0]],
+		glow: [[0, 0], [0.15, 0.8], [0.6, 0.8], [1, 0]],
+	}),
+});
+// [frequency in Hz, damping ratio]: underdamped for a visible overshoot, yet
+// settled well inside KARAOKE_EXPRESSIVE_SETTLE_MS.
+const KARAOKE_EXPRESSIVE_SPRINGS = Object.freeze({
+	scale: [1.05, 0.62],
+	offsetY: [1.5, 0.45],
+	glow: [1.2, 0.6],
+});
+const KARAOKE_EXPRESSIVE_REST_PENDING = Object.freeze({ offsetY: 0, scale: 1, glow: 0, active: false, rest: "pending" });
+// A live row's unit inside its motion window: React marks it as moving and
+// KaraokeLivePainter writes the spring values.
+const KARAOKE_EXPRESSIVE_LIVE_MOVING = Object.freeze({ offsetY: 0, scale: 1, glow: 0, active: true });
+const karaokeExpressiveMotionStates = new WeakMap();
+
+const isKaraokeExpressiveMotionEnabled = () => (
+	CONFIG?.visual?.["karaoke-motion-style"] === KARAOKE_EXPRESSIVE_MOTION_STYLE
+	&& CONFIG?.visual?.["karaoke-bounce"] !== false
+	&& !prefersReducedLyricsMotion()
+);
+
+const sampleKaraokeExpressiveCurve = (points, progress) => {
+	if (progress <= points[0][0]) return points[0][1];
+	for (let index = 1; index < points.length; index++) {
+		const [endProgress, endValue] = points[index];
+		if (progress <= endProgress) {
+			const [startProgress, startValue] = points[index - 1];
+			const t = (progress - startProgress) / Math.max(1e-6, endProgress - startProgress);
+			return startValue + (endValue - startValue) * t * t * (3 - 2 * t);
+		}
+	}
+	return points[points.length - 1][1];
+};
+
+// Closed-form step of an underdamped spring, exact for any time step.
+const stepKaraokeExpressiveSpring = (spring, goal, seconds, [frequency, damping]) => {
+	const omega = 2 * Math.PI * frequency;
+	const offset = spring.position - goal;
+	const velocity = spring.velocity;
+	const decay = Math.exp(-damping * omega * seconds);
+	const dampedOmega = omega * Math.sqrt(1 - damping * damping);
+	const cosine = Math.cos(dampedOmega * seconds);
+	const sine = Math.sin(dampedOmega * seconds);
+	spring.position = goal + decay * (offset * cosine + ((velocity + damping * omega * offset) / dampedOmega) * sine);
+	spring.velocity = decay * (velocity * cosine - ((damping * omega * velocity + omega * omega * offset) / dampedOmega) * sine);
+	return spring.position;
+};
+
+const getKaraokeExpressiveNow = () => (
+	typeof performance !== "undefined" && typeof performance.now === "function" ? performance.now() : Date.now()
+);
+
+const getKaraokeExpressiveMotion = (stateKey, position, startTime, endTime, emphasis = false, now = getKaraokeExpressiveNow()) => {
+	if (!isKaraokeExpressiveMotionEnabled() || !stateKey
+		|| !Number.isFinite(position) || !Number.isFinite(startTime) || !Number.isFinite(endTime)) {
+		if (stateKey) karaokeExpressiveMotionStates.delete(stateKey);
+		return KARAOKE_BOUNCE_IDLE;
+	}
+	if (position < startTime) {
+		karaokeExpressiveMotionStates.delete(stateKey);
+		return KARAOKE_EXPRESSIVE_REST_PENDING;
+	}
+	if (position >= Math.max(startTime, endTime) + KARAOKE_EXPRESSIVE_SETTLE_MS) {
+		karaokeExpressiveMotionStates.delete(stateKey);
+		return KARAOKE_BOUNCE_IDLE;
+	}
+	const curves = emphasis ? KARAOKE_EXPRESSIVE_CURVES.emphasis : KARAOKE_EXPRESSIVE_CURVES.word;
+	const progress = endTime > startTime ? Math.min(1, (position - startTime) / (endTime - startTime)) : 1;
+	const goals = {
+		scale: sampleKaraokeExpressiveCurve(curves.scale, progress),
+		offsetY: sampleKaraokeExpressiveCurve(curves.offsetY, progress),
+		glow: sampleKaraokeExpressiveCurve(curves.glow, progress),
+	};
+	let state = karaokeExpressiveMotionStates.get(stateKey);
+	if (!state || state.emphasis !== emphasis || position < state.position
+		|| state.startTime !== startTime || state.endTime !== endTime) {
+		// Every unit starts from its pending rest pose, also after a seek.
+		state = {
+			emphasis,
+			time: now,
+			position, startTime, endTime,
+			scale: { position: KARAOKE_EXPRESSIVE_PENDING_SCALE, velocity: 0 },
+			offsetY: { position: KARAOKE_EXPRESSIVE_PENDING_OFFSET_EM, velocity: 0 },
+			glow: { position: 0, velocity: 0 },
+		};
+		karaokeExpressiveMotionStates.set(stateKey, state);
+	}
+	// Unrelated commits while paused must not advance motion. A forward seek
+	// or stalled renderer lands on the current target rather than replaying it.
+	const seconds = position === state.position ? 0
+		: Math.max(0, (now - state.time) / 1000, (position - state.position) / 1000);
+	state.time = now;
+	state.position = position;
+	for (const property of ["scale", "offsetY", "glow"]) {
+		if (seconds > KARAOKE_EXPRESSIVE_MAX_STEP_SECONDS) {
+			// After a stall (hidden window, paused rendering) land on the
+			// current pose instead of replaying motion that is already past.
+			state[property].position = goals[property];
+			state[property].velocity = 0;
+		} else {
+			stepKaraokeExpressiveSpring(state[property], goals[property], seconds, KARAOKE_EXPRESSIVE_SPRINGS[property]);
+		}
+	}
+	return {
+		offsetY: Math.round(state.offsetY.position * 2000) / 2000,
+		scale: Math.round(state.scale.position * 1000) / 1000,
+		glow: CONFIG?.visual?.["karaoke-text-effects"] === false
+			? 0 : Math.max(0, Math.round(state.glow.position * 100) / 100),
+		active: true,
+		unit: "em",
+	};
+};
+
+// The discrete part of expressive motion, without touching any spring state.
+const getKaraokeExpressivePhase = (position, startTime, endTime) => {
+	if (!isKaraokeExpressiveMotionEnabled() || !Number.isFinite(position)
+		|| !Number.isFinite(startTime) || !Number.isFinite(endTime)) return KARAOKE_BOUNCE_IDLE;
+	if (position < startTime) return KARAOKE_EXPRESSIVE_REST_PENDING;
+	return position >= Math.max(startTime, endTime) + KARAOKE_EXPRESSIVE_SETTLE_MS
+		? KARAOKE_BOUNCE_IDLE
+		: KARAOKE_EXPRESSIVE_LIVE_MOVING;
+};
+
+const isKaraokeExpressiveEmphasisUnit = (startTime, endTime) => (
+	Number.isFinite(startTime) && Number.isFinite(endTime)
+	&& endTime - startTime >= KARAOKE_EXPRESSIVE_EMPHASIS_MIN_MS
+);
+
+// Decides what moves for each glyph of a character-timed line. Syllabic
+// scripts move per glyph ("char"); a space-delimited word moves as one unit
+// ("word", via its word wrapper) unless it is held long enough to swell letter
+// by letter ("emphasis"). Words are grouped exactly like the word wrappers:
+// maximal runs of non-whitespace glyphs.
+const KARAOKE_EXPRESSIVE_GLYPH_SCRIPT_REGEX = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u;
+const KARAOKE_EXPRESSIVE_EMPHASIS_MAX_LETTERS = 12;
+const getKaraokeExpressiveGlyphWindow = (charInfo) => {
+	const startTime = Number.isFinite(charInfo?.karaokeFillStartTime) ? charInfo.karaokeFillStartTime : charInfo?.startTime;
+	const endTime = Number.isFinite(charInfo?.karaokeFillEndTime) ? charInfo.karaokeFillEndTime : charInfo?.endTime;
+	return Number.isFinite(startTime) && Number.isFinite(endTime) ? { startTime, endTime } : null;
+};
+const classifyKaraokeExpressiveUnits = (timedChars, allowWordMotion = true) => {
+	const charModes = new Array(timedChars.length).fill(null);
+	const wordStarts = new Set();
+	const isWhitespace = (charInfo) => /^\s*$/u.test(String(charInfo?.char ?? ""));
+	let index = 0;
+	while (index < timedChars.length) {
+		if (!timedChars[index] || isWhitespace(timedChars[index])) {
+			index++;
+			continue;
+		}
+		let end = index;
+		let text = "";
+		let startTime = Infinity;
+		let endTime = -Infinity;
+		while (end < timedChars.length && timedChars[end] && !isWhitespace(timedChars[end])) {
+			text += timedChars[end].char || "";
+			const glyphWindow = getKaraokeExpressiveGlyphWindow(timedChars[end]);
+			if (glyphWindow) {
+				startTime = Math.min(startTime, glyphWindow.startTime);
+				endTime = Math.max(endTime, glyphWindow.endTime);
+			}
+			end++;
+		}
+		const letterCount = end - index;
+		const mode = KARAOKE_EXPRESSIVE_GLYPH_SCRIPT_REGEX.test(text)
+			? "char"
+			: letterCount > 1 && letterCount <= KARAOKE_EXPRESSIVE_EMPHASIS_MAX_LETTERS
+				&& isKaraokeExpressiveEmphasisUnit(startTime, endTime)
+				? "emphasis"
+				: allowWordMotion ? "word" : "char";
+		for (let charIndex = index; charIndex < end; charIndex++) charModes[charIndex] = mode;
+		if (mode === "word") wordStarts.add(index);
+		index = end;
+	}
+	return { charModes, wordStarts };
+};
+
 const prepareKaraokeGlyphUpdates = (timedChars, motionProfiles, wordTimed, wordStartTimes) => {
 	const events = [];
 	const always = [];
@@ -8345,6 +8569,7 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 	const furiganaEnabled = CONFIG?.visual?.["furigana-enabled"] === true;
 	const furiganaReady = window.FuriganaConverter?.isAvailable?.() === true;
 	const hasCharReadings = charReadings instanceof Map && Array.from(charReadings.values()).some((entry) => typeof entry === 'string' ? !!entry : !!(entry && entry.text));
+	const expressiveMotion = isKaraokeExpressiveMotionEnabled();
 	const { furiganaMap, timedChars, motionProfiles, endTime, wrapByWord, textDirection, useTextRun, preserveInlineStyles, timedText, wordStartTimes, wordRenderCache, textRunSegments, hasInlinePresentation } = useMemo(() => {
 		const sourceSyllables = Array.isArray(line.syllables) && line.syllables.length > 0
 			? line.syllables
@@ -8428,16 +8653,6 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 	const textRunReadings = useMemo(() => effectiveUseTextRun
 		? buildKaraokeTextRunReadings(timedChars, textRunSegments, charReadings) : null,
 		[effectiveUseTextRun, timedChars, textRunSegments, charReadings]);
-	const liveLineData = useMemo(() => livePaint ? {
-		timedChars,
-		motionProfiles,
-		wordTimed,
-		segmentsByStart: effectiveUseTextRun && Array.isArray(textRunSegments)
-			? new Map(textRunSegments.filter((segment) => segment.type !== "space")
-				.map((segment) => [segment.startIndex, segment]))
-			: null,
-	} : null, [livePaint, timedChars, motionProfiles, wordTimed, effectiveUseTextRun, textRunSegments]);
-	liveDataRef.current = liveLineData;
 	const { culturalMarkersByCharIndex, fallbackCulturalAnnotations } = useMemo(() => {
 		const culturalMarkersByCharIndex = new Map();
 		const fallbackCulturalAnnotations = [];
@@ -8474,9 +8689,35 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 	// Retain only the latest output per glyph. Timing still runs at the chosen
 	// cadence, while unchanged fill/release values reuse their complete subtree.
 	const glyphElementCache = useMemo(() => [], [timedChars, furiganaMap, charReadings, culturalMarkersByCharIndex]);
+	// Expressive springs keep moving after a glyph's fill ends, so they are
+	// scheduled until their settle window closes.
+	const expressiveUnits = useMemo(() => expressiveMotion && !wordTimed && !effectiveUseTextRun
+		? classifyKaraokeExpressiveUnits(timedChars, wrapByWord)
+		: null, [timedChars, expressiveMotion, wordTimed, effectiveUseTextRun, wrapByWord]);
+	const glyphMotionProfiles = useMemo(() => expressiveUnits
+		? timedChars.map((charInfo, index) => {
+			const glyphWindow = getKaraokeExpressiveGlyphWindow(charInfo);
+			// Glyphs of a word that moves as one unit only need fill updates.
+			return glyphWindow && expressiveUnits.charModes[index] !== "word"
+				? { ...glyphWindow, releaseDuration: KARAOKE_EXPRESSIVE_SETTLE_MS }
+				: null;
+		})
+		: motionProfiles, [timedChars, motionProfiles, expressiveUnits]);
 	const glyphUpdates = useMemo(() => effectiveUseTextRun ? null
-		: prepareKaraokeGlyphUpdates(timedChars, motionProfiles, wordTimed, wordStartTimes),
-		[timedChars, glyphElementCache, effectiveUseTextRun]);
+		: prepareKaraokeGlyphUpdates(timedChars, glyphMotionProfiles, wordTimed, wordStartTimes),
+		[timedChars, glyphElementCache, effectiveUseTextRun, glyphMotionProfiles]);
+	const liveLineData = useMemo(() => livePaint ? {
+		timedChars,
+		motionProfiles,
+		wordTimed,
+		segmentsByStart: effectiveUseTextRun && Array.isArray(textRunSegments)
+			? new Map(textRunSegments.filter((segment) => segment.type !== "space")
+				.map((segment) => [segment.startIndex, segment]))
+			: null,
+		// Expressive springs run in the painter, once per display frame.
+		...(expressiveMotion ? { expressive: true, expressiveUnits } : {}),
+	} : null, [livePaint, timedChars, motionProfiles, wordTimed, effectiveUseTextRun, textRunSegments, expressiveMotion, expressiveUnits]);
+	liveDataRef.current = liveLineData;
 	const wrapperElementCache = useMemo(() => new Map(), [timedChars, presentationCaches]);
 	const glyphBounceEnabled = !wordTimed && CONFIG.visual["karaoke-bounce"] && Number.isFinite(position);
 
@@ -8501,7 +8742,17 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 			? getKaraokeLiveState(position, fillStartTime, fillEndTime, isComplete)
 			: fillRatio <= 0 ? "pending" : fillRatio >= 1 ? "done" : "active";
 		const motionProfile = motionProfiles[index];
-		const bounce = !glyphBounceEnabled || !motionProfile
+		const expressiveMode = expressiveUnits ? expressiveUnits.charModes[index] : null;
+		const expressiveProfile = expressiveMode && expressiveMode !== "word" ? glyphMotionProfiles[index] : null;
+		const bounce = expressiveMode === "word"
+			? KARAOKE_BOUNCE_IDLE
+			: expressiveProfile
+			? (liveFill
+				? getKaraokeExpressivePhase(position, expressiveProfile.startTime, expressiveProfile.endTime)
+				: getKaraokeExpressiveMotion(charInfo, position, expressiveProfile.startTime, expressiveProfile.endTime,
+					expressiveMode === "emphasis"
+						|| isKaraokeExpressiveEmphasisUnit(expressiveProfile.startTime, expressiveProfile.endTime)))
+			: !glyphBounceEnabled || !motionProfile
 			|| position < motionProfile.startTime
 			|| position >= motionProfile.endTime + motionProfile.releaseDuration
 			? KARAOKE_BOUNCE_IDLE : getKaraokeBounceValues(
@@ -8534,7 +8785,7 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 			karaokeStyle["--karaoke-char-fill-soft-end"] = `${Math.min(100, fillValue + softEdge)}%`;
 		}
 		if (bounce.active && !livePaint) {
-			karaokeStyle["--karaoke-bounce-y"] = `${bounce.offsetY}px`;
+			karaokeStyle["--karaoke-bounce-y"] = `${bounce.offsetY}${bounce.unit || "px"}`;
 			karaokeStyle["--karaoke-bounce-scale"] = bounce.scale;
 			karaokeStyle["--karaoke-motion-glow"] = bounce.glow;
 		}
@@ -8649,7 +8900,8 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 			presentationCaches.textRuns,
 			wrapperElementCache,
 			livePaint,
-			textRunReadings
+			textRunReadings,
+			expressiveMotion ? KARAOKE_EXPRESSIVE_MOTION_STYLE : null
 		)
 		: (wrapByWord || wordTimed)
 		? buildKaraokeWordElements(timedChars, charElements, {
@@ -8664,6 +8916,8 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 			elementCache: wrapperElementCache,
 			wordSupplementByKey: wordStack?.supplementByKey || null,
 			livePaint,
+			motionStyle: expressiveMotion ? KARAOKE_EXPRESSIVE_MOTION_STYLE : null,
+			expressiveWordStarts: expressiveUnits?.wordStarts || null,
 		})
 		: wrapKaraokeInlineStyleRuns(timedChars, charElements, {
 			presentationCache: presentationCaches.characters,
@@ -8673,7 +8927,7 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 	return react.createElement(
 		"span",
 		{
-			className: `lyrics-karaoke-line${wrapByWord || wordTimed || effectiveUseTextRun ? " has-word-wrap" : ""}${wordTimed ? " is-word-timed" : ""}${effectiveUseTextRun ? " is-text-run" : ""}${wordStack ? " has-word-stack" : ""}${wordStack?.hasReading ? " has-word-stack-readings" : ""}${textDirection === "rtl" ? " is-rtl" : ""}${isActive ? " is-active" : ""}${isEffectLive ? " is-effect-live" : ""}${isEffectFocused ? " is-effect-focused" : ""}${isComplete ? " is-complete" : ""}${hasCharReadings ? " has-char-readings" : ""}${Number(CONFIG?.visual?.["original-outline-width"]) > 0 ? " has-glyph-outline" : ""}`,
+			className: `lyrics-karaoke-line${wrapByWord || wordTimed || effectiveUseTextRun ? " has-word-wrap" : ""}${wordTimed ? " is-word-timed" : ""}${effectiveUseTextRun ? " is-text-run" : ""}${wordStack ? " has-word-stack" : ""}${wordStack?.hasReading ? " has-word-stack-readings" : ""}${textDirection === "rtl" ? " is-rtl" : ""}${isActive ? " is-active" : ""}${isEffectLive ? " is-effect-live" : ""}${isEffectFocused ? " is-effect-focused" : ""}${isComplete ? " is-complete" : ""}${hasCharReadings ? " has-char-readings" : ""}${Number(CONFIG?.visual?.["original-outline-width"]) > 0 ? " has-glyph-outline" : ""}${expressiveMotion ? " is-motion-expressive" : ""}`,
 			dir: effectiveUseTextRun ? (textDirection === "rtl" ? "ltr" : textDirection) : undefined,
 			...(livePaint ? { ref: liveRootRef } : {}),
 		},
@@ -8709,7 +8963,8 @@ const getKaraokeLiveFill = (position, startTime, endTime) => {
 const getKaraokeLiveBounce = (position, profile) => {
 	if (!profile || !CONFIG.visual["karaoke-bounce"] || !Number.isFinite(position)
 		|| !Number.isFinite(profile.startTime) || !Number.isFinite(profile.endTime)
-		|| position < profile.startTime || position >= profile.endTime + profile.releaseDuration) return null;
+		|| position < profile.startTime || position >= profile.endTime + profile.releaseDuration
+		|| prefersReducedLyricsMotion()) return null;
 	const [strength, scaleStrength, glowStrength] = getKaraokeBounceStrengths(position, profile);
 	return {
 		offsetY: -profile.amplitude * strength,
@@ -8730,18 +8985,30 @@ const createKaraokeLiveUnit = (key, data) => {
 	const [kind, first, second] = String(key).split(":");
 	const startIndex = Number(first);
 	if (!Number.isInteger(startIndex) || startIndex < 0) return null;
-	const unit = { key, elements: [], values: new Map(), fill: null, profile: null };
+	// Expressive units carry their motion window instead of a bounce profile;
+	// the painter steps their springs (keyed by the unit) every frame.
+	const unit = { key, elements: [], values: new Map(), fill: null, profile: null, expressive: null };
 	if (kind === "g") {
 		const charInfo = data.timedChars?.[startIndex];
 		if (!charInfo || data.wordTimed) return null;
 		const { startTime, endTime } = getKaraokeLiveTimes(charInfo);
 		if (Number.isFinite(startTime) && Number.isFinite(endTime)) unit.fill = { startTime, endTime, softEdge: 16 };
+		const expressiveMode = data.expressive ? data.expressiveUnits?.charModes?.[startIndex] : null;
+		if (expressiveMode === "word") return unit;
+		if (expressiveMode && unit.fill) {
+			unit.expressive = {
+				startTime, endTime,
+				emphasis: expressiveMode === "emphasis" || isKaraokeExpressiveEmphasisUnit(startTime, endTime),
+			};
+			return unit;
+		}
 		unit.profile = data.motionProfiles?.[startIndex] || null;
 		return unit;
 	}
 	if (kind === "w") {
 		const count = Number(second);
-		if (!Number.isInteger(count) || count < 1 || !data.wordTimed) return null;
+		const expressiveWord = data.expressive === true && data.expressiveUnits?.wordStarts?.has(startIndex) === true;
+		if (!Number.isInteger(count) || count < 1 || (!data.wordTimed && !expressiveWord)) return null;
 		let startTime = Infinity;
 		let endTime = -Infinity;
 		for (const charInfo of (data.timedChars || []).slice(startIndex, startIndex + count)) {
@@ -8750,6 +9017,10 @@ const createKaraokeLiveUnit = (key, data) => {
 			if (Number.isFinite(times.endTime)) endTime = Math.max(endTime, times.endTime);
 		}
 		if (!Number.isFinite(startTime) || !Number.isFinite(endTime)) return null;
+		if (data.expressive) {
+			unit.expressive = { startTime, endTime, emphasis: false };
+			return unit;
+		}
 		unit.profile = getKaraokeMotionProfile(data.timedChars, startIndex, count)
 			|| createKaraokeMotionProfile(startTime, endTime, endTime - startTime);
 		return unit;
@@ -8760,6 +9031,10 @@ const createKaraokeLiveUnit = (key, data) => {
 		const startTime = Number.isFinite(segment.startTime) ? segment.startTime : 0;
 		const endTime = Number.isFinite(segment.endTime) ? segment.endTime : startTime;
 		if (!data.wordTimed) unit.fill = { startTime, endTime, softEdge: 10 };
+		if (data.expressive) {
+			unit.expressive = { startTime, endTime, emphasis: false };
+			return unit;
+		}
 		const charCount = Number.isFinite(segment.charCount) ? segment.charCount : splitKaraokeGraphemes(segment.text).length;
 		unit.profile = getKaraokeMotionProfile(data.timedChars, segment.startIndex, charCount)
 			|| createKaraokeMotionProfile(segment.startTime, segment.endTime, segment.endTime - segment.startTime);
@@ -8778,10 +9053,11 @@ const setKaraokeLiveValue = (unit, name, value) => {
 };
 
 const resetKaraokeLiveUnit = (unit) => {
+	if (unit.expressive) karaokeExpressiveMotionStates.delete(unit);
 	for (const name of KARAOKE_LIVE_BOUNCE_PROPERTIES) setKaraokeLiveValue(unit, name, null);
 };
 
-const paintKaraokeLiveUnit = (unit, position) => {
+const paintKaraokeLiveUnit = (unit, position, frameTime) => {
 	if (unit.fill) {
 		const fill = getKaraokeLiveFill(position, unit.fill.startTime, unit.fill.endTime);
 		if (fill !== null) {
@@ -8791,7 +9067,15 @@ const paintKaraokeLiveUnit = (unit, position) => {
 			setKaraokeLiveValue(unit, "--karaoke-char-fill-soft-end", `${Math.min(100, fill + softEdge).toFixed(2)}%`);
 		}
 	}
-	if (unit.profile) {
+	if (unit.expressive) {
+		const { startTime, endTime, emphasis } = unit.expressive;
+		const motion = getKaraokeExpressiveMotion(unit, position, startTime, endTime, emphasis,
+			Number.isFinite(frameTime) ? frameTime : undefined);
+		const moving = motion.active === true;
+		setKaraokeLiveValue(unit, "--karaoke-bounce-y", moving ? `${motion.offsetY.toFixed(4)}em` : null);
+		setKaraokeLiveValue(unit, "--karaoke-bounce-scale", moving ? motion.scale.toFixed(4) : null);
+		setKaraokeLiveValue(unit, "--karaoke-motion-glow", moving ? motion.glow.toFixed(3) : null);
+	} else if (unit.profile) {
 		const bounce = getKaraokeLiveBounce(position, unit.profile);
 		setKaraokeLiveValue(unit, "--karaoke-bounce-y", bounce ? `${bounce.offsetY.toFixed(3)}px` : null);
 		setKaraokeLiveValue(unit, "--karaoke-bounce-scale", bounce ? bounce.scale.toFixed(4) : null);
@@ -8837,9 +9121,18 @@ const paintKaraokeLiveEntry = (entry, frameTime) => {
 	const clockPosition = entry.clock?.getPosition?.(frameTime);
 	if (!Number.isFinite(clockPosition)) return false;
 	const position = entry.mapPosition ? entry.mapPosition(clockPosition) : clockPosition;
-	if (Object.is(position, entry.lastPosition)) return false;
+	const expressive = entry.data?.expressive === true;
+	// Expressive settings also apply to a paused live row before React commits
+	// its next structure. Classic retains its existing clock-only fast path.
+	const bounce = expressive ? CONFIG.visual["karaoke-bounce"] : null;
+	const effects = expressive ? CONFIG.visual["karaoke-text-effects"] : null;
+	const style = expressive ? CONFIG.visual["karaoke-motion-style"] : null;
+	const reduced = expressive ? prefersReducedLyricsMotion() : null;
+	if (Object.is(position, entry.lastPosition) && (!expressive
+		|| (entry.bounce === bounce && entry.effects === effects && entry.style === style && entry.reduced === reduced))) return false;
 	entry.lastPosition = position;
-	for (const unit of entry.units.values()) paintKaraokeLiveUnit(unit, position);
+	if (expressive) Object.assign(entry, { bounce, effects, style, reduced });
+	for (const unit of entry.units.values()) paintKaraokeLiveUnit(unit, position, frameTime);
 	return true;
 };
 

@@ -1408,6 +1408,10 @@ window.LANG_IT = {
         "label": "Mostra i controlli rapidi di sincronizzazione della traccia",
         "info": "Mostra i controlli dell’offset di sincronizzazione specifico per la traccia in basso a sinistra nelle pagine dei testi e in modalità schermo intero. Se nascosti, restano disponibili in «Regola sync testi» nel menu a destra."
       },
+      "seekFadeCompensation": {
+        "label": "Inizia leggermente prima al clic su una riga",
+        "info": "Spotify applica una dissolvenza in entrata dopo uno spostamento, che può far perdere la prima sillaba. Se attivo, il clic su una riga salta a 0,3 secondi prima del suo inizio."
+      },
       "fullscreenShortcut": {
         "label": "Scorciatoia schermo intero",
         "desc": "Scorciatoia da tastiera per la modalità schermo intero"
@@ -1520,6 +1524,14 @@ window.LANG_IT = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Anticipo render karaoke virtuale",
         "desc": "Applica un offset temporale in fase di rendering solo al karaoke virtuale. I valori positivi fanno apparire l’evidenziazione prima."
+      },
+      "motionStyle": {
+        "label": "Stile di animazione karaoke",
+        "desc": "Classico mantiene il rimbalzo discreto. Espressivo usa una fisica a molla: le parole cantate si ingrandiscono, si sollevano e brillano, quelle non ancora cantate restano leggermente più piccole e le note lunghe si animano lettera per lettera.",
+        "options": {
+          "classic": "Classico",
+          "expressive": "Espressivo"
+        }
       }
     },
     "prefetch": {

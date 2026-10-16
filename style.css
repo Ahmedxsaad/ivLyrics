@@ -18277,11 +18277,94 @@ html.is-lp-view-exit::view-transition-new(root) {
   pointer-events: none;
 }
 
+/* Glyphs of an expressive word unit glow with their wrapper, like word-timed
+   words; the expressive glow rule below sets the shadow and its strength. */
+.lyrics-karaoke-word.is-expressive-unit.is-bouncing .lyrics-karaoke-char::after {
+  content: attr(data-outline-text) / "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline: var(--karaoke-glyph-bleed-x, 0.16em);
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0 transparent;
+  transition: opacity 75ms linear;
+  pointer-events: none;
+}
+
 /* Live rows paint the glow on every display frame (KaraokeLivePainter). */
 .lyrics-karaoke-char.is-bouncing[data-karaoke-live]::after,
 .lyrics-karaoke-text-run-segment.is-bouncing[data-karaoke-live]::after,
-.lyrics-karaoke-word.is-word-timed.is-bouncing[data-karaoke-live] .lyrics-karaoke-char::after {
+.lyrics-karaoke-word.is-word-timed.is-bouncing[data-karaoke-live] .lyrics-karaoke-char::after,
+.lyrics-karaoke-word.is-expressive-unit.is-bouncing[data-karaoke-live] .lyrics-karaoke-char::after {
   transition: none;
+}
+
+/* Expressive karaoke motion. On the line being sung, units not reached yet
+   (but not the glyphs inside a word that moves as a whole) rest slightly
+   smaller and lower; the spring values written while a unit
+   moves start from this pose and settle at full size, so sung text stays
+   visibly lit. Only that line takes the pose (idle glyphs elsewhere keep no
+   transform, see the paint-chunk note on the lyric pages), and the pose eases
+   in when the line becomes live. */
+.lyrics-karaoke-line.is-motion-expressive.is-effect-live:not(.is-complete) .lyrics-karaoke-char.lyrics-karaoke-char--pending:not(.lyrics-karaoke-word.is-word-timed .lyrics-karaoke-char):not(.lyrics-karaoke-word.is-expressive-unit .lyrics-karaoke-char),
+.lyrics-karaoke-line.is-motion-expressive.is-effect-live:not(.is-complete) .lyrics-karaoke-text-run-segment.lyrics-karaoke-text-run-segment--pending,
+.lyrics-karaoke-line.is-motion-expressive.is-effect-live:not(.is-complete) .lyrics-karaoke-word.is-word-timed.is-expressive-pending,
+.lyrics-karaoke-line.is-motion-expressive.is-effect-live:not(.is-complete) .lyrics-karaoke-word.is-expressive-unit.is-expressive-pending {
+  --karaoke-bounce-scale: 0.95;
+  --karaoke-bounce-y: 0.012em;
+  transform: translateY(var(--karaoke-bounce-y)) scale(var(--karaoke-bounce-scale));
+  transition: transform 240ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* A character-timed word that moves as one unit: the wrapper owns the motion,
+   exactly like word-timed words, and its glyphs only paint their fill. It has
+   no transform while idle, for the same paint-chunk reason as idle glyphs. */
+.lyrics-karaoke-word.is-expressive-unit {
+  transform-origin: center bottom;
+}
+
+.lyrics-karaoke-word.is-expressive-unit.is-bouncing {
+  transform: translateY(var(--karaoke-bounce-y, 0)) scale(var(--karaoke-bounce-scale, 1));
+  will-change: transform;
+}
+
+/* Renderers without live painting step the motion per render; smooth it. */
+.lyrics-karaoke-word.is-expressive-unit.is-bouncing:not([data-karaoke-live]) {
+  transition: transform 75ms linear;
+}
+
+/* Its glyphs inherit the wrapper's motion values; reset the offset and scale
+   so they do not move a second time, and keep the inherited glow. */
+.lyrics-karaoke-word.is-expressive-unit .lyrics-karaoke-char {
+  --karaoke-bounce-y: 0;
+  --karaoke-bounce-scale: 1;
+}
+
+/* Expressive glow is part of the motion itself, so it follows the Text Effects
+   setting (already applied to --karaoke-motion-glow) rather than text shadows. */
+.lyrics-karaoke-line.is-motion-expressive .lyrics-karaoke-char.is-bouncing::after,
+.lyrics-karaoke-line.is-motion-expressive .lyrics-karaoke-text-run-segment.is-bouncing::after,
+.lyrics-karaoke-line.is-motion-expressive .lyrics-karaoke-word.is-word-timed.is-bouncing .lyrics-karaoke-char::after,
+.lyrics-karaoke-line.is-motion-expressive .lyrics-karaoke-word.is-expressive-unit.is-bouncing .lyrics-karaoke-char::after {
+  text-shadow: 0 0 0.24em var(--lyrics-color-active);
+  opacity: var(--karaoke-motion-glow, 0);
+}
+
+/* Honor an OS preference change immediately, including the pending CSS pose,
+   before the next renderer commit removes the expressive line class. */
+@media (prefers-reduced-motion: reduce) {
+  .lyrics-karaoke-line.is-motion-expressive .lyrics-karaoke-char,
+  .lyrics-karaoke-line.is-motion-expressive .lyrics-karaoke-text-run-segment,
+  .lyrics-karaoke-line.is-motion-expressive .lyrics-karaoke-word {
+    transform: none !important;
+    transition: none !important;
+    will-change: auto !important;
+  }
+
+  .lyrics-karaoke-line.is-motion-expressive .lyrics-karaoke-char::after,
+  .lyrics-karaoke-line.is-motion-expressive .lyrics-karaoke-text-run-segment::after {
+    opacity: 0 !important;
+  }
 }
 
 .lyrics-karaoke-glyph-fill {

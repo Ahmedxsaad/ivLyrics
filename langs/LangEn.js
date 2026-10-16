@@ -1408,6 +1408,10 @@ window.LANG_EN = {
         "label": "Show quick track sync controls",
         "info": "Show track-specific sync offset controls in the lower-left corner of lyrics pages and fullscreen mode. When hidden, they remain available under Adjust Lyrics Sync in the right-side menu."
       },
+      "seekFadeCompensation": {
+        "label": "Start Slightly Early When Clicking a Line",
+        "info": "Spotify fades audio in after a seek, which can swallow the first syllable. When enabled, clicking a lyric line seeks 0.3 seconds before it starts."
+      },
       "fullscreenShortcut": {
         "label": "Fullscreen Shortcut",
         "desc": "Keyboard shortcut for lyrics fullscreen mode"
@@ -1520,6 +1524,14 @@ window.LANG_EN = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Pseudo Karaoke Render Advance",
         "desc": "Apply a render-time timing offset to pseudo karaoke only. Positive values make the highlight appear earlier."
+      },
+      "motionStyle": {
+        "label": "Karaoke Motion Style",
+        "desc": "Classic keeps the subtle bounce. Expressive uses spring physics: sung words swell, lift and glow, words not yet sung rest slightly smaller, and long held notes animate letter by letter.",
+        "options": {
+          "classic": "Classic",
+          "expressive": "Expressive"
+        }
       }
     },
     "prefetch": {

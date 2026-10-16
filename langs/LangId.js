@@ -1408,6 +1408,10 @@ window.LANG_ID = {
         "label": "Tampilkan kontrol cepat sinkronisasi trek",
         "info": "Menampilkan kontrol offset sinkronisasi khusus trek di sudut kiri bawah halaman lirik dan mode layar penuh. Jika disembunyikan, kontrol tetap tersedia di «Atur Sinkronisasi Lirik» pada menu sisi kanan."
       },
+      "seekFadeCompensation": {
+        "label": "Mulai sedikit lebih awal saat mengklik baris",
+        "info": "Spotify memperbesar volume secara bertahap setelah melompat, sehingga suku kata pertama bisa tertelan. Jika diaktifkan, mengklik baris lirik akan melompat 0,3 detik sebelum baris dimulai."
+      },
       "fullscreenShortcut": {
         "label": "Pintasan Layar Penuh",
         "desc": "Pintasan keyboard untuk mode layar penuh lirik"
@@ -1520,6 +1524,14 @@ window.LANG_ID = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Pemajuan render karaoke virtual",
         "desc": "Menerapkan offset waktu saat render hanya untuk karaoke virtual. Nilai positif membuat sorotan muncul lebih awal."
+      },
+      "motionStyle": {
+        "label": "Gaya gerakan karaoke",
+        "desc": "Klasik mempertahankan pantulan halus. Ekspresif menggunakan fisika pegas: kata yang sedang dinyanyikan membesar, terangkat, dan bersinar, kata yang belum dinyanyikan sedikit lebih kecil, dan nada panjang dianimasikan huruf demi huruf.",
+        "options": {
+          "classic": "Klasik",
+          "expressive": "Ekspresif"
+        }
       }
     },
     "prefetch": {

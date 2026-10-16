@@ -1408,6 +1408,10 @@ window.LANG_SV = {
         "label": "Visa snabbkontroller för spårsynkronisering",
         "info": "Visar kontroller för spårspecifik synkoffset längst ned till vänster på sidor med sångtexter och i helskärmsläge. När de är dolda finns de fortfarande under ”Justera synkronisering av texter” i menyn till höger."
       },
+      "seekFadeCompensation": {
+        "label": "Starta lite tidigare när du klickar på en rad",
+        "info": "Spotify tonar in ljudet efter en spolning, vilket kan svälja den första stavelsen. När det är aktiverat spolar ett klick på en rad till 0,3 sekunder före radens början."
+      },
       "fullscreenShortcut": {
         "label": "Fullskärmsgenväg",
         "desc": "Kortkommando för sångtexter i helskärmsläge"
@@ -1520,6 +1524,14 @@ window.LANG_SV = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Förskjutning för virtuell karaoke-rendering",
         "desc": "Tillämpa en renderingstidsförskjutning endast på pseudo-karaoke. Positiva värden gör att markeringen visas tidigare."
+      },
+      "motionStyle": {
+        "label": "Rörelsestil för karaoke",
+        "desc": "Klassisk behåller den diskreta studsen. Uttrycksfull använder fjäderfysik: sjungna ord växer, lyfts och lyser, ord som inte sjungits än vilar lite mindre och långa toner animeras bokstav för bokstav.",
+        "options": {
+          "classic": "Klassisk",
+          "expressive": "Uttrycksfull"
+        }
       }
     },
     "prefetch": {

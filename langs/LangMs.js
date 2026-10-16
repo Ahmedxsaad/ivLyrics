@@ -1408,6 +1408,10 @@ window.LANG_MS = {
         "label": "Tunjukkan kawalan pantas penyegerakan trek",
         "info": "Menunjukkan kawalan ofset penyegerakan khusus trek di sudut kiri bawah halaman lirik dan mod skrin penuh. Apabila disembunyikan, kawalan ini masih tersedia di bawah «Laraskan Lirik Senada» dalam menu sebelah kanan."
       },
+      "seekFadeCompensation": {
+        "label": "Mula sedikit awal apabila mengklik baris",
+        "info": "Spotify menguatkan audio secara beransur-ansur selepas melompat, jadi suku kata pertama mungkin tenggelam. Apabila didayakan, mengklik baris lirik akan melompat 0.3 saat sebelum baris bermula."
+      },
       "fullscreenShortcut": {
         "label": "Pintasan Skrin Penuh",
         "desc": "Pintasan papan kekunci untuk menogol mod skrin penuh lirik"
@@ -1520,6 +1524,14 @@ window.LANG_MS = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Nilai Pendahuluan Render Karaoke Maya",
         "desc": "Terapkan ofset masa rendering khusus untuk karaoke maya. Nilai positif yang lebih tinggi menjadikan sorotan bergerak lebih cepat."
+      },
+      "motionStyle": {
+        "label": "Gaya pergerakan karaoke",
+        "desc": "Klasik mengekalkan lantunan halus. Ekspresif menggunakan fizik spring: perkataan yang sedang dinyanyikan membesar, terangkat dan bercahaya, perkataan yang belum dinyanyikan kekal sedikit lebih kecil, dan not panjang dianimasikan huruf demi huruf.",
+        "options": {
+          "classic": "Klasik",
+          "expressive": "Ekspresif"
+        }
       }
     },
     "prefetch": {
