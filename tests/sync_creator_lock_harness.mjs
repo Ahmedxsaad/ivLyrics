@@ -42,7 +42,7 @@ export function createLockedEditor({ text = 'ABCDEF', saved = [10, 11, 12, 13, 1
 	const rightEffect = section('\tuseEffect(() => {\n\t\tconst handleRightMove =', '\t// 현재 줄 싱크 삭제');
 	const resetSelectionEffect = section('\t// Clear offset selection whenever', '\tuseEffect(() => {\n\t\tif (!syncLinesByStart');
 	Object.assign(context, {
-		mode: 'record', syncGranularity: 'character', localStorage: { getItem: () => null },
+		mode: 'record', currentLineText: text, syncGranularity: 'character', localStorage: { getItem: () => null },
 		isDragging: false, dragStartTime: null, dragStartCharIndex: -1,
 		currentLineEffectiveSyllableSegments: Array.from(text, (_, index) => ({ start: index, end: index })),
 		currentGranularityRanges: [], WORD_GAP_MS: 80, interpolationEnabledRef: { current: true },
@@ -79,7 +79,7 @@ export function createLockedEditor({ text = 'ABCDEF', saved = [10, 11, 12, 13, 1
 		return { getActiveRecordingLockRange, getActiveRecordingLockIndex, getCurrentSyncTargetSavedChars,
 			buildLockedCharTimes, getLockClampedRecordingTime, clearRecordingLock, applyRecordingLockRange,
 			handleDragStart, handleDragMove, handleDragEnd, handleContainerMouseDown,
-			applyOffsetSelectionRange, handleCharacterContextMenu, offsetSelectionRangeRef, clearOffsetSelection, clearLyricTextSelection,
+			applyOffsetSelectionRange, handleCharacterContextMenu, offsetSelectionRangeRef, offsetSelectionTargetRef, clearOffsetSelection, clearLyricTextSelection,
 			getNormalizedHotkeyFromEvent, getSyncCreatorShortcutBindings, readSyncCreatorBooleanSetting, isSyncCreatorDragHotkeyEvent,
 			isLeadingChar, isTrailingChar, isWordBoundary, getSequentialSyncTime, getPreviousRecordedSyncTime, getLastRecordedSyncIndex,
 			estimateSegmentDuration, estimateWordInterpolationDuration, applyInterpolatedRangeToCharTimes,

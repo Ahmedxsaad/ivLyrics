@@ -187,15 +187,28 @@ const normalizeSyncCreatorLockRange = (startIndex, endIndex, charCount) => {
 const resolveSyncCreatorLockDragRange = (downIndex, upIndex, charCount) => (
 	normalizeSyncCreatorLockRange(downIndex, upIndex, charCount)
 );
-const resolveSyncCreatorOffsetSelectionRange = (downIndex, upIndex, charCount) => {
+const resolveSyncCreatorOffsetSelectionRange = (downIndex, upIndex, charCount, allowFullLine = false) => {
 	const count = Number(charCount);
 	if (!Number.isFinite(count) || count <= 0) return null;
 	if (!Number.isInteger(downIndex) || !Number.isInteger(upIndex) || downIndex === upIndex) return null;
 	const start = Math.max(0, Math.min(downIndex, upIndex));
 	const end = Math.min(count - 1, Math.max(downIndex, upIndex));
 	if (start > end) return null;
-	if (start <= 0 && end >= count - 1) return null;
+	if (!allowFullLine && start <= 0 && end >= count - 1) return null;
 	return { start, end };
+};
+const getSyncCreatorStyleSelectionRanges = (range, charRefs, lineStart, lineEnd) => {
+	if (!range || !Array.isArray(charRefs) || !Number.isInteger(range.start) || !Number.isInteger(range.end)
+		|| range.start < 0 || range.end < range.start || range.end >= charRefs.length) return [];
+	const indexes = charRefs.slice(range.start, range.end + 1).map(ref => ref?.absoluteIndex);
+	if (indexes.some(index => !Number.isInteger(index) || index < lineStart || index > lineEnd)) return [];
+	const ranges = [];
+	for (const index of [...new Set(indexes)].sort((left, right) => left - right)) {
+		const previous = ranges[ranges.length - 1];
+		if (previous && index === previous.end + 1) previous.end = index;
+		else ranges.push({ start: index, end: index });
+	}
+	return ranges;
 };
 const isSyncCreatorIndexLocked = (index, range) => {
 	if (!range || !Number.isInteger(Number(index))) return false;
@@ -3482,7 +3495,6 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	const [isParallelSplitCollapsed, setIsParallelSplitCollapsed] = useState(false);
 	const [lineMetaDrafts, setLineMetaDrafts] = useState({});
 	const [lineStyleDrafts, setLineStyleDrafts] = useState({});
-	const [styleRangeSelection, setStyleRangeSelection] = useState(null);
 	const [styleRangeEffect, setStyleRangeEffect] = useState('');
 	const [styleRangeSpeaker, setStyleRangeSpeaker] = useState(SYNC_CREATOR_DEFAULT_SPEAKER);
 	const [styleRangeSpeakerColor, setStyleRangeSpeakerColor] = useState('');
@@ -3612,7 +3624,6 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	const historyListRef = useRef(null);
 	const historyPanelRef = useRef(null);
 	const historyResizeDragRef = useRef(null);
-	const styleRangeDragRef = useRef(null);
 	const characterPronunciationCacheRequestRef = useRef(0);
 	const characterPronunciationGenerationRequestRef = useRef(0);
 	const characterPronunciationProgressOwnerRef = useRef(0);
@@ -7097,21 +7108,28 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	// dependency array, which evaluates during render before anything below.
 	const [offsetSelectionRange, setOffsetSelectionRange] = useState(null);
 	const offsetSelectionRangeRef = useRef(null);
+	const offsetSelectionTargetRef = useRef(null);
 
 	const setOffsetSelectionRangeValue = useCallback((start, end) => {
 		if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start) {
 			offsetSelectionRangeRef.current = null;
+			offsetSelectionTargetRef.current = null;
 			setOffsetSelectionRange(null);
 			return false;
 		}
 		const range = { start, end };
 		offsetSelectionRangeRef.current = range;
+		offsetSelectionTargetRef.current = {
+			lineStart: currentLineStart, targetId: activeParallelTargetId, text: currentLineText,
+			indexes: currentLineCharRefs.map(ref => ref.absoluteIndex)
+		};
 		setOffsetSelectionRange(range);
 		return true;
-	}, []);
+	}, [currentLineStart, activeParallelTargetId, currentLineText, currentLineCharRefs]);
 
 	const clearOffsetSelection = useCallback(() => {
 		offsetSelectionRangeRef.current = null;
+		offsetSelectionTargetRef.current = null;
 		setOffsetSelectionRange(null);
 	}, []);
 
@@ -7123,11 +7141,11 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		}
 	}, []);
 
-	// Right-drag in preview/idle arms an offset range. A full-line drag falls
-	// back to whole-line semantics (null) so parallel parts shift with it.
+	// The same visible range drives partial effects and offsets. Keep a full
+	// row selected for styling; offset controls still use whole-line semantics.
 	const applyOffsetSelectionRange = useCallback((downIndex, upIndex) => {
 		if (currentLineChars.length === 0) return false;
-		const range = resolveSyncCreatorOffsetSelectionRange(downIndex, upIndex, currentLineChars.length);
+		const range = resolveSyncCreatorOffsetSelectionRange(downIndex, upIndex, currentLineChars.length, true);
 		if (!range) {
 			if (Number.isInteger(downIndex) && Number.isInteger(upIndex) && downIndex !== upIndex) {
 				clearOffsetSelection();
@@ -8484,57 +8502,37 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		});
 	}, [lineCharOffsets, currentLineIndex, multiVocalMode, claimSessionForLocalEditing]);
 
-	const beginStyleRangeSelection = useCallback((localIndex, event) => {
-		if (!Number.isInteger(localIndex) || localIndex < 0 || localIndex >= currentFullLineChars.length) return;
-		event?.preventDefault?.();
-		event?.stopPropagation?.();
-		styleRangeDragRef.current = { anchor: localIndex };
-		setStyleRangeSelection({ anchor: localIndex, focus: localIndex });
+	useEffect(() => {
 		setStyleRangeEffect('');
-	}, [currentFullLineChars.length]);
-
-	const extendStyleRangeSelection = useCallback((localIndex) => {
-		const drag = styleRangeDragRef.current;
-		if (!drag || !Number.isInteger(localIndex)) return;
-		setStyleRangeSelection({ anchor: drag.anchor, focus: localIndex });
-	}, []);
-
-	useEffect(() => {
-		const finishSelection = () => {
-			styleRangeDragRef.current = null;
-		};
-		document.addEventListener('pointerup', finishSelection, true);
-		document.addEventListener('pointercancel', finishSelection, true);
-		return () => {
-			document.removeEventListener('pointerup', finishSelection, true);
-			document.removeEventListener('pointercancel', finishSelection, true);
-		};
-	}, []);
-
-	useEffect(() => {
-		styleRangeDragRef.current = null;
-		setStyleRangeSelection(null);
-	}, [currentLineStart, currentFullLineChars.length]);
+	}, [offsetSelectionRange]);
 
 	const updateCurrentLineStyleRanges = useCallback((patch) => {
-		if (!styleRangeSelection || currentFullLineChars.length === 0) return false;
-		const localStart = Math.min(styleRangeSelection.anchor, styleRangeSelection.focus);
-		const localEnd = Math.max(styleRangeSelection.anchor, styleRangeSelection.focus);
+		// Selection coordinates belong to the displayed vocal, not necessarily
+		// the full row. Reject old targets before the clearing effect runs.
+		const range = mode !== 'record' ? offsetSelectionRangeRef.current : null;
+		const target = offsetSelectionTargetRef.current;
+		if (!range || !target || currentFullLineChars.length === 0
+			|| target.lineStart !== currentLineStart || target.targetId !== activeParallelTargetId
+			|| target.text !== currentLineText || target.indexes.length !== currentLineCharRefs.length
+			|| target.indexes.some((index, position) => index !== currentLineCharRefs[position]?.absoluteIndex)) return false;
 		const lineEnd = currentLineStart + currentFullLineChars.length - 1;
-		const nextRanges = applySyncCreatorStyleRangePatch(
-			currentLineStyleRanges,
-			currentLineStart + localStart,
-			currentLineStart + localEnd,
-			patch,
-			currentLineStart,
-			lineEnd
+		const selections = getSyncCreatorStyleSelectionRanges(range, currentLineCharRefs, currentLineStart, lineEnd);
+		if (!selections.length) return false;
+		const patchRanges = (ranges, start = currentLineStart, end = lineEnd) => selections.reduce(
+			(result, selection) => selection.end < start || selection.start > end ? result
+				: applySyncCreatorStyleRangePatch(result, selection.start, selection.end, patch, start, end),
+			normalizeSyncCreatorStyleRanges(ranges, start, end)
 		);
 		claimSessionForLocalEditing();
-		setLineStyleDrafts(prev => ({ ...prev, [currentLineStart]: nextRanges }));
+		setLineStyleDrafts(prev => ({
+			...prev,
+			[currentLineStart]: patchRanges(Object.prototype.hasOwnProperty.call(prev, currentLineStart)
+				? prev[currentLineStart] : currentLineStyleRanges)
+		}));
 		if (Object.prototype.hasOwnProperty.call(patch, 'kind')) {
-			scorePendingEffectsRef.current.set(`style:${currentLineStart}:${localStart}:${localEnd}`, {
+			scorePendingEffectsRef.current.set(`style:${currentLineStart}:${activeParallelTargetId}:${range.start}:${range.end}`, {
 				start: currentLineStart,
-				ranges: [{ start: currentLineStart + localStart, end: currentLineStart + localEnd }],
+				ranges: selections,
 				expectedKind: patch.kind, style: true
 			});
 		}
@@ -8542,8 +8540,11 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			if (!prev || !Array.isArray(prev.lines)) return prev;
 			let changed = false;
 			const lines = prev.lines.map(line => {
-				if (line.start !== currentLineStart) return line;
+				if (!selections.some(selection => selection.start <= line.end && selection.end >= line.start)) return line;
 				changed = true;
+				// Patch each persisted row independently. Merged display rows may
+				// still contain separate source records until their next commit.
+				const nextRanges = patchRanges(line.styleRanges, line.start, line.end);
 				const nextLine = { ...line };
 				if (nextRanges.length) nextLine.styleRanges = nextRanges;
 				else delete nextLine.styleRanges;
@@ -8557,7 +8558,10 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		currentFullLineChars.length,
 		currentLineStart,
 		currentLineStyleRanges,
-		styleRangeSelection
+		activeParallelTargetId,
+		currentLineCharRefs,
+		currentLineText,
+		mode
 	]);
 
 	const applySongVocalSpeaker = useCallback((value, customMeta = {}) => {
@@ -8960,7 +8964,9 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		// Locks are record-mode-only and released on mode exit, so no lock
 		// interaction exists on this path by design. Parallel parts keep the
 		// whole-line path below so per-part timing runs stay intact.
-		const selectionRange = mode !== 'record' && !activeParallelPart ? offsetSelectionRangeRef.current : null;
+		const selectedRange = mode !== 'record' && !activeParallelPart ? offsetSelectionRangeRef.current : null;
+		const selectionRange = selectedRange && !(selectedRange.start === 0 && selectedRange.end === currentLineChars.length - 1)
+			? selectedRange : null;
 		if (selectionRange) {
 			const existing = Array.isArray(syncData?.lines)
 				? syncData.lines.find(line => line.start === currentLineStart)
@@ -9055,7 +9061,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				lines: prev.lines.map((line, index) => index === targetIndex ? shiftedLine : line)
 			};
 		});
-	}, [claimSessionForLocalEditing, currentLineStart, activeParallelPart, currentParallelTemplate, resetCurrentSyncInput, mode, syncData]);
+	}, [claimSessionForLocalEditing, currentLineStart, activeParallelPart, currentParallelTemplate, resetCurrentSyncInput, mode, syncData, currentLineChars.length]);
 
 	const resetFromStart = useCallback(async () => {
 		const confirmed = window.confirm(
@@ -9074,7 +9080,6 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		setMergedLineDrafts({});
 		setLineMetaDrafts({});
 		setLineStyleDrafts({});
-		setStyleRangeSelection(null);
 		setGlobalOffset(0);
 		setMode('idle');
 		const draftKey = activeSessionDraftKeyRef.current;
@@ -10871,7 +10876,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		rightLockDragStartRef.current = -1;
 		rightOffsetDragStartRef.current = -1;
 		suppressNextLockContextMenuRef.current = false;
-	}, [mode, currentLineIndex, activeParallelTargetId, currentLineChars.length, clearLyricTextSelection, clearOffsetSelection]);
+	}, [mode, currentLineIndex, activeParallelTargetId, currentLineText, clearLyricTextSelection, clearOffsetSelection]);
 
 	useEffect(() => {
 		if (!syncLinesByStart || currentLineIndex >= lyricsLines.length) {
@@ -13156,15 +13161,15 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 
 	const renderStyleRangeEditor = () => {
 		if (!currentFullLineChars.length) return null;
-		const selectionStart = styleRangeSelection
-			? Math.min(styleRangeSelection.anchor, styleRangeSelection.focus)
-			: -1;
-		const selectionEnd = styleRangeSelection
-			? Math.max(styleRangeSelection.anchor, styleRangeSelection.focus)
-			: -1;
+		// Record-mode right-click is reserved for timing locks.
+		if (mode === 'record') return null;
+		const selectionStart = offsetSelectionRange ? offsetSelectionRange.start : -1;
+		const selectionEnd = offsetSelectionRange ? offsetSelectionRange.end : -1;
 		const selectedText = selectionStart >= 0
-			? currentFullLineChars.slice(selectionStart, selectionEnd + 1).join('')
+			? currentLineChars.slice(selectionStart, selectionEnd + 1).join('')
 			: '';
+		const selectedStartLabel = currentLineCharRefs[selectionStart]?.localIndex + 1;
+		const selectedEndLabel = currentLineCharRefs[selectionEnd]?.localIndex + 1;
 		const selectRangeEffect = (value) => {
 			if (!value) return;
 			setStyleRangeEffect(value);
@@ -13205,63 +13210,6 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			setStyleRangeEffect('');
 			Toast.success(I18n.t('syncCreator.rangeStyleCleared') || '선택 범위의 스타일을 지웠습니다.');
 		};
-
-		const renderStyleRangeCharGrid = () => react.createElement('div', {
-				style: {
-					display: 'flex',
-					flexWrap: 'wrap',
-					alignItems: 'baseline',
-					gap: 0,
-					maxHeight: 80,
-					overflowY: 'auto',
-					marginTop: 7,
-					padding: '7px 8px',
-					borderRadius: 7,
-					background: 'rgba(0,0,0,0.22)',
-					fontSize: 16,
-					lineHeight: 1.55,
-					userSelect: 'none',
-					cursor: 'text',
-					overscrollBehavior: 'contain'
-				},
-				role: 'listbox',
-				'aria-label': I18n.t('syncCreator.rangeStyleSelectLabel') || '스타일을 적용할 글자 범위'
-			}, currentFullLineChars.map((char, index) => {
-				const absoluteIndex = currentLineStart + index;
-				const existingStyle = currentLineStyleRanges.find(range => range.start <= absoluteIndex && range.end >= absoluteIndex);
-				const selected = index >= selectionStart && index <= selectionEnd;
-				const color = existingStyle?.speaker
-					? getSyncCreatorSpeakerTextColor(
-						existingStyle.speaker,
-						existingStyle['speaker-color'],
-						existingStyle['speaker-fallback']
-					)
-					: '';
-				return react.createElement('span', {
-					key: `range-style-${currentLineStart}-${index}`,
-					role: 'option',
-					'aria-selected': selected,
-					onPointerDown: (event) => beginStyleRangeSelection(index, event),
-					onPointerEnter: () => extendStyleRangeSelection(index),
-					style: {
-						display: 'inline-block',
-						minWidth: char === ' ' ? '0.42em' : undefined,
-						padding: 0,
-						margin: 0,
-						borderRadius: 3,
-						color: color || 'var(--spice-text)',
-						background: selected
-							? 'rgba(var(--spice-rgb-accent, 30, 215, 96), 0.32)'
-							: (existingStyle ? 'rgba(var(--spice-rgb-accent, 30, 215, 96), 0.10)' : 'transparent'),
-						boxShadow: existingStyle?.kind && existingStyle.kind !== 'vocal'
-							? 'inset 0 -2px 0 rgba(var(--spice-rgb-accent, 30, 215, 96), 0.75)'
-							: 'none'
-					},
-					title: existingStyle
-						? [getSyncCreatorKindLabel(existingStyle.kind), existingStyle.speaker].filter(Boolean).join(' · ')
-						: undefined
-				}, char === ' ' ? '\u00A0' : char);
-			}));
 
 		const renderStyleRangeColorColumn = () => react.createElement('section', { className: 'sync-creator-range-style-pane sync-creator-range-color-picker' },
 					react.createElement('div', { className: 'sync-creator-range-style-pane-title' }, I18n.t('syncCreator.rangeColorLabel') || '부분 색상'),
@@ -13350,17 +13298,16 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				style: { padding: '0 11px 10px', borderTop: `1px solid ${TOSS_BORDER}` }
 			},
 				react.createElement('div', { style: { marginTop: 8, fontSize: 10.5, color: 'var(--spice-subtext)', lineHeight: 1.4 } },
-					I18n.t('syncCreator.rangeStyleHint') || '싱크 단위와 관계없이 원하는 글자를 드래그해 선택하세요.'
+					I18n.t('syncCreator.rangeStyleHint') || 'Right-drag the lyric line to select characters.'
 				),
-				renderStyleRangeCharGrid(),
 				react.createElement('div', {
 					style: { minHeight: 28, marginTop: 5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }
 				},
 					react.createElement('div', {
 						style: { minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10.5, color: selectedText ? 'var(--spice-text)' : 'var(--spice-subtext)' }
 					}, selectedText
-						? `${I18n.t('syncCreator.rangeStyleSelected') || '선택'}: “${selectedText}” (${selectionStart + 1}–${selectionEnd + 1})`
-						: (I18n.t('syncCreator.rangeStyleSelectPrompt') || '먼저 적용할 글자를 드래그하세요.')
+					? `${I18n.t('syncCreator.rangeStyleSelected') || '선택'}: “${selectedText}” (${selectedStartLabel}–${selectedEndLabel})`
+						: (I18n.t('syncCreator.rangeStyleSelectPrompt') || 'Right-drag the lyric line first.')
 					),
 					react.createElement('button', {
 						type: 'button',

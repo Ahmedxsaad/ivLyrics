@@ -10,7 +10,7 @@ function shift(data, delta) {
         claimSessionForLocalEditing() {}, resetCurrentSyncInput() {},
         roundSyncTime: value => Math.round(value * 1000) / 1000,
         SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC: 0.001,
-        mode: 'idle', Toast: { error() {} }, I18n: { t: key => key },
+        mode: 'idle', currentLineChars: new Array(5), Toast: { error() {} }, I18n: { t: key => key },
         offsetSelectionRangeRef: { current: null },
         get syncData() { return data; },
         setSyncData: update => { data = update(data); } };
