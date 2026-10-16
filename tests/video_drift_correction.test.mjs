@@ -68,6 +68,34 @@ test("a seek that resumes late no longer leaves the video steadily behind", () =
     assert.ok(state.leadSeconds > 0.15 && state.leadSeconds < 0.45, `learned lead ${state.leadSeconds}`);
 });
 
+test("a seek that takes over a second to resume is not re-sent while the video buffers", () => {
+    // Re-seeking every time drift crossed half a second restarted the
+    // buffering: on a slow connection the video never played (27 seeks in
+    // 20 s) and the page stuttered under them.
+    for (const resumeDelay of [0.8, 1.5]) {
+        const { seeks, state, finalDrift } = simulate({ seconds: 20, startDrift: -2, resumeDelay });
+        assert.ok(seeks.length <= 3, `${resumeDelay} s resume: ${seeks.length} seeks`);
+        assert.ok(Math.abs(finalDrift) <= 0.1, `${resumeDelay} s resume: final drift ${finalDrift.toFixed(3)} s`);
+        assert.ok(state.leadSeconds >= resumeDelay - 0.3, `the lead covers the resume time (${state.leadSeconds} s)`);
+    }
+});
+
+test("a seek that never resumes is retried with growing patience", () => {
+    const { seeks } = simulate({ seconds: 30, startDrift: -2, resumeDelay: 1000 });
+    const gaps = seeks.slice(1).map((seek, index) => seek.now - seeks[index].now);
+    assert.ok(seeks.length <= 5, `${seeks.length} seeks in 30 s`);
+    assert.deepEqual(gaps, [2500, 5000, 10000, 10000], "waits double up to 10 s");
+});
+
+test("a timing nudge seeks at once even while a previous seek buffers", () => {
+    const state = createVideoDriftState();
+    assert.equal(planVideoDriftCorrection(state, { currentTime: 0, targetTime: 10, now: 0, isPlaying: true }).type, "seek");
+    assert.equal(planVideoDriftCorrection(state, { currentTime: 9, targetTime: 10.75, now: 750, isPlaying: true }).type, "none",
+        "buffering: no second seek");
+    state.seekRequested = true;
+    assert.equal(planVideoDriftCorrection(state, { currentTime: 9, targetTime: 11, now: 1000, isPlaying: true }).type, "seek");
+});
+
 test("the old half-second threshold left the same player 0.3 s behind for good", () => {
     const oldPlan = (state, { currentTime, targetTime }) =>
         Math.abs(currentTime - targetTime) > 0.5 ? { type: "seek", time: targetTime } : { type: "none" };
