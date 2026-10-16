@@ -720,27 +720,43 @@
     const buildBlockPrompt = (lines, language) => `Please accurately translate the following text into ${language}.\nYou must retain the exact same number of delimiters in the translation. Strictly do not omit, escape, or translate these symbols, and pay close attention to their placement.\n\n${lines.join('\n')}`;
     const outputBudget = (text) => Math.min(1536, 48 + Math.ceil(String(text).length * 3));
 
+    // wllama 3.8.1 forwards llama.cpp's final streaming timings. predicted_ms
+    // measures generation separately from prompt_ms; neither loading nor queueing is included.
+    function completionPerformance(timings) {
+        const tokens = timings?.predicted_n;
+        const milliseconds = timings?.predicted_ms;
+        if (!Number.isSafeInteger(tokens) || tokens <= 0 || !Number.isFinite(milliseconds) || milliseconds <= 0) return null;
+        const seconds = milliseconds / 1000;
+        const tokensPerSecond = tokens / seconds;
+        return Number.isFinite(tokensPerSecond) ? { tokens, seconds, tokensPerSecond } : null;
+    }
+
     async function complete(instance, prompt, maxTokens, signal) {
         if (signal?.aborted) throw cancelledError();
         let text = '';
         let finishReason = null;
+        let performance = null;
         await instance.createChatCompletion({
             messages: [{ role: 'user', content: prompt }],
             max_tokens: maxTokens,
             ...SAMPLING,
             stream: true,
+            stream_options: { include_usage: true },
             // Lets a song nobody waits for any more give the engine back mid-block.
             abortSignal: signal,
             onData(chunk) {
                 const choice = chunk?.choices?.[0];
                 if (typeof choice?.delta?.content === 'string') text += choice.delta.content;
                 if (choice?.finish_reason) finishReason = choice.finish_reason;
+                // The usage/timings-only final chunk can have an empty choices array.
+                if (chunk?.timings) performance = completionPerformance(chunk.timings);
             }
         });
-        return { text, finishReason };
+        if (signal?.aborted) throw cancelledError();
+        return { text, finishReason, performance };
     }
 
-    async function translateBlock(instance, parts, language, signal) {
+    async function translateBlock(instance, parts, language, signal, onPerformance) {
         if (parts.length > 1) {
             const { text, finishReason } = await complete(instance, buildBlockPrompt(parts, language), outputBudget(parts.join('\n')), signal);
             const lines = text.replace(/\r\n?/g, '\n').trim().split('\n').map((line) => line.trim());
@@ -749,9 +765,10 @@
         // The block lost or merged a line: translate each line on its own instead.
         const translated = [];
         for (const part of parts) {
-            const { text } = await complete(instance, buildLinePrompt(part, language), outputBudget(part), signal);
+            const { text, performance } = await complete(instance, buildLinePrompt(part, language), outputBudget(part), signal);
             const line = text.replace(/\s*\n+\s*/g, ' ').trim();
             if (!line) throw new Error('[Local AI] The model returned an empty line.');
+            onPerformance?.(performance);
             translated.push(line);
         }
         return translated;
@@ -823,7 +840,8 @@
             try {
                 if (Date.now() > deadline) throw timeoutError();
                 const instance = await ensureLoaded();
-                return await translateBlock(instance, block, language, job.signal);
+                return await translateBlock(instance, block, language, job.signal,
+                    job.kind === 'test' ? (performance) => { job.performance = performance; } : null);
             } catch (error) {
                 // Stopping a song nobody waits for aborts its block on purpose; the engine is fine.
                 if (job.stopped) throw job.stopReason;
@@ -849,15 +867,17 @@
         return sourceLines.map((_, row) => rowText(row));
     }
 
-    async function runTestTranslation() {
+    async function runTestTranslation(onJob) {
         const lang = getCurrentTargetLanguage();
         const language = resolveTargetLanguage(lang);
         const sample = String(lang).toLowerCase().startsWith('ja') ? 'The night is still young.' : '今夜はまだ始まったばかり';
         const started = Date.now();
         const job = startJob({ kind: 'test' });
+        onJob?.(job);
         try {
-            const [line] = await translateLyricsLines(sample, language, null, job);
-            return { sample, line, seconds: (Date.now() - started) / 1000 };
+            const [line] = await Promise.race([translateLyricsLines(sample, language, null, job), job.whenStopped]);
+            if (job.stopped) throw job.stopReason;
+            return { sample, line, seconds: (Date.now() - started) / 1000, performance: job.performance || null };
         } finally {
             finishJob(job);
         }
@@ -904,14 +924,27 @@
             const [idleMinutes, setIdleMinutes] = useState(getIdleUnloadMinutes);
             const [confirmRemove, setConfirmRemove] = useState(false);
             const [test, setTest] = useState(null);
+            const [testRun] = useState(() => ({ id: 0, job: null }));
 
             useEffect(() => subscribe(setSnapshot), []);
             useEffect(() => { void refreshStatus(); }, [tierId]);
+            useEffect(() => () => {
+                testRun.id++;
+                testRun.job?.stop(cancelledError());
+                testRun.job = null;
+            }, []);
 
             const busy = snapshot.phase === 'downloading' || snapshot.phase === 'loading';
             const hasModel = snapshot.phase === 'downloaded' || snapshot.phase === 'ready';
             // Say so before anyone downloads the model for a language it cannot translate into.
             const targetLanguage = getCurrentTargetLanguage();
+            const clearTest = () => {
+                testRun.id++;
+                testRun.job?.stop(cancelledError());
+                testRun.job = null;
+                setTest(null);
+            };
+            useEffect(() => { clearTest(); }, [targetLanguage]);
             const languageSupported = !!targetLanguageName(targetLanguage);
             const tierIndex = Math.max(0, QUALITY_TIERS.findIndex((candidate) => candidate.id === tierId));
             const tier = QUALITY_TIERS[tierIndex];
@@ -925,13 +958,14 @@
                 setSetting('quality', id);
                 setTierId(id);
                 setConfirmRemove(false);
-                setTest(null);
+                clearTest();
                 void runTask(unloadModel);
             };
             const changeDevice = async (event) => {
                 const next = event.target.value === 'cpu' ? 'cpu' : 'auto';
                 setSetting('device', next);
                 setDevice(next);
+                clearTest();
                 await runTask(unloadModel);
             };
             const changeIdle = (event) => {
@@ -940,24 +974,30 @@
                 setIdleMinutes(next);
                 if (!pumping) scheduleIdleUnload();
             };
-            const startDownload = () => { setTest(null); void downloadModel().catch(() => {}); };
-            const freeMemory = () => { void runTask(unloadModel); };
+            const startDownload = () => { clearTest(); void downloadModel().catch(() => {}); };
+            const freeMemory = () => { clearTest(); void runTask(unloadModel); };
             const deleteModel = () => {
                 if (!confirmRemove) {
                     setConfirmRemove(true);
                     return;
                 }
                 setConfirmRemove(false);
-                setTest(null);
+                clearTest();
                 void runTask(removeModel).catch((error) => setState({ phase: 'error', error: friendlyError(error, 'cache').message }));
             };
             const testTranslation = async () => {
+                if (testRun.job || busy || !languageSupported) return;
+                const id = ++testRun.id;
                 setTest({ running: true });
                 try {
-                    const result = await runTestTranslation();
-                    setTest({ ok: true, text: `✓ ${result.sample} → ${result.line} (${result.seconds.toFixed(1)}s)` });
+                    const result = await runTestTranslation((job) => { testRun.job = job; });
+                    if (id !== testRun.id) return;
+                    setTest({ ok: true, result, tierId, text: `✓ ${result.sample} → ${result.line}` });
                 } catch (error) {
+                    if (id !== testRun.id) return;
                     setTest({ ok: false, text: `✗ ${friendlyError(error, 'translate').message}` });
+                } finally {
+                    if (id === testRun.id) testRun.job = null;
                 }
             };
 
@@ -1036,10 +1076,24 @@
                             type: 'button', className: 'ai-addon-btn ai-addon-btn-secondary', onClick: deleteModel, disabled: busy
                         }, confirmRemove ? t('confirmRemove', 'Click again to delete') : t('remove', 'Delete model'))
                     ),
-                    test && !test.running && h('small', {
-                        className: `ai-addon-test-status ${test.ok ? 'success' : 'error'}`,
-                        style: { display: 'block', marginTop: '8px' }
-                    }, test.text)
+                    test && !test.running && h('div', { role: 'status', 'aria-live': 'polite', 'aria-atomic': true,
+                        style: { marginTop: '8px', overflowWrap: 'anywhere' } },
+                        h('small', { className: `ai-addon-test-status ${test.ok ? 'success' : 'error'}` }, test.text),
+                        test.ok && h('small', { style: { display: 'block', marginTop: '4px' } },
+                            t('testTotalTime', 'Total: {seconds}s', { seconds: test.result.seconds.toFixed(1) })),
+                        test.ok && h('small', { style: { display: 'block', marginTop: '4px' } },
+                            test.result.performance
+                                ? t('testSpeed', '{speed} output tokens/s · {tokens} tokens · {seconds}s decoding', {
+                                    speed: test.result.performance.tokensPerSecond.toFixed(1), tokens: test.result.performance.tokens,
+                                    seconds: test.result.performance.seconds.toFixed(2)
+                                })
+                                : t('testSpeedUnavailable', 'Output speed unavailable for this test.')),
+                        test.ok && test.result.performance && h('small', { className: 'local-model-hint', style: { display: 'block', marginTop: '4px' } },
+                            t('testSpeedScope', 'Decoding only; excludes download, loading and prompt processing. Speed varies by device, preset and text.')),
+                        test.ok && tierIndex > 0 && test.tierId === tierId && h('small', { className: 'local-model-hint', style: { display: 'block', marginTop: '4px' } },
+                            t('testSmallerHint', 'If this feels slow, try {tier}, a smaller preset; speed and quality may vary.', {
+                                tier: tierLabel(QUALITY_TIERS[tierIndex - 1])
+                            })))
                 ),
                 h('div', { className: 'ai-addon-setting' },
                     h('label', null, t('device', 'Processor')),

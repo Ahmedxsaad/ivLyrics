@@ -142,6 +142,7 @@ const createReact = () => {
 	let cursor = 0;
 	return {
 		reset() { cursor = 0; },
+		unmount() { for (const slot of slots) slot?.cleanup?.(); slots.length = 0; },
 		createElement: (type, props, ...children) => ({ type, props: props || {}, children: children.flat(Infinity).filter((child) => child !== false && child != null) }),
 		useState(initial) {
 			const index = cursor++;
@@ -152,8 +153,8 @@ const createReact = () => {
 			const index = cursor++;
 			const previous = slots[index];
 			if (!previous || deps.some((dep, i) => !Object.is(dep, previous.deps[i]))) {
-				slots[index] = { deps };
-				effect();
+				previous?.cleanup?.();
+				slots[index] = { deps, cleanup: effect() };
 			}
 		},
 	};
@@ -173,6 +174,7 @@ export const button = (tree, prefix) => nodes(tree).find((node) => node.type ===
 export function createHarness({
 	cached = ["high"], partial = {}, settings = {}, gpu = true, load = null, reply = null, inference = null, hold = false,
 	importGate = null, importModule = null, download = instantDownload, playing = null, config = null, uiLanguage = null,
+	completion = null,
 } = {}) {
 	const store = new Map(Object.entries(settings));
 	const cache = new FakeCache();
@@ -203,7 +205,8 @@ export function createHarness({
 			this.loaded = true;
 		}
 		getChatTemplate() { return "{{ messages }}"; }
-		async createChatCompletion({ messages, onData, abortSignal }) {
+		async createChatCompletion(options) {
+			const { messages, onData, abortSignal } = options;
 			const call = { prompt: messages[0].content, signal: abortSignal };
 			calls.push(call);
 			await new Promise((resolve, reject) => {
@@ -215,6 +218,7 @@ export function createHarness({
 				else setImmediate(entry.release);
 			});
 			if (inference) await inference(call);
+			if (completion) return completion({ ...call, onData, options });
 			onData({ choices: [{ delta: { content: (reply || defaultReply)(call.prompt) } }] });
 			onData({ choices: [{ delta: {}, finish_reason: "stop" }] });
 		}
@@ -255,6 +259,7 @@ export function createHarness({
 	let Settings = null;
 	return {
 		addon, store, cache, calls, loads, running, debug, timers, window, play,
+		unmount() { React.unmount(); },
 		get prompts() { return calls.map((call) => call.prompt); },
 		get exits() { return exits; },
 		advance(ms) { now += ms; },
