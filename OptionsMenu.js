@@ -6146,6 +6146,14 @@ const TOOLBAR_PANEL_COMPANION_SURFACES = TOOLBAR_PANEL_DIALOG_SURFACES +
 // In fullscreen, a click outside the opened menu folds it, except in these.
 const TOOLBAR_FULLSCREEN_MENU_SURFACES = TOOLBAR_PANEL_COMPANION_SURFACES +
   ", #ivLyrics-share-image-overlay, .lyrics-creator-profile-overlay";
+
+// React may replace the clicked submenu before the document's bubbling click
+// listener runs. The original event path still identifies it as an inside click.
+const isToolbarSurfaceEvent = (event, root, companionSurfaces) =>
+  !!root?.contains(event.target) ||
+  !!event.target?.closest?.(companionSurfaces) ||
+  !!event.composedPath?.().some((node) => node === root || node?.matches?.(companionSurfaces));
+
 const TOOLBAR_HOTKEY_LABELS = Object.freeze({
   ctrl: "⌃",
   control: "⌃",
@@ -6553,8 +6561,7 @@ const IvLyricsFloatingToolbar = react.memo((toolbar) => {
   useEffect(() => {
     if (!openId) return undefined;
     const handlePointerDown = (event) => {
-      const target = event.target;
-      if (rootRef.current?.contains(target) || target?.closest?.(TOOLBAR_PANEL_COMPANION_SURFACES)) return;
+      if (isToolbarSurfaceEvent(event, rootRef.current, TOOLBAR_PANEL_COMPANION_SURFACES)) return;
       closePanel();
     };
     // Focus outside the toolbar (e.g. on the page) still lets Esc close it.
@@ -6581,8 +6588,7 @@ const IvLyricsFloatingToolbar = react.memo((toolbar) => {
   useEffect(() => {
     if (!isMenuUnfolded) return undefined;
     const handleClickOutside = (event) => {
-      const target = event.target;
-      if (rootRef.current?.contains(target) || target?.closest?.(TOOLBAR_FULLSCREEN_MENU_SURFACES)) return;
+      if (isToolbarSurfaceEvent(event, rootRef.current, TOOLBAR_FULLSCREEN_MENU_SURFACES)) return;
       actions?.onCloseMenu?.();
     };
     document.addEventListener("click", handleClickOutside);
