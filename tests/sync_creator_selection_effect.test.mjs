@@ -26,12 +26,18 @@ const {
 } = context.__helpers;
 const plain = value => JSON.parse(JSON.stringify(value));
 
-test('selection effect target is only active in idle/preview with no parallel part and a real range', () => {
-	assert.equal(shouldUseSyncCreatorSelectionEffect({ mode: 'idle', activeParallelPart: null, offsetSelectionRange: { start: 1, end: 2 } }), true);
-	assert.equal(shouldUseSyncCreatorSelectionEffect({ mode: 'preview', activeParallelPart: null, offsetSelectionRange: { start: 0, end: 0 } }), true);
-	assert.equal(shouldUseSyncCreatorSelectionEffect({ mode: 'record', activeParallelPart: null, offsetSelectionRange: { start: 1, end: 2 } }), false);
-	assert.equal(shouldUseSyncCreatorSelectionEffect({ mode: 'idle', activeParallelPart: { id: 'b' }, offsetSelectionRange: { start: 1, end: 2 } }), false);
-	assert.equal(shouldUseSyncCreatorSelectionEffect({ mode: 'idle', activeParallelPart: null, offsetSelectionRange: null }), false);
+test('idle/preview selections target exact ranges on normal, split and grouped vocals', () => {
+	for (const activeParallelPart of [null, { id: 'b' }, { id: 'background', ranges: [{ start: 3, end: 4 }, { start: 8, end: 9 }] }]) {
+		for (const mode of ['idle', 'preview']) {
+			for (const offsetSelectionRange of [{ start: 1, end: 2 }, { start: 0, end: 0 }]) {
+				assert.equal(shouldUseSyncCreatorSelectionEffect({ mode, activeParallelPart, offsetSelectionRange }), true);
+			}
+		}
+		assert.equal(shouldUseSyncCreatorSelectionEffect({ mode: 'record', activeParallelPart, offsetSelectionRange: { start: 1, end: 2 } }), false);
+		for (const offsetSelectionRange of [null, {}, { start: -1, end: 1 }, { start: 2, end: 1 }, { start: 0.5, end: 1 }, { start: 0, end: Infinity }, { start: '0', end: 1 }]) {
+			assert.equal(shouldUseSyncCreatorSelectionEffect({ mode: 'idle', activeParallelPart, offsetSelectionRange }), false);
+		}
+	}
 });
 
 test('selection effect kind is the uniform kind across selected refs, empty when mixed or unstyled', () => {

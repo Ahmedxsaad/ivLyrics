@@ -12,10 +12,15 @@ const section = (startMarker, endMarker) => {
 	assert.ok(start >= 0 && end > start, `missing production section: ${startMarker}`);
 	return source.slice(start, end);
 };
-const styleMemo = section('\tconst currentLineStyleRanges = useMemo(', '\tconst getParallelTemplateForLine =');
+const styleMemo = section('\tconst currentLineMeta = useMemo(', '\tconst getParallelTemplateForLine =');
 const charMemo = section('\tconst currentLineCharRefs = useMemo(', '\tscoreInputContextRef.current =');
+const charRefsHelper = section('\tconst rangesToCharRefs =', '\tconst getSyncCreatorParallelJoinText =');
+const effectMeta = section('\tconst currentSpeakerMeta =', '\tuseEffect(() => {');
+const metaCallbacks = section('\tconst updateParallelPartMeta =', '\tconst updateCurrentLineStyleRanges =');
 const styleCallback = section('\tconst updateCurrentLineStyleRanges =', '\tconst applySongVocalSpeaker =');
-const styleRenderer = section('\tconst renderStyleRangeEditor =', '\tconst renderStagePanel =');
+const pickers = section('\tconst getSpeakerTone =', '\tconst renderBulkSpeakerControl =');
+const inspectors = section('\tconst updateCurrentTextEffect =', '\tconst renderGranularitySelector =');
+const stageRenderer = section('\tconst renderStagePanel =', '\tconst renderLineOffsetControls =');
 
 function* nodes(tree) {
 	if (tree === null || tree === undefined || typeof tree === 'boolean') return;
@@ -28,8 +33,9 @@ function* nodes(tree) {
 }
 
 // Reuse the existing production-backed mouse/keyboard host, without changing it.
-// Add only the shipping style memo, updater and renderer. State setters can be
-// queued like React's batched updates; selection itself is never manufactured.
+// Add the shipping metadata/style memos, updaters, stage and speaker inspector.
+// Only React hosting and unrelated stage/bulk content are replaced. State writes
+// can be batched; selection itself is made by production event handlers.
 function createStyleEditor({ text = 'ABCDEFGH', mode = 'idle' } = {}) {
 	const h = createLockedEditor({ text, saved: Array.from(text, (_, i) => 10 + i * 0.25) });
 	const c = h.context;
@@ -37,20 +43,24 @@ function createStyleEditor({ text = 'ABCDEFGH', mode = 'idle' } = {}) {
 	let deferWrites = false, claims = 0;
 	Object.assign(c, {
 		mode, offsetSelectionRange: null, currentLineText: c.currentLineChars.join(''),
-		styleRangeEffect: '', styleRangeSpeaker: 'NORMAL', styleRangeSpeakerColor: '',
-		styleRangeSpeakerFallback: 'MALE 1', isStyleRangeEditorExpanded: true,
-		bulkCustomSpeakerColor: '', bulkCustomSpeakerFallback: 'MALE 1', TOSS_BORDER: '#333', s: {},
+		bulkCustomSpeakerColor: '', bulkCustomSpeakerFallback: 'MALE 1',
+		customSpeakerMetaMemoryRef: { current: new Map() },
+		TOSS_BORDER: '#333', TOSS_BLUE: '#08f', TOSS_BLUE_SOFT: '#123', TOSS_BLUE_BORDER: '#357', TOSS_BLUE_RING: '#456',
+		s: { effectPill: {}, effectCard: {} },
 		claimSessionForLocalEditing() { claims++; },
 		react: { createElement: (type, props, ...children) => ({ type, props: props || {}, children }) },
-		renderTextEffectPicker: (value, onChange, options) => ({ type: 'effect-picker', props: { value, onChange, ...options } }),
-		renderSpeakerPicker: (value, color, fallback, onChange, options) => ({ type: 'speaker-picker', props: { value, color, fallback, onChange, ...options } }),
+		renderBulkSpeakerControl: () => null,
+		isLoading: false, error: null, previousNavigableLineIndex: -1, nextNavigableLineIndex: -1,
+		isCurrentLineSynced: true, showLivePreview: false, syncGranularityRecordingHint: '',
+		goToPrevLine() {}, goToNextLine() {}, renderManualSplitEditor: () => null,
+		renderCurrentLineCharacters: () => null, renderParallelPartLine: () => null,
 	});
-	for (const name of ['styleRangeEffect', 'styleRangeSpeaker', 'styleRangeSpeakerColor', 'styleRangeSpeakerFallback', 'isStyleRangeEditorExpanded']) {
+	for (const name of ['bulkCustomSpeakerColor', 'bulkCustomSpeakerFallback']) {
 		c[`set${name[0].toUpperCase()}${name.slice(1)}`] = update => {
 			c[name] = typeof update === 'function' ? update(c[name]) : update;
 		};
 	}
-	for (const name of ['lineStyleDrafts', 'syncData']) {
+	for (const name of ['lineStyleDrafts', 'lineMetaDrafts', 'parallelPartMetaDrafts', 'syncData']) {
 		c[`set${name[0].toUpperCase()}${name.slice(1)}`] = update => {
 			const apply = () => { c[name] = typeof update === 'function' ? update(c[name]) : update; };
 			if (deferWrites) queued.push(apply);
@@ -58,12 +68,15 @@ function createStyleEditor({ text = 'ABCDEFGH', mode = 'idle' } = {}) {
 		};
 	}
 	const render = (selected = c.activeParallelPartId, { refreshTarget = true } = {}) => {
-		if (refreshTarget) h.render(selected);
-		// The shared offset host always picks a vocal. With multi-vocal mode
-		// off, use the shipping full-row character memos instead.
-		if (!c.multiVocalMode) {
-			Object.assign(c, { activeParallelPart: null, activeParallelTargetId: 'full', activeParallelPartId: 'full' });
+		if (refreshTarget) {
+			h.render(selected);
+			// The shared offset host also picks a vocal for an unsplit row. Match
+			// shipping target resolution before running the actual character memos.
+			if (!c.multiVocalMode || !c.hasCurrentParallelParts) {
+				Object.assign(c, { activeParallelPart: null, activeParallelTargetId: 'full', activeParallelPartId: 'full' });
+			}
 			vm.runInContext(`Object.assign(globalThis, (() => {
+				${charRefsHelper}
 				${charMemo}
 				return { currentLineCharRefs, currentLineChars };
 			})());`, c);
@@ -71,26 +84,54 @@ function createStyleEditor({ text = 'ABCDEFGH', mode = 'idle' } = {}) {
 		c.currentLineText = c.currentLineChars.join('');
 		vm.runInContext(`Object.assign(globalThis, (() => {
 			${styleMemo}
+			${effectMeta}
+			${metaCallbacks}
 			${styleCallback}
-			${styleRenderer}
-			return { currentLineStyleRanges, updateCurrentLineStyleRanges, renderStyleRangeEditor };
+			${pickers}
+			${inspectors}
+			${stageRenderer}
+			return { currentLineMeta, currentLineStyleRanges, currentTextEffectKind,
+				updateCurrentLineStyleRanges, renderLineInspector, renderStagePanel };
 		})());`, c);
 	};
-	const picker = type => {
-		const node = [...nodes(c.renderStyleRangeEditor())].find(node => node?.type === type);
-		assert.ok(node, `${type} must be rendered`);
-		assert.equal(node.props.disabled, false, `${type} must be enabled for the visible selection`);
+	const styleTree = () => [c.renderStagePanel(), c.renderLineInspector()];
+	const control = (predicate, label) => {
+		const node = [...nodes(styleTree())].find(predicate);
+		assert.ok(node, `${label} must be rendered`);
+		assert.notEqual(node.props.disabled, true, `${label} must be enabled`);
 		return node;
 	};
+	const effectButton = value => control(node => node?.type === 'button'
+		&& node.props.className === 'ivlyrics-sync-effect-card' && node.props.key === value, `effect ${value}`);
+	const speakerButton = value => control(node => node?.type === 'button'
+		&& node.props['data-speaker'] === value, `speaker ${value}`);
 	render();
 	return {
 		...h, render,
 		get claims() { return claims; },
 		selection: () => plain(c.offsetSelectionRangeRef.current),
 		style: patch => c.updateCurrentLineStyleRanges(patch),
-		chooseEffect(value) { render(); picker('effect-picker').props.onChange(value); },
-		chooseSpeaker(value) { render(); picker('speaker-picker').props.onChange(value); },
-		styleTree: () => c.renderStyleRangeEditor(),
+		chooseEffect(value) { render(); effectButton(value).props.onClick(); },
+		chooseSpeaker(value) { render(); speakerButton(value).props.onClick(); },
+		chooseColor(value) {
+			render();
+			control(node => node?.type === 'input' && node.props.type === 'color', 'custom color').props.onChange({ target: { value } });
+		},
+		blurColor(value) {
+			render();
+			const target = { value };
+			control(node => node?.type === 'input' && node.props.type === 'text', 'custom HEX color').props.onBlur({ target });
+			return target.value;
+		},
+		chooseFallback(value) {
+			render();
+			control(node => node?.type === 'select', 'custom speaker fallback').props.onChange({ target: { value } });
+		},
+		clearStyle() {
+			render();
+			control(node => node?.type === 'button' && node.props.title === 'syncCreator.rangeStyleClear', 'clear style').props.onClick();
+		},
+		styleTree, effectButton, speakerButton,
 		deferWrites() { deferWrites = true; },
 		flushWrites() { deferWrites = false; while (queued.length) queued.shift()(); },
 	};
@@ -105,18 +146,131 @@ const styleAt = (ranges, index) => {
 };
 const lineStyles = h => h.line().styleRanges || [];
 
-test('without a visible lyric selection the effect and color controls are disabled and cannot write styles', () => {
-	const h = createStyleEditor();
-	const before = plain(h.context.syncData);
-	for (const type of ['effect-picker', 'speaker-picker']) {
-		const picker = [...nodes(h.styleTree())].find(node => node?.type === type);
-		assert.ok(picker);
-		assert.equal(picker.props.disabled, true);
+const createVocalEditor = (layout, mode = 'idle') => {
+	const h = createStyleEditor({ text: layout === 'grouped' ? 'AB (CD) EF (GH)' : 'ABCDEFGH', mode });
+	if (layout === 'normal') return h;
+	if (layout === 'grouped') {
+		h.context.parentheticalLayoutDrafts[3] = 'grouped';
+		h.render();
+		const grouped = h.context.currentParallelParts.find(part => part.ranges.length > 1);
+		assert.ok(grouped, 'use the production noncontiguous parenthetical template');
+		h.render(grouped.id);
+	} else {
+		h.split(3);
+		h.render('b');
 	}
+	const partId = h.context.activeParallelPart.id;
+	h.context.syncData = h.materialize();
+	h.render(partId);
+	assert.ok(h.line().parallel.parts.find(part => part.id === partId), 'persist the real part so an accidental whole-part write is observable');
+	return h;
+};
+
+test('without a visible selection the main controls edit line metadata and the range updater stays disarmed', () => {
+	const h = createStyleEditor();
+	h.line().styleRanges = [{ start: 4, end: 5, kind: 'echo', speaker: 'MALE 1' }];
+	h.render();
+	const before = plain(h.context.syncData);
 	assert.equal(h.style({ kind: 'echo', speaker: 'FEMALE 1' }), false);
 	assert.equal(h.claims, 0);
 	assert.deepEqual(plain(h.context.syncData), before);
+	const clear = [...nodes(h.styleTree())].find(node => node?.props?.title === 'syncCreator.rangeStyleClear');
+	assert.ok(clear);
+	assert.equal(clear.props.disabled, true);
+	h.chooseEffect('whisper');
+	h.chooseSpeaker('FEMALE 1');
+	const expected = plain(before);
+	expected.lines[1].kind = 'whisper';
+	expected.lines[1].speaker = 'FEMALE 1';
+	assert.deepEqual(plain(h.context.syncData), expected, 'main controls edit the current line without creating ranges');
+	h.chooseSpeaker('CUSTOM');
+	h.chooseColor('#12ab34');
+	h.blurColor('#34cd56');
+	h.chooseFallback('DUET 1');
+	Object.assign(expected.lines[1], { speaker: 'CUSTOM', 'speaker-color': '#34cd56', 'speaker-fallback': 'DUET 1' });
+	assert.deepEqual(plain(h.context.syncData), expected, 'custom color/fallback update only current line metadata without a selection');
+	assert.deepEqual(plain(h.context.lineStyleDrafts), {});
 });
+
+for (const layout of ['split', 'grouped']) {
+	test(`${layout}: without a selection main effect, speaker, color and fallback controls edit only the active part`, () => {
+		const h = createVocalEditor(layout);
+		h.line().styleRanges = [{ start: 3, end: h.line().end, kind: 'echo', speaker: 'MALE 1' }];
+		h.render();
+		const before = plain(h.context.syncData);
+		const partId = h.context.activeParallelPart.id;
+		const clear = [...nodes(h.styleTree())].find(node => node?.props?.title === 'syncCreator.rangeStyleClear');
+		assert.equal(clear.props.disabled, true);
+		clear.props.onClick();
+		assert.deepEqual(plain(h.context.syncData), before);
+		assert.equal(h.style({ kind: 'glow' }), false);
+		h.chooseEffect('whisper');
+		h.chooseSpeaker('CUSTOM');
+		h.chooseColor('#12ab34');
+		h.blurColor('#34cd56');
+		h.chooseFallback('DUET 1');
+		const expected = plain(before);
+		const part = expected.lines[1].parallel.parts.find(part => part.id === partId);
+		Object.assign(part, { kind: 'whisper', speaker: 'CUSTOM', 'speaker-color': '#34cd56', 'speaker-fallback': 'DUET 1' });
+		assert.deepEqual(plain(h.context.syncData), expected, 'sibling parts, timing, ranges, line metadata and existing styles stay identical');
+		assert.deepEqual(plain(h.context.lineMetaDrafts), {});
+		assert.deepEqual(plain(h.context.lineStyleDrafts), {});
+	});
+}
+
+for (const mode of ['idle', 'preview']) {
+	for (const layout of ['normal', 'split', 'grouped']) {
+		test(`${mode} ${layout}: actual selected effect, speaker, custom color/fallback and clear callbacks edit only selected refs`, () => {
+			const h = createVocalEditor(layout, mode);
+			const c = h.context;
+			const originalStyle = { kind: 'glow', speaker: 'MALE 1' };
+			h.line().styleRanges = [{ start: 3, end: h.line().end, ...originalStyle }];
+			h.render();
+			const before = withoutStyles(c.syncData);
+			const selectedRefs = plain(c.currentLineCharRefs.slice(1, 3));
+			const selectedIndexes = new Set(selectedRefs.map(ref => ref.absoluteIndex));
+			assert.ok(c.currentLineCharRefs.some(ref => !selectedIndexes.has(ref.absoluteIndex)), 'the active part includes unselected refs');
+			if (layout === 'grouped') assert.ok(selectedRefs[1].absoluteIndex > selectedRefs[0].absoluteIndex + 1, 'the selected display span crosses a source gap');
+			h.rightDrag(1, 2);
+			const expectSelectedStyles = expected => {
+				for (let index = 3; index <= h.line().end; index++) {
+					assert.deepEqual(styleAt(lineStyles(h), index), selectedIndexes.has(index) ? expected : originalStyle, `absolute character ${index}`);
+				}
+				assert.deepEqual(withoutStyles(c.syncData), before, 'all part metadata, ranges, timings and other rows must remain unchanged');
+				assert.deepEqual(plain(c.parallelPartMetaDrafts), {}, 'selection must never fall through to updateParallelPartMeta');
+				assert.deepEqual(plain(c.lineMetaDrafts), {}, 'selection must never fall through to updateCurrentLineMeta');
+				assert.deepEqual(plain(c.lineStyleDrafts[3]), plain(lineStyles(h)), 'draft and saved style ranges must agree');
+			};
+			h.chooseEffect('whisper');
+			expectSelectedStyles({ kind: 'whisper', speaker: 'MALE 1' });
+			h.render();
+			assert.equal(h.effectButton('whisper').props['aria-pressed'], true, 'the main effect picker reads the selected refs');
+			const labels = [...nodes(h.styleTree())].filter(node => typeof node === 'string').join(' ');
+			assert.ok(labels.includes(`“${selectedRefs.map(ref => ref.char).join('')}”`), 'a parallel selection subtitle shows selected text before its role');
+			assert.ok(labels.includes(`(${selectedRefs[0].localIndex + 1}–${selectedRefs[1].localIndex + 1})`), 'subtitle uses source-row positions');
+			h.chooseSpeaker('FEMALE 1');
+			expectSelectedStyles({ kind: 'whisper', speaker: 'FEMALE 1' });
+			h.chooseSpeaker('CUSTOM');
+			const custom = styleAt(lineStyles(h), selectedRefs[0].absoluteIndex);
+			assert.equal(custom.speaker, 'CUSTOM');
+			assert.equal(custom.kind, 'whisper', 'speaker changes preserve the selected effect');
+			expectSelectedStyles(custom);
+			h.chooseColor('#12ab34');
+			expectSelectedStyles({ ...custom, 'speaker-color': '#12ab34' });
+			h.blurColor('#34cd56');
+			expectSelectedStyles({ ...custom, 'speaker-color': '#34cd56' });
+			h.chooseFallback('DUET 1');
+			expectSelectedStyles({ kind: 'whisper', speaker: 'CUSTOM', 'speaker-color': '#34cd56', 'speaker-fallback': 'DUET 1' });
+			const claims = h.claims;
+			assert.equal(h.blurColor('invalid'), '#34cd56', 'invalid HEX input restores the selected custom color');
+			assert.equal(h.claims, claims, 'invalid color blur must not claim an edit');
+			expectSelectedStyles({ kind: 'whisper', speaker: 'CUSTOM', 'speaker-color': '#34cd56', 'speaker-fallback': 'DUET 1' });
+			h.clearStyle();
+			expectSelectedStyles(null);
+			assert.deepEqual(h.selection(), { start: 1, end: 2 }, 'clearing styles keeps the visible selection');
+		});
+	}
+}
 
 test('normal-row right-click reaches the real partial-effect picker and a second click disarms it', () => {
 	const h = createStyleEditor();
@@ -153,7 +307,7 @@ test('record-mode right-click and right-drag remain timing locks, never partial 
 	h.context.mode = 'record';
 	h.render();
 	assert.ok(h.selection(), 'the updater must reject a record-mode edit even before the clearing effect runs');
-	assert.equal(h.styleTree(), null);
+	assert.equal([...nodes(h.styleTree())].find(node => node?.props?.title === 'syncCreator.rangeStyleClear').props.disabled, true);
 	assert.equal(h.style({ kind: 'echo' }), false);
 	h.resetSelection({ mode: 'record' });
 	h.contextMenu(2);
@@ -161,7 +315,7 @@ test('record-mode right-click and right-drag remain timing locks, never partial 
 	assert.deepEqual(plain(h.context.getActiveRecordingLockRange()), { start: 3, end: 4 });
 	assert.equal(h.selection(), null);
 	h.render();
-	assert.equal(h.styleTree(), null, 'record mode must not expose an effect picker for a timing lock');
+	assert.equal([...nodes(h.styleTree())].find(node => node?.props?.title === 'syncCreator.rangeStyleClear').props.disabled, true, 'a timing lock cannot arm clear-style');
 	assert.equal(h.style({ kind: 'whisper', speaker: 'FEMALE 1' }), false);
 	assert.equal(h.claims, 0);
 	assert.deepEqual(plain(h.context.syncData), before);
@@ -250,9 +404,16 @@ for (const change of ['line', 'part', 'text', 'same-text remap']) {
 		h.render(undefined, { refreshTarget: false });
 		assert.ok(h.selection(), 'do not run the selection-clearing effect; the updater itself must reject the old owner');
 		assert.equal(h.style({ kind: 'echo' }), false);
+		h.effectButton('echo').props.onClick();
+		h.speakerButton('FEMALE 1').props.onClick();
+		const clear = [...nodes(h.styleTree())].find(node => node?.props?.title === 'syncCreator.rangeStyleClear');
+		assert.equal(clear.props.disabled, false, 'state still contains the old selection before its clearing effect');
+		clear.props.onClick();
 		assert.equal(h.claims, 0, 'reject stale ownership before claiming a local edit');
 		assert.deepEqual(plain(c.syncData), before);
 		assert.deepEqual(plain(c.lineStyleDrafts), {});
+		assert.deepEqual(plain(c.lineMetaDrafts), {}, 'stale picker callbacks cannot fall through to line metadata');
+		assert.deepEqual(plain(c.parallelPartMetaDrafts), {}, 'stale picker callbacks cannot fall through to part metadata');
 	});
 }
 

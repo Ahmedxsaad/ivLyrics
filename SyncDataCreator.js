@@ -210,9 +210,10 @@ const getSyncCreatorStyleSelectionRanges = (range, charRefs, lineStart, lineEnd)
 	}
 	return ranges;
 };
-const shouldUseSyncCreatorSelectionEffect = ({ mode, activeParallelPart, offsetSelectionRange } = {}) => {
+const shouldUseSyncCreatorSelectionEffect = ({ mode, offsetSelectionRange } = {}) => {
 	if (mode === 'record') return false;
-	if (activeParallelPart) return false;
+	// A selection is relative to the displayed vocal, including split/grouped
+	// parts. The style updater maps its character refs back to source ranges.
 	if (!offsetSelectionRange || !Number.isInteger(offsetSelectionRange.start) || !Number.isInteger(offsetSelectionRange.end)) return false;
 	if (offsetSelectionRange.start < 0 || offsetSelectionRange.end < offsetSelectionRange.start) return false;
 	return true;
@@ -12637,7 +12638,14 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		);
 		const updateSpeakerMeta = (field, value) => {
 			if (hasInspectorSelectionTarget) {
-				updateCurrentLineStyleRanges({ [field]: value });
+				// Range patches replace speaker metadata atomically. A color-only
+				// patch would otherwise be ignored and revert the visible input.
+				updateCurrentLineStyleRanges({
+					speaker: targetSpeaker,
+					'speaker-color': targetSpeakerColor,
+					'speaker-fallback': targetSpeakerFallback,
+					[field]: value
+				});
 				return;
 			}
 			if (activeParallelPart) updateParallelPartMeta(activeParallelPart.id, field, value);
@@ -12706,16 +12714,14 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		const inspectorSelectedText = hasInspectorSelectionTarget && inspectorSelectionStart >= 0
 			? currentLineChars.slice(inspectorSelectionStart, inspectorSelectionEnd + 1).join('')
 			: '';
-		const inspectorSubtitle = activeParallelPart
-			? (activeParallelPart.role || '')
-			: (hasInspectorSelectionTarget && inspectorSelectedText
-				? formatSyncCreatorSelectedSubtitle({
-					selectedText: inspectorSelectedText,
-					startLabel: currentLineCharRefs[inspectorSelectionStart]?.localIndex + 1,
-					endLabel: currentLineCharRefs[inspectorSelectionEnd]?.localIndex + 1,
-					selectedLabel: I18n.t('syncCreator.rangeStyleSelected') || 'Selected'
-				})
-				: (I18n.t('syncCreator.allLine') || 'Full line'));
+		const inspectorSubtitle = hasInspectorSelectionTarget && inspectorSelectedText
+			? formatSyncCreatorSelectedSubtitle({
+				selectedText: inspectorSelectedText,
+				startLabel: currentLineCharRefs[inspectorSelectionStart]?.localIndex + 1,
+				endLabel: currentLineCharRefs[inspectorSelectionEnd]?.localIndex + 1,
+				selectedLabel: I18n.t('syncCreator.rangeStyleSelected') || 'Selected'
+			})
+			: (activeParallelPart ? (activeParallelPart.role || '') : (I18n.t('syncCreator.allLine') || 'Full line'));
 		return react.createElement('div', { style: s.sideInspectorGrid },
 			react.createElement('div', { style: s.panel },
 				react.createElement('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 } },

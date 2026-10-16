@@ -27,13 +27,13 @@ function SelectionFixture(){
   const [mode,setMode]=useState('idle'),[activeParallelTargetId,setTarget]=useState('full');
   const [syncData,setSyncData]=useState({version:5,lines:[{start:10,end:15,chars:[1,2,3,4,5,6],speaker:'NORMAL',kind:'vocal'}]});
   const [lineStyleDrafts,setLineStyleDrafts]=useState({});
-  const [styleRangeEffect,setStyleRangeEffect]=useState(''),[styleRangeSpeaker,setStyleRangeSpeaker]=useState('NORMAL');
-  const [styleRangeSpeakerColor,setStyleRangeSpeakerColor]=useState(''),[styleRangeSpeakerFallback,setStyleRangeSpeakerFallback]=useState('MALE 1');
-  const [isStyleRangeEditorExpanded,setIsStyleRangeEditorExpanded]=useState(true);
+  const [bulkCustomSpeakerColor,setBulkCustomSpeakerColor]=useState(''),[bulkCustomSpeakerFallback,setBulkCustomSpeakerFallback]=useState('MALE 1');
+  const customSpeakerMetaMemoryRef=useRef(new Map()),wholeTargetWrites=useRef([]),trackId='fixture';
   const currentLineStart=10,currentLineIndex=0,currentFullLineChars=useMemo(()=>Array.from('ABCDEF'),[]),lyricsLines=['ABCDEF'];
   const currentLineCharRefs=useMemo(()=>(activeParallelTargetId==='full'?[0,1,2,3,4,5]:[2,3,5]).map(index=>({absoluteIndex:10+index,localIndex:index,char:currentFullLineChars[index]})),[activeParallelTargetId]);
   const currentLineChars=useMemo(()=>currentLineCharRefs.map(ref=>ref.char),[currentLineCharRefs]),currentLineText=currentLineChars.join('');
-  const activeParallelPart=activeParallelTargetId==='full'?null:{id:'part'};
+  const activeParallelPart=activeParallelTargetId==='full'?null:{id:'part',role:'background',speaker:'NORMAL',kind:'vocal'};
+  const currentLineMeta={speaker:'NORMAL',kind:'vocal',...syncData.lines[0]};
   const currentLineStyleRanges=lineStyleDrafts[currentLineStart]||syncData.lines[0].styleRanges||[];
   const charElementsRef=useRef([]),scorePendingEffectsRef=useRef(new Map());
   const rightLockDragStartRef=useRef(-1),isRightLockDraggingRef=useRef(false),rightOffsetDragStartRef=useRef(-1),isRightOffsetDraggingRef=useRef(false),suppressNextLockContextMenuRef=useRef(false);
@@ -46,23 +46,30 @@ function SelectionFixture(){
   ${part('\tconst [offsetSelectionRange, setOffsetSelectionRange]', '\tconst applyRecordingLockRange =')}
   ${part('\tconst handleContainerMouseDown =', '\n\tuseEffect(() => {\n\t\tif (!isDragging)')}
   ${part('\tuseEffect(() => {\n\t\tconst handleRightMove =', '\t// 현재 줄 싱크 삭제')}
-  ${part('\tuseEffect(() => {\n\t\tsetStyleRangeEffect', '\tconst applySongVocalSpeaker =')}
+  ${part('\tconst updateCurrentLineStyleRanges =', '\tconst applySongVocalSpeaker =')}
   ${part('\t// Clear offset selection whenever', '\tuseEffect(() => {\n\t\tif (!syncLinesByStart')}
   const usePrimaryCharacterPronunciation=false,hasCurrentLineFurigana=false,hasCurrentLineCharacterPronunciation=false,currentLineRenderedPronunciationUnits=[];
   ${part('\tconst TOSS_BLUE =', '\tconst currentLineData =')}
-  const textEffectsDisabled=true,bulkCustomSpeakerColor='',bulkCustomSpeakerFallback='MALE 1';
+  const textEffectsDisabled=true;
   ${part('\tconst getSpeakerTone =', '\tconst renderBulkSpeakerControl =')}
-  ${part('\tconst renderStyleRangeEditor =', '\tconst renderStagePanel =')}
+  const renderBulkSpeakerControl=()=>null;
+  const updateCurrentLineMeta=(field,value)=>{wholeTargetWrites.current.push(['line',field,value]);setSyncData(previous=>({...previous,lines:previous.lines.map(line=>({...line,[field]:value}))}));};
+  const updateParallelPartMeta=(id,field,value)=>{wholeTargetWrites.current.push(['part',id,field,value]);};
+  ${part('\tconst updateCurrentTextEffect =', '\tconst renderGranularitySelector =')}
   const currentRecordingCharIndex=-1,isRecordingLockArmed=false,recordingLockRange=null,recordingLockIndex=-1,currentLockedPlaybackIndex=null,currentLinePreviewIndex=-1,useFixedPrimaryCharacterCells=false;
   const currentLineFuriganaMap=new Map(),currentLineCharacterPronunciationMap=new Map();
   const isCharSynced=()=>true,getCharSyncTime=(_,index)=>syncData.lines[0].chars[currentLineCharRefs[index].localIndex],formatSeconds=value=>value.toFixed(1)+'s';
   ${part('\tconst renderCharacterSpan =', '\tconst renderPronunciationUnit =')}
-  window.selectionFixtureState={mode,target:activeParallelTargetId,range:offsetSelectionRange,syncData,lineStyleDrafts};
+  window.selectionFixtureState={mode,target:activeParallelTargetId,range:offsetSelectionRange,syncData,lineStyleDrafts,wholeTargetWrites:wholeTargetWrites.current};
   return react.createElement('main',null,
     react.createElement('p',null,'Offline production-source fixture — no Spotify session or API calls'),
     react.createElement('nav',null,...['full','part'].map(value=>react.createElement('button',{key:value,'data-fixture-target':value,onClick:()=>setTarget(value)},value)),react.createElement('button',{'data-fixture-mode':true,onClick:()=>setMode(value=>value==='record'?'idle':'record')},mode)),
     react.createElement('div',{id:'lyric-row',style:{...s.lyricsBox,...s.stageLyricsBox,overflowX:'auto'},onMouseDown:handleContainerMouseDown},react.createElement('div',{style:s.lyricsLine},currentLineChars.map((char,index)=>renderCharacterSpan(char,index)))),
-    renderStyleRangeEditor());
+    react.createElement('div',{id:'effect-strip'},renderTextEffectPicker(
+      shouldUseSyncCreatorSelectionEffect({mode,activeParallelPart,offsetSelectionRange})
+        ?resolveSyncCreatorSelectionEffectKind({styleRanges:currentLineStyleRanges,charRefs:currentLineCharRefs,range:offsetSelectionRange}):currentLineMeta.kind,
+      updateCurrentTextEffect,{compact:true,allowEmpty:shouldUseSyncCreatorSelectionEffect({mode,activeParallelPart,offsetSelectionRange})})),
+    react.createElement('div',{id:'inspector'},renderLineInspector()));
 }
 ReactDOM.createRoot(document.getElementById('root')).render(react.createElement(SelectionFixture));`;
 }
@@ -78,7 +85,8 @@ const server=createServer((request,response)=>{
   try{
     if(path==='/favicon.ico'){response.writeHead(204);response.end();return;}
     if(path!=='/'&&path!=='/fixture.js'&&!files.has(path)){response.writeHead(404);response.end();return;}
-    const body=path==='/'?html:path==='/fixture.js'?fixture():readFileSync(files.get(path));
+    let body=path==='/'?html:path==='/fixture.js'?fixture():readFileSync(files.get(path));
+    if(path==='/style.css')body=body.toString().replace(/@import\s+url\(["']?https?:\/\/[^)]+\)\s*;/g,'');
     response.writeHead(200,{'Content-Type':path==='/'?'text/html; charset=utf-8':path.endsWith('.css')?'text/css':'application/javascript; charset=utf-8','Cache-Control':'no-store'});response.end(body);
   }catch(error){response.writeHead(500);response.end(error.stack);}
 });

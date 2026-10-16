@@ -47,6 +47,7 @@ const createPreview = ({ mode = "preview", initialPosition = 0, textRun = false,
 		charTimesRef: { current: [] },
 		SYNC_CREATOR_PROGRESS_BACKGROUND: "progress",
 		SYNC_CREATOR_SYNCED_BACKGROUND: "synced",
+		window: {},
 		Spicetify: { Player: { getProgress: () => { polls++; return progress; } } },
 		getActiveRecordingLockIndex: () => lockIndex,
 		applyRecordingProgressVisual: (value) => recordingCalls.push(value),
@@ -71,7 +72,7 @@ const createPreview = ({ mode = "preview", initialPosition = 0, textRun = false,
 		slice("const getSyncCreatorProgressGradient", "const normalizeSyncCreatorIsrc"),
 		`Object.assign(globalThis, (() => {
 			${source.slice(0, source.indexOf("const SyncDataCreator ="))}
-			return { hasOrderedSyncCreatorTimes, getSyncCreatorRejoinedLineChars };
+			return { hasOrderedSyncCreatorTimes, getSyncCreatorRejoinedLineChars, resolveSyncCreatorPaintCharColor };
 		})());`,
 	].join("\n"), context);
 	const refreshCallbacks = () => {
@@ -341,6 +342,7 @@ const part = (id, chars, ranges = [{ start: 0, end: 3 }], extra = {}) => ({
 	id, role: "background", speaker: "FEMALE 1", kind: "vocal", ranges, join: [], chars, ...extra,
 });
 const backgrounds = (row) => Array.from(row.elements, (element) => element.style.background || "");
+const colors = (elements) => Array.from(elements, (element) => element.style.color);
 
 // Mount the selected row with its production glyph renderer and timing lookups,
 // so synced flags and playback paint are checked together rather than replaced
@@ -354,7 +356,7 @@ const createSelectedPartPreview = ({ savedLine, targetPart, text = "ABCD", initi
 		currentLineData: savedLine,
 		syncLinesByStart: new Map([[0, savedLine]]),
 		currentParallelData: { parts: [targetPart] },
-		currentLineStyleRanges: [], currentLineFuriganaMap: new Map(),
+		currentLineStyleRanges: savedLine?.styleRanges || [], currentLineFuriganaMap: new Map(),
 		currentLineCharacterPronunciationMap: new Map(), currentLineRenderedPronunciationUnits: [],
 		currentLineRenderedPronunciationUnitByStart: new Map(), currentLineRenderedPronunciationCoveredIndexes: new Set(),
 		currentWordBoundaryStartIndexes: new Set(),
@@ -387,6 +389,151 @@ const createSelectedPartPreview = ({ savedLine, targetPart, text = "ABCD", initi
 	preview.render();
 	return { preview, context, renderer, mounted };
 };
+
+const attachRecordingPainter = (preview) => {
+	Object.assign(preview.context, {
+		lastPaintedRecordingIndexRef: { current: -2 },
+		SYNC_CREATOR_RECORDING_BACKGROUND: "recording",
+		I18n: { t: () => "" },
+		autoScroll: () => {},
+	});
+	vm.runInContext(`globalThis.recordingPainter = (() => {
+		${slice("\tconst applyRecordingProgressVisual =", "\tconst cancelRecordingProgressAnimation =")}
+		return applyRecordingProgressVisual;
+	})();`, preview.context);
+	preview.context.applyRecordingProgressVisual = (value) => {
+		preview.recordingCalls.push(value);
+		preview.context.recordingPainter(value);
+	};
+	preview.render({ mode: "record" });
+};
+
+test("partial speaker colors follow absolute split-vocal ranges through playback, seeks and paused polls", () => {
+	const rangeColor = "#33cc99";
+	const savedLine = freeze({
+		start: 0, end: 5, chars: [1, 2, 2, 2, 3, 4],
+		styleRanges: [{ start: 1, end: 4, speaker: "CUSTOM", "speaker-color": rangeColor }],
+	});
+	const targetPart = freeze(part("lead", [1, 2, 3, 4], [{ start: 0, end: 1 }, { start: 4, end: 5 }]));
+	const { preview, context, renderer } = createSelectedPartPreview({ savedLine, targetPart, text: "AB--CD", initialPosition: 500 });
+	const glyphs = context.charElementsRef.current;
+	assert.deepEqual(Array.from(glyphs, glyph => glyph.dataset.ivSyncCreatorRangeColor), ["", rangeColor, rangeColor, ""]);
+	for (const [position, expected] of [
+		[500, ["synced", "synced", "synced", "synced"]],
+		[1500, ["progress", "synced", "synced", "synced"]],
+		[4500, ["progress", "progress", "progress", "progress"]],
+		[2500, ["progress", "progress", "synced", "synced"]],
+		[500, ["synced", "synced", "synced", "synced"]],
+	]) {
+		preview.setProgress(position);
+		preview.tick();
+		assert.deepEqual(colors(glyphs), [context.currentSpeakerTextColor, rangeColor, rangeColor, context.currentSpeakerTextColor]);
+		assert.deepEqual(Array.from(glyphs, glyph => glyph.style.background), expected);
+		const writes = renderer.styleWrites.length;
+		preview.tick(10);
+		assert.equal(renderer.styleWrites.length, writes, "paused range colors do not require repeated paint");
+	}
+	preview.dispose();
+});
+
+for (const mode of ["preview", "record"]) {
+	test(`clearing one partial speaker color restores the line color during ${mode} without clearing its neighbour`, () => {
+		const retainedRange = { start: 0, end: 0, speaker: "CUSTOM", "speaker-color": "#ee6699" };
+		const clearedColor = "#33cc99";
+		const savedLine = freeze({
+			start: 0, end: 3, chars: [1, 2, 3, 4],
+			styleRanges: [retainedRange, { start: 1, end: 2, speaker: "CUSTOM", "speaker-color": clearedColor }],
+		});
+		const targetPart = freeze(part("lead", [1, 2, 3, 4]));
+		const { preview, context, renderer } = createSelectedPartPreview({ savedLine, targetPart, initialPosition: 4500 });
+		if (mode === "record") {
+			attachRecordingPainter(preview);
+			preview.setLock(3);
+		}
+		preview.tick();
+		const glyphs = context.charElementsRef.current;
+		assert.deepEqual(colors(glyphs), ["#ee6699", clearedColor, clearedColor, context.currentSpeakerTextColor]);
+
+		// React updates these data attributes on existing glyphs when a range's
+		// speaker is cleared. Keep the old inline paint to catch stale-color reuse.
+		context.currentLineStyleRanges = [retainedRange, { start: 1, end: 2, kind: "whisper" }];
+		const updatedGlyphs = renderer.render(targetPart, 0).children[1].children;
+		updatedGlyphs.forEach((glyph, index) => {
+			glyphs[index].dataset.ivSyncCreatorRangeColor = glyph.props["data-iv-sync-creator-range-color"];
+			glyphs[index].dataset.ivSyncCreatorBaseColor = glyph.props["data-iv-sync-creator-base-color"];
+		});
+		assert.deepEqual(Array.from(glyphs, glyph => glyph.dataset.ivSyncCreatorRangeColor), ["#ee6699", "", "", ""]);
+		assert.equal(glyphs[1].style.color, clearedColor, "the painter must replace its previous range color");
+		context.lastPaintedPlaybackIndexRef.current = -2;
+		if (mode === "record") context.lastPaintedRecordingIndexRef.current = -2;
+		for (const position of [4500, 500, 2500, 4500]) {
+			preview.setProgress(position);
+			preview.tick();
+			assert.deepEqual(colors(glyphs), ["#ee6699", ...new Array(3).fill(context.currentSpeakerTextColor)]);
+		}
+		assert.deepEqual(Array.from(glyphs, glyph => glyph.style.background), new Array(4).fill(mode === "record" ? "recording" : "progress"));
+		assert.equal(savedLine.styleRanges[1]["speaker-color"], clearedColor, "preview paint never edits persisted styles");
+		preview.dispose();
+	});
+}
+
+test("rejoined overlapping vocals preserve partial speaker colors and clear stale paint per glyph", () => {
+	const rangeColor = "#33cc99";
+	const savedLine = freeze({
+		start: 0, end: 3, chars: [1, 2, 3, 4],
+		parallel: { parts: [part("a", [1, 3], [{ start: 0, end: 1 }]), part("b", [2, 4], [{ start: 2, end: 3 }])] },
+		styleRanges: [{ start: 1, end: 2, speaker: "CUSTOM", "speaker-color": rangeColor }],
+	});
+	const targetPart = freeze(part("lead", [1, 2, 3, 4]));
+	const { preview, context } = createSelectedPartPreview({ savedLine, targetPart });
+	context.activeParallelPart = null;
+	preview.refreshCallbacks();
+	preview.render({ activeParallelPartId: "full" });
+	const glyphs = context.charElementsRef.current;
+	for (const [position, expected] of [
+		[2500, ["progress", "synced", "progress", "synced"]],
+		[3500, ["progress", "progress", "progress", "synced"]],
+		[1500, ["progress", "synced", "synced", "synced"]],
+		[500, ["synced", "synced", "synced", "synced"]],
+	]) {
+		preview.setProgress(position);
+		preview.tick();
+		assert.deepEqual(Array.from(glyphs, glyph => glyph.style.background), expected);
+		assert.deepEqual(colors(glyphs), [context.currentSpeakerTextColor, rangeColor, rangeColor, context.currentSpeakerTextColor]);
+	}
+	glyphs[1].dataset.ivSyncCreatorRangeColor = "";
+	glyphs[2].dataset.ivSyncCreatorRangeColor = "";
+	context.lastPaintedPlaybackIndexRef.current = -2;
+	preview.tick();
+	assert.deepEqual(colors(glyphs), new Array(4).fill(context.currentSpeakerTextColor));
+	preview.dispose();
+});
+
+test("recording paints retain selected range colors while parallel vocals keep their own speaker color", () => {
+	const rangeColor = "#33cc99";
+	const parallelColor = "#7755cc";
+	const savedLine = freeze({
+		start: 0, end: 3, chars: [1, 2, 3, 4],
+		styleRanges: [{ start: 1, end: 2, speaker: "CUSTOM", "speaker-color": rangeColor }],
+	});
+	const targetPart = freeze(part("lead", [1, 2, 3, 4]));
+	const { preview, context, renderer } = createSelectedPartPreview({ savedLine, targetPart, initialPosition: 500 });
+	const { row } = renderer.mount(freeze(part("background", [1, 2, 3, 4], undefined, { "speaker-color": parallelColor })));
+	attachRecordingPainter(preview);
+	preview.setLock(3);
+	for (const [position, completed] of [[500, 0], [1500, 1], [3500, 3], [4500, 4], [500, 0]]) {
+		preview.setProgress(position);
+		preview.tick();
+		assert.deepEqual(colors(context.charElementsRef.current), [context.currentSpeakerTextColor, rangeColor, rangeColor, context.currentSpeakerTextColor]);
+		assert.deepEqual(Array.from(context.charElementsRef.current, glyph => glyph.style.background),
+			Array.from({ length: 4 }, (_, index) => index < completed ? "recording" : "synced"));
+		assert.deepEqual(colors(row.elements), new Array(4).fill(parallelColor));
+		assert.deepEqual(backgrounds(row), Array.from({ length: 4 }, (_, index) => index < completed ? "progress" : "synced"));
+	}
+	assert.deepEqual(preview.playbackCalls, [], "locked recording uses the production recording painter");
+	assert.deepEqual(preview.recordingCalls, [-1, 0.5, 2.5, 3, -1]);
+	preview.dispose();
+});
 
 test("selected split vocals preview inherited line timings and retain time labels", () => {
 	const savedLine = freeze({ start: 0, end: 3, chars: [1, 2, 3, 4] });
