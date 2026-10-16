@@ -3853,12 +3853,21 @@ const getRegenerateTranslationChoiceItems = ({
 
 // 번역 재생성 in the conversion panel: one button per target. The panel stays
 // open, and the button that started a regeneration spins until it finishes.
+const getToolbarRegenerationKinds = (target) => target === "all"
+  ? ["phonetic", "translation"]
+  : [target];
+
 const RegenerateTranslationButton = react.memo(
-  ({ choices = [], onRegenerate, isEnabled, isLoading }) => {
-    const [pendingTarget, setPendingTarget] = useState(null);
+  ({ choices = [], onRegenerate, isEnabled, busyTargets = [] }) => {
+    const [pendingTargets, setPendingTargets] = useState([]);
+    const pendingRef = useRef(new Set());
+    const mountedRef = useRef(true);
     useEffect(() => {
-      if (!isLoading) setPendingTarget(null);
-    }, [isLoading]);
+      mountedRef.current = true;
+      return () => { mountedRef.current = false; };
+    }, []);
+    const isBusy = target => getToolbarRegenerationKinds(target)
+      .some(kind => busyTargets.includes(kind) || pendingTargets.includes(kind));
 
     return react.createElement(ToolbarPanelRow, {
       stack: true,
@@ -3871,11 +3880,22 @@ const RegenerateTranslationButton = react.memo(
           ToolbarButton,
           {
             key: choice.key,
-            className: joinToolbarClasses("ivl-tb-chip", isLoading && pendingTarget === choice.target && "is-busy"),
-            disabled: !isEnabled || isLoading,
-            onClick: () => {
-              setPendingTarget(choice.target);
-              onRegenerate?.(choice.target);
+            className: joinToolbarClasses("ivl-tb-chip", isBusy(choice.target) && "is-busy"),
+            disabled: !isEnabled || isBusy(choice.target),
+            "aria-busy": isBusy(choice.target),
+            onClick: async () => {
+              const kinds = getToolbarRegenerationKinds(choice.target);
+              if (kinds.some(kind => pendingRef.current.has(kind) || busyTargets.includes(kind))) return;
+              kinds.forEach(kind => pendingRef.current.add(kind));
+              setPendingTargets([...pendingRef.current]);
+              try {
+                await onRegenerate?.(choice.target);
+              } catch (error) {
+                console.warn("[ivLyrics] Regeneration action failed:", error);
+              } finally {
+                kinds.forEach(kind => pendingRef.current.delete(kind));
+                if (mountedRef.current) setPendingTargets([...pendingRef.current]);
+              }
             },
           },
           react.createElement(ToolbarGlyph, { name: "refresh", size: 14 }),
@@ -6332,14 +6352,19 @@ const IvLyricsFloatingToolbar = react.memo((toolbar) => {
         title: I18n.t("menu.translationSettings"),
         subtitle: I18n.t("menu.translationOptionsSubtitle"),
         body: react.createElement(TranslationMenu, {
-          key: toolbar.friendlyLanguage || "gemini",
+          key: `${toolbar.trackUri || ""}:${toolbar.friendlyLanguage || "gemini"}`,
           friendlyLanguage: toolbar.friendlyLanguage,
           detectedLanguage: toolbar.detectedLanguage,
           regenerate: {
             choices: actions?.getRegenerateChoices?.() || [],
             onRegenerate: actions?.onRegenerate,
             isEnabled: !!toolbar.canRegenerate,
-            isLoading: !!toolbar.isRegenerating,
+            busyTargets: [
+              toolbar.isPronunciationRegenerating && "phonetic",
+              toolbar.isTranslationRegenerating && "translation",
+              toolbar.isCulturalAnnotationsRegenerating && "cultural-annotations",
+              toolbar.isWordSupplementsRegenerating && "word-supplements",
+            ].filter(Boolean),
           },
           cacheEdit: toolbar.hasLyrics
             ? {

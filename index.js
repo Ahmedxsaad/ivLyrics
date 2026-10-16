@@ -6690,16 +6690,16 @@ class LyricsContainer extends react.Component {
     }
 
     if (targets.needPhonetic) {
-      this.regenerateTranslation("phonetic");
+      this.runRegenerateTranslationChoice("phonetic");
       return;
     }
 
     if (targets.needTranslation) {
-      this.regenerateTranslation("translation");
+      this.runRegenerateTranslationChoice("translation");
       return;
     }
 
-    this.regenerateTranslation("all");
+    this.runRegenerateTranslationChoice("all");
   }
 
   // 번역 재생성 choices in the toolbar's conversion panel: the choice dialog's
@@ -6728,16 +6728,26 @@ class LyricsContainer extends react.Component {
     return [{ key: `regenerate-${target}`, target, label: I18n.t(labelKey) }];
   }
 
-  runRegenerateTranslationChoice(target) {
-    if (target === "cultural-annotations") {
-      this.regenerateCulturalAnnotations();
-      return;
+  async runRegenerateTranslationChoice(target) {
+    const uri = this.state.uri;
+    if (!uri) return;
+    const kinds = target === "all" ? ["phonetic", "translation"] : [target];
+    if (kinds.some(kind => !["phonetic", "translation", "cultural-annotations", "word-supplements"].includes(kind))) return;
+    const requests = this._regenerationRequests ||= new Map();
+    const keys = kinds.map(kind => `${uri}\0${kind}`);
+    // Protect API/cache work as well as the UI from repeated or overlapping clicks.
+    if (keys.some(key => requests.has(key))) return;
+    const request = {};
+    keys.forEach(key => requests.set(key, request));
+    this.forceUpdate();
+    try {
+      if (target === "cultural-annotations") return await this.regenerateCulturalAnnotations();
+      if (target === "word-supplements") return await this.regenerateWordSupplements();
+      return await this.regenerateTranslation(target);
+    } finally {
+      keys.forEach(key => { if (requests.get(key) === request) requests.delete(key); });
+      if (this._isComponentMounted) this.forceUpdate();
     }
-    if (target === "word-supplements") {
-      this.regenerateWordSupplements();
-      return;
-    }
-    this.regenerateTranslation(target);
   }
 
   async regenerateCulturalAnnotations() {
@@ -7047,6 +7057,8 @@ class LyricsContainer extends react.Component {
       const initialStreamedLyrics2 = this._dmResults[currentUri].mode2 || null;
       let streamedLyrics1 = initialStreamedLyrics1;
       let streamedLyrics2 = initialStreamedLyrics2;
+      const ownsMode = mode => (mode === "gemini_romaji" && needPhonetic)
+        || (mode === "gemini_ko" && needTranslation);
       const streamedPhoneticLines = [];
       const streamedTranslationLines = [];
 
@@ -7055,14 +7067,16 @@ class LyricsContainer extends react.Component {
           return;
         }
 
-        this._dmResults[currentUri].mode1 = streamedLyrics1;
-        this._dmResults[currentUri].mode2 = streamedLyrics2;
+        // Independent regenerations share this result record. Only replace the
+        // fields owned by this request; always present the latest other field.
+        if (ownsMode(mode1)) requestResults.mode1 = streamedLyrics1;
+        if (ownsMode(mode2)) requestResults.mode2 = streamedLyrics2;
 
         this.applyStreamingTranslation({
           uri: currentUri,
           lyrics: originalLyrics,
-          lyricsMode1: streamedLyrics1,
-          lyricsMode2: streamedLyrics2,
+          lyricsMode1: requestResults.mode1,
+          lyricsMode2: requestResults.mode2,
           displayMode1: mode1,
           displayMode2: mode2,
         });
@@ -7246,8 +7260,11 @@ class LyricsContainer extends react.Component {
       if (!this._dmResults?.[currentUri]) {
         return;
       }
-      this._dmResults[currentUri].mode1 = translatedLyrics1;
-      this._dmResults[currentUri].mode2 = translatedLyrics2;
+      if (ownsMode(mode1)) requestResults.mode1 = translatedLyrics1;
+      if (ownsMode(mode2)) requestResults.mode2 = translatedLyrics2;
+      // Another target may have streamed/completed during persistent cache writes.
+      translatedLyrics1 = requestResults.mode1;
+      translatedLyrics2 = requestResults.mode2;
       this._dmResults[currentUri].lastMode1 = mode1;
       this._dmResults[currentUri].lastMode2 = mode2;
       this._dmResults[currentUri].lastPronunciationNotation =
@@ -11032,6 +11049,10 @@ class LyricsContainer extends react.Component {
             this.state.isPhoneticLoading ||
             this.state.isCulturalAnnotationsLoading
           ),
+          isPronunciationRegenerating: !!(this.state.isPhoneticLoading || this._regenerationRequests?.has(`${this.state.uri}\0phonetic`)),
+          isTranslationRegenerating: !!(this.state.isTranslationLoading || this._regenerationRequests?.has(`${this.state.uri}\0translation`)),
+          isCulturalAnnotationsRegenerating: !!(this.state.isCulturalAnnotationsLoading || this._regenerationRequests?.has(`${this.state.uri}\0cultural-annotations`)),
+          isWordSupplementsRegenerating: !!(this._activeWordSupplementsLoadingTokens?.size || this._regenerationRequests?.has(`${this.state.uri}\0word-supplements`)),
           hasLyrics,
           isLyricsLoading: !!this.state.isLoading,
           isLyricsEditBusy: !!(this.state.isLyricsEditLoading || this.state.isLyricsEditSaving),
