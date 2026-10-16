@@ -2861,6 +2861,7 @@ window.LANG_FR = {
     "globalOffset": "Décalage global",
     "lineOffset": "Décalage de ligne",
     "lineOffsetUnavailable": "Disponible après la synchronisation",
+    "selectionOffsetRequiresTiming": "Les caractères sélectionnés nécessitent d'abord un minutage - synchronisez la ligne avant d'en décaler une partie.",
     "synced": "Synchro",
     "notSynced": "Non synchro",
     "deleteLine": "Supprimer ligne",

@@ -2861,6 +2861,7 @@ window.LANG_RU = {
     "globalOffset": "Общее смещение",
     "lineOffset": "Смещение строки",
     "lineOffsetUnavailable": "Доступно после синхронизации",
+    "selectionOffsetRequiresTiming": "Выбранным символам сначала нужен тайминг - синхронизируйте строку, прежде чем сдвигать её часть.",
     "synced": "Готово",
     "notSynced": "Не готово",
     "deleteLine": "Удалить строку",

@@ -59,6 +59,7 @@ const createEditor = ({ progress = 0, playing = true } = {}) => {
 		isLineCoveredByMergedPrevious: () => false,
 		showMissingMetaToast: () => calls.toasts.push('missing metadata'),
 		clearRecordingLock: () => {}, syncSessionUiFromRecord: () => {}, announceHistoryStatus: () => {},
+		clearLyricTextSelection: () => {}, clearOffsetSelection: () => {},
 		sanitizeSyncCreatorSyncData: data => structuredClone(data),
 		syncCreatorDraftStore: null,
 	});

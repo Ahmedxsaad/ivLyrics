@@ -2861,6 +2861,7 @@ window.LANG_ZH_CN = {
     "globalOffset": "全局偏移",
     "lineOffset": "行偏移",
     "lineOffsetUnavailable": "同步后可调整",
+    "selectionOffsetRequiresTiming": "所选字符需要先有时间轴 - 在偏移其中一部分之前请先同步该行。",
     "synced": "已注册",
     "notSynced": "未注册",
     "deleteLine": "删除此行",

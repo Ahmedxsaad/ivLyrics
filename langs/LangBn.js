@@ -2861,6 +2861,7 @@ window.LANG_BN = {
     "globalOffset": "গ্লোবাল অফসেট",
     "lineOffset": "লাইন অফসেট",
     "lineOffsetUnavailable": "সিঙ্ক করার পর উপলভ্য",
+    "selectionOffsetRequiresTiming": "নির্বাচিত অক্ষরগুলোর আগে টাইমিং দরকার - অংশ অফসেট করার আগে লাইনটি সিঙ্ক করুন।",
     "synced": "নিবন্ধিত",
     "notSynced": "অনিবন্ধিত",
     "deleteLine": "এই লাইন মুছুন",

@@ -2861,6 +2861,7 @@ window.LANG_CS = {
     "globalOffset": "Globální offset",
     "lineOffset": "Posun řádku",
     "lineOffsetUnavailable": "Dostupné po synchronizaci",
+    "selectionOffsetRequiresTiming": "Vybrané znaky nejprve potřebují časování - před posunutím části synchronizujte řádek.",
     "synced": "Registrováno",
     "notSynced": "Neregistrováno",
     "deleteLine": "Smazat tento řádek",

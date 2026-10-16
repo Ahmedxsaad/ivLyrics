@@ -2861,6 +2861,7 @@ window.LANG_MS = {
     "globalOffset": "Ofset Keseluruhan",
     "lineOffset": "Ofset Baris",
     "lineOffsetUnavailable": "Tersedia selepas penyegerakan",
+    "selectionOffsetRequiresTiming": "Aksara yang dipilih memerlukan pemasaan dahulu - segerakkan baris sebelum menganjak sebahagiannya.",
     "synced": "Berdaftar",
     "notSynced": "Belum Berdaftar",
     "deleteLine": "Padam Baris Ini",

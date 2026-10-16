@@ -2861,6 +2861,7 @@ window.LANG_HI = {
     "globalOffset": "वैश्विक ऑफसेट",
     "lineOffset": "लाइन ऑफ़सेट",
     "lineOffsetUnavailable": "सिंक करने के बाद उपलब्ध",
+    "selectionOffsetRequiresTiming": "चयनित अक्षरों को पहले टाइमिंग चाहिए - किसी हिस्से को ऑफसेट करने से पहले लाइन सिंक करें।",
     "synced": "सिंक किया गया",
     "notSynced": "सिंक नहीं",
     "deleteLine": "यह लाइन हटाएं",

@@ -2861,6 +2861,7 @@ window.LANG_JA = {
     "globalOffset": "全体オフセット",
     "lineOffset": "行オフセット",
     "lineOffsetUnavailable": "同期後に調整可能",
+    "selectionOffsetRequiresTiming": "選択した文字には先にタイミングが必要です - 一部をオフセットする前に行を同期してください。",
     "synced": "登録済み",
     "notSynced": "未登録",
     "deleteLine": "この行を削除",

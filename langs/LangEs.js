@@ -2861,6 +2861,7 @@ window.LANG_ES = {
     "globalOffset": "Desfase global",
     "lineOffset": "Desfase de línea",
     "lineOffsetUnavailable": "Disponible después de sincronizar",
+    "selectionOffsetRequiresTiming": "Los caracteres seleccionados necesitan temporización primero - sincroniza la línea antes de desplazar una parte.",
     "synced": "Registrado",
     "notSynced": "No registrado",
     "deleteLine": "Eliminar línea",

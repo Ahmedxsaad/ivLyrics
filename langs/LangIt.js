@@ -2861,6 +2861,7 @@ window.LANG_IT = {
     "globalOffset": "Offset globale",
     "lineOffset": "Offset riga",
     "lineOffsetUnavailable": "Disponibile dopo la sincronizzazione",
+    "selectionOffsetRequiresTiming": "I caratteri selezionati necessitano prima della temporizzazione - sincronizza la riga prima di spostarne una parte.",
     "synced": "Registrato",
     "notSynced": "Non registrato",
     "deleteLine": "Elimina riga",

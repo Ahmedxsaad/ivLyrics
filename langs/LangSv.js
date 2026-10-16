@@ -2861,6 +2861,7 @@ window.LANG_SV = {
     "globalOffset": "Global förskjutning",
     "lineOffset": "Radförskjutning",
     "lineOffsetUnavailable": "Tillgängligt efter synkning",
+    "selectionOffsetRequiresTiming": "De valda tecknen behöver tajmning först - synka raden innan du förskjuter en del av den.",
     "synced": "Registrerad",
     "notSynced": "Oregistrerad",
     "deleteLine": "Ta bort den här raden",

@@ -2861,6 +2861,7 @@ window.LANG_KO = {
     "globalOffset": "전체 오프셋",
     "lineOffset": "라인 오프셋",
     "lineOffsetUnavailable": "싱크 후 조정 가능",
+    "selectionOffsetRequiresTiming": "선택한 문자는 먼저 타이밍이 필요합니다 - 일부를 오프셋하기 전에 줄을 싱크하세요.",
     "synced": "등록됨",
     "notSynced": "미등록",
     "deleteLine": "이 줄 삭제",

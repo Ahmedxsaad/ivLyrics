@@ -2861,6 +2861,7 @@ window.LANG_DE = {
     "globalOffset": "Globaler Offset",
     "lineOffset": "Zeilen-Offset",
     "lineOffsetUnavailable": "Nach dem Synchronisieren verfügbar",
+    "selectionOffsetRequiresTiming": "Die ausgewählten Zeichen brauchen zuerst Timing - synchronisiere die Zeile, bevor du einen Teil verschiebst.",
     "synced": "Registriert",
     "notSynced": "Nicht registriert",
     "deleteLine": "Zeile löschen",

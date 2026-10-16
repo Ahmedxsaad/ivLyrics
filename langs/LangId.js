@@ -2861,6 +2861,7 @@ window.LANG_ID = {
     "globalOffset": "Offset Global",
     "lineOffset": "Offset Baris",
     "lineOffsetUnavailable": "Tersedia setelah disinkronkan",
+    "selectionOffsetRequiresTiming": "Karakter yang dipilih membutuhkan pewaktuan terlebih dahulu - sinkronkan baris sebelum menggeser sebagiannya.",
     "synced": "Tersinkron",
     "notSynced": "Belum Sinkron",
     "deleteLine": "Hapus baris ini",

@@ -148,6 +148,16 @@ const normalizeSyncCreatorLockRange = (startIndex, endIndex, charCount) => {
 const resolveSyncCreatorLockDragRange = (downIndex, upIndex, charCount) => (
 	normalizeSyncCreatorLockRange(downIndex, upIndex, charCount)
 );
+const resolveSyncCreatorOffsetSelectionRange = (downIndex, upIndex, charCount) => {
+	const count = Number(charCount);
+	if (!Number.isFinite(count) || count <= 0) return null;
+	if (!Number.isInteger(downIndex) || !Number.isInteger(upIndex) || downIndex === upIndex) return null;
+	const start = Math.max(0, Math.min(downIndex, upIndex));
+	const end = Math.min(count - 1, Math.max(downIndex, upIndex));
+	if (start > end) return null;
+	if (start <= 0 && end >= count - 1) return null;
+	return { start, end };
+};
 const isSyncCreatorIndexLocked = (index, range) => {
 	if (!range || !Number.isInteger(Number(index))) return false;
 	const numericIndex = Number(index);
@@ -220,41 +230,38 @@ const shiftSyncCreatorSelectionTimes = (savedChars, selStart, selEnd, deltaSec, 
 		}
 	}
 	const selectedMin = Math.min(...saved.slice(start, end + 1));
-	const boundedDelta = Math.max(delta, -selectedMin);
+	// The selection moves as one rigid block: bound the delta once against
+	// the track start and both unselected neighbors, then apply it uniformly
+	// so internal relative timing never changes.
+	let lower = -selectedMin;
+	for (let i = start - 1; i >= 0; i--) {
+		if (typeof saved[i] === 'number' && Number.isFinite(saved[i])) {
+			lower = Math.max(lower, saved[i] + normalizedStep - saved[start]);
+			break;
+		}
+	}
+	let upper = Number.POSITIVE_INFINITY;
+	for (let i = end + 1; i < saved.length; i++) {
+		if (typeof saved[i] === 'number' && Number.isFinite(saved[i])) {
+			upper = saved[i] - normalizedStep - saved[end];
+			break;
+		}
+	}
+	let boundedDelta;
+	if (delta > 0) {
+		boundedDelta = Math.min(delta, upper);
+		if (boundedDelta < 0) boundedDelta = 0;
+	} else {
+		boundedDelta = Math.max(delta, lower);
+		if (boundedDelta > 0) boundedDelta = 0;
+	}
 	if (!Number.isFinite(boundedDelta) || Math.abs(boundedDelta) < 0.0005) {
 		return { ok: false, reason: 'noop' };
 	}
+	const appliedDelta = Math.round(boundedDelta * 1000) / 1000;
 	const times = [...saved];
 	for (let i = start; i <= end; i++) {
-		times[i] = Math.round(Math.max(0, saved[i] + boundedDelta) * 1000) / 1000;
-	}
-	// Clamp the back edge against the previous unselected neighbor.
-	let prevAnchor = null;
-	for (let i = start - 1; i >= 0; i--) {
-		if (typeof saved[i] === 'number' && Number.isFinite(saved[i])) {
-			prevAnchor = saved[i];
-			break;
-		}
-	}
-	if (prevAnchor !== null) {
-		for (let i = start; i <= end; i++) {
-			const floor = prevAnchor + (i - start + 1) * normalizedStep;
-			if (times[i] < floor) times[i] = Math.round(floor * 1000) / 1000;
-		}
-	}
-	// Clamp the front edge against the next unselected neighbor.
-	let nextAnchor = null;
-	for (let i = end + 1; i < saved.length; i++) {
-		if (typeof saved[i] === 'number' && Number.isFinite(saved[i])) {
-			nextAnchor = saved[i];
-			break;
-		}
-	}
-	if (nextAnchor !== null) {
-		for (let i = end; i >= start; i--) {
-			const cap = nextAnchor - (end - i + 1) * normalizedStep;
-			if (times[i] > cap) times[i] = Math.round(cap * 1000) / 1000;
-		}
+		times[i] = Math.round(Math.max(0, saved[i] + appliedDelta) * 1000) / 1000;
 	}
 	return { ok: true, times };
 };
@@ -3395,6 +3402,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	const [isReverting, setIsReverting] = useState(false);
 	const [recordingCharIndex, setRecordingCharIndex] = useState(-1);
 	const [recordingLockIndex, setRecordingLockIndex] = useState(-1);
+	const [recordingLockRange, setRecordingLockRange] = useState(null);
 	const [dragStartTime, setDragStartTime] = useState(null);
 	const [dragStartCharIndex, setDragStartCharIndex] = useState(-1);
 	const [isDragging, setIsDragging] = useState(false);
@@ -3453,6 +3461,12 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	const rtlTextRunRef = useRef(null);
 	const recordingCharIndexRef = useRef(-1);
 	const recordingLockIndexRef = useRef(-1);
+	const recordingLockRangeRef = useRef(null);
+	const rightLockDragStartRef = useRef(-1);
+	const isRightLockDraggingRef = useRef(false);
+	const rightOffsetDragStartRef = useRef(-1);
+	const isRightOffsetDraggingRef = useRef(false);
+	const suppressNextLockContextMenuRef = useRef(false);
 	const lastPaintedRecordingIndexRef = useRef(-1);
 	const recordingVisualIndexRef = useRef(-1);
 	const recordingVisualTargetIndexRef = useRef(-1);
@@ -3708,7 +3722,21 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		setRecordingLockIndex(safeIndex);
 	}, []);
 
+	const setRecordingLockRangeValue = useCallback((start, end) => {
+		if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start) {
+			recordingLockRangeRef.current = null;
+			setRecordingLockRange(null);
+			return false;
+		}
+		const range = { start, end };
+		recordingLockRangeRef.current = range;
+		setRecordingLockRange(range);
+		return true;
+	}, []);
+
 	const clearRecordingLock = useCallback(() => {
+		recordingLockRangeRef.current = null;
+		setRecordingLockRange(null);
 		recordingLockIndexRef.current = -1;
 		setRecordingLockIndex(-1);
 	}, []);
@@ -4887,6 +4915,19 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			return Number.isFinite(time) ? time : null;
 		});
 	}, [activeParallelPart, activeParallelTargetId, currentExistingLineData, currentLineChars.length]);
+	const getActiveRecordingLockRange = useCallback(() => {
+		const range = recordingLockRangeRef.current;
+		if (range && Number.isInteger(range.start) && Number.isInteger(range.end)
+			&& range.start >= 0 && range.end >= range.start && currentLineChars.length > 0) {
+			return {
+				start: Math.max(0, Math.min(range.start, currentLineChars.length - 1)),
+				end: Math.max(0, Math.min(range.end, currentLineChars.length - 1))
+			};
+		}
+		const lockIndex = recordingLockIndexRef.current;
+		if (!Number.isInteger(lockIndex) || lockIndex < 0 || currentLineChars.length === 0) return null;
+		return { start: 0, end: Math.min(lockIndex, currentLineChars.length - 1) };
+	}, [currentLineChars.length]);
 	const getActiveRecordingLockIndex = useCallback(() => {
 		const lockIndex = recordingLockIndexRef.current;
 		if (!Number.isInteger(lockIndex) || lockIndex < 0 || currentLineChars.length === 0) return -1;
@@ -4894,17 +4935,42 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	}, [currentLineChars.length]);
 	const buildLockedCharTimes = useCallback((lockIndex = getActiveRecordingLockIndex()) => {
 		const nextCharTimes = new Array(currentLineChars.length).fill(null);
-		const safeLockIndex = Number.isInteger(lockIndex)
-			? Math.min(lockIndex, currentLineChars.length - 1)
-			: -1;
-		if (safeLockIndex < 0) return nextCharTimes;
+		let range = getActiveRecordingLockRange();
+		if (lockIndex !== undefined && lockIndex !== null) {
+			if (typeof lockIndex === 'object' && Number.isInteger(lockIndex.start) && Number.isInteger(lockIndex.end)) {
+				range = { start: Math.max(0, lockIndex.start), end: Math.min(lockIndex.end, currentLineChars.length - 1) };
+			} else if (Number.isInteger(lockIndex) && lockIndex >= 0 && !range) {
+				range = { start: 0, end: Math.min(lockIndex, currentLineChars.length - 1) };
+			} else if (lockIndex === -1) {
+				range = getActiveRecordingLockRange();
+			}
+		}
+		if (!range || range.start < 0 || range.end < range.start) return nextCharTimes;
 
 		const savedChars = getCurrentSyncTargetSavedChars();
-		for (let i = 0; i <= safeLockIndex; i++) {
+		for (let i = Math.max(0, range.start); i <= Math.min(range.end, nextCharTimes.length - 1); i++) {
 			nextCharTimes[i] = savedChars[i];
 		}
 		return nextCharTimes;
-	}, [currentLineChars.length, getActiveRecordingLockIndex, getCurrentSyncTargetSavedChars]);
+	}, [currentLineChars.length, getActiveRecordingLockIndex, getActiveRecordingLockRange, getCurrentSyncTargetSavedChars]);
+	const getLockClampedRecordingTime = useCallback((index, value) => {
+		if (!Number.isFinite(value)) return value;
+		const range = getActiveRecordingLockRange();
+		if (!range) return value;
+		const savedChars = getCurrentSyncTargetSavedChars();
+		if (index < range.start) {
+			const anchor = Number(savedChars[range.start]);
+			if (Number.isFinite(anchor)) {
+				return Math.min(value, anchor - (range.start - index) * SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC);
+			}
+		} else if (index > range.end) {
+			const anchor = Number(savedChars[range.end]);
+			if (Number.isFinite(anchor)) {
+				return Math.max(value, anchor + (index - range.end) * SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC);
+			}
+		}
+		return value;
+	}, [getActiveRecordingLockRange, getCurrentSyncTargetSavedChars]);
 	const currentLineText = currentLineChars.join('');
 	const currentLineDirection = useMemo(
 		() => getSyncCreatorTextDirection(currentLineText),
@@ -6058,23 +6124,46 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		cacheCharHitBoxes();
 
 		const currentTime = Spicetify.Player.getProgress() / 1000;
+		const lockRange = getActiveRecordingLockRange();
 		const lockIndex = getActiveRecordingLockIndex();
-		if (lockIndex >= currentLineChars.length - 1) {
+		const hasEditable = (() => {
+			for (let i = 0; i < currentLineChars.length; i++) {
+				if (!isSyncCreatorIndexLocked(i, lockRange)) return true;
+			}
+			return false;
+		})();
+		if (!hasEditable || (lockRange && lockRange.start <= 0 && lockRange.end >= currentLineChars.length - 1)) {
 			Toast.error(I18n.t('settings.syncLockNoEditableChars') || 'Right-click an earlier character so there is something left to re-sync.');
 			return;
 		}
-		const firstEditableIndex = Math.max(0, lockIndex + 1);
-		const requestedStartIndex = Math.max(charIndex < 0 ? 0 : charIndex, firstEditableIndex);
-		const startIndex = Math.max(
-			firstEditableIndex,
-			Math.min(currentLineChars.length - 1, getGranularityEndIndex(requestedStartIndex))
+		const rawRequested = charIndex < 0 ? 0 : charIndex;
+		const requestedStartIndex = getSyncCreatorNextEditableIndex(
+			Math.min(currentLineChars.length - 1, Math.max(0, rawRequested)),
+			lockRange,
+			currentLineChars.length,
+			1
 		);
+		if (requestedStartIndex >= currentLineChars.length) {
+			Toast.error(I18n.t('settings.syncLockNoEditableChars') || 'Right-click an earlier character so there is something left to re-sync.');
+			return;
+		}
+		const startIndex = Math.min(
+			currentLineChars.length - 1,
+			getGranularityEndIndex(Math.max(0, requestedStartIndex))
+		);
+		const safeStartIndex = isSyncCreatorIndexLocked(startIndex, lockRange)
+			? getSyncCreatorNextEditableIndex(startIndex, lockRange, currentLineChars.length, 1)
+			: startIndex;
+		if (safeStartIndex < 0 || safeStartIndex >= currentLineChars.length) {
+			Toast.error(I18n.t('settings.syncLockNoEditableChars') || 'Right-click an earlier character so there is something left to re-sync.');
+			return;
+		}
 		const hasKeyboardProgress = isKeyboardSyncingRef.current
 			&& Array.isArray(charTimesRef.current)
 			&& charTimesRef.current.length === currentLineChars.length;
 		const nextCharTimes = hasKeyboardProgress
 			? [...charTimesRef.current]
-			: buildLockedCharTimes(lockIndex);
+			: buildLockedCharTimes(lockRange || lockIndex);
 
 		if (hasKeyboardProgress) {
 			if (pendingWordSyncRef.current && interpolationEnabledRef.current) {
@@ -6087,30 +6176,31 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				const endTime = Math.max(startTime, currentTime - EDGE_INTERPOLATION_GAP_SEC);
 				applyInterpolatedRangeToCharTimes(nextCharTimes, startIdx, endIdx, startTime, endTime);
 			}
-			if (lockIndex >= 0) {
-				const lockedCharTimes = buildLockedCharTimes(lockIndex);
-				for (let i = 0; i <= lockIndex; i++) {
+			if (lockRange) {
+				const lockedCharTimes = buildLockedCharTimes(lockRange);
+				for (let i = lockRange.start; i <= lockRange.end && i < nextCharTimes.length; i++) {
 					nextCharTimes[i] = lockedCharTimes[i];
 				}
 			}
 		}
 
 		setDragStartTime(currentTime);
-		setDragStartCharIndex(startIndex);
-		setRecordingProgressIndex(startIndex, { commitState: false });
+		setDragStartCharIndex(safeStartIndex);
+		setRecordingProgressIndex(safeStartIndex, { commitState: false });
 		setIsDragging(true);
 
 		if (hasKeyboardProgress) {
 			const lastRecordedIndex = getLastRecordedSyncIndex(nextCharTimes);
-			if (startIndex <= lastRecordedIndex) {
-				for (let i = firstEditableIndex; i < nextCharTimes.length; i++) {
-					nextCharTimes[i] = null;
+			if (safeStartIndex <= lastRecordedIndex) {
+				for (let i = 0; i < nextCharTimes.length; i++) {
+					if (!isSyncCreatorIndexLocked(i, lockRange)) nextCharTimes[i] = null;
 				}
-				nextCharTimes[startIndex] = getSequentialSyncTime(currentTime, getPreviousRecordedSyncTime(nextCharTimes, startIndex));
+				nextCharTimes[safeStartIndex] = getLockClampedRecordingTime(safeStartIndex, getSequentialSyncTime(currentTime, getPreviousRecordedSyncTime(nextCharTimes, safeStartIndex)));
 			} else {
-				let previousTime = getPreviousRecordedSyncTime(nextCharTimes, startIndex + 1);
-				for (let i = lastRecordedIndex + 1; i <= startIndex; i++) {
-					nextCharTimes[i] = getSequentialSyncTime(currentTime, previousTime);
+				let previousTime = getPreviousRecordedSyncTime(nextCharTimes, safeStartIndex + 1);
+				for (let i = Math.max(0, lastRecordedIndex + 1); i <= safeStartIndex; i++) {
+					if (isSyncCreatorIndexLocked(i, lockRange)) continue;
+					nextCharTimes[i] = getLockClampedRecordingTime(i, getSequentialSyncTime(currentTime, previousTime));
 					previousTime = nextCharTimes[i];
 				}
 			}
@@ -6130,15 +6220,21 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				keyboardDragWarmupTimerRef.current = null;
 			}
 		} else {
-			let previousTime = getPreviousRecordedSyncTime(nextCharTimes, firstEditableIndex);
-			for (let i = firstEditableIndex; i <= startIndex; i++) {
-				nextCharTimes[i] = getSequentialSyncTime(currentTime, previousTime);
+			let previousTime = getPreviousRecordedSyncTime(nextCharTimes, 0);
+			for (let i = 0; i <= safeStartIndex; i++) {
+				if (isSyncCreatorIndexLocked(i, lockRange)) {
+					previousTime = nextCharTimes[i];
+					continue;
+				}
+				if (!isFiniteSyncCreatorTime(nextCharTimes[i])) {
+					nextCharTimes[i] = getLockClampedRecordingTime(i, getSequentialSyncTime(currentTime, previousTime));
+				}
 				previousTime = nextCharTimes[i];
 			}
 		}
 		charTimesRef.current = nextCharTimes;
-		markScoreTimingInput(requestedStartIndex, startIndex, syncGranularity);
-	}, [mode, currentLineIndex, lyricsLines.length, currentLineChars.length, setRecordingProgressIndex, cacheCharHitBoxes, getActiveRecordingLockIndex, buildLockedCharTimes, getGranularityEndIndex, markScoreTimingInput, syncGranularity]);
+		markScoreTimingInput(requestedStartIndex, safeStartIndex, syncGranularity);
+	}, [mode, currentLineIndex, lyricsLines.length, currentLineChars.length, setRecordingProgressIndex, cacheCharHitBoxes, getActiveRecordingLockIndex, getActiveRecordingLockRange, getLockClampedRecordingTime, buildLockedCharTimes, getGranularityEndIndex, markScoreTimingInput, syncGranularity]);
 
 	const handleDragMove = useCallback((charIndex, e) => {
 		if (mode !== 'record' || !isDragging || dragStartTime === null) return;
@@ -6157,34 +6253,67 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		}
 
 		charIndex = Math.min(currentLineChars.length - 1, getGranularityEndIndex(charIndex));
+		const lockRange = getActiveRecordingLockRange();
 		const lockIndex = getActiveRecordingLockIndex();
-		const firstEditableIndex = Math.max(0, lockIndex + 1);
-		if (charIndex < firstEditableIndex) {
-			for (let i = firstEditableIndex; i <= previousRecordingCharIndex; i++) {
-				charTimesRef.current[i] = null;
+		const isCharLocked = (index) => isSyncCreatorIndexLocked(index, lockRange);
+		if (lockRange && charIndex >= lockRange.start && charIndex <= lockRange.end) {
+			if (previousRecordingCharIndex > lockRange.end) {
+				setRecordingProgressIndex(lockRange.end, { commitState: false });
+			} else if (previousRecordingCharIndex >= lockRange.start) {
+				setRecordingProgressIndex(previousRecordingCharIndex, { commitState: false });
+			} else {
+				setRecordingProgressIndex(lockRange.start - 1 >= 0 ? lockRange.start - 1 : lockRange.end, { commitState: false });
 			}
-			setRecordingProgressIndex(lockIndex, { commitState: false });
+			return;
+		}
+		const firstEditableBefore = (() => {
+			for (let i = 0; i < currentLineChars.length; i++) {
+				if (!isCharLocked(i)) return i;
+			}
+			return currentLineChars.length;
+		})();
+		if (charIndex < firstEditableBefore && previousRecordingCharIndex < firstEditableBefore) {
+			for (let i = firstEditableBefore; i <= previousRecordingCharIndex; i++) {
+				if (!isCharLocked(i)) charTimesRef.current[i] = null;
+			}
+			setRecordingProgressIndex(lockRange ? lockRange.end : lockIndex, { commitState: false });
 			return;
 		}
 
 		if (charIndex >= previousRecordingCharIndex) {
-			if (charIndex > previousRecordingCharIndex) markScoreTimingInput(Math.max(firstEditableIndex, previousRecordingCharIndex + 1), charIndex, syncGranularity);
-			// 정방향 진행
+			const scoreFrom = (() => {
+				let from = previousRecordingCharIndex + 1;
+				if (lockRange && from >= lockRange.start && from <= lockRange.end) from = lockRange.end + 1;
+				return Math.max(0, from);
+			})();
+			if (charIndex > previousRecordingCharIndex && scoreFrom <= charIndex) markScoreTimingInput(scoreFrom, charIndex, syncGranularity);
+			// 정방향 진행 (locked span은 saved 시간 유지 → skip, 경계에서 clamp)
 			for (let i = previousRecordingCharIndex + 1; i <= charIndex; i++) {
+				if (isCharLocked(i)) continue;
 				if (!isFiniteSyncCreatorTime(charTimesRef.current[i])) {
-					charTimesRef.current[i] = currentTime;
+					charTimesRef.current[i] = getLockClampedRecordingTime(i, currentTime);
 				}
 			}
 			setRecordingProgressIndex(charIndex, { commitState: false });
 		} else {
-			// 역방향 진행 (취소)
+			// 역방향 진행 (취소) — locked span은 절대 지우지 않음
 			// 현재 recordingCharIndex에서 charIndex+1 까지의 기록을 지움
-			for (let i = Math.max(charIndex + 1, firstEditableIndex); i <= previousRecordingCharIndex; i++) {
+			for (let i = Math.max(charIndex + 1, 0); i <= previousRecordingCharIndex; i++) {
+				if (isCharLocked(i)) continue;
 				charTimesRef.current[i] = null;
 			}
-			setRecordingProgressIndex(Math.max(charIndex, lockIndex), { commitState: false });
+			let nextProgress = charIndex;
+			if (lockRange && charIndex >= lockRange.start && charIndex <= lockRange.end) {
+				nextProgress = previousRecordingCharIndex > lockRange.end ? lockRange.end : lockRange.start - 1;
+			} else if (lockRange && charIndex < lockRange.start && previousRecordingCharIndex > lockRange.end) {
+				nextProgress = charIndex;
+			}
+			if (lockRange && nextProgress >= lockRange.start && nextProgress <= lockRange.end) {
+				nextProgress = lockRange.end;
+			}
+			setRecordingProgressIndex(Math.max(nextProgress, -1), { commitState: false });
 		}
-	}, [mode, isDragging, dragStartTime, currentLineChars.length, setRecordingProgressIndex, getActiveRecordingLockIndex, getGranularityEndIndex, markScoreTimingInput, syncGranularity]);
+	}, [mode, isDragging, dragStartTime, currentLineChars.length, setRecordingProgressIndex, getActiveRecordingLockIndex, getActiveRecordingLockRange, getLockClampedRecordingTime, getGranularityEndIndex, markScoreTimingInput, syncGranularity]);
 
 	// Keep timestamps ordered within each vocal without shifting overlapping lines.
 	const normalizeCommittedLineChars = useCallback((
@@ -6699,8 +6828,27 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 
 		const endTime = Spicetify.Player.getProgress() / 1000;
 		const charCount = currentLineChars.length;
+		const lockRange = getActiveRecordingLockRange();
 		const lockIndex = getActiveRecordingLockIndex();
-		if (lockIndex >= 0 && endCharIndex <= lockIndex) {
+		if (lockRange) {
+			let hasEditableTiming = false;
+			for (let i = 0; i < charCount; i++) {
+				if (!isSyncCreatorIndexLocked(i, lockRange) && isFiniteSyncCreatorTime(charTimesRef.current[i])) {
+					hasEditableTiming = true;
+					break;
+				}
+			}
+			if (!hasEditableTiming) {
+				setDragStartTime(null);
+				setDragStartCharIndex(-1);
+				setRecordingProgressIndex(lockRange.end, { commitState: false });
+				setIsDragging(false);
+				charTimesRef.current = buildLockedCharTimes(lockRange);
+				charHitBoxesRef.current = [];
+				charScrollMetricsRef.current = [];
+				return;
+			}
+		} else if (lockIndex >= 0 && endCharIndex <= lockIndex) {
 			setDragStartTime(null);
 			setDragStartCharIndex(-1);
 			setRecordingProgressIndex(lockIndex, { commitState: false });
@@ -6739,7 +6887,10 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		}
 
 		const isComplete = endCharIndex >= charCount - 1;
-		const committedLine = commitCurrentLineSync(chars, { createCheckpoint: isComplete });
+		const finalChars = lockRange
+			? clampSyncCreatorTimesToLockRange(chars, getCurrentSyncTargetSavedChars(), lockRange, SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC)
+			: chars;
+		const committedLine = commitCurrentLineSync(finalChars, { createCheckpoint: isComplete });
 		if (!committedLine) {
 			setDragStartTime(null);
 			setDragStartCharIndex(-1);
@@ -6763,7 +6914,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		charTimesRef.current = [];
 		charHitBoxesRef.current = [];
 		charScrollMetricsRef.current = [];
-	}, [mode, isDragging, dragStartTime, currentLineIndex, currentLineChars, lyricsLines.length, dragStartCharIndex, commitCurrentLineSync, advanceAfterCompletedTarget, setRecordingProgressIndex, getActiveRecordingLockIndex, buildLockedCharTimes, clearRecordingLock]);
+	}, [mode, isDragging, dragStartTime, currentLineIndex, currentLineChars, lyricsLines.length, dragStartCharIndex, commitCurrentLineSync, advanceAfterCompletedTarget, setRecordingProgressIndex, getActiveRecordingLockIndex, getActiveRecordingLockRange, getCurrentSyncTargetSavedChars, buildLockedCharTimes, clearRecordingLock]);
 
 	// 키보드 싱크 상태 ref (isDragging과 별개로 키보드용)
 	const isKeyboardSyncingRef = useRef(false);
@@ -6821,10 +6972,80 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		setSyncGranularity(nextGranularity);
 	}, [claimSessionForLocalEditing, resetCurrentSyncInput, syncGranularity]);
 
+	// Offset-selection range for preview/idle (set by right-drag, same gesture
+	// family as the record-mode lock). Null means "whole current line".
+	// Declared up here (not next to its other call sites) because
+	// handleCharacterContextMenu below lists clearOffsetSelection in its
+	// dependency array, which evaluates during render before anything below.
+	const [offsetSelectionRange, setOffsetSelectionRange] = useState(null);
+	const offsetSelectionRangeRef = useRef(null);
+
+	const setOffsetSelectionRangeValue = useCallback((start, end) => {
+		if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start) {
+			offsetSelectionRangeRef.current = null;
+			setOffsetSelectionRange(null);
+			return false;
+		}
+		const range = { start, end };
+		offsetSelectionRangeRef.current = range;
+		setOffsetSelectionRange(range);
+		return true;
+	}, []);
+
+	const clearOffsetSelection = useCallback(() => {
+		offsetSelectionRangeRef.current = null;
+		setOffsetSelectionRange(null);
+	}, []);
+
+	const clearLyricTextSelection = useCallback(() => {
+		try {
+			window.getSelection?.()?.removeAllRanges?.();
+		} catch (error) {
+			// Selection API unavailable (e.g. detached DOM) — nothing to clear.
+		}
+	}, []);
+
+	// Right-drag in preview/idle arms an offset range. A full-line drag falls
+	// back to whole-line semantics (null) so parallel parts shift with it.
+	const applyOffsetSelectionRange = useCallback((downIndex, upIndex) => {
+		if (currentLineChars.length === 0) return false;
+		const range = resolveSyncCreatorOffsetSelectionRange(downIndex, upIndex, currentLineChars.length);
+		if (!range) {
+			if (Number.isInteger(downIndex) && Number.isInteger(upIndex) && downIndex !== upIndex) {
+				clearOffsetSelection();
+				return true;
+			}
+			return false;
+		}
+		return setOffsetSelectionRangeValue(range.start, range.end);
+	}, [currentLineChars.length, clearOffsetSelection, setOffsetSelectionRangeValue]);
+
 	const handleCharacterContextMenu = useCallback((charIndex, e) => {
 		e.preventDefault();
 		e.stopPropagation();
 
+		if (suppressNextLockContextMenuRef.current) {
+			suppressNextLockContextMenuRef.current = false;
+			return;
+		}
+		// Outside record mode a plain right-click toggles a single-character
+		// offset range (same idiom as the record-mode lock): click inside the
+		// armed range to disarm it, click elsewhere to arm that character.
+		// Ranges spanning multiple chars are armed by right-drag instead.
+		if (mode !== 'record' && currentLineIndex < lyricsLines.length && currentLineChars.length) {
+			if (!isCurrentSyncTargetMetaComplete) {
+				showMissingMetaToast();
+				return;
+			}
+			const clickedIndex = Math.max(0, Math.min(charIndex, currentLineChars.length - 1));
+			const offsetRange = offsetSelectionRangeRef.current;
+			if (offsetRange && clickedIndex >= offsetRange.start && clickedIndex <= offsetRange.end) {
+				clearOffsetSelection();
+			} else {
+				setOffsetSelectionRangeValue(clickedIndex, clickedIndex);
+			}
+			return;
+		}
 		if (syncGranularity !== 'character' || mode !== 'record' || currentLineIndex >= lyricsLines.length || !currentLineChars.length) return;
 		if (!isCurrentSyncTargetMetaComplete) {
 			showMissingMetaToast();
@@ -6832,7 +7053,8 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		}
 
 		const safeIndex = Math.max(0, Math.min(charIndex, currentLineChars.length - 1));
-		if (recordingLockIndexRef.current === safeIndex) {
+		const activeRange = getActiveRecordingLockRange();
+		if (activeRange && safeIndex >= activeRange.start && safeIndex <= activeRange.end) {
 			clearRecordingLock();
 			isKeyboardSyncingRef.current = false;
 			keyboardCharIndexRef.current = -1;
@@ -6847,20 +7069,21 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			return;
 		}
 
-		if (safeIndex >= currentLineChars.length - 1) {
+		const prefixRange = normalizeSyncCreatorLockRange(safeIndex, safeIndex, currentLineChars.length);
+		if (!prefixRange) {
 			Toast.error(I18n.t('settings.syncLockNoEditableChars') || 'Right-click an earlier character so there is something left to re-sync.');
 			return;
 		}
 
 		const savedChars = getCurrentSyncTargetSavedChars();
-		const missingSavedIndex = savedChars.findIndex((time, index) => index <= safeIndex && !isFiniteSyncCreatorTime(time));
+		const missingSavedIndex = savedChars.findIndex((time, index) => index >= prefixRange.start && index <= prefixRange.end && !isFiniteSyncCreatorTime(time));
 		if (missingSavedIndex >= 0) {
 			Toast.error(I18n.t('settings.syncLockRequiresTiming') || 'Sync this line once before locking part of it.');
 			return;
 		}
 
 		isKeyboardSyncingRef.current = false;
-		keyboardCharIndexRef.current = safeIndex;
+		keyboardCharIndexRef.current = prefixRange.end;
 		pendingWordSyncRef.current = null;
 		pendingSyllableSyncRef.current = null;
 		isKeyboardDraggingRef.current = false;
@@ -6872,8 +7095,9 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			clearTimeout(keyboardDragWarmupTimerRef.current);
 			keyboardDragWarmupTimerRef.current = null;
 		}
-		setRecordingLockIndexValue(safeIndex);
-		charTimesRef.current = buildLockedCharTimes(safeIndex);
+		setRecordingLockRangeValue(prefixRange.start, prefixRange.end);
+		setRecordingLockIndexValue(prefixRange.end);
+		charTimesRef.current = buildLockedCharTimes(prefixRange);
 		setDragStartTime(null);
 		setDragStartCharIndex(-1);
 		// Keep the lock armed without treating the locked prefix as live input.
@@ -6891,7 +7115,65 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		isCurrentSyncTargetMetaComplete,
 		showMissingMetaToast,
 		clearRecordingLock,
+		clearOffsetSelection,
+		setOffsetSelectionRangeValue,
 		getCurrentSyncTargetSavedChars,
+		getActiveRecordingLockRange,
+		setRecordingLockRangeValue,
+		setRecordingLockIndexValue,
+		buildLockedCharTimes,
+		setRecordingProgressIndex
+	]);
+
+	const applyRecordingLockRange = useCallback((startIndex, endIndex) => {
+		if (syncGranularity !== 'character' || mode !== 'record' || currentLineIndex >= lyricsLines.length || !currentLineChars.length) return false;
+		if (!isCurrentSyncTargetMetaComplete) {
+			showMissingMetaToast();
+			return false;
+		}
+		const range = normalizeSyncCreatorLockRange(startIndex, endIndex, currentLineChars.length);
+		if (!range) {
+			Toast.error(I18n.t('settings.syncLockNoEditableChars') || 'Right-click an earlier character so there is something left to re-sync.');
+			return false;
+		}
+		const savedChars = getCurrentSyncTargetSavedChars();
+		const missingSavedIndex = savedChars.findIndex((time, index) => index >= range.start && index <= range.end && !isFiniteSyncCreatorTime(time));
+		if (missingSavedIndex >= 0) {
+			Toast.error(I18n.t('settings.syncLockRequiresTiming') || 'Sync this line once before locking part of it.');
+			return false;
+		}
+		isKeyboardSyncingRef.current = false;
+		keyboardCharIndexRef.current = range.end;
+		pendingWordSyncRef.current = null;
+		pendingSyllableSyncRef.current = null;
+		isKeyboardDraggingRef.current = false;
+		if (keyboardDragIntervalRef.current) {
+			clearInterval(keyboardDragIntervalRef.current);
+			keyboardDragIntervalRef.current = null;
+		}
+		if (keyboardDragWarmupTimerRef.current) {
+			clearTimeout(keyboardDragWarmupTimerRef.current);
+			keyboardDragWarmupTimerRef.current = null;
+		}
+		setRecordingLockRangeValue(range.start, range.end);
+		setRecordingLockIndexValue(range.end);
+		charTimesRef.current = buildLockedCharTimes(range);
+		setDragStartTime(null);
+		setDragStartCharIndex(-1);
+		setRecordingProgressIndex(-1, { animate: false, commitState: false });
+		setIsDragging(false);
+		Toast.success(I18n.t('settings.syncLockSet') || 'Locked timing up to the selected character.');
+		return true;
+	}, [
+		syncGranularity,
+		mode,
+		currentLineIndex,
+		lyricsLines.length,
+		currentLineChars.length,
+		isCurrentSyncTargetMetaComplete,
+		showMissingMetaToast,
+		getCurrentSyncTargetSavedChars,
+		setRecordingLockRangeValue,
 		setRecordingLockIndexValue,
 		buildLockedCharTimes,
 		setRecordingProgressIndex
@@ -7776,8 +8058,29 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	}, [mode, currentLineIndex, activeParallelTargetId, lyricsLines.length, currentLineChars, currentLineEffectiveSyllableSegments, currentGranularityRanges, lineCharOffsets, commitCurrentLineSync, advanceAfterCompletedTarget, isCurrentSyncTargetMetaComplete, showMissingMetaToast, setRecordingProgressIndex, getActiveRecordingLockIndex, buildLockedCharTimes, clearRecordingLock, syncGranularity]);
 
 	const handleContainerMouseDown = useCallback((e) => {
-		if (mode !== 'record' || currentLineIndex >= lyricsLines.length) return;
-		if (e.button === 2) return;
+		if (currentLineIndex >= lyricsLines.length) return;
+		if (e.button === 2) {
+			if (!isCurrentSyncTargetMetaComplete) {
+				showMissingMetaToast();
+				return;
+			}
+			const touch = e.touches ? e.touches[0] : e;
+			const charIndex = getCharIndexFromPoint(touch.clientX, touch.clientY);
+			if (charIndex < 0) return;
+			if (mode === 'record') {
+				rightLockDragStartRef.current = charIndex;
+				isRightLockDraggingRef.current = true;
+				suppressNextLockContextMenuRef.current = false;
+			} else {
+				rightOffsetDragStartRef.current = charIndex;
+				isRightOffsetDraggingRef.current = true;
+				suppressNextLockContextMenuRef.current = false;
+			}
+			e.preventDefault();
+			e.stopPropagation();
+			return;
+		}
+		if (mode !== 'record') return;
 		if (!isCurrentSyncTargetMetaComplete) {
 			showMissingMetaToast();
 			return;
@@ -7813,6 +8116,53 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			document.removeEventListener('touchend', handleGlobalEnd);
 		};
 	}, [isDragging, getCharIndexFromPoint, handleDragMove, handleDragEnd]);
+
+	useEffect(() => {
+		const handleRightMove = (e) => {
+			const lockDragging = isRightLockDraggingRef.current;
+			const offsetDragging = isRightOffsetDraggingRef.current;
+			if ((!lockDragging && !offsetDragging) || e.buttons === 0) return;
+			const charIndex = getCharIndexFromPoint(e.clientX, e.clientY);
+			const dragStart = lockDragging ? rightLockDragStartRef.current : rightOffsetDragStartRef.current;
+			if (charIndex !== null && charIndex >= 0 && charIndex !== dragStart) {
+				suppressNextLockContextMenuRef.current = true;
+			}
+		};
+		const handleRightUp = (e) => {
+			if (e.button !== 2 && e.type === 'mouseup') return;
+			if (isRightLockDraggingRef.current) {
+				const dragStart = rightLockDragStartRef.current;
+				isRightLockDraggingRef.current = false;
+				if (dragStart < 0) return;
+				const charIndex = (typeof e.clientX === 'number') ? getCharIndexFromPoint(e.clientX, e.clientY) : dragStart;
+				const dragEnd = (charIndex !== null && charIndex >= 0) ? charIndex : dragStart;
+				rightLockDragStartRef.current = -1;
+				if (dragEnd !== dragStart) {
+					suppressNextLockContextMenuRef.current = true;
+					applyRecordingLockRange(dragStart, dragEnd);
+				}
+				return;
+			}
+			if (isRightOffsetDraggingRef.current) {
+				const dragStart = rightOffsetDragStartRef.current;
+				isRightOffsetDraggingRef.current = false;
+				if (dragStart < 0) return;
+				const charIndex = (typeof e.clientX === 'number') ? getCharIndexFromPoint(e.clientX, e.clientY) : dragStart;
+				const dragEnd = (charIndex !== null && charIndex >= 0) ? charIndex : dragStart;
+				rightOffsetDragStartRef.current = -1;
+				if (dragEnd !== dragStart) {
+					suppressNextLockContextMenuRef.current = true;
+					applyOffsetSelectionRange(dragStart, dragEnd);
+				}
+			}
+		};
+		document.addEventListener('mousemove', handleRightMove);
+		document.addEventListener('mouseup', handleRightUp);
+		return () => {
+			document.removeEventListener('mousemove', handleRightMove);
+			document.removeEventListener('mouseup', handleRightUp);
+		};
+	}, [getCharIndexFromPoint, applyRecordingLockRange, applyOffsetSelectionRange]);
 
 	// 현재 줄 싱크 삭제
 	const deleteCurrentLineSync = useCallback(() => {
@@ -8312,16 +8662,20 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	const toggleMode = useCallback((newMode) => {
 		claimSessionForLocalEditing();
 		if (mode === newMode) {
+			clearLyricTextSelection();
+			clearOffsetSelection();
 			setMode('idle');
 		} else {
 			if (newMode === 'record' && !isCurrentSyncTargetMetaComplete) {
 				showMissingMetaToast();
 				return;
 			}
+			clearLyricTextSelection();
+			clearOffsetSelection();
 			setMode(newMode);
 			if (!Spicetify.Player.isPlaying()) Spicetify.Player.play();
 		}
-	}, [claimSessionForLocalEditing, mode, isCurrentSyncTargetMetaComplete, showMissingMetaToast]);
+	}, [claimSessionForLocalEditing, clearLyricTextSelection, clearOffsetSelection, mode, isCurrentSyncTargetMetaComplete, showMissingMetaToast]);
 
 	const adjustGlobalOffset = useCallback((deltaMs) => {
 		claimSessionForLocalEditing();
@@ -8374,6 +8728,46 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	};
 
 	const adjustCurrentLineOffset = useCallback((deltaMs) => {
+		// Right-drag offset ranges only exist outside record mode (entering
+		// record clears them). Read the ref synchronously in the click handler.
+		// Locks are record-mode-only and released on mode exit, so no lock
+		// interaction exists on this path by design. Parallel parts keep the
+		// whole-line path below so per-part timing runs stay intact.
+		const selectionRange = mode !== 'record' && !activeParallelPart ? offsetSelectionRangeRef.current : null;
+		if (selectionRange) {
+			const existing = Array.isArray(syncData?.lines)
+				? syncData.lines.find(line => line.start === currentLineStart)
+				: null;
+			const savedChars = Array.isArray(existing?.chars) ? existing.chars : [];
+			const shifted = shiftSyncCreatorSelectionTimes(
+				savedChars,
+				selectionRange.start,
+				selectionRange.end,
+				deltaMs / 1000,
+				SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC
+			);
+			if (!shifted.ok) {
+				if (shifted.reason === 'untimed') {
+					Toast.error(I18n.t('syncCreator.selectionOffsetRequiresTiming') || 'Selected characters need timing first - sync the line before offsetting part of it.');
+				}
+				return;
+			}
+			claimSessionForLocalEditing();
+			resetCurrentSyncInput();
+			setSyncData(prev => {
+				if (!prev || !Array.isArray(prev.lines)) return prev;
+				const targetIndex = prev.lines.findIndex(line => line.start === currentLineStart);
+				if (targetIndex < 0) return prev;
+				return {
+					...prev,
+					lines: prev.lines.map((line, index) => index === targetIndex
+						? { ...line, chars: shifted.times }
+						: line)
+				};
+			});
+			return;
+		}
+
 		claimSessionForLocalEditing();
 		const requestedDeltaSec = deltaMs / 1000;
 		resetCurrentSyncInput();
@@ -8438,7 +8832,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				lines: prev.lines.map((line, index) => index === targetIndex ? shiftedLine : line)
 			};
 		});
-	}, [claimSessionForLocalEditing, currentLineStart, activeParallelPart, currentParallelTemplate, resetCurrentSyncInput]);
+	}, [claimSessionForLocalEditing, currentLineStart, activeParallelPart, currentParallelTemplate, resetCurrentSyncInput, mode, syncData]);
 
 	const resetFromStart = useCallback(async () => {
 		const confirmed = window.confirm(
@@ -10243,6 +10637,14 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		}
 	}, [mode, position, currentLineIndex, activeParallelPartId]);
 
+	// Clear offset selection whenever the displayed line changes
+	// (nav buttons, shortcuts, preview auto-follow) so stale selections
+	// never apply to the wrong line.
+	useEffect(() => {
+		clearLyricTextSelection();
+		clearOffsetSelection();
+	}, [currentLineIndex, clearLyricTextSelection, clearOffsetSelection]);
+
 	useEffect(() => {
 		if (!syncLinesByStart || currentLineIndex >= lyricsLines.length) {
 			applyPlaybackProgressVisual(-1);
@@ -11383,7 +11785,13 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		const inlineStyleKind = normalizeSyncCreatorKind(inlineStyleRange?.kind) || 'vocal';
 		const isSynced = isCharSynced(currentLineIndex, i);
 		const isRec = mode === 'record' && currentRecordingCharIndex >= 0 && i <= currentRecordingCharIndex;
-		const isLocked = isRecordingLockArmed && i <= recordingLockIndex;
+		const isLocked = isRecordingLockArmed && (recordingLockRange
+			? (i >= recordingLockRange.start && i <= recordingLockRange.end)
+			: i <= recordingLockIndex);
+		// Offset-selection highlight uses the same underline treatment as the
+		// record-mode lock. The two never coexist (entering record clears it).
+		const isOffsetSelected = !isRecordingLockArmed && mode !== 'record' && offsetSelectionRange !== null
+			&& i >= offsetSelectionRange.start && i <= offsetSelectionRange.end;
 		const lockedPlaybackCompletedIndex = currentLockedPlaybackIndex === null
 			? -1
 			: Math.floor(currentLockedPlaybackIndex);
@@ -11418,7 +11826,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		if (!options.wordSpacer) {
 			if (isRec || isLockedPlaybackProgress) style = { ...style, ...s.charRecording };
 			else if (isSynced) style = isPlayed ? { ...style, ...s.charPlayed } : { ...style, ...s.charSynced };
-			if (isLocked) style = { ...style, ...s.charLocked };
+			if (isLocked || isOffsetSelected) style = { ...style, ...s.charLocked };
 			if (inlineStyleColor) {
 				style = {
 					...style,

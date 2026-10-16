@@ -2861,6 +2861,7 @@ window.LANG_EN = {
     "globalOffset": "Global Offset",
     "lineOffset": "Line Offset",
     "lineOffsetUnavailable": "Available after syncing",
+    "selectionOffsetRequiresTiming": "Selected characters need timing first - sync the line before offsetting part of it.",
     "synced": "Registered",
     "notSynced": "Unregistered",
     "deleteLine": "Delete This Line",

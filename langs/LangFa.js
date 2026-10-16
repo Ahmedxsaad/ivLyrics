@@ -2861,6 +2861,7 @@ window.LANG_FA = {
     "globalOffset": "آفست کلی",
     "lineOffset": "آفست خط",
     "lineOffsetUnavailable": "پس از همگام‌سازی در دسترس است",
+    "selectionOffsetRequiresTiming": "نویسه‌های انتخاب‌شده ابتدا به زمان‌بندی نیاز دارند - پیش از جابه‌جایی بخشی از خط، آن را همگام کنید.",
     "synced": "سینک شده",
     "notSynced": "سینک نشده",
     "deleteLine": "حذف این خط",

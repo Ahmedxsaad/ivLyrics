@@ -2861,6 +2861,7 @@ window.LANG_AR = {
     "globalOffset": "الإزاحة الكلية",
     "lineOffset": "إزاحة السطر",
     "lineOffsetUnavailable": "متاح بعد المزامنة",
+    "selectionOffsetRequiresTiming": "الأحرف المحددة تحتاج إلى توقيت أولاً - زامن السطر قبل إزاحة جزء منه.",
     "synced": "مسجل",
     "notSynced": "غير مسجل",
     "deleteLine": "حذف هذا السطر",

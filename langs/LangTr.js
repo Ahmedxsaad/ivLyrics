@@ -2861,6 +2861,7 @@ window.LANG_TR = {
     "globalOffset": "Genel Ofset",
     "lineOffset": "Satır Ofseti",
     "lineOffsetUnavailable": "Senkronize ettikten sonra kullanılabilir",
+    "selectionOffsetRequiresTiming": "Seçili karakterlerin önce zamanlaması olmalı - bir kısmını kaydırmadan önce satırı senkronize edin.",
     "synced": "Kaydedildi",
     "notSynced": "Kaydedilmedi",
     "deleteLine": "Bu Satırı Sil",

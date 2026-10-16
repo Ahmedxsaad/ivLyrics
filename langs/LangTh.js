@@ -2861,6 +2861,7 @@ window.LANG_TH = {
     "globalOffset": "ออฟเซ็ตทั้งหมด",
     "lineOffset": "ออฟเซ็ตบรรทัด",
     "lineOffsetUnavailable": "ใช้ได้หลังจากซิงค์แล้ว",
+    "selectionOffsetRequiresTiming": "อักขระที่เลือกต้องมีไทม์มิงก่อน - ซิงก์บรรทัดก่อนเลื่อนบางส่วน",
     "synced": "ลงทะเบียนแล้ว",
     "notSynced": "ยังไม่ลงทะเบียน",
     "deleteLine": "ลบบรรทัดนี้",

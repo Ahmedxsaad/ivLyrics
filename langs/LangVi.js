@@ -2861,6 +2861,7 @@ window.LANG_VI = {
     "globalOffset": "Offset tổng thể",
     "lineOffset": "Offset dòng",
     "lineOffsetUnavailable": "Khả dụng sau khi đồng bộ",
+    "selectionOffsetRequiresTiming": "Các ký tự đã chọn cần có thời gian trước - hãy đồng bộ dòng trước khi dịch chuyển một phần.",
     "synced": "Đã ghi",
     "notSynced": "Chưa ghi",
     "deleteLine": "Xóa dòng này",
