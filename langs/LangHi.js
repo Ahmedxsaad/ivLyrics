@@ -2109,7 +2109,12 @@ window.LANG_HI = {
     "trackInfo": "केवल वर्तमान में चल रहे ट्रैक पर लागू होता है।",
     "globalTitle": "वैश्विक सिंक",
     "globalInfo": "यह केवल इस डिवाइस पर सभी गानों पर लागू होता है। इसे समुदाय में कभी जमा नहीं किया जाता।",
-    "communityUnavailableLocal": "Spotify trackId के बिना स्थानीय ट्रैक के लिए कम्युनिटी ऑफसेट सबमिट नहीं किए जा सकते।"
+    "communityUnavailableLocal": "Spotify trackId के बिना स्थानीय ट्रैक के लिए कम्युनिटी ऑफसेट सबमिट नहीं किए जा सकते।",
+    "noVideo": "कोई वीडियो नहीं चल रहा है",
+    "quickLyricsLabel": "लिरिक्स ऑफसेट",
+    "quickVideoLabel": "वीडियो ऑफसेट",
+    "videoTitle": "वर्तमान वीडियो",
+    "videoInfo": "स्वचालित मिलान के बाद वर्तमान वीडियो के पहले लिरिक्स का समय बारीकी से समायोजित करें।"
   },
   "playbarButton": {
     "label": "लिरिक्स प्लस"
@@ -2856,6 +2861,7 @@ window.LANG_HI = {
     "globalOffset": "वैश्विक ऑफसेट",
     "lineOffset": "लाइन ऑफ़सेट",
     "lineOffsetUnavailable": "सिंक करने के बाद उपलब्ध",
+    "selectionOffsetRequiresTiming": "चयनित अक्षरों को पहले टाइमिंग चाहिए - किसी हिस्से को ऑफसेट करने से पहले लाइन सिंक करें।",
     "synced": "सिंक किया गया",
     "notSynced": "सिंक नहीं",
     "deleteLine": "यह लाइन हटाएं",
@@ -2996,10 +3002,10 @@ window.LANG_HI = {
     "kindBlur": "धुंधला",
     "kindPop": "पॉप",
     "rangeStyleTitle": "आंशिक प्रभाव · रंग",
-    "rangeStyleHint": "सिंक इकाई से अलग किसी भी अक्षर को खींचकर चुनें।",
+    "rangeStyleHint": "प्रीव्यू या आइडल में गीत पंक्ति पर राइट-ड्रैग करके अक्षर चुनें।",
     "rangeStyleSelectLabel": "शैली के लिए अक्षर सीमा",
     "rangeStyleSelected": "चयनित",
-    "rangeStyleSelectPrompt": "पहले इच्छित अक्षरों पर खींचें।",
+    "rangeStyleSelectPrompt": "पहले गीत की पंक्ति पर माउस का दायाँ बटन दबाकर खींचें।",
     "rangeStyleCount": "सीमाएँ",
     "rangeStyleEmpty": "कोई शैलीबद्ध सीमा नहीं",
     "rangeEffectApply": "प्रभाव लागू करें",

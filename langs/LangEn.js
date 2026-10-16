@@ -2109,7 +2109,12 @@ window.LANG_EN = {
     "trackInfo": "Applies only to the currently playing track.",
     "globalTitle": "Global Sync",
     "globalInfo": "Applies to every song on this device only. It is never submitted to the community.",
-    "communityUnavailableLocal": "Community offsets cannot be submitted for local tracks without a Spotify trackId."
+    "communityUnavailableLocal": "Community offsets cannot be submitted for local tracks without a Spotify trackId.",
+    "noVideo": "No video playing",
+    "quickLyricsLabel": "Lyrics offset",
+    "quickVideoLabel": "Video offset",
+    "videoTitle": "Current video",
+    "videoInfo": "Fine-tune the current video's first-lyric time after auto-match."
   },
   "playbarButton": {
     "label": "Lyrics Plus"
@@ -2856,6 +2861,7 @@ window.LANG_EN = {
     "globalOffset": "Global Offset",
     "lineOffset": "Line Offset",
     "lineOffsetUnavailable": "Available after syncing",
+    "selectionOffsetRequiresTiming": "Selected characters need timing first - sync the line before offsetting part of it.",
     "synced": "Registered",
     "notSynced": "Unregistered",
     "deleteLine": "Delete This Line",
@@ -2996,10 +3002,10 @@ window.LANG_EN = {
     "kindBlur": "Blur",
     "kindPop": "Pop",
     "rangeStyleTitle": "Partial effects · color",
-    "rangeStyleHint": "Drag to select any characters, independently of the timing unit.",
+    "rangeStyleHint": "Right-drag the lyric line to select characters, in preview or idle.",
     "rangeStyleSelectLabel": "Character range to style",
     "rangeStyleSelected": "Selected",
-    "rangeStyleSelectPrompt": "Drag over the characters to style first.",
+    "rangeStyleSelectPrompt": "Right-drag the lyric line first.",
     "rangeStyleCount": "ranges",
     "rangeStyleEmpty": "No styled ranges",
     "rangeEffectApply": "Apply effect",

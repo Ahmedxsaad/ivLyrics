@@ -88,6 +88,7 @@ function createEditor({ rows = ['PRE', 'ABCD', 'TAIL'], data = null } = {}) {
         } },
         selectedLrclibCandidateKey: '', selectedLrclibSource: null, activeSessionDraftKey: '',
         claimSessionForLocalEditing() {}, resetCurrentSyncInput() {}, clearRecordingLock() {},
+        getActiveRecordingLockRange: () => null, getCurrentSyncTargetSavedChars: () => [],
         setRecordingProgressIndex() {}, syncSessionUiFromRecord() {}, announceHistoryStatus() {},
         setProviderValue(value) { context.provider = value; },
         setSelectedLrclibSourceValue(value) { context.selectedLrclibSource = value; },

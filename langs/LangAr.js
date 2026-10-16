@@ -2109,7 +2109,12 @@ window.LANG_AR = {
     "trackInfo": "تُطبّق على المسار قيد التشغيل فقط.",
     "globalTitle": "مزامنة عامة",
     "globalInfo": "تطبق على كل الأغاني على هذا الجهاز فقط. لا يتم إرسالها إلى المجتمع أبداً.",
-    "communityUnavailableLocal": "لا يمكن إرسال إزاحات المجتمع للمسارات المحلية التي لا تحتوي على Spotify trackId."
+    "communityUnavailableLocal": "لا يمكن إرسال إزاحات المجتمع للمسارات المحلية التي لا تحتوي على Spotify trackId.",
+    "noVideo": "لا يوجد فيديو قيد التشغيل",
+    "quickLyricsLabel": "إزاحة الكلمات",
+    "quickVideoLabel": "إزاحة الفيديو",
+    "videoTitle": "الفيديو الحالي",
+    "videoInfo": "اضبط وقت أول كلمات للفيديو الحالي بدقة بعد المطابقة التلقائية."
   },
   "playbarButton": {
     "label": "كلمات بلس"
@@ -2856,6 +2861,7 @@ window.LANG_AR = {
     "globalOffset": "الإزاحة الكلية",
     "lineOffset": "إزاحة السطر",
     "lineOffsetUnavailable": "متاح بعد المزامنة",
+    "selectionOffsetRequiresTiming": "الأحرف المحددة تحتاج إلى توقيت أولاً - زامن السطر قبل إزاحة جزء منه.",
     "synced": "مسجل",
     "notSynced": "غير مسجل",
     "deleteLine": "حذف هذا السطر",
@@ -2996,10 +3002,10 @@ window.LANG_AR = {
     "kindBlur": "ضبابية",
     "kindPop": "فرقعة",
     "rangeStyleTitle": "تأثيرات جزئية · لون",
-    "rangeStyleHint": "اسحب لتحديد أي أحرف بصورة مستقلة عن وحدة التزامن.",
+    "rangeStyleHint": "اسحب بزر الفأرة الأيمن على سطر الكلمات لتحديد الأحرف، في وضع المعاينة أو الخمول.",
     "rangeStyleSelectLabel": "نطاق الأحرف المراد تنسيقه",
     "rangeStyleSelected": "المحدد",
-    "rangeStyleSelectPrompt": "اسحب أولاً فوق الأحرف المطلوبة.",
+    "rangeStyleSelectPrompt": "اسحب بزر الفأرة الأيمن على سطر الكلمات أولاً.",
     "rangeStyleCount": "نطاقات",
     "rangeStyleEmpty": "لا توجد نطاقات منسقة",
     "rangeEffectApply": "تطبيق التأثير",

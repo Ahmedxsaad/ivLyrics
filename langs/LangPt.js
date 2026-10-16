@@ -2109,7 +2109,12 @@ window.LANG_PT = {
     "trackInfo": "Aplica-se apenas à faixa em reprodução.",
     "globalTitle": "Sincronização global",
     "globalInfo": "Aplica-se a todas as músicas apenas neste dispositivo. Nunca é enviada à comunidade.",
-    "communityUnavailableLocal": "Offsets da comunidade não podem ser enviados para faixas locais sem Spotify trackId."
+    "communityUnavailableLocal": "Offsets da comunidade não podem ser enviados para faixas locais sem Spotify trackId.",
+    "noVideo": "Nenhum vídeo em reprodução",
+    "quickLyricsLabel": "Deslocamento da letra",
+    "quickVideoLabel": "Deslocamento do vídeo",
+    "videoTitle": "Vídeo atual",
+    "videoInfo": "Ajuste o tempo da primeira letra do vídeo atual após a correspondência automática."
   },
   "playbarButton": {
     "label": "Letra Plus"
@@ -2856,6 +2861,7 @@ window.LANG_PT = {
     "globalOffset": "Offset Global",
     "lineOffset": "Deslocamento da linha",
     "lineOffsetUnavailable": "Disponível após sincronizar",
+    "selectionOffsetRequiresTiming": "Os caracteres selecionados precisam de temporização primeiro - sincronize a linha antes de deslocar parte dela.",
     "synced": "Registrado",
     "notSynced": "Não Registrado",
     "deleteLine": "Excluir esta linha",
@@ -2996,10 +3002,10 @@ window.LANG_PT = {
     "kindBlur": "Desfoque",
     "kindPop": "Pop",
     "rangeStyleTitle": "Efeitos parciais · cor",
-    "rangeStyleHint": "Arraste para selecionar caracteres sem depender da unidade de sincronização.",
+    "rangeStyleHint": "Arraste com o botão direito na linha para selecionar caracteres, na pré-visualização ou em repouso.",
     "rangeStyleSelectLabel": "Intervalo de caracteres para estilizar",
     "rangeStyleSelected": "Selecionado",
-    "rangeStyleSelectPrompt": "Primeiro arraste sobre os caracteres desejados.",
+    "rangeStyleSelectPrompt": "Primeiro arraste com o botão direito sobre a linha da letra.",
     "rangeStyleCount": "intervalos",
     "rangeStyleEmpty": "Nenhum intervalo estilizado",
     "rangeEffectApply": "Aplicar efeito",

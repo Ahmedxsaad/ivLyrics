@@ -2109,7 +2109,12 @@ window.LANG_KO = {
     "trackInfo": "현재 재생 중인 곡에만 적용됩니다.",
     "globalTitle": "전역 싱크",
     "globalInfo": "이 기기에서만 모든 곡에 적용됩니다. 커뮤니티에는 절대 제출되지 않습니다.",
-    "communityUnavailableLocal": "Spotify trackId가 없는 로컬 곡은 커뮤니티 오프셋을 등록할 수 없습니다."
+    "communityUnavailableLocal": "Spotify trackId가 없는 로컬 곡은 커뮤니티 오프셋을 등록할 수 없습니다.",
+    "noVideo": "재생 중인 영상이 없습니다",
+    "quickLyricsLabel": "가사 오프셋",
+    "quickVideoLabel": "영상 오프셋",
+    "videoTitle": "현재 영상",
+    "videoInfo": "자동 매칭 후 현재 영상의 첫 가사 시점을 미세 조정합니다."
   },
   "playbarButton": {
     "label": "가사 플러스"
@@ -2856,6 +2861,7 @@ window.LANG_KO = {
     "globalOffset": "전체 오프셋",
     "lineOffset": "라인 오프셋",
     "lineOffsetUnavailable": "싱크 후 조정 가능",
+    "selectionOffsetRequiresTiming": "선택한 문자는 먼저 타이밍이 필요합니다 - 일부를 오프셋하기 전에 줄을 싱크하세요.",
     "synced": "등록됨",
     "notSynced": "미등록",
     "deleteLine": "이 줄 삭제",
@@ -2996,10 +3002,10 @@ window.LANG_KO = {
     "kindBlur": "블러",
     "kindPop": "팝",
     "rangeStyleTitle": "부분 효과 · 색상",
-    "rangeStyleHint": "싱크 단위와 관계없이 원하는 글자를 드래그해 선택하세요.",
+    "rangeStyleHint": "미리보기나 대기 상태에서 가사 줄을 오른쪽 버튼으로 드래그해 글자를 선택하세요.",
     "rangeStyleSelectLabel": "스타일을 적용할 글자 범위",
     "rangeStyleSelected": "선택",
-    "rangeStyleSelectPrompt": "먼저 적용할 글자를 드래그하세요.",
+    "rangeStyleSelectPrompt": "먼저 가사 줄을 오른쪽 버튼으로 드래그해 선택하세요.",
     "rangeStyleCount": "개 범위",
     "rangeStyleEmpty": "설정된 범위 없음",
     "rangeEffectApply": "효과 적용",

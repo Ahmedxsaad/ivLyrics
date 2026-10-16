@@ -2109,7 +2109,12 @@ window.LANG_CS = {
     "trackInfo": "Platí pouze pro právě přehrávanou skladbu.",
     "globalTitle": "Globální synchronizace",
     "globalInfo": "Platí pouze pro každou skladbu na tomto zařízení. Nikdy se nepředkládá komunitě.",
-    "communityUnavailableLocal": "Komunitní offsety nelze odeslat pro místní stopy bez Spotify trackId."
+    "communityUnavailableLocal": "Komunitní offsety nelze odeslat pro místní stopy bez Spotify trackId.",
+    "noVideo": "Nepřehrává se žádné video",
+    "quickLyricsLabel": "Posun textu",
+    "quickVideoLabel": "Posun videa",
+    "videoTitle": "Aktuální video",
+    "videoInfo": "Po automatickém spárování jemně dolaďte čas prvního textu aktuálního videa."
   },
   "playbarButton": {
     "label": "Texty Plus"
@@ -2856,6 +2861,7 @@ window.LANG_CS = {
     "globalOffset": "Globální offset",
     "lineOffset": "Posun řádku",
     "lineOffsetUnavailable": "Dostupné po synchronizaci",
+    "selectionOffsetRequiresTiming": "Vybrané znaky nejprve potřebují časování - před posunutím části synchronizujte řádek.",
     "synced": "Registrováno",
     "notSynced": "Neregistrováno",
     "deleteLine": "Smazat tento řádek",
@@ -2996,10 +3002,10 @@ window.LANG_CS = {
     "kindBlur": "Rozostření",
     "kindPop": "Pop",
     "rangeStyleTitle": "Částečné efekty · barva",
-    "rangeStyleHint": "Tažením vyberte libovolné znaky nezávisle na jednotce synchronizace.",
+    "rangeStyleHint": "V náhledu nebo ve stavu nečinnosti vyberte znaky tažením pravým tlačítkem myši po řádku textu.",
     "rangeStyleSelectLabel": "Rozsah znaků pro styl",
     "rangeStyleSelected": "Vybráno",
-    "rangeStyleSelectPrompt": "Nejprve přetáhněte přes požadované znaky.",
+    "rangeStyleSelectPrompt": "Nejprve táhněte pravým tlačítkem myši po řádku textu.",
     "rangeStyleCount": "rozsahů",
     "rangeStyleEmpty": "Žádné stylované rozsahy",
     "rangeEffectApply": "Použít efekt",

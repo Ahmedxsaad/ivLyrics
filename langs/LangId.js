@@ -2109,7 +2109,12 @@ window.LANG_ID = {
     "trackInfo": "Hanya berlaku untuk trek yang sedang diputar.",
     "globalTitle": "Sinkronisasi Global",
     "globalInfo": "Berlaku untuk semua lagu hanya di perangkat ini. Tidak pernah dikirim ke komunitas.",
-    "communityUnavailableLocal": "Offset komunitas tidak dapat dikirim untuk lagu lokal tanpa Spotify trackId."
+    "communityUnavailableLocal": "Offset komunitas tidak dapat dikirim untuk lagu lokal tanpa Spotify trackId.",
+    "noVideo": "Tidak ada video yang diputar",
+    "quickLyricsLabel": "Offset lirik",
+    "quickVideoLabel": "Offset video",
+    "videoTitle": "Video saat ini",
+    "videoInfo": "Sesuaikan waktu lirik pertama video saat ini setelah pencocokan otomatis."
   },
   "playbarButton": {
     "label": "Lirik Plus"
@@ -2856,6 +2861,7 @@ window.LANG_ID = {
     "globalOffset": "Offset Global",
     "lineOffset": "Offset Baris",
     "lineOffsetUnavailable": "Tersedia setelah disinkronkan",
+    "selectionOffsetRequiresTiming": "Karakter yang dipilih membutuhkan pewaktuan terlebih dahulu - sinkronkan baris sebelum menggeser sebagiannya.",
     "synced": "Tersinkron",
     "notSynced": "Belum Sinkron",
     "deleteLine": "Hapus baris ini",
@@ -2996,10 +3002,10 @@ window.LANG_ID = {
     "kindBlur": "Buram",
     "kindPop": "Pop",
     "rangeStyleTitle": "Efek sebagian · warna",
-    "rangeStyleHint": "Seret untuk memilih karakter apa pun tanpa bergantung pada unit sinkronisasi.",
+    "rangeStyleHint": "Seret dengan klik kanan pada baris lirik untuk memilih karakter, dalam pratinjau atau idle.",
     "rangeStyleSelectLabel": "Rentang karakter yang akan diberi gaya",
     "rangeStyleSelected": "Dipilih",
-    "rangeStyleSelectPrompt": "Seret dulu pada karakter yang diinginkan.",
+    "rangeStyleSelectPrompt": "Seret dengan tombol kanan mouse pada baris lirik terlebih dahulu.",
     "rangeStyleCount": "rentang",
     "rangeStyleEmpty": "Belum ada rentang bergaya",
     "rangeEffectApply": "Terapkan efek",

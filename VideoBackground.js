@@ -128,7 +128,13 @@ const wrapVideoSyncTime = (targetVideoTime, duration) => {
 // "현재 Spotify 위치 + 오프셋 → resolveVideoSyncState" 계산을 모은다.
 // videoDuration은 재생 소스마다 다르게 얻으므로(video.duration vs player.getDuration())
 // 호출부에서 wrapVideoSyncTime과 함께 별도로 처리한다.
-const computeVideoSyncState = ({ firstLyricTime, videoInfo, trackOffsetMs }) => {
+const getLiveVideoSyncInfo = (videoInfo, trackUri) => {
+    const active = typeof window !== 'undefined' ? window.ivLyricsActiveCommunityVideoInfo : null;
+    return trackUri && active?.trackUri === trackUri && active.youtubeVideoId === videoInfo?.youtubeVideoId
+        ? active : videoInfo;
+};
+
+const computeVideoSyncState = ({ firstLyricTime, videoInfo, trackOffsetMs, trackUri = null }) => {
     const spotifyTime = Spicetify.Player.getProgress() / 1000;
     const lyricsStartTime = getLyricsStartTimeSeconds(firstLyricTime);
     const globalDelayMs = typeof CONFIG !== "undefined" && CONFIG.visual ? Number(CONFIG.visual.delay || 0) : 0;
@@ -137,7 +143,7 @@ const computeVideoSyncState = ({ firstLyricTime, videoInfo, trackOffsetMs }) => 
     return resolveVideoSyncState({
         spotifyTime,
         lyricsStartTime,
-        videoInfo,
+        videoInfo: getLiveVideoSyncInfo(videoInfo, trackUri),
         additionalDelaySeconds,
         mapVideoTime: Utils.mapVideoTimeWithSkipSegments.bind(Utils),
     });
@@ -177,6 +183,7 @@ const syncYouTubePlayerTimeline = ({
     shouldHoldAtStart,
     shouldPlay,
     holdState,
+    forceSeek = false,
 }) => {
     if (!player || !holdState) return;
     if (globalThis.VideoBackgroundDepend?.isAdPlayback?.(player)) {
@@ -225,7 +232,7 @@ const syncYouTubePlayerTimeline = ({
     holdState.primePending = false;
     const currentVideoTime = player.getCurrentTime();
     if (
-        wasHoldingAtStart ||
+        forceSeek || wasHoldingAtStart ||
         !Number.isFinite(currentVideoTime) ||
         Math.abs(currentVideoTime - targetVideoTime) > VIDEO_SYNC_SEEK_THRESHOLD_SECONDS
     ) {
@@ -310,7 +317,10 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
             console.log(...args);
         }
     };
-    const [videoInfo, setVideoInfo] = useState(null);
+    // A pending old-track lookup must never publish its video under the new URI.
+    const [videoSource, setVideoSource] = useState(null);
+    const videoInfo = videoSource?.trackUri === trackUri ? videoSource.info : null;
+    const setVideoInfo = useCallback(info => setVideoSource({ trackUri, info }), [trackUri]);
     const [isPlayerReady, setIsPlayerReady] = useState(false);
     const [videoLoadRevision, setVideoLoadRevision] = useState(0);
 
@@ -355,6 +365,7 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
     const [helperVideoUrl, setHelperVideoUrl] = useState(null);
     const containerRef = useRef(null);
     const playerRef = useRef(null); // Use ref to hold player instance for reliable cleanup
+    const activeVideoOwnerRef = useRef({});
     const videoRef = useRef(null); // HTML5 video element for helper mode
     const previousFallbackUrlRef = useRef("");
     const [previousFallbackUrl, setPreviousFallbackUrl] = useState("");
@@ -500,16 +511,54 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
     }, [trackUri]);
 
     useEffect(() => {
+        window.ivLyricsActiveCommunityVideoOwner = activeVideoOwnerRef.current;
         window.ivLyricsActiveCommunityVideoInfo = videoInfo?.youtubeVideoId
-            ? { trackUri, ...videoInfo }
+            ? { ...videoInfo, trackUri }
             : null;
+        window.dispatchEvent(new CustomEvent('ivLyrics:communityVideoChanged', { detail: { trackUri } }));
+    }, [trackUri, videoInfo]);
 
+    useEffect(() => {
         return () => {
-            if (window.ivLyricsActiveCommunityVideoInfo?.trackUri === trackUri) {
+            if (window.ivLyricsActiveCommunityVideoOwner === activeVideoOwnerRef.current) {
+                const outgoingTrackUri = window.ivLyricsActiveCommunityVideoInfo?.trackUri || trackUri;
                 window.ivLyricsActiveCommunityVideoInfo = null;
+                window.ivLyricsActiveCommunityVideoOwner = null;
+                window.dispatchEvent(new CustomEvent('ivLyrics:communityVideoChanged', { detail: { trackUri: outgoingTrackUri } }));
             }
         };
-    }, [trackUri, videoInfo]);
+    }, []);
+
+    // Offset taps update the timeline immediately (including 10ms steps and
+    // paused playback), without rebuilding/downloading the video player.
+    useEffect(() => {
+        const handleSyncChange = (event) => {
+            const detail = event?.detail;
+            if (detail?.trackUri !== trackUri || detail.youtubeVideoId !== videoInfo?.youtubeVideoId) return;
+            if (!isPlayerReady || !videoInfo) return;
+            const syncState = computeVideoSyncState({
+                firstLyricTime: firstLyricTimeRef.current, videoInfo, trackUri,
+                trackOffsetMs: trackOffsetMsRef.current,
+            });
+            if (useHelper) {
+                const video = videoRef.current;
+                if (!video) return;
+                video.currentTime = wrapVideoSyncTime(syncState.targetVideoTime, video.duration);
+                if (!isPlaying || syncState.shouldHoldAtStart) video.pause();
+                else if (video.paused) video.play().catch(() => {});
+            } else {
+                const player = playerRef.current;
+                if (!player || typeof player.getPlayerState !== 'function') return;
+                syncYouTubePlayerTimeline({
+                    player, targetVideoTime: wrapVideoSyncTime(syncState.targetVideoTime, player.getDuration?.()),
+                    shouldHoldAtStart: syncState.shouldHoldAtStart, shouldPlay: isPlaying,
+                    holdState: youtubeHoldStateRef.current, forceSeek: true,
+                });
+            }
+        };
+        window.addEventListener('ivLyrics:community-video-start-changed', handleSyncChange);
+        return () => window.removeEventListener('ivLyrics:community-video-start-changed', handleSyncChange);
+    }, [trackUri, videoInfo, useHelper, isPlayerReady, isPlaying]);
 
     const reportVideoBackgroundStatus = useCallback((phase, details = {}) => {
         if (typeof onLoadingChange !== "function") return;
@@ -1066,7 +1115,7 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
                 readySyncState = resolveVideoSyncState({
                     spotifyTime,
                     lyricsStartTime,
-                    videoInfo,
+                    videoInfo: getLiveVideoSyncInfo(videoInfo, trackUri),
                     additionalDelaySeconds,
                     mapVideoTime: Utils.mapVideoTimeWithSkipSegments.bind(Utils),
                 });
@@ -1249,7 +1298,7 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
             ? resolveVideoSyncState({
                 spotifyTime: Spicetify.Player.getProgress() / 1000,
                 lyricsStartTime,
-                videoInfo,
+                videoInfo: getLiveVideoSyncInfo(videoInfo, trackUri),
                 additionalDelaySeconds: (trackOffsetMsRef.current + globalDelayMs + globalSyncOffsetMs) / 1000,
                 mapVideoTime: Utils.mapVideoTimeWithSkipSegments.bind(Utils),
             })
@@ -1296,7 +1345,7 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
         const video = videoRef.current;
 
         const syncVideo = () => {
-            const syncState = computeVideoSyncState({ firstLyricTime, videoInfo, trackOffsetMs });
+            const syncState = computeVideoSyncState({ firstLyricTime, videoInfo, trackOffsetMs, trackUri });
             const targetVideoTime = wrapVideoSyncTime(syncState.targetVideoTime, video.duration);
             const currentVideoTime = video.currentTime;
 
@@ -1524,7 +1573,7 @@ const VideoBackground = ({ trackUri, firstLyricTime, brightness, blurAmount, cov
                 }
             } catch (e) {}
 
-            const syncState = computeVideoSyncState({ firstLyricTime, videoInfo, trackOffsetMs });
+            const syncState = computeVideoSyncState({ firstLyricTime, videoInfo, trackOffsetMs, trackUri });
             const videoDuration = typeof player.getDuration === 'function'
                 ? player.getDuration()
                 : 0;

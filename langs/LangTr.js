@@ -2109,7 +2109,12 @@ window.LANG_TR = {
     "trackInfo": "Yalnızca çalmakta olan parçaya uygulanır.",
     "globalTitle": "Genel Senkronizasyon",
     "globalInfo": "Yalnızca bu cihazdaki her şarkı için geçerlidir. Asla topluluğa gönderilmez.",
-    "communityUnavailableLocal": "Yerel parçalar için Spotify trackId olmadan topluluk ofsetleri gönderilemez."
+    "communityUnavailableLocal": "Yerel parçalar için Spotify trackId olmadan topluluk ofsetleri gönderilemez.",
+    "noVideo": "Oynatılan video yok",
+    "quickLyricsLabel": "Söz ofseti",
+    "quickVideoLabel": "Video ofseti",
+    "videoTitle": "Mevcut video",
+    "videoInfo": "Otomatik eşleşmeden sonra mevcut videonun ilk söz zamanını ince ayarlayın."
   },
   "playbarButton": {
     "label": "ivLyrics"
@@ -2856,6 +2861,7 @@ window.LANG_TR = {
     "globalOffset": "Genel Ofset",
     "lineOffset": "Satır Ofseti",
     "lineOffsetUnavailable": "Senkronize ettikten sonra kullanılabilir",
+    "selectionOffsetRequiresTiming": "Seçili karakterlerin önce zamanlaması olmalı - bir kısmını kaydırmadan önce satırı senkronize edin.",
     "synced": "Kaydedildi",
     "notSynced": "Kaydedilmedi",
     "deleteLine": "Bu Satırı Sil",
@@ -2996,10 +3002,10 @@ window.LANG_TR = {
     "kindBlur": "Bulanıklık",
     "kindPop": "Patlama",
     "rangeStyleTitle": "Kısmi efektler · renk",
-    "rangeStyleHint": "Senkron biriminden bağımsız olarak istediğiniz karakterleri sürükleyerek seçin.",
+    "rangeStyleHint": "Önizleme veya bekleme durumunda şarkı sözü satırında sağ fare düğmesini basılı tutup sürükleyerek karakterleri seçin.",
     "rangeStyleSelectLabel": "Stil uygulanacak karakter aralığı",
     "rangeStyleSelected": "Seçili",
-    "rangeStyleSelectPrompt": "Önce istediğiniz karakterlerin üzerinde sürükleyin.",
+    "rangeStyleSelectPrompt": "Önce şarkı sözü satırında sağ fare düğmesini basılı tutup sürükleyin.",
     "rangeStyleCount": "aralık",
     "rangeStyleEmpty": "Stilli aralık yok",
     "rangeEffectApply": "Efekti uygula",

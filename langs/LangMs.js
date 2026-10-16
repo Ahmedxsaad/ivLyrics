@@ -2109,7 +2109,12 @@ window.LANG_MS = {
     "trackInfo": "Digunakan pada trek yang sedang dimainkan sahaja.",
     "globalTitle": "Segerak Global",
     "globalInfo": "Digunakan pada semua lagu hanya pada peranti ini. Tidak akan dihantar kepada komuniti.",
-    "communityUnavailableLocal": "Ofset komuniti tidak boleh dihantar untuk lagu setempat tanpa Spotify trackId."
+    "communityUnavailableLocal": "Ofset komuniti tidak boleh dihantar untuk lagu setempat tanpa Spotify trackId.",
+    "noVideo": "Tiada video sedang dimainkan",
+    "quickLyricsLabel": "Offset lirik",
+    "quickVideoLabel": "Offset video",
+    "videoTitle": "Video semasa",
+    "videoInfo": "Laraskan masa lirik pertama video semasa selepas padanan automatik."
   },
   "playbarButton": {
     "label": "Lirik Plus"
@@ -2856,6 +2861,7 @@ window.LANG_MS = {
     "globalOffset": "Ofset Keseluruhan",
     "lineOffset": "Ofset Baris",
     "lineOffsetUnavailable": "Tersedia selepas penyegerakan",
+    "selectionOffsetRequiresTiming": "Aksara yang dipilih memerlukan pemasaan dahulu - segerakkan baris sebelum menganjak sebahagiannya.",
     "synced": "Berdaftar",
     "notSynced": "Belum Berdaftar",
     "deleteLine": "Padam Baris Ini",
@@ -2996,10 +3002,10 @@ window.LANG_MS = {
     "kindBlur": "Kabur",
     "kindPop": "Pop",
     "rangeStyleTitle": "Kesan separa · warna",
-    "rangeStyleHint": "Seret untuk memilih mana-mana aksara tanpa bergantung pada unit segerak.",
+    "rangeStyleHint": "Seret klik kanan pada baris lirik untuk memilih aksara, dalam pratonton atau melahu.",
     "rangeStyleSelectLabel": "Julat aksara untuk digayakan",
     "rangeStyleSelected": "Dipilih",
-    "rangeStyleSelectPrompt": "Seret dahulu pada aksara yang dikehendaki.",
+    "rangeStyleSelectPrompt": "Seret dengan butang kanan tetikus pada baris lirik dahulu.",
     "rangeStyleCount": "julat",
     "rangeStyleEmpty": "Tiada julat bergaya",
     "rangeEffectApply": "Gunakan kesan",

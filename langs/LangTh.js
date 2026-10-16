@@ -2109,7 +2109,12 @@ window.LANG_TH = {
     "trackInfo": "ใช้กับแทร็กที่กำลังเล่นอยู่เท่านั้น",
     "globalTitle": "ซิงก์ส่วนกลาง",
     "globalInfo": "ใช้กับทุกเพลงบนอุปกรณ์นี้เท่านั้น และจะไม่ถูกส่งไปยังชุมชน",
-    "communityUnavailableLocal": "ไม่สามารถส่งออฟเซ็ตชุมชนสำหรับเพลงในเครื่องที่ไม่มี Spotify trackId ได้"
+    "communityUnavailableLocal": "ไม่สามารถส่งออฟเซ็ตชุมชนสำหรับเพลงในเครื่องที่ไม่มี Spotify trackId ได้",
+    "noVideo": "ไม่มีวิดีโอที่กำลังเล่น",
+    "quickLyricsLabel": "ออฟเซตเนื้อเพลง",
+    "quickVideoLabel": "ออฟเซตวิดีโอ",
+    "videoTitle": "วิดีโอปัจจุบัน",
+    "videoInfo": "ปรับเวลาของเนื้อเพลงท่อนแรกของวิดีโอปัจจุบันอย่างละเอียดหลังการจับคู่อัตโนมัติ"
   },
   "playbarButton": {
     "label": "เนื้อเพลง Plus"
@@ -2856,6 +2861,7 @@ window.LANG_TH = {
     "globalOffset": "ออฟเซ็ตทั้งหมด",
     "lineOffset": "ออฟเซ็ตบรรทัด",
     "lineOffsetUnavailable": "ใช้ได้หลังจากซิงค์แล้ว",
+    "selectionOffsetRequiresTiming": "อักขระที่เลือกต้องมีไทม์มิงก่อน - ซิงก์บรรทัดก่อนเลื่อนบางส่วน",
     "synced": "ลงทะเบียนแล้ว",
     "notSynced": "ยังไม่ลงทะเบียน",
     "deleteLine": "ลบบรรทัดนี้",
@@ -2996,10 +3002,10 @@ window.LANG_TH = {
     "kindBlur": "เบลอ",
     "kindPop": "ป๊อป",
     "rangeStyleTitle": "เอฟเฟกต์บางส่วน · สี",
-    "rangeStyleHint": "ลากเพื่อเลือกตัวอักษรใดก็ได้โดยไม่ขึ้นกับหน่วยซิงก์",
+    "rangeStyleHint": "ลากด้วยคลิกขวาบนบรรทัดเพลงเพื่อเลือกตัวอักษร ในโหมดพรีวิวหรือว่าง",
     "rangeStyleSelectLabel": "ช่วงตัวอักษรที่จะใส่สไตล์",
     "rangeStyleSelected": "เลือกแล้ว",
-    "rangeStyleSelectPrompt": "ลากเลือกตัวอักษรที่ต้องการก่อน",
+    "rangeStyleSelectPrompt": "ให้ลากด้วยปุ่มเมาส์ขวาบนบรรทัดเนื้อเพลงเพื่อเลือกตัวอักษรก่อน",
     "rangeStyleCount": "ช่วง",
     "rangeStyleEmpty": "ไม่มีช่วงที่ใส่สไตล์",
     "rangeEffectApply": "ใช้เอฟเฟกต์",

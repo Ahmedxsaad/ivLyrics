@@ -2109,7 +2109,12 @@ window.LANG_ZH_TW = {
     "trackInfo": "僅套用於目前播放的曲目。",
     "globalTitle": "全域同步",
     "globalInfo": "只會在此裝置上套用到所有歌曲，絕不會提交到社群。",
-    "communityUnavailableLocal": "沒有 Spotify trackId 的本機曲目無法提交社群偏移。"
+    "communityUnavailableLocal": "沒有 Spotify trackId 的本機曲目無法提交社群偏移。",
+    "noVideo": "目前沒有播放影片",
+    "quickLyricsLabel": "歌詞偏移",
+    "quickVideoLabel": "影片偏移",
+    "videoTitle": "目前影片",
+    "videoInfo": "在自動比對後微調目前影片首句歌詞的時間。"
   },
   "playbarButton": {
     "label": "歌詞 Plus"
@@ -2856,6 +2861,7 @@ window.LANG_ZH_TW = {
     "globalOffset": "全域偏移",
     "lineOffset": "行偏移",
     "lineOffsetUnavailable": "同步後可調整",
+    "selectionOffsetRequiresTiming": "所選字元需要先有時間軸 - 在偏移其中一部分之前請先同步該行。",
     "synced": "已登錄",
     "notSynced": "未登錄",
     "deleteLine": "刪除此行",
@@ -2996,10 +3002,10 @@ window.LANG_ZH_TW = {
     "kindBlur": "模糊",
     "kindPop": "彈出",
     "rangeStyleTitle": "局部效果與色彩",
-    "rangeStyleHint": "不受同步單位限制，拖曳即可選取任意字元。",
+    "rangeStyleHint": "在預覽或閒置狀態下，在歌詞行上按住右鍵拖曳以選取字元。",
     "rangeStyleSelectLabel": "要套用樣式的字元範圍",
     "rangeStyleSelected": "已選取",
-    "rangeStyleSelectPrompt": "請先拖曳選取要設定樣式的字元。",
+    "rangeStyleSelectPrompt": "請先在歌詞行上按住右鍵拖曳以選取字元。",
     "rangeStyleCount": "個範圍",
     "rangeStyleEmpty": "尚無樣式範圍",
     "rangeEffectApply": "套用效果",

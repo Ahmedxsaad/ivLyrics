@@ -2109,7 +2109,12 @@ window.LANG_FA = {
     "trackInfo": "فقط روی آهنگی که در حال پخش است اعمال می‌شود.",
     "globalTitle": "همگام‌سازی سراسری",
     "globalInfo": "فقط روی همین دستگاه برای همه آهنگ‌ها اعمال می‌شود و هرگز برای انجمن ارسال نمی‌شود.",
-    "communityUnavailableLocal": "برای قطعه‌های محلی بدون Spotify trackId نمی‌توان آفست انجمن ثبت کرد."
+    "communityUnavailableLocal": "برای قطعه‌های محلی بدون Spotify trackId نمی‌توان آفست انجمن ثبت کرد.",
+    "noVideo": "ویدیویی در حال پخش نیست",
+    "quickLyricsLabel": "آفست متن",
+    "quickVideoLabel": "آفست ویدیو",
+    "videoTitle": "ویدیوی فعلی",
+    "videoInfo": "پس از تطبیق خودکار، زمان شروع متن ویدیوی فعلی را دقیق تنظیم کنید."
   },
   "playbarButton": {
     "label": "متن آهنگ پلاس"
@@ -2856,6 +2861,7 @@ window.LANG_FA = {
     "globalOffset": "آفست کلی",
     "lineOffset": "آفست خط",
     "lineOffsetUnavailable": "پس از همگام‌سازی در دسترس است",
+    "selectionOffsetRequiresTiming": "نویسه‌های انتخاب‌شده ابتدا به زمان‌بندی نیاز دارند - پیش از جابه‌جایی بخشی از خط، آن را همگام کنید.",
     "synced": "سینک شده",
     "notSynced": "سینک نشده",
     "deleteLine": "حذف این خط",
@@ -2996,10 +3002,10 @@ window.LANG_FA = {
     "kindBlur": "محو",
     "kindPop": "پاپ",
     "rangeStyleTitle": "جلوه‌های بخشی · رنگ",
-    "rangeStyleHint": "مستقل از واحد همگام‌سازی، نویسه‌های دلخواه را با کشیدن انتخاب کنید.",
+    "rangeStyleHint": "در حالت پیش‌نمایش یا بیکار، با درگ راست روی خط شعر کاراکترها را انتخاب کنید.",
     "rangeStyleSelectLabel": "بازه نویسه‌ها برای سبک‌دهی",
     "rangeStyleSelected": "انتخاب‌شده",
-    "rangeStyleSelectPrompt": "ابتدا روی نویسه‌های موردنظر بکشید.",
+    "rangeStyleSelectPrompt": "ابتدا با نگه داشتن دکمهٔ راست ماوس روی خط شعر بکشید و نویسه‌ها را انتخاب کنید.",
     "rangeStyleCount": "بازه",
     "rangeStyleEmpty": "بازه سبک‌دار وجود ندارد",
     "rangeEffectApply": "اعمال جلوه",

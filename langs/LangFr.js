@@ -2109,7 +2109,12 @@ window.LANG_FR = {
     "trackInfo": "S’applique uniquement au titre en cours de lecture.",
     "globalTitle": "Synchronisation globale",
     "globalInfo": "S'applique à tous les titres sur cet appareil uniquement. Elle n'est jamais envoyée à la communauté.",
-    "communityUnavailableLocal": "Les offsets communautaires ne peuvent pas être envoyés pour les titres locaux sans Spotify trackId."
+    "communityUnavailableLocal": "Les offsets communautaires ne peuvent pas être envoyés pour les titres locaux sans Spotify trackId.",
+    "noVideo": "Aucune vidéo en cours de lecture",
+    "quickLyricsLabel": "Décalage des paroles",
+    "quickVideoLabel": "Décalage de la vidéo",
+    "videoTitle": "Vidéo actuelle",
+    "videoInfo": "Ajustez précisément le début des paroles de la vidéo actuelle après la correspondance automatique."
   },
   "playbarButton": {
     "label": "Paroles Plus"
@@ -2856,6 +2861,7 @@ window.LANG_FR = {
     "globalOffset": "Décalage global",
     "lineOffset": "Décalage de ligne",
     "lineOffsetUnavailable": "Disponible après la synchronisation",
+    "selectionOffsetRequiresTiming": "Les caractères sélectionnés nécessitent d'abord un minutage - synchronisez la ligne avant d'en décaler une partie.",
     "synced": "Synchro",
     "notSynced": "Non synchro",
     "deleteLine": "Supprimer ligne",
@@ -2996,10 +3002,10 @@ window.LANG_FR = {
     "kindBlur": "Flou",
     "kindPop": "Pop",
     "rangeStyleTitle": "Effets partiels · couleur",
-    "rangeStyleHint": "Faites glisser pour sélectionner des caractères, indépendamment de l’unité de synchronisation.",
+    "rangeStyleHint": "Faites un glisser-déposer avec le bouton droit sur la ligne pour sélectionner des caractères, en aperçu ou au repos.",
     "rangeStyleSelectLabel": "Plage de caractères à styliser",
     "rangeStyleSelected": "Sélection",
-    "rangeStyleSelectPrompt": "Faites d’abord glisser sur les caractères voulus.",
+    "rangeStyleSelectPrompt": "Faites d’abord glisser le bouton droit de la souris sur la ligne des paroles.",
     "rangeStyleCount": "plages",
     "rangeStyleEmpty": "Aucune plage stylisée",
     "rangeEffectApply": "Appliquer l’effet",

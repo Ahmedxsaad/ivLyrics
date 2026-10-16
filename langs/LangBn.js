@@ -2109,7 +2109,12 @@ window.LANG_BN = {
     "trackInfo": "শুধু বর্তমানে চলমান ট্র্যাকে প্রযোজ্য।",
     "globalTitle": "গ্লোবাল সিঙ্ক",
     "globalInfo": "শুধু এই ডিভাইসে সব গানে প্রযোজ্য। এটি কখনও কমিউনিটিতে জমা দেওয়া হয় না।",
-    "communityUnavailableLocal": "Spotify trackId ছাড়া লোকাল ট্র্যাকের জন্য কমিউনিটি অফসেট জমা দেওয়া যাবে না।"
+    "communityUnavailableLocal": "Spotify trackId ছাড়া লোকাল ট্র্যাকের জন্য কমিউনিটি অফসেট জমা দেওয়া যাবে না।",
+    "noVideo": "কোনো ভিডিও চলছে না",
+    "quickLyricsLabel": "লিরিক্স অফসেট",
+    "quickVideoLabel": "ভিডিও অফসেট",
+    "videoTitle": "বর্তমান ভিডিও",
+    "videoInfo": "স্বয়ংক্রিয় মিলের পর বর্তমান ভিডিওর প্রথম লিরিক্সের সময় সূক্ষ্মভাবে সমন্বয় করুন।"
   },
   "playbarButton": {
     "label": "লিরিক্স প্লাস"
@@ -2856,6 +2861,7 @@ window.LANG_BN = {
     "globalOffset": "গ্লোবাল অফসেট",
     "lineOffset": "লাইন অফসেট",
     "lineOffsetUnavailable": "সিঙ্ক করার পর উপলভ্য",
+    "selectionOffsetRequiresTiming": "নির্বাচিত অক্ষরগুলোর আগে টাইমিং দরকার - অংশ অফসেট করার আগে লাইনটি সিঙ্ক করুন।",
     "synced": "নিবন্ধিত",
     "notSynced": "অনিবন্ধিত",
     "deleteLine": "এই লাইন মুছুন",
@@ -2996,10 +3002,10 @@ window.LANG_BN = {
     "kindBlur": "ব্লার",
     "kindPop": "পপ",
     "rangeStyleTitle": "আংশিক ইফেক্ট · রঙ",
-    "rangeStyleHint": "সিঙ্ক ইউনিটের বাইরে যেকোনো অক্ষর টেনে নির্বাচন করুন।",
+    "rangeStyleHint": "প্রিভিউ বা আইডল অবস্থায় গানের লাইনে ডান-ড্র্যাগ করে অক্ষর নির্বাচন করুন।",
     "rangeStyleSelectLabel": "স্টাইল দেওয়ার অক্ষরসীমা",
     "rangeStyleSelected": "নির্বাচিত",
-    "rangeStyleSelectPrompt": "প্রথমে কাঙ্ক্ষিত অক্ষরগুলোর ওপর টানুন।",
+    "rangeStyleSelectPrompt": "প্রথমে গানের লাইনে মাউসের ডান বোতাম চেপে টেনে নির্বাচন করুন।",
     "rangeStyleCount": "সীমা",
     "rangeStyleEmpty": "কোনো স্টাইল করা সীমা নেই",
     "rangeEffectApply": "ইফেক্ট প্রয়োগ",

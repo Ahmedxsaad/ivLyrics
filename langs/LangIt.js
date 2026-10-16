@@ -2109,7 +2109,12 @@ window.LANG_IT = {
     "trackInfo": "Si applica solo alla traccia in riproduzione.",
     "globalTitle": "Sincronizzazione globale",
     "globalInfo": "Si applica a tutti i brani solo su questo dispositivo. Non viene mai inviata alla community.",
-    "communityUnavailableLocal": "Non è possibile inviare offset della community per brani locali senza Spotify trackId."
+    "communityUnavailableLocal": "Non è possibile inviare offset della community per brani locali senza Spotify trackId.",
+    "noVideo": "Nessun video in riproduzione",
+    "quickLyricsLabel": "Offset testo",
+    "quickVideoLabel": "Offset video",
+    "videoTitle": "Video corrente",
+    "videoInfo": "Regola con precisione l'inizio del testo del video corrente dopo l'abbinamento automatico."
   },
   "playbarButton": {
     "label": "Testi Plus"
@@ -2856,6 +2861,7 @@ window.LANG_IT = {
     "globalOffset": "Offset globale",
     "lineOffset": "Offset riga",
     "lineOffsetUnavailable": "Disponibile dopo la sincronizzazione",
+    "selectionOffsetRequiresTiming": "I caratteri selezionati necessitano prima della temporizzazione - sincronizza la riga prima di spostarne una parte.",
     "synced": "Registrato",
     "notSynced": "Non registrato",
     "deleteLine": "Elimina riga",
@@ -2996,10 +3002,10 @@ window.LANG_IT = {
     "kindBlur": "Sfocatura",
     "kindPop": "Pop",
     "rangeStyleTitle": "Effetti parziali · colore",
-    "rangeStyleHint": "Trascina per selezionare qualsiasi carattere, indipendentemente dall’unità di sincronizzazione.",
+    "rangeStyleHint": "Trascina con il tasto destro sulla riga per selezionare i caratteri, in anteprima o in pausa.",
     "rangeStyleSelectLabel": "Intervallo di caratteri da stilizzare",
     "rangeStyleSelected": "Selezione",
-    "rangeStyleSelectPrompt": "Prima trascina sui caratteri desiderati.",
+    "rangeStyleSelectPrompt": "Prima trascina con il tasto destro sulla riga del testo.",
     "rangeStyleCount": "intervalli",
     "rangeStyleEmpty": "Nessun intervallo con stile",
     "rangeEffectApply": "Applica effetto",
