@@ -123,6 +123,141 @@ const getSyncCreatorPronunciationTargetLanguage = (mode = 'latin') => {
 			return 'en';
 	}
 };
+const normalizeSyncCreatorLockRange = (startIndex, endIndex, charCount) => {
+	const count = Number(charCount);
+	if (!Number.isFinite(count) || count <= 1) return null;
+	const start = Number(startIndex);
+	const end = Number(endIndex);
+	if (!Number.isInteger(start) || !Number.isInteger(end)) return null;
+	if (start === end) {
+		const prefixEnd = Math.min(Math.max(start, 0), count - 1);
+		if (prefixEnd >= count - 1) return null;
+		if (prefixEnd < 0) return null;
+		return { start: 0, end: prefixEnd };
+	}
+	const min = Math.min(start, end);
+	const max = Math.max(start, end);
+	if (!Number.isInteger(min) || !Number.isInteger(max)) return null;
+	const safeStart = Math.max(0, min);
+	const safeEnd = Math.min(count - 1, max);
+	if (safeStart > safeEnd) return null;
+	if (safeStart <= 0 && safeEnd >= count - 1) return null;
+	if (min < 0 || max >= count) return null;
+	return { start: safeStart, end: safeEnd };
+};
+const resolveSyncCreatorLockDragRange = (downIndex, upIndex, charCount) => (
+	normalizeSyncCreatorLockRange(downIndex, upIndex, charCount)
+);
+const isSyncCreatorIndexLocked = (index, range) => {
+	if (!range || !Number.isInteger(Number(index))) return false;
+	const numericIndex = Number(index);
+	return numericIndex >= range.start && numericIndex <= range.end;
+};
+const buildSyncCreatorLockedCharTimesForRange = (savedChars, range) => {
+	const saved = Array.isArray(savedChars) ? savedChars : [];
+	const next = new Array(saved.length).fill(null);
+	if (!range) return next;
+	for (let i = Math.max(0, range.start); i <= Math.min(range.end, saved.length - 1); i++) {
+		next[i] = saved[i];
+	}
+	return next;
+};
+const getSyncCreatorNextEditableIndex = (index, range, charCount, direction = 1) => {
+	const numericIndex = Number(index);
+	if (!Number.isInteger(numericIndex)) return -1;
+	if (!range) return numericIndex;
+	if (numericIndex < range.start || numericIndex > range.end) return numericIndex;
+	if (direction >= 0) return range.end + 1;
+	return range.start - 1;
+};
+const clampSyncCreatorTimesToLockRange = (draftTimes, savedChars, range, step) => {
+	const normalizedStep = Number.isFinite(Number(step)) && Number(step) > 0 ? Number(step) : 0.001;
+	const draft = Array.isArray(draftTimes) ? [...draftTimes] : [];
+	const saved = Array.isArray(savedChars) ? savedChars : [];
+	if (!range || !Number.isInteger(range.start) || !Number.isInteger(range.end)) return draft;
+	const start = Math.max(0, range.start);
+	const end = Math.min(draft.length - 1, range.end);
+	if (start > end) return draft;
+	// Locked span is restored exactly from saved timing — it never moves.
+	for (let i = start; i <= end; i++) {
+		if (i < saved.length) draft[i] = saved[i];
+	}
+	const lockStartTime = Number(draft[start]);
+	const lockEndTime = Number(draft[end]);
+	// Prefix recordings stop at the locked boundary instead of overlapping it.
+	if (Number.isFinite(lockStartTime)) {
+		for (let i = start - 1; i >= 0; i--) {
+			const value = draft[i];
+			if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+			const cap = lockStartTime - (start - i) * normalizedStep;
+			if (value > cap) draft[i] = Math.round(cap * 1000) / 1000;
+		}
+	}
+	// Suffix recordings continue after the locked boundary.
+	if (Number.isFinite(lockEndTime)) {
+		for (let i = end + 1; i < draft.length; i++) {
+			const value = draft[i];
+			if (typeof value !== 'number' || !Number.isFinite(value)) continue;
+			const floor = lockEndTime + (i - end) * normalizedStep;
+			if (value < floor) draft[i] = Math.round(floor * 1000) / 1000;
+		}
+	}
+	return draft;
+};
+const shiftSyncCreatorSelectionTimes = (savedChars, selStart, selEnd, deltaSec, step) => {
+	const normalizedStep = Number.isFinite(Number(step)) && Number(step) > 0 ? Number(step) : 0.001;
+	const saved = Array.isArray(savedChars) ? savedChars : [];
+	const start = Number(selStart);
+	const end = Number(selEnd);
+	const delta = Number(deltaSec);
+	if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end >= saved.length || start > end) {
+		return { ok: false, reason: 'range' };
+	}
+	if (!Number.isFinite(delta)) return { ok: false, reason: 'delta' };
+	for (let i = start; i <= end; i++) {
+		if (typeof saved[i] !== 'number' || !Number.isFinite(saved[i])) {
+			return { ok: false, reason: 'untimed' };
+		}
+	}
+	const selectedMin = Math.min(...saved.slice(start, end + 1));
+	const boundedDelta = Math.max(delta, -selectedMin);
+	if (!Number.isFinite(boundedDelta) || Math.abs(boundedDelta) < 0.0005) {
+		return { ok: false, reason: 'noop' };
+	}
+	const times = [...saved];
+	for (let i = start; i <= end; i++) {
+		times[i] = Math.round(Math.max(0, saved[i] + boundedDelta) * 1000) / 1000;
+	}
+	// Clamp the back edge against the previous unselected neighbor.
+	let prevAnchor = null;
+	for (let i = start - 1; i >= 0; i--) {
+		if (typeof saved[i] === 'number' && Number.isFinite(saved[i])) {
+			prevAnchor = saved[i];
+			break;
+		}
+	}
+	if (prevAnchor !== null) {
+		for (let i = start; i <= end; i++) {
+			const floor = prevAnchor + (i - start + 1) * normalizedStep;
+			if (times[i] < floor) times[i] = Math.round(floor * 1000) / 1000;
+		}
+	}
+	// Clamp the front edge against the next unselected neighbor.
+	let nextAnchor = null;
+	for (let i = end + 1; i < saved.length; i++) {
+		if (typeof saved[i] === 'number' && Number.isFinite(saved[i])) {
+			nextAnchor = saved[i];
+			break;
+		}
+	}
+	if (nextAnchor !== null) {
+		for (let i = end; i >= start; i--) {
+			const cap = nextAnchor - (end - i + 1) * normalizedStep;
+			if (times[i] > cap) times[i] = Math.round(cap * 1000) / 1000;
+		}
+	}
+	return { ok: true, times };
+};
 const getSyncCreatorLockedPlaybackProgressIndex = (previewIndex, lockIndex, recordingIndex) => {
 	const numericLockIndex = Number(lockIndex);
 	const numericRecordingIndex = Number(recordingIndex);
