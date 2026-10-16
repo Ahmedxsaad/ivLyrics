@@ -1534,23 +1534,24 @@
                     });
                 }, []);
 
-                const renderApiKeyRow = () => React.createElement('div', { className: 'ai-addon-setting' },
-                        React.createElement('label', null, aiText('apiKey', 'API Key(s)')),
+                const renderApiKeyRow = () => React.createElement('div', { className: 'ai-addon-setting ai-addon-connection-field' },
+                        React.createElement('label', { htmlFor: `${ADDON_INFO.id}-primary-apiKeys` }, aiText('apiKey', 'API Key(s)')),
                         React.createElement('div', { className: 'ai-addon-input-group' },
-                            React.createElement('input', { type: 'password', autoComplete: 'off', value: apiKeys, onChange: handleApiKeyChange, placeholder: 'sk-...' }),
+                            React.createElement('input', { id: `${ADDON_INFO.id}-primary-apiKeys`, type: 'password', autoComplete: 'off', value: apiKeys, onChange: handleApiKeyChange, placeholder: 'sk-...' }),
                             React.createElement('button', { type: 'button', onClick: () => window.open(ADDON_INFO.apiKeyUrl, '_blank'), className: 'ai-addon-btn ai-addon-btn-secondary' }, aiText('getApiKey', 'Get API Key'))
                         ),
                         React.createElement('small', null, aiText('apiKeyDesc', 'Enter an API key or JSON array.'))
                     );
-                const renderBaseUrlRow = () => React.createElement('div', { className: 'ai-addon-setting' },
-                        React.createElement('label', null, aiText('baseUrl', 'Base URL')),
-                        React.createElement('input', { type: 'text', value: baseUrl, onChange: handleBaseUrlChange, placeholder: DEFAULT_OPENAI_BASE_URL }),
+                const renderBaseUrlRow = () => React.createElement('div', { className: 'ai-addon-setting ai-addon-connection-field' },
+                        React.createElement('label', { htmlFor: `${ADDON_INFO.id}-primary-baseUrl` }, aiText('baseUrl', 'Base URL')),
+                        React.createElement('input', { id: `${ADDON_INFO.id}-primary-baseUrl`, type: 'text', value: baseUrl, onChange: handleBaseUrlChange, placeholder: DEFAULT_OPENAI_BASE_URL }),
                         React.createElement('small', null, aiText('baseUrlDesc', 'Use a custom OpenAI-compatible API URL.'))
                     );
-                const renderModelRow = () => React.createElement('div', { className: 'ai-addon-setting' },
-                        React.createElement('label', null, aiText('model', 'Model')),
+                const renderModelRow = () => React.createElement('div', { className: 'ai-addon-setting ai-addon-connection-field' },
+                        React.createElement('label', { htmlFor: `${ADDON_INFO.id}-primary-models` }, aiText('model', 'Model')),
                         React.createElement('div', { className: 'ai-addon-input-group' },
                             React.createElement('select', {
+                                id: `${ADDON_INFO.id}-primary-models`,
                                 value: isModelInList ? model : '',
                                 onChange: handleModelChange,
                                 disabled: modelsLoading
@@ -1579,34 +1580,49 @@
                         ),
                         availableModels.length > 0 && React.createElement('small', null, aiText('modelsAvailable', '{count} models available', { count: availableModels.length }))
                     );
-                const renderCustomModelRow = () => React.createElement('div', { className: 'ai-addon-setting' },
-                        React.createElement('label', null, aiText('modelId', 'Custom Model ID')),
-                        React.createElement('input', { type: 'text', value: customModel, onChange: handleCustomModelChange, placeholder: 'gpt-4-turbo', 'aria-label': aiText('modelId', 'Custom Model ID') })
+                const renderCustomModelRow = () => React.createElement('div', { className: 'ai-addon-setting ai-addon-connection-field' },
+                        React.createElement('label', { htmlFor: `${ADDON_INFO.id}-primary-customModel` }, aiText('modelId', 'Custom Model ID')),
+                        React.createElement('input', { id: `${ADDON_INFO.id}-primary-customModel`, type: 'text', value: customModel, onChange: handleCustomModelChange, placeholder: 'gpt-4-turbo', 'aria-label': aiText('modelId', 'Custom Model ID') })
                     );
 
                 return React.createElement('div', { className: 'ai-addon-settings chatgpt-settings' },
-                    renderApiKeyRow(),
-                    renderBaseUrlRow(),
-                    renderModelRow(),
-                    (!isModelInList || customModel) &&
-                    renderCustomModelRow(),
-                    React.createElement(CapabilityControls, {
-                        capabilities: primaryCapabilities, onToggle: togglePrimaryCapability
-                    }),
+                    React.createElement('div', { className: 'ai-addon-setting' },
+                        renderConnectionCard({
+                            heading: React.createElement('div', { className: 'ai-addon-connection-enabled' },
+                                React.createElement('span', null, `1. ${t('misc.default', 'Default')}`)
+                            ),
+                            fields: [
+                                renderApiKeyRow(),
+                                renderBaseUrlRow(),
+                                renderModelRow(),
+                                (!isModelInList || customModel) && renderCustomModelRow()
+                            ],
+                            capabilities: primaryCapabilities,
+                            onToggle: togglePrimaryCapability,
+                            testButton: React.createElement('button', {
+                                type: 'button', onClick: handleTest, className: 'ai-addon-btn ai-addon-btn-secondary'
+                            }, aiText('testConnection', 'Test Connection')),
+                            status: testStatus && React.createElement('small', {
+                                role: 'status', 'aria-live': 'polite',
+                                className: `ai-addon-test-status ${testStatus.startsWith('✓') ? 'success' : testStatus.startsWith('✗') ? 'error' : ''}`
+                            }, testStatus)
+                        })
+                    ),
                     React.createElement(FallbackProvidersSection),
                     // Advanced API Parameters
                     React.createElement(AdvancedParamsSection)
-                    ,
-                    React.createElement('div', { className: 'ai-addon-setting' },
-                        React.createElement('div', { className: 'ai-addon-input-group' },
-                            React.createElement('button', { type: 'button', onClick: handleTest, className: 'ai-addon-btn ai-addon-btn-primary' }, aiText('testConnection', 'Test Connection'))
-                        ),
-                        testStatus && React.createElement('span', {
-                            className: `ai-addon-test-status ${testStatus.startsWith('✓') ? 'success' : testStatus.startsWith('✗') ? 'error' : ''}`
-                        }, testStatus)
-                    )
                 );
             };
+
+            // Share presentation only: the primary keeps its original settings and handlers.
+            function renderConnectionCard({ heading, actions, fields, capabilities, onToggle, testButton, status }) {
+                return React.createElement('div', { className: 'ai-addon-connection-card' },
+                    React.createElement('div', { className: 'ai-addon-connection-header' }, heading, actions),
+                    React.createElement('div', { className: 'ai-addon-connection-fields' }, ...fields),
+                    React.createElement(CapabilityControls, { capabilities, onToggle }),
+                    React.createElement('div', { className: 'ai-addon-connection-footer' }, testButton, status)
+                );
+            }
 
             function CapabilityControls({ capabilities, onToggle }) {
                 return React.createElement('div', { className: 'ai-addon-setting ai-addon-connection-capabilities' },
@@ -1696,22 +1712,20 @@
                     type: 'button', className: 'ai-addon-btn ai-addon-btn-secondary ai-addon-connection-icon',
                     onClick, disabled, 'aria-label': label, title: label
                 }, glyph);
-                return React.createElement('div', { className: 'ai-addon-connection-card' },
-                    React.createElement('div', { className: 'ai-addon-connection-header' },
-                        React.createElement('label', { className: 'ai-addon-connection-enabled' },
-                            React.createElement('input', {
-                                type: 'checkbox', checked: connection.enabled !== false,
-                                onChange: event => onChange({ enabled: event.target.checked })
-                            }),
-                            React.createElement('span', null, `${index + 2}. ${connection.name || 'API'}`)
-                        ),
-                        React.createElement('div', { className: 'ai-addon-connection-actions' },
-                            iconButton(aiText('moveUp', 'Move up'), '↑', () => onMove(-1), index === 0),
-                            iconButton(aiText('moveDown', 'Move down'), '↓', () => onMove(1), index === count - 1),
-                            iconButton(aiText('removeConnection', 'Remove provider'), '×', onRemove)
-                        )
+                return renderConnectionCard({
+                    heading: React.createElement('label', { className: 'ai-addon-connection-enabled' },
+                        React.createElement('input', {
+                            type: 'checkbox', checked: connection.enabled !== false,
+                            onChange: event => onChange({ enabled: event.target.checked })
+                        }),
+                        React.createElement('span', null, `${index + 2}. ${connection.name || 'API'}`)
                     ),
-                    React.createElement('div', { className: 'ai-addon-connection-fields' },
+                    actions: React.createElement('div', { className: 'ai-addon-connection-actions' },
+                        iconButton(aiText('moveUp', 'Move up'), '↑', () => onMove(-1), index === 0),
+                        iconButton(aiText('moveDown', 'Move down'), '↓', () => onMove(1), index === count - 1),
+                        iconButton(aiText('removeConnection', 'Remove provider'), '×', onRemove)
+                    ),
+                    fields: [
                         field(aiText('connectionName', 'Name'), 'name'),
                         field(aiText('baseUrl', 'Base URL'), 'baseUrl'),
                         field(aiText('apiKey', 'API Key(s)'), 'apiKeys', 'password'),
@@ -1731,30 +1745,26 @@
                             )
                         ),
                         customModel && field(aiText('modelId', 'Model ID'), 'model')
-                    ),
-                    React.createElement(CapabilityControls, {
-                        capabilities: connection.capabilities,
-                        onToggle: capability => onChange({
-                            capabilities: toggleEndpointCapability(connection.capabilities, capability)
-                        })
+                    ],
+                    capabilities: connection.capabilities,
+                    onToggle: capability => onChange({
+                        capabilities: toggleEndpointCapability(connection.capabilities, capability)
                     }),
-                    React.createElement('div', { className: 'ai-addon-connection-footer' },
-                        React.createElement('button', {
-                            type: 'button', className: 'ai-addon-btn ai-addon-btn-secondary',
-                            disabled: testing || loading || !keys.length || !selectedModel,
-                            onClick: async () => {
-                                setTesting(true);
-                                setStatus(aiText('testingConnection', 'Testing...'));
-                                try {
-                                    await testSingleTarget({ baseUrl: connection.baseUrl, apiKey: keys[0], model: selectedModel });
-                                    setStatus('✓ ' + aiText('connectionSuccess', 'Connection successful.'));
-                                } catch (error) { setStatus(`✗ ${error.message}`); }
-                                finally { setTesting(false); }
-                            }
-                        }, aiText('testThisConnection', 'Test this provider')),
-                        status && React.createElement('small', { role: 'status', 'aria-live': 'polite' }, status)
-                    )
-                );
+                    testButton: React.createElement('button', {
+                        type: 'button', className: 'ai-addon-btn ai-addon-btn-secondary',
+                        disabled: testing || loading || !keys.length || !selectedModel,
+                        onClick: async () => {
+                            setTesting(true);
+                            setStatus(aiText('testingConnection', 'Testing...'));
+                            try {
+                                await testSingleTarget({ baseUrl: connection.baseUrl, apiKey: keys[0], model: selectedModel });
+                                setStatus('✓ ' + aiText('connectionSuccess', 'Connection successful.'));
+                            } catch (error) { setStatus(`✗ ${error.message}`); }
+                            finally { setTesting(false); }
+                        }
+                    }, aiText('testThisConnection', 'Test this provider')),
+                    status: status && React.createElement('small', { role: 'status', 'aria-live': 'polite' }, status)
+                });
             }
 
             // Settings wording for getRequestBodyMergeValidationError; requests keep its raw message.
