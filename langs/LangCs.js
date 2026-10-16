@@ -1408,6 +1408,10 @@ window.LANG_CS = {
         "label": "Zobrazit rychlé ovládání synchronizace skladby",
         "info": "Zobrazí ovládání posunu synchronizace pro konkrétní skladbu v levém dolním rohu stránek s texty a režimu celé obrazovky. Po skrytí zůstane dostupné v nabídce vpravo pod položkou „Upravit synchronizaci textů“."
       },
+      "seekFadeCompensation": {
+        "label": "Při kliknutí na řádek začít o něco dříve",
+        "info": "Spotify po přetočení postupně zesiluje zvuk, takže první slabika může zaniknout. Když je zapnuto, kliknutí na řádek přetočí 0,3 sekundy před jeho začátek."
+      },
       "fullscreenShortcut": {
         "label": "Zkratka na celou obrazovku",
         "desc": "Klávesová zkratka pro celoobrazovkový režim textů"
@@ -1520,6 +1524,14 @@ window.LANG_CS = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Předstih vykreslení virtuálního karaoke",
         "desc": "Použijte časový posun v době vykreslování pouze na pseudo karaoke. Kladné hodnoty způsobí, že se zvýraznění objeví dříve."
+      },
+      "motionStyle": {
+        "label": "Styl pohybu karaoke",
+        "desc": "Klasický zachovává jemné poskakování. Expresivní používá pružinovou fyziku: zpívaná slova se zvětší, zvednou a rozzáří, ještě nezazpívaná slova zůstanou o něco menší a dlouhé tóny se animují písmeno po písmenu.",
+        "options": {
+          "classic": "Klasický",
+          "expressive": "Expresivní"
+        }
       }
     },
     "prefetch": {

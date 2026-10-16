@@ -1408,6 +1408,10 @@ window.LANG_DE = {
         "label": "Schnelle Steuerelemente für Track-Sync anzeigen",
         "info": "Zeigt die Steuerelemente für den trackspezifischen Sync-Offset unten links auf Songtextseiten und im Vollbildmodus an. Wenn ausgeblendet, bleiben sie im rechten Menü unter „Songtext-Sync anpassen“ verfügbar."
       },
+      "seekFadeCompensation": {
+        "label": "Beim Klicken auf eine Zeile etwas früher starten",
+        "info": "Spotify blendet den Ton nach einem Sprung ein, wodurch die erste Silbe verschluckt werden kann. Wenn aktiviert, springt ein Klick auf eine Zeile 0,3 Sekunden vor ihren Beginn."
+      },
       "fullscreenShortcut": {
         "label": "Vollbild-Kurzbefehl",
         "desc": "Tastaturkürzel für den Songtext-Vollbildmodus"
@@ -1520,6 +1524,14 @@ window.LANG_DE = {
       "pseudoKaraokeRenderAdvance": {
         "label": "Pseudo-Karaoke-Vorlauf",
         "desc": "Wendet einen Timing-Offset nur beim Rendern von Pseudo-Karaoke an. Positive Werte lassen die Hervorhebung früher erscheinen."
+      },
+      "motionStyle": {
+        "label": "Karaoke-Bewegungsstil",
+        "desc": "Klassisch behält das dezente Hüpfen bei. Ausdrucksstark nutzt Federphysik: gesungene Wörter wachsen, heben sich und leuchten, noch nicht gesungene Wörter bleiben etwas kleiner, und lang gehaltene Töne werden Buchstabe für Buchstabe animiert.",
+        "options": {
+          "classic": "Klassisch",
+          "expressive": "Ausdrucksstark"
+        }
       }
     },
     "prefetch": {

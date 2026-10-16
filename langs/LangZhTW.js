@@ -1408,6 +1408,10 @@ window.LANG_ZH_TW = {
         "label": "顯示曲目快速同步控制項",
         "info": "在歌詞頁面與全螢幕模式左下角顯示目前曲目的同步偏移控制項。隱藏後，仍可透過右側選單中的「歌詞同步調整」使用。"
       },
+      "seekFadeCompensation": {
+        "label": "點擊歌詞行時稍早開始",
+        "info": "Spotify 在跳轉後會淡入音訊，可能導致第一個音節聽不清楚。啟用後，點擊歌詞行會跳轉到該行開始前 0.3 秒。"
+      },
       "fullscreenShortcut": {
         "label": "全螢幕快速鍵",
         "desc": "進入歌詞全螢幕模式的鍵盤快速鍵"
@@ -1520,6 +1524,14 @@ window.LANG_ZH_TW = {
       "pseudoKaraokeRenderAdvance": {
         "label": "虛擬卡拉OK渲染提前量",
         "desc": "僅對虛擬卡拉OK套用渲染時序偏移。數值越大，高亮推進越早。"
+      },
+      "motionStyle": {
+        "label": "卡拉OK動態風格",
+        "desc": "經典保留細微的彈跳效果。表現力使用彈簧物理：正在演唱的詞會放大、上浮並發光，尚未演唱的詞會略微縮小，長音會逐字動畫。",
+        "options": {
+          "classic": "經典",
+          "expressive": "表現力"
+        }
       }
     },
     "prefetch": {

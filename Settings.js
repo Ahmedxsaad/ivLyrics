@@ -7397,13 +7397,15 @@ const SETTINGS_DEFAULT_VALUES = Object.freeze({
   "cultural-annotations-opacity": 60, "cultural-annotations-vinyl-opacity": 60,
   "translate:target-language": "auto", "cultural-annotations-enabled": false, "furigana-enabled": false,
   "ja-detect-threshold": 40, "hans-detect-threshold": 40, "fade-blur": true, "highlight-mode": false,
-  "highlight-intensity": 70, "karaoke-bounce": true, "karaoke-line-transition": true,
+  "highlight-intensity": 70, "karaoke-bounce": true, "karaoke-motion-style": "classic",
+  "karaoke-line-transition": true,
   "karaoke-text-effects": true, "karaoke-mode-enabled": true, "sync-creator-auto-boundary-chars": true,
   "karaoke-fill-correction-curve": "[[0,0],[0.25,0.25],[0.5,0.5],[0.75,0.75],[1,1]]",
   "spotify-fake-karaoke-enabled": false, "pseudo-karaoke-render-advance": 250,
   "prefer-sync-data-provider": true, "prefer-lyrics-type-over-provider-order": true,
   "prefetch-enabled": true, "prefetch-video-enabled": true, "prefetch-word-details-enabled": true,
-  "quick-sync-controls-enabled": true, "fullscreen-key": "f12", "translate-metadata": false,
+  "quick-sync-controls-enabled": true, "seek-fade-compensation": false, "fullscreen-key": "f12",
+  "translate-metadata": false,
   "translate-metadata-mode": "translated", "fullscreen-two-column": true,
   "fullscreen-layout-reverse": false, "fullscreen-show-album": true, "fullscreen-show-info": true,
   "fullscreen-center-when-no-lyrics": true, "fullscreen-album-size": "400",
@@ -9584,6 +9586,18 @@ const ConfigModal = ({
       {
         section: I18n.t("tabs.behavior"),
         sectionKey: "lyrics",
+        settingKey: "seek-fade-compensation",
+        name: I18n.t("settingsAdvanced.playback.seekFadeCompensation.label"),
+        desc: I18n.t("settingsAdvanced.playback.seekFadeCompensation.info"),
+        i18nKeys: [
+          "tabs.behavior",
+          "settingsAdvanced.playback.seekFadeCompensation.label",
+          "settingsAdvanced.playback.seekFadeCompensation.info",
+        ]
+      },
+      {
+        section: I18n.t("tabs.behavior"),
+        sectionKey: "lyrics",
         settingKey: "sync-creator-settings",
         name: getSettingsText("settings.syncCreatorSettings.title", "Sync Creator Settings"),
         desc: getSettingsText("settings.syncCreatorSettings.subtitle", "Configure Sync Creator keyboard behavior and recording shortcuts."),
@@ -9606,6 +9620,20 @@ const ConfigModal = ({
         name: I18n.t("settingsAdvanced.karaokeMode.title"),
         desc: I18n.t("settingsAdvanced.karaokeMode.subtitle"),
         i18nKeys: ["tabs.behavior", "settingsAdvanced.karaokeMode.title", "settingsAdvanced.karaokeMode.subtitle"]
+      },
+      {
+        section: I18n.t("tabs.behavior"),
+        sectionKey: "lyrics",
+        settingKey: "karaoke-motion-style",
+        name: I18n.t("settingsAdvanced.karaokeMode.motionStyle.label"),
+        desc: I18n.t("settingsAdvanced.karaokeMode.motionStyle.desc"),
+        i18nKeys: [
+          "tabs.behavior",
+          "settingsAdvanced.karaokeMode.motionStyle.label",
+          "settingsAdvanced.karaokeMode.motionStyle.desc",
+          "settingsAdvanced.karaokeMode.motionStyle.options.classic",
+          "settingsAdvanced.karaokeMode.motionStyle.options.expressive",
+        ]
       },
       {
         section: I18n.t("tabs.behavior"),
@@ -12018,6 +12046,13 @@ const ConfigModal = ({
               type: ConfigSlider,
               defaultValue: CONFIG.visual["quick-sync-controls-enabled"] ?? true,
             },
+            {
+              desc: I18n.t("settingsAdvanced.playback.seekFadeCompensation.label"),
+              key: "seek-fade-compensation",
+              info: I18n.t("settingsAdvanced.playback.seekFadeCompensation.info"),
+              type: ConfigSlider,
+              defaultValue: CONFIG.visual["seek-fade-compensation"] === true,
+            },
           ],
           onChange: handleVisualConfigChange,
         })
@@ -12144,6 +12179,19 @@ const ConfigModal = ({
               info: I18n.t("settingsAdvanced.karaokeMode.bounce.desc"),
               key: "karaoke-bounce",
               type: ConfigSlider,
+            },
+            {
+              desc: I18n.t("settingsAdvanced.karaokeMode.motionStyle.label"),
+              info: I18n.t("settingsAdvanced.karaokeMode.motionStyle.desc"),
+              key: "karaoke-motion-style",
+              type: ConfigSelection,
+              defaultValue: CONFIG.visual["karaoke-motion-style"] === "expressive" ? "expressive" : "classic",
+              options: {
+                classic: I18n.t("settingsAdvanced.karaokeMode.motionStyle.options.classic"),
+                expressive: I18n.t("settingsAdvanced.karaokeMode.motionStyle.options.expressive"),
+              },
+              // Expressive motion is a style of the bounce, so it needs the bounce on.
+              when: () => CONFIG.visual["karaoke-bounce"] !== false,
             },
             {
               desc: I18n.t("settingsAdvanced.karaokeMode.lineTransition.label"),
