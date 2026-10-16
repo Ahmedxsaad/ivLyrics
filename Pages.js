@@ -9118,10 +9118,18 @@ const syncKaraokeLiveEntry = (entry, root, clock, mapPosition, data) => {
 };
 
 const paintKaraokeLiveEntry = (entry, frameTime) => {
+	const expressive = entry.data?.expressive === true;
+	// A layout effect paints with performance.now(), which can be later than
+	// the RAF timestamp still queued for that same frame. Feeding that older
+	// sample to a spring looks like a backward seek and resets it to rest on
+	// every React commit. Keep the newest paint; real seeks at a newer frame
+	// timestamp still go through the normal motion/position reset path.
+	if (expressive && Number.isFinite(frameTime) && Number.isFinite(entry.lastMotionFrameTime)
+		&& frameTime < entry.lastMotionFrameTime) return false;
 	const clockPosition = entry.clock?.getPosition?.(frameTime);
 	if (!Number.isFinite(clockPosition)) return false;
 	const position = entry.mapPosition ? entry.mapPosition(clockPosition) : clockPosition;
-	const expressive = entry.data?.expressive === true;
+	if (expressive && Number.isFinite(frameTime)) entry.lastMotionFrameTime = frameTime;
 	// Expressive settings also apply to a paused live row before React commits
 	// its next structure. Classic retains its existing clock-only fast path.
 	const bounce = expressive ? CONFIG.visual["karaoke-bounce"] : null;

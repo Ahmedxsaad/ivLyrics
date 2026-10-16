@@ -159,6 +159,22 @@ test('Text Effects removes live Expressive glow at a fixed clock without removin
   assert.equal(live.values.get('--karaoke-bounce-scale'), scale);
 });
 
+test('an older RAF sample cannot rewind Expressive springs after a commit-time paint', () => {
+  const h = expressive(), live = liveFixture(h);
+  live.paint(1416, 416);
+  const committed = plain([...live.values]);
+  // RAF's timestamp is the beginning of the frame; a layout effect may already
+  // have painted at performance.now() several milliseconds later in that frame.
+  assert.equal(live.paint(1411, 411), false, 'discard the obsolete frame, not the spring velocity');
+  assert.deepEqual(plain([...live.values]), committed, 'all continuously painted values keep the committed pose');
+  assert.equal(live.paint(1433, 433), true, 'the next display frame advances normally');
+  assert.ok(Number(live.values.get('--karaoke-bounce-scale')) > 0.98,
+    'a 5ms timestamp inversion must not reset the unit to its 0.95 pending scale');
+  assert.equal(live.paint(1200, 450), true, 'a real backward seek at a newer timestamp is still painted');
+  assert.equal(Number(live.values.get('--karaoke-bounce-scale')), 0.95,
+    'real backward seeks retain their existing reset behavior');
+});
+
 for (const system of [false, true]) test(`the Classic live fallback honors ${system ? 'OS' : 'app'} reduced motion after Expressive is disabled`, () => {
   const h = expressive(), live = liveFixture(h, false);
   if (system) h.window.reducedMotion = true;
