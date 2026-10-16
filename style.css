@@ -20337,11 +20337,19 @@ a.research-media-item:hover {
 }
 
 /* The column of entries */
+.lyrics-config-button-container.ivl-tb > .ivl-tb-col {
+  /* Let the entry list scroll within short/fullscreen windows. */
+  flex-shrink: 1;
+}
+
 .ivl-tb-col {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  width: 68px;
+  /* Fit the longest whole word while keeping short labels in a slim column. */
+  width: min-content;
+  min-width: 68px;
+  max-width: calc(100vw - 48px);
   min-height: 0;
   max-height: 100%;
   padding: 4px;
@@ -20445,14 +20453,11 @@ a.research-media-item:hover {
 }
 
 .ivl-tb-label {
-  display: -webkit-box;
+  display: block;
   max-width: 100%;
   padding: 0 2px;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
   text-align: center;
-  overflow-wrap: break-word;
+  overflow-wrap: normal;
   word-break: keep-all;
 }
 
