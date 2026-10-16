@@ -76,6 +76,45 @@ const SYNC_CREATOR_SYNCED_BACKGROUND = 'rgba(255, 255, 255, 0.055)';
 const SYNC_CREATOR_RECORDING_BACKGROUND = 'rgba(255, 152, 0, 0.6)';
 const SYNC_CREATOR_PRONUNCIATION_TARGET_STORAGE_KEY = 'ivLyrics:syncCreator:pronunciation-target-mode';
 const SYNC_CREATOR_PRONUNCIATION_TARGET_MODES = new Set(['latin', 'translation']);
+const SYNC_CREATOR_CHARACTER_PRONUNCIATION_CONSENT_KEY = 'ivLyrics:syncCreator:character-pronunciation-token-consent:v1';
+let syncCreatorCharacterPronunciationConsentAccepted = false;
+const hasSyncCreatorCharacterPronunciationConsent = () => {
+	if (syncCreatorCharacterPronunciationConsentAccepted) return true;
+	const readers = [
+		() => window.ivLyricsStoragePersistence?.getItem?.(SYNC_CREATOR_CHARACTER_PRONUNCIATION_CONSENT_KEY),
+		() => window.Spicetify?.LocalStorage?.get?.(SYNC_CREATOR_CHARACTER_PRONUNCIATION_CONSENT_KEY),
+		() => window.localStorage?.getItem?.(SYNC_CREATOR_CHARACTER_PRONUNCIATION_CONSENT_KEY)
+	];
+	for (const read of readers) {
+		try {
+			const value = read();
+			if (value === 'true' || value === '1') {
+				syncCreatorCharacterPronunciationConsentAccepted = true;
+				return true;
+			}
+		} catch (_) {
+			// A blocked storage backend must not prevent the other backends from reading.
+		}
+	}
+	return false;
+};
+const rememberSyncCreatorCharacterPronunciationConsent = () => {
+	// Called only by the explicit confirmation action, never by cancel or dismiss.
+	// Keep the choice for this session even if persistent storage is unavailable.
+	syncCreatorCharacterPronunciationConsentAccepted = true;
+	const backends = [window.ivLyricsStoragePersistence, window.Spicetify?.LocalStorage];
+	try { backends.push(window.localStorage); } catch (_) { /* Storage can be blocked. */ }
+	for (const backend of backends) {
+		try {
+			const write = backend?.setItem || backend?.set;
+			if (typeof write !== 'function') continue;
+			write.call(backend, SYNC_CREATOR_CHARACTER_PRONUNCIATION_CONSENT_KEY, 'true');
+			return;
+		} catch (_) {
+			// Try the next backend; the current session still remembers the choice.
+		}
+	}
+};
 const normalizeSyncCreatorLrclibId = (value) => {
 	const normalized = value === null || value === undefined ? '' : String(value).trim();
 	return /^[1-9]\d*$/.test(normalized) ? normalized : '';
@@ -5187,7 +5226,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			return;
 		}
 
-		if (options?.skipConsent !== true) {
+		if (options?.skipConsent !== true && !hasSyncCreatorCharacterPronunciationConsent()) {
 			characterPronunciationConsentForceRef.current = forceRegenerate;
 			setShowCharacterPronunciationConsent(true);
 			return;
@@ -13143,6 +13182,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 						style: s.lrcLibBtn,
 						onClick: () => {
 							const forceRegenerate = characterPronunciationConsentForceRef.current;
+							rememberSyncCreatorCharacterPronunciationConsent();
 							characterPronunciationConsentForceRef.current = false;
 							setShowCharacterPronunciationConsent(false);
 							handleCharacterPronunciationToggle({ skipConsent: true, forceRegenerate });
