@@ -2131,11 +2131,21 @@ window.LANG_SV = {
     "wordSupplements": "Orddetaljer",
     "wordSupplementsLoading": "Läser in uttal och glosor..."
   },
+  "videoSync": {
+    "title": "Videotiming",
+    "share": "Dela",
+    "shareInfo": "Dela den här timingen som videons startpunkt för alla",
+    "shared": "Videotimingen har delats. Tack!",
+    "shareFailed": "Det gick inte att dela videotimingen.",
+    "cannotShare": "Den här timingen kan inte delas: den kräver synkade låttexter och en startpunkt inuti videon."
+  },
   "videoBackground": {
     "loading": "Laddar videoinformation...",
     "notFound": "Videon hittades inte.",
     "error": "Ett fel uppstod.",
     "localTrackNeedsVideo": "För lokala spår anger du YouTube-URL manuellt från videoknappen.",
+    "noMatch": "Ingen video som matchar den här låten hittades. Välj en från videoknappen.",
+    "timingGuess": "Den här videons timing är uppskattad. Ange var sången börjar från videoknappen.",
     "loadingMessage": "Laddar videobakgrund... Detta tar cirka 30 sekunder.",
     "downloadingVideo": "Laddar ned video...",
     "downloading": "Laddar ner: {percent}%",

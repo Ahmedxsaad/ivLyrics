@@ -2131,11 +2131,21 @@ window.LANG_ZH_CN = {
     "wordSupplements": "单词详情",
     "wordSupplementsLoading": "正在加载单词发音和释义..."
   },
+  "videoSync": {
+    "title": "视频同步",
+    "share": "分享",
+    "shareInfo": "将此同步作为视频起点分享给所有人",
+    "shared": "已分享视频同步。谢谢！",
+    "shareFailed": "无法分享视频同步。",
+    "cannotShare": "无法分享此同步：需要同步歌词，且起点位于视频内。"
+  },
   "videoBackground": {
     "loading": "正在加载视频信息...",
     "notFound": "找不到视频。",
     "error": "发生错误。",
     "localTrackNeedsVideo": "对于本地曲目，请从视频按钮手动设置 YouTube URL。",
+    "noMatch": "未找到与这首歌匹配的视频。请从视频按钮中选择一个。",
+    "timingGuess": "此视频的同步时间是估算的。请从视频按钮设置演唱开始的位置。",
     "loadingMessage": "视频背景加载中... 大约需要 30 秒。",
     "downloadingVideo": "视频下载中...",
     "downloading": "下载中: {percent}%",

@@ -2131,11 +2131,21 @@ window.LANG_TR = {
     "wordSupplements": "Kelime ayrıntıları",
     "wordSupplementsLoading": "Kelime okunuşları ve açıklamalar yükleniyor..."
   },
+  "videoSync": {
+    "title": "Video zamanlaması",
+    "share": "Paylaş",
+    "shareInfo": "Bu zamanlamayı herkes için videonun başlangıç noktası olarak paylaş",
+    "shared": "Video zamanlaması paylaşıldı. Teşekkürler!",
+    "shareFailed": "Video zamanlaması paylaşılamadı.",
+    "cannotShare": "Bu zamanlama paylaşılamaz: senkronize şarkı sözleri ve video içinde bir başlangıç noktası gerekir."
+  },
   "videoBackground": {
     "loading": "Video bilgileri yükleniyor...",
     "notFound": "Video bulunamadı.",
     "error": "Bir hata oluştu.",
     "localTrackNeedsVideo": "Yerel parçalar için video butonundan manuel olarak bir YouTube URL'si ayarlayın.",
+    "noMatch": "Bu şarkıyla eşleşen bir video bulunamadı. Video butonundan bir tane seçin.",
+    "timingGuess": "Bu videonun zamanlaması tahminidir. Şarkının başladığı yeri video butonundan ayarlayın.",
     "loadingMessage": "Video arka planı yükleniyor... Bu işlem yaklaşık 30 saniye sürer.",
     "downloadingVideo": "Video indiriliyor...",
     "downloading": "İndiriliyor: %{percent}",

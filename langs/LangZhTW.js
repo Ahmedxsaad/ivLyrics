@@ -2131,11 +2131,21 @@ window.LANG_ZH_TW = {
     "wordSupplements": "單字詳情",
     "wordSupplementsLoading": "正在載入單字發音和釋義..."
   },
+  "videoSync": {
+    "title": "影片同步",
+    "share": "分享",
+    "shareInfo": "將此同步作為影片起點分享給所有人",
+    "shared": "已分享影片同步。謝謝！",
+    "shareFailed": "無法分享影片同步。",
+    "cannotShare": "無法分享此同步：需要同步歌詞，且起點位於影片內。"
+  },
   "videoBackground": {
     "loading": "正在載入影片資訊...",
     "notFound": "找不到影片。",
     "error": "發生錯誤。",
     "localTrackNeedsVideo": "對於本機曲目，請從影片按鈕手動設定 YouTube URL。",
+    "noMatch": "找不到與這首歌相符的影片。請從影片按鈕選擇一個。",
+    "timingGuess": "此影片的同步時間是估計值。請從影片按鈕設定演唱開始的位置。",
     "loadingMessage": "影片背景載入中... 約需 30 秒。",
     "downloadingVideo": "正在下載影片...",
     "downloading": "下載中: {percent}%",

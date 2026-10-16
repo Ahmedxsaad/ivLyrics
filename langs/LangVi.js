@@ -2131,11 +2131,21 @@ window.LANG_VI = {
     "wordSupplements": "Chi tiết từ",
     "wordSupplementsLoading": "Đang tải cách đọc & nghĩa..."
   },
+  "videoSync": {
+    "title": "Thời gian video",
+    "share": "Chia sẻ",
+    "shareInfo": "Chia sẻ thời gian này làm điểm bắt đầu của video cho mọi người",
+    "shared": "Đã chia sẻ thời gian video. Cảm ơn!",
+    "shareFailed": "Không thể chia sẻ thời gian video.",
+    "cannotShare": "Không thể chia sẻ thời gian này: cần lời bài hát đồng bộ và điểm bắt đầu nằm trong video."
+  },
   "videoBackground": {
     "loading": "Đang tải thông tin video...",
     "notFound": "Không tìm thấy video.",
     "error": "Đã xảy ra lỗi.",
     "localTrackNeedsVideo": "Với bài hát cục bộ, hãy đặt URL YouTube thủ công từ nút video.",
+    "noMatch": "Không tìm thấy video khớp với bài hát này. Hãy chọn một video từ nút video.",
+    "timingGuess": "Thời gian của video này chỉ là ước tính. Hãy đặt điểm bắt đầu hát từ nút video.",
     "loadingMessage": "Đang tải nền video... Sẽ mất khoảng 30 giây.",
     "downloadingVideo": "Đang tải video...",
     "downloading": "Đang tải: {percent}%",

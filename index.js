@@ -3735,7 +3735,7 @@ const Prefetcher = {
           CONFIG.visual["prefetch-video-enabled"] !== false &&
           CONFIG.visual["community-video-random"] !== true
         ) {
-          prefetchPromises.push(this._prefetchVideoBackground(trackInfo.uri));
+          prefetchPromises.push(this._prefetchVideoBackground(trackInfo.uri, trackInfo));
         }
 
         // 1단계: 가사 먼저 프리페치
@@ -4043,18 +4043,29 @@ const Prefetcher = {
   /**
    * 영상 배경 정보 프리페치
    */
-  async _prefetchVideoBackground(uri) {
+  async _prefetchVideoBackground(uri, trackInfo = null) {
     if (CONFIG.visual["community-video-random"] === true) return null;
 
     const trackId = Utils.extractTrackId(uri);
     if (!trackId) return;
     const spotifyData = SpotifyDataHelper.extractSpotifyData(uri);
-    const currentItem = Spicetify.Player?.data?.item || null;
+    // This runs for the *next* track. The player item describes the track that
+    // is playing now, so it may only fill gaps when it is the same track;
+    // otherwise the server would match (and cache) the playing song's video
+    // and ISRC for the next one.
+    const playerItem = Spicetify.Player?.data?.item || null;
+    const currentItem = playerItem?.uri === uri ? playerItem : null;
+    const infoArtists = typeof trackInfo?.artist === "string" && trackInfo.artist
+      ? trackInfo.artist.split(", ").filter(Boolean)
+      : [];
     const fallbackArtists = Array.isArray(spotifyData?.artists) && spotifyData.artists.length
       ? spotifyData.artists
-      : (currentItem?.artists || []).map(artist => typeof artist === "string" ? artist : artist?.name).filter(Boolean);
-    const fallbackTrackName = spotifyData?.name || currentItem?.name || "";
-    const fallbackAlbum = spotifyData?.album || spotifyData?.albumName || currentItem?.album?.name || currentItem?.metadata?.album_title || "";
+      : infoArtists.length
+        ? infoArtists
+        : (currentItem?.artists || []).map(artist => typeof artist === "string" ? artist : artist?.name).filter(Boolean);
+    const fallbackTrackName = spotifyData?.name || trackInfo?.title || currentItem?.name || "";
+    const fallbackAlbum = spotifyData?.album || spotifyData?.albumName || trackInfo?.album
+      || currentItem?.album?.name || currentItem?.metadata?.album_title || "";
     const metadata = {
       trackId,
       trackName: fallbackTrackName,
@@ -4093,26 +4104,21 @@ const Prefetcher = {
       try {
         ivLyricsDebug(`[Prefetcher] Fetching video info for: ${identityKey} (fallback)`);
 
-        const userHash = Utils.getUserHash();
-        // 서버 캐시/추천 정확도를 위해 현재 가진 트랙 메타데이터를 함께 전달
-        const youtubeApiUrlObject = new URL('https://ivlis.kr/ivLyrics/openvideo/youtube');
-        youtubeApiUrlObject.searchParams.set('isrc', isrc);
-        youtubeApiUrlObject.searchParams.set('trackId', trackId);
-        youtubeApiUrlObject.searchParams.set('userHash', userHash);
-        if (metadata.trackName) {
-          youtubeApiUrlObject.searchParams.set('trackName', metadata.trackName);
-        }
-        if (metadata.artists?.length) {
-          youtubeApiUrlObject.searchParams.set('trackArtists', metadata.artists.join(', '));
-        }
-        if (metadata.album) {
-          youtubeApiUrlObject.searchParams.set('album', metadata.album);
-        }
-        if (isrc && window.SyncDataService?.shouldBypassServerCache?.(isrc)) {
-          youtubeApiUrlObject.searchParams.set('bypassCache', '1');
-        }
-        const youtubeApiUrl = youtubeApiUrlObject.toString();
-        const response = await fetch(youtubeApiUrl, { cache: "no-store" });
+        // 서버 캐시/추천 정확도를 위해 현재 가진 트랙 메타데이터를 함께 전달.
+        // Send exactly what VideoBackground sends: without the client parameters
+        // and headers the server answers with a placeholder (decoy) video, which
+        // left this prefetch with nothing to keep.
+        const clientVersion = getYouTubeVideoApiClientVersion();
+        const youtubeApiUrl = buildYouTubeVideoApiUrl({
+          trackIsrc: isrc,
+          trackId,
+          spotifyData: { name: metadata.trackName, artists: metadata.artists, album: metadata.album },
+          clientVersion,
+        });
+        const response = await fetch(youtubeApiUrl, {
+          cache: "no-store",
+          headers: buildYouTubeVideoApiHeaders(clientVersion),
+        });
         const data = await response.json();
         if (response.headers.get('X-ivLyrics-Decoy') === '1') {
           console.warn(`[Prefetcher] Video prefetch returned decoy for: ${identityKey}`);
@@ -4120,24 +4126,33 @@ const Prefetcher = {
         }
 
         if (data.success) {
-          const resolvedIsrc = window.SyncDataService?.normalizeSyncDataIsrc?.(data.data?.isrc) || isrc;
-          if (resolvedIsrc) {
-            window.SyncDataService?.rememberTrackIsrc?.(trackId, resolvedIsrc);
+          // The track's ISRC was resolved locally before the request. Never
+          // re-map the track (or cache) by an ISRC echoed from the response:
+          // a mismatched server answer would otherwise stick to this track.
+          const responseIsrc = window.SyncDataService?.normalizeSyncDataIsrc?.(data.data?.isrc) || "";
+          if (responseIsrc && responseIsrc !== isrc) {
+            console.warn(`[Prefetcher] Video response ISRC ${responseIsrc} differs from requested ${isrc}`);
           }
+          const candidates = getYouTubeVideoCandidates(data.data, data.communityVideos);
+          const picked = typeof VideoMatch !== "undefined"
+            ? VideoMatch.pickCandidate({
+              title: metadata.trackName,
+              artists: metadata.artists,
+              durationMs: Number(spotifyData?.duration_ms) || Number(trackInfo?.durationMs) || 0,
+              isrc,
+            }, candidates, { describe: describeVideoForMatch, rejectedIds: getRejectedVideoIds(uri) })
+            : (responseIsrc && responseIsrc !== isrc ? null : (data.data?.youtubeVideoId ? { video: data.data } : null));
+          // Do not cache or download a different recording even under the right
+          // cache key. Playback re-checks this selection once its length is known.
+          if (!picked) return null;
           this._prefetchCache.set(cacheKey, {
-            data: data.data,
+            data: picked.video,
             timestamp: Date.now(),
           });
-          if (resolvedIsrc) {
-            this._prefetchCache.set(`prefetch:video:${resolvedIsrc}`, {
-              data: data.data,
-              timestamp: Date.now(),
-            });
-          }
-          ivLyricsDebug(`[Prefetcher] Video info cached for: ${resolvedIsrc || identityKey}`);
+          ivLyricsDebug(`[Prefetcher] Video info cached for: ${identityKey}`);
           // 헬퍼를 통한 영상 미리 다운로드
-          if (data.data?.youtubeVideoId) {
-            this._prefetchVideoWithHelper(data.data.youtubeVideoId);
+          if (picked.video?.youtubeVideoId) {
+            this._prefetchVideoWithHelper(picked.video.youtubeVideoId);
           }
         }
 
@@ -10916,46 +10931,33 @@ class LyricsContainer extends react.Component {
         Boolean(renderTrackUri);
       const quickSyncControlsEnabled =
         CONFIG.visual["quick-sync-controls-enabled"] !== false;
-      const trackSyncAdjustPill = canAdjustTrackSync &&
+      // The same pill adjusts the background video's timing (Lyrics/Video
+      // switch), so it also shows for a video without synced lyrics.
+      const canAdjustVideoSync = shouldUseVideoBackground &&
+        Boolean(this.state.uri) &&
+        renderTrackUri === this.state.uri &&
+        !suppressStaleLyricsPage &&
+        !isSyncCreatorActive &&
+        !this.state.showMarketplace;
+      const trackSyncAdjustPill = (canAdjustTrackSync || canAdjustVideoSync) &&
         quickSyncControlsEnabled &&
+        Boolean(renderTrackUri) &&
         typeof TrackSyncAdjustPill !== "undefined"
         ? react.createElement(TrackSyncAdjustPill, {
           key: renderTrackUri,
           trackUri: renderTrackUri,
+          lyricsAdjustable: canAdjustTrackSync,
+          videoTrackUri: canAdjustVideoSync ? this.state.uri : null,
         })
         : null;
-      const videoSyncAdjustPill = quickSyncControlsEnabled &&
-        shouldUseVideoBackground &&
-        Boolean(renderTrackUri) &&
-        (() => {
-          const active = window.ivLyricsActiveCommunityVideoInfo;
-          return !!active?.youtubeVideoId && active.trackUri === renderTrackUri;
-        })() &&
-        typeof CurrentVideoSyncPill !== "undefined"
-        ? react.createElement(CurrentVideoSyncPill, {
-          key: `video-${renderTrackUri}`,
-          trackUri: renderTrackUri,
-          hideWhenEmpty: true,
-        })
-        : null;
-      const renderQuickSyncRow = (label, pill) => react.createElement(
-        "div",
-        { className: "lyrics-quick-sync-row", key: label },
-        react.createElement("span", { className: "lyrics-quick-sync-label" }, label),
-        pill
-      );
-      const quickSyncStack = (trackSyncAdjustPill || videoSyncAdjustPill)
+      // A single accessible Lyrics/Video control replaces the two duplicate
+      // floating rows. The toolbar's video panel uses the same local anchor.
+      const videoSyncAdjustPill = null;
+      const quickSyncStack = trackSyncAdjustPill
         ? react.createElement(
           "div",
           { className: "lyrics-quick-sync-stack" },
-          trackSyncAdjustPill && renderQuickSyncRow(
-            I18n.t("syncAdjust.quickLyricsLabel") || "Lyrics offset",
-            trackSyncAdjustPill
-          ),
-          videoSyncAdjustPill && renderQuickSyncRow(
-            I18n.t("syncAdjust.quickVideoLabel") || "Video offset",
-            videoSyncAdjustPill
-          )
+          trackSyncAdjustPill
         )
         : null;
       return { canAdjustTrackSync, quickSyncControlsEnabled, trackSyncAdjustPill, videoSyncAdjustPill, quickSyncStack };

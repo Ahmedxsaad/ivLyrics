@@ -2131,11 +2131,21 @@ window.LANG_PT = {
     "wordSupplements": "Detalhes das palavras",
     "wordSupplementsLoading": "Carregando leituras e glosas..."
   },
+  "videoSync": {
+    "title": "Sincronia do vídeo",
+    "share": "Compartilhar",
+    "shareInfo": "Compartilhar esta sincronia como ponto de início do vídeo para todos",
+    "shared": "Sincronia do vídeo compartilhada. Obrigado!",
+    "shareFailed": "Não foi possível compartilhar a sincronia do vídeo.",
+    "cannotShare": "Esta sincronia não pode ser compartilhada: são necessárias letras sincronizadas e um início dentro do vídeo."
+  },
   "videoBackground": {
     "loading": "Carregando informações do vídeo...",
     "notFound": "Vídeo não encontrado.",
     "error": "Ocorreu um erro.",
     "localTrackNeedsVideo": "Para faixas locais, defina manualmente a URL do YouTube pelo botão de vídeo.",
+    "noMatch": "Nenhum vídeo correspondente a esta música foi encontrado. Escolha um pelo botão de vídeo.",
+    "timingGuess": "O tempo deste vídeo é uma estimativa. Defina onde o canto começa pelo botão de vídeo.",
     "loadingMessage": "Carregando fundo de vídeo... Leva cerca de 30 segundos.",
     "downloadingVideo": "Baixando vídeo...",
     "downloading": "Baixando: {percent}%",

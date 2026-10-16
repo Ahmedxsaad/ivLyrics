@@ -2131,11 +2131,21 @@ window.LANG_EN = {
     "wordSupplements": "Word details",
     "wordSupplementsLoading": "Loading word readings & glosses..."
   },
+  "videoSync": {
+    "title": "Video timing",
+    "share": "Share",
+    "shareInfo": "Share this timing as the video's start point for everyone",
+    "shared": "Video timing shared. Thanks!",
+    "shareFailed": "Couldn't share the video timing.",
+    "cannotShare": "This timing can't be shared: it needs synced lyrics and a start point inside the video."
+  },
   "videoBackground": {
     "loading": "Loading video info...",
     "notFound": "Video not found.",
     "error": "An error occurred.",
     "localTrackNeedsVideo": "For local tracks, set a YouTube URL manually from the video button.",
+    "noMatch": "No video matching this song was found. Pick one from the video button.",
+    "timingGuess": "This video's timing is a guess. Set where the singing starts from the video button.",
     "loadingMessage": "Loading video background... This takes about 30 seconds.",
     "downloadingVideo": "Downloading video...",
     "downloading": "Downloading: {percent}%",

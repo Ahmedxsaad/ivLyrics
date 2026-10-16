@@ -2131,11 +2131,21 @@ window.LANG_FR = {
     "wordSupplements": "Détails des mots",
     "wordSupplementsLoading": "Chargement des lectures et gloses..."
   },
+  "videoSync": {
+    "title": "Timing de la vidéo",
+    "share": "Partager",
+    "shareInfo": "Partager ce timing comme point de départ de la vidéo pour tous",
+    "shared": "Timing de la vidéo partagé. Merci !",
+    "shareFailed": "Impossible de partager le timing de la vidéo.",
+    "cannotShare": "Ce timing ne peut pas être partagé : il faut des paroles synchronisées et un début dans la vidéo."
+  },
   "videoBackground": {
     "loading": "Chargement infos vidéo...",
     "notFound": "Vidéo introuvable.",
     "error": "Erreur survenue.",
     "localTrackNeedsVideo": "Pour les titres locaux, définissez manuellement l’URL YouTube avec le bouton vidéo.",
+    "noMatch": "Aucune vidéo correspondant à ce titre n’a été trouvée. Choisissez-en une avec le bouton vidéo.",
+    "timingGuess": "Le timing de cette vidéo est estimé. Indiquez où commence le chant avec le bouton vidéo.",
     "loadingMessage": "Chargement fond vidéo... env. 30s.",
     "downloadingVideo": "Téléchargement vidéo...",
     "downloading": "Téléchargement : {percent}%",

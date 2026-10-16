@@ -3,12 +3,10 @@ import { readFileSync, readdirSync } from "node:fs";
 import test from "node:test";
 import vm from "node:vm";
 
-// Video offset quick-sync bubble (ported from fork-pixel/15/10/26 becf916):
-// a "Video offset" pill next to the "Lyrics offset" quick-sync pill plus a
-// Current-video section in the sync-adjust panel, both visible only while a
-// video is active. The pill component and helpers are evaluated from the real
-// OptionsMenu.js with stubbed React hooks (no DOM); index.js wiring, the
-// panel gating, langs and CSS are asserted against the real sources.
+// The legacy video pill remains usable by fixtures, while production renders
+// one unified Lyrics/Video pill. Both it and the Current-video panel retain the
+// canonical absolute-anchor helpers. Evaluate the actual components with hooks
+// and check production wiring, panel gating, locales and keyboard-focus CSS.
 const read = (name) =>
   readFileSync(new URL("../" + name, import.meta.url), "utf8").replace(/\r\n/g, "\n");
 const optionsSource = read("OptionsMenu.js");
@@ -73,6 +71,7 @@ const loadBubble = () => {
     Utils: {
       getSelectedVideo: async () => null,
       saveSelectedVideo: async () => {},
+      updateSelectedVideoSyncOffset: async () => true,
       submitCommunityVideo: async () => ({}),
     },
     window: win,
@@ -227,27 +226,44 @@ test("community video sync helpers normalize, clamp and format", () => {
   assert.equal(formatCommunityVideoSyncSeconds(1.234), "1.234s");
 });
 
-test("index.js stacks lyrics and video pills with labelled rows", () => {
+test("index.js renders one unified pill with independent lyric/video eligibility", () => {
   const compute = section(indexSource, "const computeTrackSyncAdjustPill = () => {", "const renderFullscreenOverlayChild");
   for (const token of [
-    "videoSyncAdjustPill",
+    "canAdjustVideoSync",
     "shouldUseVideoBackground",
-    "ivLyricsActiveCommunityVideoInfo",
-    "hideWhenEmpty",
-    "renderQuickSyncRow",
+    "lyricsAdjustable: canAdjustTrackSync",
+    "videoTrackUri: canAdjustVideoSync",
     "quickSyncStack",
     "lyrics-quick-sync-stack",
-    "lyrics-quick-sync-row",
-    "lyrics-quick-sync-label",
-    'syncAdjust.quickLyricsLabel',
-    'syncAdjust.quickVideoLabel',
   ]) {
     assert.ok(compute.includes(token), `computeTrackSyncAdjustPill missing: ${token}`);
   }
-  assert.ok(
-    compute.includes("trackSyncAdjustPill, videoSyncAdjustPill, quickSyncStack"),
-    "compute must return lyrics pill, video pill and stack together"
+  assert.equal(compute.includes("react.createElement(CurrentVideoSyncPill"), false, "no duplicate floating video pill");
+  const render = (overrides = {}) => vm.runInNewContext(
+    `(function () { ${compute}\nreturn { trackSyncAdjustPill, quickSyncStack }; }).call({ state })`,
+    {
+      mode: "synced", SYNCED: "synced", isKaraokeRenderMode: () => false,
+      state: { uri: TRACK_URI, synced: [{ startTime: 1000 }], karaoke: [], showMarketplace: false },
+      suppressStaleLyricsPage: false, shouldHideFullscreenLyrics: false, isSyncCreatorActive: false,
+      shouldUseVideoBackground: true, renderTrackUri: TRACK_URI,
+      CONFIG: { visual: {} }, TrackSyncAdjustPill: "UnifiedSyncPill",
+      react: { createElement }, ...overrides,
+    }
   );
+  const both = render();
+  assert.equal(both.trackSyncAdjustPill.type, "UnifiedSyncPill");
+  assert.equal(both.trackSyncAdjustPill.props.lyricsAdjustable, true);
+  assert.equal(both.trackSyncAdjustPill.props.videoTrackUri, TRACK_URI);
+  assert.deepEqual(both.quickSyncStack.children, [both.trackSyncAdjustPill]);
+  const noLyrics = { uri: TRACK_URI, synced: [], karaoke: [], showMarketplace: false };
+  assert.equal(render({ state: noLyrics }).trackSyncAdjustPill.props.lyricsAdjustable, false);
+  assert.equal(render({ shouldUseVideoBackground: false }).trackSyncAdjustPill.props.videoTrackUri, null);
+  for (const overrides of [
+    { state: noLyrics, shouldUseVideoBackground: false },
+    { CONFIG: { visual: { "quick-sync-controls-enabled": false } } },
+    { state: noLyrics, renderTrackUri: "spotify:track:stale" },
+    { isSyncCreatorActive: true },
+  ]) assert.equal(render(overrides).quickSyncStack, null);
   assert.ok(
     indexSource.includes("quickSyncStack ?? trackSyncAdjustPill"),
     "render call site must prefer the stack while keeping the lyrics pill"
@@ -312,6 +328,14 @@ test("quick-sync stack styles exist without restyling the pill", () => {
   for (const token of [".lyrics-quick-sync-stack", ".lyrics-quick-sync-row", ".lyrics-quick-sync-label"]) {
     assert.ok(styleSource.includes(token), `style.css missing: ${token}`);
   }
+});
+
+test("unified mode and share buttons reuse visible keyboard-focus styles", () => {
+  for (const selector of [".lyrics-track-sync-mode-button:focus-visible", ".lyrics-track-sync-share:focus-visible"]) {
+    assert.ok(styleSource.includes(selector), `missing focus selector: ${selector}`);
+  }
+  assert.match(styleSource, /\.lyrics-track-sync-share:focus-visible\s*\{[^}]*outline:\s*2px/);
+  assert.ok(styleSource.includes('.lyrics-track-sync-mode-button[aria-pressed="true"]'));
 });
 
 test("video panel control follows the global sync structure", () => {

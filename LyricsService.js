@@ -2785,6 +2785,15 @@
             const playerData = typeof Spicetify !== 'undefined' ? Spicetify.Player?.data : null;
             const playerItem = playerData?.item || null;
             const playerTrack = playerData?.track || null;
+            // The player's ISRC only describes the track that is playing. A
+            // lookup for any other track (the next song while prefetching, a
+            // queue item) must not inherit it: resolveTrackIsrc caches the
+            // answer, which would map that track to the wrong recording and
+            // fetch the wrong video and community sync data for it.
+            const requestedTrackId = getTrackIdFromInput(trackId, metadata);
+            const playerTrackId = normalizeSyncDataTrackId(TrackIdentity.extractTrackId(playerItem?.uri))
+                || normalizeSyncDataTrackId(TrackIdentity.extractTrackId(playerTrack?.uri));
+            const playerIsRequestedTrack = !requestedTrackId || requestedTrackId === playerTrackId;
             const explicitIsrc = firstNormalizedSyncDataIsrc(
                 metadata?.isrc,
                 metadata?.metadata?.isrc,
@@ -2797,12 +2806,14 @@
                 metadata?.item?.metadata?.isrc,
                 metadata?.item?.external_ids?.isrc,
                 metadata?.item?.externalIds?.isrc,
-                playerItem?.metadata?.isrc,
-                playerItem?.external_ids?.isrc,
-                playerItem?.externalIds?.isrc,
-                playerTrack?.metadata?.isrc,
-                playerTrack?.external_ids?.isrc,
-                playerTrack?.externalIds?.isrc
+                ...(playerIsRequestedTrack ? [
+                    playerItem?.metadata?.isrc,
+                    playerItem?.external_ids?.isrc,
+                    playerItem?.externalIds?.isrc,
+                    playerTrack?.metadata?.isrc,
+                    playerTrack?.external_ids?.isrc,
+                    playerTrack?.externalIds?.isrc
+                ] : [])
             );
             if (explicitIsrc) return explicitIsrc;
 

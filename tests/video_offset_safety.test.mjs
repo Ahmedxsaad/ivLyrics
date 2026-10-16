@@ -44,6 +44,7 @@ function harness({ helper = false } = {}) {
     firstLyricTimeRef: { current: 10000 }, trackOffsetMsRef: { current: 0 },
     videoRef: { current: localVideo }, playerRef: { current: player },
     youtubeHoldStateRef: { current: { isHolding: false, primePending: false } },
+    videoDriftStateRef: { current: null },
   });
   vm.runInContext(slice(options, 'const COMMUNITY_VIDEO_SYNC_MAX_SECONDS', '\nconst TrackSyncAdjustPill') +
     '\nglobalThis.api = { useCurrentVideoSync, queueCommunityVideoSyncWrite };', context);
@@ -98,12 +99,29 @@ test('source changes notify the controls, and an old unmount cannot clear a newe
   h.window.addEventListener('ivLyrics:communityVideoChanged', event => notifications.push(event.detail.trackUri));
   vm.runInContext(publication, h.context);
   assert.equal(h.window.ivLyricsActiveCommunityVideoInfo.youtubeVideoId, 'video-a');
-  assert.deepEqual(notifications, [TRACK]);
+  assert.ok(notifications.length > 0);
+  assert.ok(notifications.every(uri => uri === TRACK));
+  assert.equal(h.window.ivLyricsActiveCommunityVideoInfo.playerReady, true);
+  assert.equal(h.window.ivLyricsActiveCommunityVideoInfo.videoDurationSeconds, 300);
   const nextOwner = {};
   h.window.ivLyricsActiveCommunityVideoOwner = nextOwner;
   h.window.ivLyricsActiveCommunityVideoInfo = { trackUri: 'next-track', youtubeVideoId: 'video-b' };
   cleanups[0]();
   assert.equal(h.window.ivLyricsActiveCommunityVideoInfo.youtubeVideoId, 'video-b');
+});
+
+test('player readiness and duration updates preserve an optimistically adjusted anchor', () => {
+  const h = harness();
+  h.context.activeVideoOwnerRef = { current: {} };
+  h.window.ivLyricsActiveCommunityVideoOwner = h.context.activeVideoOwnerRef.current;
+  h.window.ivLyricsActiveCommunityVideoInfo = { ...sourceInfo(), trackUri: TRACK, captionStartTime: 5.01, playerReady: false };
+  const readiness = slice(video,
+    '    useEffect(() => {\n        const current = window.ivLyricsActiveCommunityVideoInfo;',
+    '    useEffect(() => {\n        return () => {');
+  vm.runInContext(readiness, h.context);
+  assert.equal(h.window.ivLyricsActiveCommunityVideoInfo.captionStartTime, 5.01);
+  assert.equal(h.window.ivLyricsActiveCommunityVideoInfo.playerReady, true);
+  assert.equal(h.window.ivLyricsActiveCommunityVideoInfo.videoDurationSeconds, 300);
 });
 
 test('rapid steps are serialized and coalesced to the latest local anchor', async () => {

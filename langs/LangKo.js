@@ -2131,11 +2131,21 @@ window.LANG_KO = {
     "wordSupplements": "단어 상세",
     "wordSupplementsLoading": "단어 읽기와 뜻을 불러오는 중..."
   },
+  "videoSync": {
+    "title": "영상 싱크",
+    "share": "공유",
+    "shareInfo": "이 싱크를 모두를 위한 영상 시작 지점으로 공유합니다",
+    "shared": "영상 싱크를 공유했습니다. 감사합니다!",
+    "shareFailed": "영상 싱크를 공유하지 못했습니다.",
+    "cannotShare": "이 싱크는 공유할 수 없습니다. 싱크 가사가 있고 시작 지점이 영상 안에 있어야 합니다."
+  },
   "videoBackground": {
     "loading": "동영상 정보를 불러오는 중...",
     "notFound": "동영상을 찾을 수 없습니다.",
     "error": "오류가 발생했습니다.",
     "localTrackNeedsVideo": "로컬 곡은 영상 버튼에서 YouTube URL을 직접 지정하세요.",
+    "noMatch": "이 곡과 맞는 영상을 찾지 못했습니다. 영상 버튼에서 직접 선택하세요.",
+    "timingGuess": "이 영상의 싱크는 추정값입니다. 영상 버튼에서 노래가 시작되는 지점을 지정하세요.",
     "loadingMessage": "영상 배경 로딩 중... 30초 정도 소요됩니다.",
     "downloadingVideo": "영상 다운로드 중...",
     "downloading": "다운로드 중: {percent}%",

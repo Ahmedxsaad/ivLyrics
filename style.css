@@ -652,7 +652,7 @@ body.ivlyrics-settings-open .lyrics-lyricsContainer-LyricsContainer * {
     box-shadow var(--iv-motion-duration-fast) ease;
 }
 
-/* Quick sync stack: lyrics + video pills stacked above each other. */
+/* One quick-sync control switches between lyrics and the current video. */
 .lyrics-quick-sync-stack {
   --iv-track-sync-pill-edge: 16px;
   position: absolute;
@@ -661,9 +661,12 @@ body.ivlyrics-settings-open .lyrics-lyricsContainer-LyricsContainer * {
   z-index: var(--iv-layer-floating-toolbar, 1000);
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
-  width: max-content;
+  width: calc(100% - 104px);
   max-width: calc(100% - 104px);
+  container: ivl-quick-sync / inline-size;
+  pointer-events: none;
   opacity: 1;
   transform: translateY(0) scale(1);
   transition:
@@ -674,6 +677,7 @@ body.ivlyrics-settings-open .lyrics-lyricsContainer-LyricsContainer * {
 .lyrics-quick-sync-stack .lyrics-track-sync-pill {
   position: static;
   max-width: 100%;
+  pointer-events: auto;
 }
 
 .lyrics-quick-sync-row {
@@ -700,12 +704,93 @@ body.ivlyrics-settings-open .lyrics-lyricsContainer-LyricsContainer * {
 /* In the standard fullscreen split, anchor the stack to the lyrics half. */
 .lyrics-lyricsContainer-LyricsContainer.fullscreen-active:not(.layout-reversed):not(.fullscreen-single-column):not(.fullscreen-no-lyrics):not(.portrait-mode):not(.tv-mode-active) .lyrics-quick-sync-stack {
   left: calc(50% + var(--iv-track-sync-pill-edge));
+  width: calc(50% - 104px);
+  max-width: calc(50% - 104px);
 }
 
 .lyrics-track-sync-pill:hover,
 .lyrics-track-sync-pill:focus-within {
   background: rgba(var(--spice-rgb-card), 0.62);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
+}
+
+/* Lyrics/Video switch at the start of the sync pill, shown while a background
+   video plays: the steps then adjust the selected timing. */
+.lyrics-track-sync-mode {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  margin-right: 4px;
+  padding: 2px;
+  border-radius: 999px;
+  background: rgba(var(--spice-rgb-text), 0.07);
+}
+
+.lyrics-track-sync-mode-button,
+.lyrics-track-sync-share {
+  appearance: none;
+  -webkit-appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: rgba(var(--spice-rgb-text), 0.56);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    color var(--iv-motion-duration-fast) ease,
+    background var(--iv-motion-duration-fast) ease;
+}
+
+.lyrics-track-sync-mode-button {
+  width: 28px;
+  height: 24px;
+}
+
+.lyrics-track-sync-mode-button:hover,
+.lyrics-track-sync-share:hover:not(:disabled) {
+  color: var(--spice-text, #fff);
+}
+
+.lyrics-track-sync-mode-button[aria-pressed="true"] {
+  color: var(--spice-text, #fff);
+  background: rgba(var(--spice-rgb-text), 0.16);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+/* Appears once the video timing changed: share it as the community start. */
+.lyrics-track-sync-share {
+  width: 28px;
+  height: 28px;
+  margin-left: 2px;
+  color: rgba(var(--spice-rgb-text), 0.76);
+  animation: lyrics-track-sync-share-in var(--iv-motion-duration-medium) var(--iv-motion-ease-standard) both;
+}
+
+.lyrics-track-sync-share:hover:not(:disabled) {
+  background: rgba(var(--spice-rgb-text), 0.08);
+}
+
+.lyrics-track-sync-share:disabled {
+  opacity: 0.52;
+  cursor: wait;
+}
+
+.lyrics-track-sync-mode-button:focus-visible,
+.lyrics-track-sync-share:focus-visible {
+  outline: 2px solid var(--spice-button-active, #fff);
+  outline-offset: -2px;
+}
+
+@keyframes lyrics-track-sync-share-in {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
 }
 
 .lyrics-track-sync-controls {
@@ -1057,11 +1142,19 @@ body.ivlyrics-settings-open .lyrics-lyricsContainer-LyricsContainer * {
   animation: none !important;
 }
 
+.lyrics-lyricsContainer-LyricsContainer.motion-reduced .lyrics-track-sync-share {
+  animation: none !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .lyrics-track-sync-hover-transfer,
   .lyrics-track-sync-value-impact,
   .lyrics-track-sync-value-current,
   .lyrics-track-sync-value-reset-done {
+    animation: none !important;
+  }
+
+  .lyrics-track-sync-share {
     animation: none !important;
   }
 }
@@ -1071,6 +1164,7 @@ body.ivlyrics-settings-open .lyrics-lyricsContainer-LyricsContainer * {
     --iv-track-sync-pill-edge: 12px;
     left: var(--iv-track-sync-pill-edge);
     bottom: 12px;
+    width: calc(100% - 88px);
     max-width: calc(100% - 88px);
   }
 
@@ -1089,6 +1183,69 @@ body.ivlyrics-settings-open .lyrics-lyricsContainer-LyricsContainer * {
   .lyrics-track-sync-value {
     min-width: 58px;
     padding-inline: 7px;
+  }
+}
+
+/* Use the actual lyrics pane width, not just the browser width: Spotify's
+   sidebar or split fullscreen can leave a narrow pane in a wide window. */
+@container ivl-quick-sync (max-width: 480px) {
+  .lyrics-track-sync-pill {
+    width: 100%;
+  }
+
+  .lyrics-track-sync-pill:has(.lyrics-track-sync-mode) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 3px;
+    height: auto;
+    padding: 4px;
+    border-radius: 16px;
+  }
+
+  .lyrics-track-sync-mode {
+    justify-self: start;
+  }
+
+  .lyrics-track-sync-share {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
+  .lyrics-track-sync-controls {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) minmax(60px, 1.5fr) repeat(3, minmax(0, 1fr));
+    min-width: 0;
+    width: 100%;
+  }
+
+  .lyrics-track-sync-controls .lyrics-track-sync-separator {
+    display: none;
+  }
+
+  .lyrics-track-sync-controls .lyrics-track-sync-step,
+  .lyrics-track-sync-controls .lyrics-track-sync-value {
+    min-width: 0;
+    padding-inline: 2px;
+    font-size: 10px;
+  }
+}
+
+@container ivl-quick-sync (max-width: 260px) {
+  .lyrics-track-sync-controls {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .lyrics-track-sync-controls .lyrics-track-sync-value {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .lyrics-track-sync-pill {
+    height: auto;
+    border-radius: 16px;
   }
 }
 

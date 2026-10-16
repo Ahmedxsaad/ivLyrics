@@ -2131,11 +2131,21 @@ window.LANG_JA = {
     "wordSupplements": "単語詳細",
     "wordSupplementsLoading": "単語の読みと意味を読み込み中..."
   },
+  "videoSync": {
+    "title": "動画のタイミング",
+    "share": "共有",
+    "shareInfo": "このタイミングを動画の開始位置としてみんなと共有します",
+    "shared": "動画のタイミングを共有しました。ありがとうございます！",
+    "shareFailed": "動画のタイミングを共有できませんでした。",
+    "cannotShare": "このタイミングは共有できません。同期歌詞と、動画内にある開始位置が必要です。"
+  },
   "videoBackground": {
     "loading": "動画情報を読み込み中...",
     "notFound": "動画が見つかりません。",
     "error": "エラーが発生しました。",
     "localTrackNeedsVideo": "ローカルトラックでは、動画ボタンから YouTube URL を手動で指定してください。",
+    "noMatch": "この曲に合う動画が見つかりませんでした。動画ボタンから選んでください。",
+    "timingGuess": "この動画のタイミングは推定です。動画ボタンから歌い出しの位置を設定してください。",
     "loadingMessage": "動画背景を読み込み中... 30秒ほどかかります。",
     "downloadingVideo": "動画をダウンロード中...",
     "downloading": "ダウンロード中: {percent}%",

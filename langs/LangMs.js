@@ -2131,11 +2131,21 @@ window.LANG_MS = {
     "wordSupplements": "Perincian perkataan",
     "wordSupplementsLoading": "Memuatkan bacaan & glosa..."
   },
+  "videoSync": {
+    "title": "Pemasaan video",
+    "share": "Kongsi",
+    "shareInfo": "Kongsi pemasaan ini sebagai titik mula video untuk semua orang",
+    "shared": "Pemasaan video dikongsi. Terima kasih!",
+    "shareFailed": "Tidak dapat berkongsi pemasaan video.",
+    "cannotShare": "Pemasaan ini tidak boleh dikongsi: ia memerlukan lirik segerak dan titik mula di dalam video."
+  },
   "videoBackground": {
     "loading": "Memuatkan maklumat video...",
     "notFound": "Video tidak ditemui.",
     "error": "Ralat telah berlaku.",
     "localTrackNeedsVideo": "Untuk lagu setempat, tetapkan URL YouTube secara manual daripada butang video.",
+    "noMatch": "Tiada video yang sepadan dengan lagu ini ditemui. Pilih satu daripada butang video.",
+    "timingGuess": "Pemasaan video ini hanyalah anggaran. Tetapkan di mana nyanyian bermula daripada butang video.",
     "loadingMessage": "Memuatkan latar belakang video... Proses ini mengambil masa sekitar 30 saat.",
     "downloadingVideo": "Memuat turun video...",
     "downloading": "Memuat turun: {percent}%",

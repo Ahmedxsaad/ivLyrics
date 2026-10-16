@@ -2131,11 +2131,21 @@ window.LANG_ID = {
     "wordSupplements": "Detail kata",
     "wordSupplementsLoading": "Memuat bacaan & glosa..."
   },
+  "videoSync": {
+    "title": "Waktu video",
+    "share": "Bagikan",
+    "shareInfo": "Bagikan waktu ini sebagai titik awal video untuk semua orang",
+    "shared": "Waktu video dibagikan. Terima kasih!",
+    "shareFailed": "Gagal membagikan waktu video.",
+    "cannotShare": "Waktu ini tidak dapat dibagikan: memerlukan lirik tersinkron dan titik awal di dalam video."
+  },
   "videoBackground": {
     "loading": "Memuat info video...",
     "notFound": "Video tidak ditemukan.",
     "error": "Terjadi kesalahan.",
     "localTrackNeedsVideo": "Untuk lagu lokal, atur URL YouTube secara manual dari tombol video.",
+    "noMatch": "Tidak ditemukan video yang cocok dengan lagu ini. Pilih satu dari tombol video.",
+    "timingGuess": "Waktu video ini hanya perkiraan. Atur dari tombol video di mana nyanyian dimulai.",
     "loadingMessage": "Memuat latar belakang video... Membutuhkan waktu sekitar 30 detik.",
     "downloadingVideo": "Mengunduh video...",
     "downloading": "Mengunduh: {percent}%",

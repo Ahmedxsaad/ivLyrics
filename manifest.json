@@ -53,6 +53,7 @@
 		"TabBar.js",
 		"Utils.js",
 		"LyricsShareImage.js",
+		"VideoMatch.js",
 		"CommunityVideoSelector.js",
 		"VideoBackground.js",
 		"VideoHelperService.js",

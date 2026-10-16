@@ -2131,11 +2131,21 @@ window.LANG_ES = {
     "wordSupplements": "Detalles de palabras",
     "wordSupplementsLoading": "Cargando lecturas y glosas..."
   },
+  "videoSync": {
+    "title": "Sincronización del video",
+    "share": "Compartir",
+    "shareInfo": "Compartir esta sincronización como punto de inicio del video para todos",
+    "shared": "Sincronización del video compartida. ¡Gracias!",
+    "shareFailed": "No se pudo compartir la sincronización del video.",
+    "cannotShare": "Esta sincronización no se puede compartir: requiere letras sincronizadas y un inicio dentro del video."
+  },
   "videoBackground": {
     "loading": "Cargando info de video...",
     "notFound": "Video no encontrado.",
     "error": "Ocurrió un error.",
     "localTrackNeedsVideo": "Para pistas locales, define la URL de YouTube manualmente desde el botón de video.",
+    "noMatch": "No se encontró un video que coincida con esta canción. Elige uno desde el botón de video.",
+    "timingGuess": "La sincronización de este video es aproximada. Indica desde el botón de video dónde empieza el canto.",
     "loadingMessage": "Cargando fondo de video... Tardará unos 30 segundos.",
     "downloadingVideo": "Descargando video...",
     "downloading": "Descargando: {percent}%",

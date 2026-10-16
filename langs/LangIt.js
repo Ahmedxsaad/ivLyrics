@@ -2131,11 +2131,21 @@ window.LANG_IT = {
     "wordSupplements": "Dettagli parole",
     "wordSupplementsLoading": "Caricamento letture e glosse..."
   },
+  "videoSync": {
+    "title": "Sincronizzazione video",
+    "share": "Condividi",
+    "shareInfo": "Condividi questa sincronizzazione come punto di inizio del video per tutti",
+    "shared": "Sincronizzazione del video condivisa. Grazie!",
+    "shareFailed": "Impossibile condividere la sincronizzazione del video.",
+    "cannotShare": "Questa sincronizzazione non può essere condivisa: servono testi sincronizzati e un inizio all'interno del video."
+  },
   "videoBackground": {
     "loading": "Caricamento info video...",
     "notFound": "Video non trovato.",
     "error": "Si è verificato un errore.",
     "localTrackNeedsVideo": "Per i brani locali, imposta manualmente l’URL YouTube dal pulsante video.",
+    "noMatch": "Nessun video corrisponde a questo brano. Scegline uno dal pulsante video.",
+    "timingGuess": "La sincronizzazione di questo video è stimata. Imposta dal pulsante video dove inizia il canto.",
     "loadingMessage": "Caricamento sfondo video... Richiede circa 30s.",
     "downloadingVideo": "Scaricamento video...",
     "downloading": "Scaricamento: {percent}%",
