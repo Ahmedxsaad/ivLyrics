@@ -27,11 +27,11 @@ async (page) => {
       }), document.getElementById('toolbar'));
       return Object.fromEntries(choices.map(choice => [choice.target, choice.label]));
     });
+    assert(!Object.hasOwn(labels, 'all'), 'the redundant combined action is not offered');
     await page.locator('.ivl-tb-item[data-entry="convert"]').click();
     const button = target => page.getByRole('button', { name: labels[target], exact: true });
     await button('phonetic').click();
     assert(await button('phonetic').isDisabled(), 'the requested pronunciation is busy');
-    assert(await button('all').isDisabled(), 'the overlapping combined request is busy');
     assert(await button('translation').isEnabled(), 'translation remains independently usable');
     assert(await button('cultural-annotations').isEnabled(), 'cultural annotations remain independently usable');
     await button('translation').click(); await button('cultural-annotations').click();
@@ -44,7 +44,7 @@ async (page) => {
     assert(await button('phonetic').isEnabled(), 'pronunciation unlocks independently');
     assert(await button('translation').isDisabled(), 'finishing pronunciation does not unlock translation');
     await page.evaluate(() => { for (const resolve of window.regenerationRequests.values()) resolve(); });
-    assert(await button('all').isEnabled(), 'combined action unlocks after both fields complete');
+    assert(await button('phonetic').isEnabled() && await button('translation').isEnabled(), 'individual actions unlock when finished');
     await page.screenshot({ path: `output/playwright/parallel-regeneration-${width}-${language}-complete.png` });
     results.push({ width, language, theme, jobs: 4 });
   }

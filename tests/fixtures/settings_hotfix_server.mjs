@@ -11,7 +11,7 @@ const modules = resolve(process.argv[2] || "/tmp/ivlyrics-welcome-deps.YxOkwc/no
 const files = new Map([
   ["/react.js", resolve(modules, "react/umd/react.development.js")],
   ["/react-dom.js", resolve(modules, "react-dom/umd/react-dom.development.js")],
-  ...["Settings.js", "SettingsStyles.js", "I18n.js", "Addon_AI_DeepL.js", "style.css"]
+  ...["Settings.js", "SettingsStyles.js", "I18n.js", "Addon_AI_DeepL.js", "LrclibLocalDatabaseRuntime.js", "LrclibLocalDatabase.js", "Addon_Lyrics_Lrclib.js", "style.css"]
     .map(name => ["/" + name, resolve(root, name)]),
 ]);
 const languages = readdirSync(resolve(root, "langs")).filter(name => /^Lang[A-Za-z]+\.js$/.test(name)).sort();
@@ -79,9 +79,9 @@ function previewHelpers() {
 productionDefaults();
 previewHelpers();
 const csp = [
-  "default-src 'none'", "script-src 'self' 'unsafe-inline'", "style-src 'self' 'unsafe-inline'",
+  "default-src 'none'", "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'", "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob:", "font-src 'self'", "connect-src 'self'",
-  "frame-src 'none'", "worker-src 'none'", "object-src 'none'", "base-uri 'none'", "form-action 'none'",
+  "frame-src 'none'", "worker-src 'self' blob:", "object-src 'none'", "base-uri 'none'", "form-action 'none'",
 ].join("; ");
 const server = createServer((request, response) => {
   const headers = { "Cache-Control": "no-store", "Content-Security-Policy": csp,

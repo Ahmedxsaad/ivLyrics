@@ -309,8 +309,8 @@
     // ============================================
     // API Endpoints (API 엔드포인트)
     // ============================================
-    // LRCLIB 서버의 기본 API 주소입니다.
-    // 모든 API 요청은 이 주소를 기반으로 구성됩니다.
+    // 공식 LRCLIB API 주소입니다. 검색/싱크 제작은 항상 이 주소를 쓰며,
+    // 일반 가사 로딩만 별도의 커스텀 /get 조회를 먼저 시도할 수 있습니다.
     //
     // 【사용 가능한 엔드포인트】
     // - GET /api/search?track_name=...&artist_name=... : 구조화된 검색
@@ -318,6 +318,7 @@
     // - GET /api/get?...      : 특정 가사 직접 조회
 
     const LRCLIB_API_BASE = 'https://lrclib.net/api';
+    const LRCLIB_CUSTOM_API_TIMEOUT_MS = 5000;
     const LRCLIB_DURATION_TOLERANCE_SEC = 15;
     const LRCLIB_ARTIST_MATCH_THRESHOLD = 0.9;
     const LRCLIB_FALLBACK_TITLE_MATCH_THRESHOLD = 0.98;
@@ -333,10 +334,12 @@
     const LRCLIB_MEANINGFUL_TEXT_REGEX = /\p{L}|\p{N}/u;
     const LRCLIB_METADATA_LINE_REGEX = /^\s*\[(?:ar|al|ti|au|length|by|offset|re|ve):[^\]]*\]\s*$/i;
     const LRCLIB_SETTING_KEYS = {
+        customApiEndpoint: 'custom_api_endpoint',
         fallbackTitleArtist: 'enable_fallback_title_artist',
         fallbackTitleOnly: 'enable_fallback_title_only'
     };
     const LRCLIB_DEFAULT_SETTINGS = {
+        [LRCLIB_SETTING_KEYS.customApiEndpoint]: '',
         [LRCLIB_SETTING_KEYS.fallbackTitleArtist]: true,
         [LRCLIB_SETTING_KEYS.fallbackTitleOnly]: true
     };
@@ -410,6 +413,34 @@
         };
     }
 
+    function normalizeCustomApiEndpoint(value) {
+        const input = String(value ?? '').trim();
+        if (!input) return '';
+        const url = new URL(input);
+        if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password
+            || input.includes('?') || input.includes('#')) {
+            throw new Error('Invalid LRCLIB API base URL');
+        }
+        url.pathname = url.pathname.replace(/\/+$/, '') || '/api';
+        return url.href.replace(/\/$/, '');
+    }
+
+    function getCustomApiEndpoint() {
+        try {
+            const endpoint = normalizeCustomApiEndpoint(getProviderSetting(LRCLIB_SETTING_KEYS.customApiEndpoint, ''));
+            return endpoint === LRCLIB_API_BASE ? '' : endpoint;
+        } catch {
+            // An invalid imported/older value must never break official loading.
+            return '';
+        }
+    }
+
+    function getCustomApiText(name, fallback) {
+        const key = `settings.lyricsProviders.lrclibCustomApi.${name}`;
+        const translated = window.I18n?.t?.(key);
+        return translated && translated !== key ? translated : fallback;
+    }
+
     /**
      * 현재 LRCLIB 설정을 반영한 캐시 버전을 생성합니다.
      *
@@ -417,7 +448,11 @@
      */
     function buildCacheVersion() {
         const settings = getSearchSettings();
-        return `${LRCLIB_CACHE_VERSION_BASE}:fta=${settings.enableFallbackTitleArtist ? 1 : 0}:fto=${settings.enableFallbackTitleOnly ? 1 : 0}`;
+        const customApi = getCustomApiEndpoint();
+        return `${LRCLIB_CACHE_VERSION_BASE}:fta=${settings.enableFallbackTitleArtist ? 1 : 0}:fto=${settings.enableFallbackTitleOnly ? 1 : 0}`
+            + (customApi ? `:custom=${getLyricsTextFingerprint(customApi)}` : '')
+            + (window.IvLyricsLocalLrclib?.getCacheVersion?.()
+                ? `:local=${getLyricsTextFingerprint(window.IvLyricsLocalLrclib.getCacheVersion())}` : '');
     }
 
     /**
@@ -1914,6 +1949,76 @@
         return !!(result.karaoke || result.synced || result.unsynced);
     }
 
+    function buildPlaybackOnlyResult(candidate, info, cacheVersion, apiSource) {
+        if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return null;
+        const { title, trackDurationSec, expectedArtists } = parseLrclibTrackMetadata(info);
+        const duration = Number(candidate.duration);
+        if (!Number.isFinite(duration) || duration <= 0 || Math.abs(duration - trackDurationSec) > LRCLIB_DURATION_TOLERANCE_SEC
+            || getTitleScore(title, candidate.trackName || candidate.name || '') < LRCLIB_FALLBACK_TITLE_MATCH_THRESHOLD
+            || getBestArtistScore(expectedArtists, splitArtists(candidate.artistName)) <= LRCLIB_ARTIST_MATCH_THRESHOLD) return null;
+        if ((candidate.syncedLyrics != null && typeof candidate.syncedLyrics !== 'string')
+            || (candidate.plainLyrics != null && typeof candidate.plainLyrics !== 'string')) return null;
+        const parsedSynced = candidate.syncedLyrics ? parseLRC(candidate.syncedLyrics) : null;
+        const playbackCandidate = { ...candidate, id: undefined, instrumental: candidate.instrumental === true,
+            syncedLyrics: parsedSynced?.synced?.some(line => String(line?.text || '').trim()) ? candidate.syncedLyrics : null };
+        const result = { uri: info.uri, provider: ADDON_INFO.id, cacheVersion, lrclibApiSource: apiSource,
+            karaoke: null, synced: null, unsynced: null, copyright: null, error: null };
+        const lineMatch = getCandidateSyncLineMatch(playbackCandidate, null);
+        // A local/mirror record is for playback, not an official editor source.
+        applyCandidateLyricsToResult(result, { ...playbackCandidate, preferredLyricsSource: lineMatch.preferredLyricsSource });
+        return [result.karaoke, result.synced, result.unsynced]
+            .some(lines => Array.isArray(lines) && lines.some(line => String(line?.text || '').trim())) ? result : null;
+    }
+
+    async function getLocalDatabaseLyrics(info, cacheVersion) {
+        const local = window.IvLyricsLocalLrclib;
+        if (info?.lrclibOfficialOnly || local?.getState?.().phase !== 'ready') return null;
+        try {
+            const candidate = await local.lookup({ uri: info.uri, title: info.title, artist: info.artist,
+                album: info.album, duration: info.duration });
+            return buildPlaybackOnlyResult(candidate, info, cacheVersion, 'local');
+        } catch {
+            window.__ivLyricsDebugLog?.('[LR-DEBUG] Local database unavailable; continuing online fallback');
+            return null;
+        }
+    }
+
+    // Playback-only accelerator. Keep the public/exported transport strictly
+    // official: editor search, source identity and submissions must not use this.
+    async function getCustomApiLyrics(info, cacheVersion) {
+        const endpoint = info?.lrclibOfficialOnly ? '' : getCustomApiEndpoint();
+        if (!endpoint) return null;
+        const { title, artist, album, trackDurationSec, expectedArtists } = parseLrclibTrackMetadata(info);
+        if (!title || !artist || !trackDurationSec) return null;
+        const query = new URLSearchParams({ track_name: title, artist_name: artist, duration: String(trackDurationSec) });
+        if (album && album !== 'undefined') query.set('album_name', album);
+        const controller = new AbortController();
+        let timeoutId;
+        const timeout = new Promise(resolve => {
+            timeoutId = setTimeout(() => {
+                controller.abort();
+                resolve(null);
+            }, LRCLIB_CUSTOM_API_TIMEOUT_MS);
+        });
+        const load = async () => {
+            const response = await fetch(`${endpoint}/get?${query}`, {
+                method: 'GET', headers: { Accept: 'application/json' },
+                credentials: 'omit', referrerPolicy: 'no-referrer', redirect: 'error', signal: controller.signal
+            });
+            if (!response?.ok || controller.signal.aborted) return null;
+            const candidate = await response.json();
+            return controller.signal.aborted ? null : buildPlaybackOnlyResult(candidate, info, cacheVersion, 'custom');
+        };
+        try {
+            return await Promise.race([load(), timeout]);
+        } catch {
+            window.__ivLyricsDebugLog?.('[LR-DEBUG] Custom playback API unavailable; falling back to official LRCLIB');
+            return null;
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+
     function buildPreviewCandidateList(primarySearchFlow, englishSearchFlow, selectedCandidate) {
         const selectedSignature = selectedCandidate ? buildLrclibCandidateSignature(selectedCandidate) : null;
         const seen = new Set();
@@ -2435,6 +2540,21 @@
             syncAddonCacheVersion();
         },
 
+        async prepareLyricsLookup(info) {
+            const local = window.IvLyricsLocalLrclib;
+            if (!info?.lrclibOfficialOnly && typeof local?.connect === 'function'
+                && !['ready', 'opening', 'importing'].includes(local.getState?.().phase)) {
+                let timer;
+                try {
+                    // A multi-gigabyte import/restoration must never hold cached
+                    // playback or online fallbacks behind its control queue.
+                    await Promise.race([local.connect(), new Promise(resolve => { timer = setTimeout(resolve, 250); })]);
+                } catch { /* Online fallbacks stay available. */ }
+                finally { clearTimeout(timer); }
+            }
+            syncAddonCacheVersion();
+        },
+
         async searchCandidates(info) {
             try {
                 const { title, artist, album, searchSettings, trackDurationSec, expectedArtists } = parseLrclibTrackMetadata(info);
@@ -2656,9 +2776,53 @@
          */
         getSettingsUI() {
             const React = Spicetify.React;  // Spicetify 내장 React 사용
-            const { useState, useCallback } = React;
+            const { useState, useCallback, useEffect } = React;
 
             return function LrclibLyricsSettings() {
+                const local = window.IvLyricsLocalLrclib;
+                const [localState, setLocalState] = useState(() => local?.getState?.() || { phase: 'empty' });
+                const [localActionError, setLocalActionError] = useState(null);
+                useEffect(() => {
+                    if (!local) return;
+                    const unsubscribe = local.subscribe(setLocalState);
+                    local.connect().catch(() => {});
+                    return unsubscribe;
+                }, []);
+                const localText = (key, fallback) => {
+                    const path = `settings.lyricsProviders.lrclibLocal.${key}`;
+                    const value = window.I18n?.t?.(path);
+                    return value && value !== path ? value : fallback;
+                };
+                const runLocalAction = async action => {
+                    setLocalActionError(null);
+                    if (!local?.[action]) { setLocalActionError('unsupported'); return; }
+                    const previous = local.getCacheVersion();
+                    try { await local[action](); }
+                    catch (error) { setLocalActionError(error?.code || 'error'); }
+                    if (local.getCacheVersion() !== previous) {
+                        syncAddonCacheVersion();
+                        window.reloadLyrics?.(false);
+                    }
+                };
+                const formatSize = bytes => {
+                    const value = Number(bytes) || 0;
+                    const unit = value >= 1024 ** 3 ? 'GB' : 'MB';
+                    return `${(value / (unit === 'GB' ? 1024 ** 3 : 1024 ** 2)).toLocaleString(undefined, { maximumFractionDigits: 1 })} ${unit}`;
+                };
+                const localBusy = localState.phase === 'importing' || localState.phase === 'opening';
+                const localStatus = localState.phase === 'ready'
+                    ? localText('ready', '{name} · {size}').replace('{name}', localState.name || '').replace('{size}', formatSize(localState.size))
+                    : localState.phase === 'importing'
+                        ? localText('importing', 'Preparing database… {percent}% · {size} unpacked')
+                            .replace('{percent}', String(Math.round(Math.min(1, Math.max(0, localState.progress || 0)) * 100)))
+                            .replace('{size}', formatSize(localState.bytesWritten))
+                        : localState.phase === 'opening' ? localText('opening', 'Opening database…')
+                            : localState.phase === 'permission' ? localText('permission', 'Select the file again to allow access.')
+                                : localText('empty', 'No database selected');
+                const localError = localActionError || localState.errorCode;
+                const [customApiEndpoint, setCustomApiEndpoint] = useState(() =>
+                    String(getProviderSetting(LRCLIB_SETTING_KEYS.customApiEndpoint, '')));
+                const [endpointInvalid, setEndpointInvalid] = useState(false);
                 const [enableFallbackTitleArtist, setEnableFallbackTitleArtist] = useState(() =>
                     getProviderSetting(
                         LRCLIB_SETTING_KEYS.fallbackTitleArtist,
@@ -2678,6 +2842,23 @@
                     setProviderSetting(key, checked);
                     syncAddonCacheVersion();
                 }, []);
+
+                const saveCustomApiEndpoint = () => {
+                    let normalized;
+                    try {
+                        normalized = normalizeCustomApiEndpoint(customApiEndpoint);
+                    } catch {
+                        setEndpointInvalid(true);
+                        return;
+                    }
+                    setEndpointInvalid(false);
+                    setCustomApiEndpoint(normalized);
+                    if (normalized === getProviderSetting(LRCLIB_SETTING_KEYS.customApiEndpoint, '')) return;
+                    setProviderSetting(LRCLIB_SETTING_KEYS.customApiEndpoint, normalized);
+                    syncAddonCacheVersion();
+                    // Reload without clearing unrelated translation/sync caches.
+                    window.reloadLyrics?.(false);
+                };
 
                 // 두 폴백 토글 행은 라벨/설명/체크 상태/onChange만 다르고 구조가 동일하다.
                 const renderFallbackSetting = ({ label, description, checked, onChange }) =>
@@ -2703,6 +2884,49 @@
                     );
 
                 return React.createElement('div', { className: 'lyrics-addon-settings ai-addon-settings lrclib-settings' },
+                    React.createElement('div', { className: 'ai-addon-setting' },
+                        React.createElement('label', null, localText('label', 'Local LRCLIB database')),
+                        React.createElement('small', null, localText('desc', 'Choose an official LRCLIB SQLite dump (.sqlite3 or .sqlite3.gz). Lyrics are read on this device without an API server. A gzip file is unpacked once and needs enough free disk space; the original file is not changed.')),
+                        React.createElement('small', null, localText('priority', 'Try the local file first, then the custom API if configured, and finally the official LRCLIB API.')),
+                        React.createElement('small', null, localText('officialOnly', 'Only used to load lyrics. Sync Creator, lyrics search, and sync submissions still use the official LRCLIB API.')),
+                        React.createElement('small', { role: 'status', 'aria-live': 'polite', 'data-lrclib-local-state': localState.phase }, localStatus),
+                        localState.phase === 'importing' && React.createElement('progress', {
+                            value: Math.min(1, Math.max(0, localState.progress || 0)), max: 1,
+                            'aria-label': localText('importing', 'Preparing database… {percent}% · {size} unpacked')
+                                .replace('{percent}', String(Math.round((localState.progress || 0) * 100))).replace('{size}', formatSize(localState.bytesWritten))
+                        }),
+                        React.createElement('div', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' } },
+                            React.createElement('button', { type: 'button', className: 'btn', disabled: localBusy,
+                                onClick: () => runLocalAction('pickFile') }, localText('choose', 'Choose database file')),
+                            localBusy ? React.createElement('button', { type: 'button', className: 'btn',
+                                onClick: () => local?.cancelImport?.() }, localText('cancel', 'Cancel import'))
+                                : localState.phase !== 'empty' && React.createElement('button', { type: 'button', className: 'btn',
+                                    onClick: () => runLocalAction('remove') }, localText('remove', 'Remove database'))
+                        ),
+                        localError && React.createElement('small', { className: 'ai-addon-field-error', role: 'alert' },
+                            localText(localError, localText('error', 'Unable to use the local database.')))
+                    ),
+                    React.createElement('div', { className: 'ai-addon-setting' },
+                        React.createElement('label', { htmlFor: 'ivlyrics-lrclib-custom-api' },
+                            getCustomApiText('label', 'Custom API endpoint')),
+                        React.createElement('input', {
+                            id: 'ivlyrics-lrclib-custom-api', type: 'text', inputMode: 'url',
+                            value: customApiEndpoint, autoComplete: 'off', spellCheck: false,
+                            placeholder: getCustomApiText('placeholder', 'https://your-lrclib-server.example/api'),
+                            'aria-invalid': endpointInvalid || undefined,
+                            'aria-describedby': `ivlyrics-lrclib-custom-api-desc ivlyrics-lrclib-custom-api-official${endpointInvalid ? ' ivlyrics-lrclib-custom-api-error' : ''}`,
+                            onChange: event => { setCustomApiEndpoint(event.target.value); setEndpointInvalid(false); },
+                            onBlur: saveCustomApiEndpoint,
+                            onKeyDown: event => { if (event.key === 'Enter') { event.preventDefault(); saveCustomApiEndpoint(); } }
+                        }),
+                        React.createElement('small', { id: 'ivlyrics-lrclib-custom-api-desc' },
+                            getCustomApiText('desc', 'Optional. Try this LRCLIB-compatible server first when loading lyrics. If it has no matching lyrics or cannot be reached, use the official LRCLIB API.')),
+                        React.createElement('small', { id: 'ivlyrics-lrclib-custom-api-official' },
+                            getCustomApiText('officialOnly', 'Only used to load lyrics. Sync Creator, lyrics search, and sync submissions always use official LRCLIB data.')),
+                        endpointInvalid && React.createElement('small', {
+                            id: 'ivlyrics-lrclib-custom-api-error', className: 'ai-addon-field-error', role: 'alert'
+                        }, getCustomApiText('invalid', 'Enter an HTTP or HTTPS API base URL without a username, password, query parameters, or fragment.'))
+                    ),
                     renderFallbackSetting({
                         label: getAddonText('settings.fallbackTitleArtistLabel', '1st Fallback (title + artist)'),
                         description: getAddonText('settings.fallbackTitleArtistDesc', 'Use q=title+artist free-text search when structured search fails.'),
@@ -2750,7 +2974,12 @@
          */
         async getLyrics(info) {
             const startTotal = performance.now();
+            await LrclibLyricsAddon.prepareLyricsLookup(info);
             const cacheVersion = syncAddonCacheVersion();
+            const localResult = await getLocalDatabaseLyrics(info, cacheVersion);
+            if (localResult) return localResult;
+            const customResult = await getCustomApiLyrics(info, cacheVersion);
+            if (customResult) return customResult;
             const result = {
                 uri: info.uri,
                 provider: 'lrclib',

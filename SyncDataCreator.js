@@ -5687,7 +5687,8 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				name: trackName,
 				artist: firstArtist,
 				album: trackInfo?.album?.name || Spicetify.Player?.data?.item?.album?.name || '',
-				duration: Spicetify.Player?.data?.item?.duration?.milliseconds || 0
+				duration: Spicetify.Player?.data?.item?.duration?.milliseconds || 0,
+				lrclibOfficialOnly: true
 			};
 			const lrclibAddon = window.LyricsAddonManager?.getAddon?.(SYNC_CREATOR_SOURCE_ADDON_ID);
 			window.__ivLyricsDebugLog?.('[SyncDataCreator] Trying fixed provider:', SYNC_CREATOR_SOURCE_ADDON_ID);

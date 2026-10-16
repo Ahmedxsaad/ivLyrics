@@ -22,12 +22,15 @@ const costKeys = [
 function harness(visual = {}) {
   const CONFIG = { visual: { ...visual } };
   const changes = [];
+  const destinations = [];
   const handlePerformanceSettingChange = (...args) => changes.push(args);
   const context = vm.createContext({
     CONFIG, activeTab: "performance", handlePerformanceSettingChange,
     react: { createElement: (type, props, ...children) => ({ type, props: { ...props, children } }) },
     SettingsSection: "SettingsSection", OptionList: "OptionList",
     ConfigSlider: "ConfigSlider", ConfigSliderRange: "ConfigSliderRange",
+    ConfigButton: "ConfigButton",
+    navigateToDestination: (...args) => destinations.push(args),
     I18n: { t: (key) => key },
     getSettingsText: (_key, fallback) => fallback,
     useSettingsConfigRevision() {},
@@ -35,6 +38,7 @@ function harness(visual = {}) {
     getSettingsPreviewNumber: (key, fallback) => Number(CONFIG.visual[key] ?? fallback),
   });
   vm.runInContext([
+    section("const getPerformanceSettingsSections =", "const SettingsLoadMeter ="),
     section("const SettingsLoadMeter =", "const SettingsDock ="),
     section("  const renderPerformanceTab = () =>", "  const renderLyricsTab ="),
     "globalThis.render = renderPerformanceTab; globalThis.LoadMeter = SettingsLoadMeter;",
@@ -45,21 +49,22 @@ function harness(visual = {}) {
   assert.ok(meter, "the Performance tab still renders its load meter");
   const lists = nodes.filter((node) => node.type === "OptionList");
   return {
-    CONFIG, changes, handlePerformanceSettingChange, tree, meter, lists,
+    CONFIG, changes, destinations, handlePerformanceSettingChange, tree, meter, lists,
     items: lists.flatMap((node) => Array.from(node.props.items)),
     summary: () => elements(context.LoadMeter(meter.props))
       .find((node) => node.type === "small").props.children.join(""),
   };
 }
 
-test("Performance exposes exactly seven counted effects and keeps its other controls and handlers", () => {
+test("Performance counts seven effects without duplicating the Appearance background editor", () => {
   const h = harness({ "blur-gradient-background": true });
   assert.equal(h.tree.props["data-tab-id"], "performance");
   assert.deepEqual(Array.from(h.meter.props.costKeys), costKeys);
   assert.equal(h.meter.props.frameKey, "performance-frame-rate");
-  assert.deepEqual(h.items.filter((item) => item.cost).map((item) => item.key), costKeys);
+  assert.deepEqual(h.items.filter((item) => item.cost).map((item) => item.key), costKeys.filter((key) => key !== "video-background"));
   assert.deepEqual(h.items.map((item) => item.key), [
-    "performance-frame-rate", "reduce-motion", ...costKeys,
+    "performance-frame-rate", "reduce-motion", ...costKeys.filter((key) => key !== "video-background"),
+    "video-background-settings",
     "prefetch-enabled", "prefetch-video-enabled", "prefetch-word-details-enabled",
   ]);
   assert.ok(h.lists.every((list) => list.props.onChange === h.handlePerformanceSettingChange));
@@ -67,6 +72,11 @@ test("Performance exposes exactly seven counted effects and keeps its other cont
   assert.equal(frameRate.defaultValue, 60);
   assert.equal(frameRate.min, 10);
   assert.equal(frameRate.max, 240);
+  const videoLink = h.items.find((item) => item.key === "video-background-settings");
+  assert.equal(videoLink.type, "ConfigButton");
+  assert.equal(videoLink.searchable, false);
+  videoLink.onChange();
+  assert.deepEqual(h.destinations, [["appearance", "video-background"]]);
   assert.deepEqual(h.CONFIG.visual, { "blur-gradient-background": true });
   assert.deepEqual(h.changes, [], "rendering does not save or reset the background mode");
 });

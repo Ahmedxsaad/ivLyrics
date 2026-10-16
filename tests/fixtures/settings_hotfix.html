@@ -195,8 +195,6 @@
     }
     window.AIAddonManager = fixtureManager();
     window.LyricsAddonManager = fixtureManager();
-    window.LyricsAddonManager.register({ id: "lrclib", name: "LrcLib", author: "offline fixture", version: "1.0.0",
-      description: { en: "Offline provider data", ko: "오프라인 제공자 데이터" }, supports: { karaoke: false, synced: true, unsynced: true } });
     // The playback-only KaraokeLine is an explicit host stub. All settings controls,
     // preview typography variables and break-icon markup are production code.
     const KaraokeLine = ({ line }) => react.createElement("span", { className: "karaoke-line", "data-fixture-playback-stub": "true" }, line.text);
@@ -227,6 +225,9 @@
   <script src="/fixture-preview-helpers.js"></script>
   <script src="/SettingsStyles.js"></script>
   <script src="/Addon_AI_DeepL.js"></script>
+  <script src="/LrclibLocalDatabaseRuntime.js"></script>
+  <script src="/LrclibLocalDatabase.js"></script>
+  <script src="/Addon_Lyrics_Lrclib.js"></script>
   <script src="/Settings.js"></script>
 </head>
 <body>

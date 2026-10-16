@@ -3798,12 +3798,13 @@ const SettingsFontPicker = ({ value, label, disabled, allowEmpty = false, onChan
 };
 
 
-const ConfigButton = ({ name, settingKey, info, text, onChange = () => { } }) => {
+const ConfigButton = ({ name, settingKey, info, text, searchable = true, onChange = () => { } }) => {
   return react.createElement(
     "div",
     {
       className: "setting-row",
       "data-setting-key": settingKey,
+      "data-search-exclude": searchable === false ? "true" : undefined,
     },
     react.createElement(
       "div",
@@ -3839,18 +3840,20 @@ const ConfigButton = ({ name, settingKey, info, text, onChange = () => { } }) =>
 const ConfigSlider = react.memo(
   ({ name, defaultValue, disabled, onChange = () => { } }) => {
     const [active, setActive] = useState(defaultValue);
+    const activeRef = useRef(defaultValue);
 
     useEffect(() => {
+      activeRef.current = defaultValue;
       setActive(defaultValue);
     }, [defaultValue]);
 
     const toggleState = useCallback(() => {
       if (disabled) return;
-      setActive((prevActive) => {
-        const newState = !prevActive;
-        onChange(newState);
-        return newState;
-      });
+      const newState = !activeRef.current;
+      activeRef.current = newState;
+      setActive(newState);
+      // Persist from the input event, not a replayable React state updater.
+      onChange(newState);
     }, [onChange, disabled]);
 
     return react.createElement(ButtonSVG, {
@@ -7154,6 +7157,9 @@ const OptionList = ({ type, items, onChange }) => {
     }
 
     const onChangeItem = item.onChange || onChange;
+    // Changed-setting rows disappear as they are reset. Keep each control's
+    // local state with its setting instead of reusing the following row's state.
+    const rowKey = item.key || index;
     const isDisabled =
       typeof item.disabled === "function"
         ? item.disabled()
@@ -7164,7 +7170,7 @@ const OptionList = ({ type, items, onChange }) => {
       return react.createElement(
         "div",
         {
-          key: index,
+          key: rowKey,
           className: "setting-row is-inline",
           "data-setting-key": item.key,
         },
@@ -7192,7 +7198,7 @@ const OptionList = ({ type, items, onChange }) => {
 
       const selfRenderedRow = react.createElement(item.type, {
         ...item,
-        key: index,
+        key: rowKey,
         name: item.desc || item.key,
         settingKey: item.key,
         text: item.text,
@@ -7206,7 +7212,7 @@ const OptionList = ({ type, items, onChange }) => {
       if (!item.jump) return selfRenderedRow;
       return react.createElement(
         react.Fragment,
-        { key: index },
+        { key: rowKey },
         selfRenderedRow,
         react.createElement("div", { className: "settings-jump-row" }, renderSettingsJumpLink(item.jump))
       );
@@ -7239,7 +7245,7 @@ const OptionList = ({ type, items, onChange }) => {
     return react.createElement(
       "div",
       {
-        key: index,
+        key: rowKey,
         className: [
           "setting-row",
           stacked ? "is-stack" : "is-inline",
@@ -7249,6 +7255,7 @@ const OptionList = ({ type, items, onChange }) => {
         ].filter(Boolean).join(" "),
         "data-setting-key": item.key,
         "data-control": kind,
+        "data-search-exclude": item.searchable === false ? "true" : undefined,
       },
       react.createElement(
         "div",
@@ -7474,7 +7481,9 @@ const hasSettingDefault = (key) =>
   );
 
 const getSettingDefaultValue = (key) =>
-  Object.prototype.hasOwnProperty.call(SETTINGS_DEFAULT_VALUES, key)
+  key === SETTINGS_BACKGROUND_MODE_KEY
+    ? SETTINGS_DEFAULT_BACKGROUND_MODE
+    : Object.prototype.hasOwnProperty.call(SETTINGS_DEFAULT_VALUES, key)
     ? SETTINGS_DEFAULT_VALUES[key]
     : SETTINGS_FALLBACK_DEFAULT_VALUES[key];
 
@@ -8471,6 +8480,85 @@ const SettingsTiles = ({ chips, onChange }) => {
   );
 };
 
+// One definition for the Performance controls, their search destinations and
+// changed-setting ownership. Other menus keep styling details, not these toggles.
+const getPerformanceSettingsSections = () => {
+  const option = (key, labelKey, descriptionKey, extra = {}) => ({
+    key,
+    desc: I18n.t(labelKey),
+    info: I18n.t(descriptionKey),
+    type: ConfigSlider,
+    i18nKeys: [labelKey, descriptionKey],
+    ...extra,
+  });
+  return [
+    {
+      sectionKey: "performance-rendering",
+      titleKey: "settingsAdvanced.performance.rendering.title",
+      subtitleKey: "settingsAdvanced.performance.rendering.subtitle",
+      items: [
+        option("performance-frame-rate", "settingsAdvanced.performance.frameRate.label", "settingsAdvanced.performance.frameRate.desc", {
+          type: ConfigSliderRange, presentation: "fps",
+          defaultValue: Number(CONFIG.visual["performance-frame-rate"] ?? 60),
+          min: 10, max: 240, step: 1, unit: I18n.t("settingsAdvanced.performance.frameRate.unit"),
+        }),
+        option("reduce-motion", "settings.reduceMotion.label", "settings.reduceMotion.desc", {
+          defaultValue: CONFIG.visual["reduce-motion"] ?? false,
+        }),
+        option("karaoke-bounce", "settingsAdvanced.karaokeMode.bounce.label", "settingsAdvanced.karaokeMode.bounce.desc", { cost: true }),
+        option("karaoke-line-transition", "settingsAdvanced.karaokeMode.lineTransition.label", "settingsAdvanced.karaokeMode.lineTransition.desc", { cost: true }),
+        option("karaoke-text-effects", "settingsAdvanced.performance.textEffects.label", "settingsAdvanced.performance.textEffects.desc", {
+          cost: true, defaultValue: CONFIG.visual["karaoke-text-effects"] ?? true,
+        }),
+      ],
+    },
+    {
+      sectionKey: "performance-visual-cost",
+      titleKey: "settingsAdvanced.performance.visualCost.title",
+      subtitleKey: "settingsAdvanced.performance.visualCost.subtitle",
+      items: [
+        option("fade-blur", "settingsAdvanced.syncMode.fadeoutBlur.label", "settingsAdvanced.syncMode.fadeoutBlur.desc", { cost: true }),
+        option("highlight-mode", "settingsAdvanced.syncMode.highlightMode.label", "settingsAdvanced.syncMode.highlightMode.desc", { cost: true }),
+        option("text-shadow-enabled", "settingsAdvanced.textShadow.enabled.label", "settingsAdvanced.textShadow.enabled.desc", { cost: true }),
+        // Video is an exclusive background choice, not an independent effect
+        // toggle. Keep one editor in Appearance and offer a shortcut here.
+        option("video-background-settings", "settings.videoBackground.label", "settings.videoBackground.desc", {
+          type: ConfigButton, text: I18n.t("tabs.appearance"), searchable: false,
+        }),
+      ],
+    },
+    {
+      sectionKey: "performance-background-work",
+      titleKey: "settingsAdvanced.performance.backgroundWork.title",
+      subtitleKey: "settingsAdvanced.performance.backgroundWork.subtitle",
+      searchKeys: ["settingsAdvanced.prefetch.title", "settingsAdvanced.prefetch.subtitle"],
+      items: [
+        option("prefetch-enabled", "settingsAdvanced.prefetch.enabled.label", "settingsAdvanced.prefetch.enabled.desc"),
+        option("prefetch-video-enabled", "settingsAdvanced.prefetch.videoEnabled.label", "settingsAdvanced.prefetch.videoEnabled.desc"),
+        option("prefetch-word-details-enabled", "settingsAdvanced.prefetch.wordDetailsEnabled.label", "settingsAdvanced.prefetch.wordDetailsEnabled.desc"),
+      ],
+    },
+  ];
+};
+
+const getCanonicalSettingsDestination = (() => {
+  let performanceKeys = null;
+  return (tabId, settingKey) => {
+    if (!settingKey) return { tabId, settingKey };
+    if (settingKey === "video-background") return { tabId: "appearance", settingKey };
+    if (settingKey === "prefetch") {
+      return { tabId: "performance", settingKey: "performance-background-work" };
+    }
+    // Ownership is static; don't rebuild translated controls for every row in
+    // the registry or every navigation event.
+    performanceKeys ??= new Set(getPerformanceSettingsSections().flatMap((section) => [
+      section.sectionKey,
+      ...section.items.filter((item) => item.searchable !== false).map((item) => item.key),
+    ]));
+    return { tabId: performanceKeys.has(settingKey) ? "performance" : tabId, settingKey };
+  };
+})();
+
 // How many GPU-heavy display effects are on, plus the frame cap.
 const SettingsLoadMeter = ({ costKeys, frameKey }) => {
   useSettingsConfigRevision();
@@ -9146,9 +9234,11 @@ const SETTINGS_SEARCHABLE_TAB_SELECTOR =
 
 const ConfigModal = ({
   onRequestClose = () => {},
-  initialTab = "general",
-  initialSettingKey = null,
+  initialTab: requestedInitialTab = "general",
+  initialSettingKey: requestedInitialSettingKey = null,
 }) => {
+  const { tabId: initialTab, settingKey: initialSettingKey } =
+    getCanonicalSettingsDestination(requestedInitialTab, requestedInitialSettingKey);
   const [activeTab, setActiveTab] = react.useState(initialTab || "general");
   const [searchQuery, setSearchQuery] = react.useState("");
   const [searchPanelOpen, setSearchPanelOpen] = react.useState(true);
@@ -9350,38 +9440,6 @@ const ConfigModal = ({
       {
         section: I18n.t("tabs.appearance"),
         sectionKey: "appearance",
-        settingKey: "reduce-motion",
-        name: I18n.t("settings.reduceMotion.label"),
-        desc: I18n.t("settings.reduceMotion.desc"),
-        i18nKeys: ["tabs.appearance", "sections.motion", "settings.reduceMotion.label", "settings.reduceMotion.desc"]
-      },
-      {
-        section: I18n.t("tabs.performance"),
-        sectionKey: "performance",
-        settingKey: "performance-frame-rate",
-        name: I18n.t("settingsAdvanced.performance.frameRate.label"),
-        desc: I18n.t("settingsAdvanced.performance.frameRate.desc"),
-        i18nKeys: ["tabs.performance", "settingsAdvanced.performance.rendering.title", "settingsAdvanced.performance.frameRate.label", "settingsAdvanced.performance.frameRate.desc"]
-      },
-      {
-        section: I18n.t("tabs.performance"),
-        sectionKey: "performance",
-        settingKey: "karaoke-line-transition",
-        name: I18n.t("settingsAdvanced.karaokeMode.lineTransition.label"),
-        desc: I18n.t("settingsAdvanced.karaokeMode.lineTransition.desc"),
-        i18nKeys: ["tabs.performance", "settingsAdvanced.performance.rendering.title", "settingsAdvanced.karaokeMode.lineTransition.label", "settingsAdvanced.karaokeMode.lineTransition.desc"]
-      },
-      {
-        section: I18n.t("tabs.performance"),
-        sectionKey: "performance",
-        settingKey: "karaoke-text-effects",
-        name: I18n.t("settingsAdvanced.performance.textEffects.label"),
-        desc: I18n.t("settingsAdvanced.performance.textEffects.desc"),
-        i18nKeys: ["tabs.performance", "settingsAdvanced.performance.rendering.title", "settingsAdvanced.performance.textEffects.label", "settingsAdvanced.performance.textEffects.desc"]
-      },
-      {
-        section: I18n.t("tabs.appearance"),
-        sectionKey: "appearance",
         settingKey: "colorful",
         name: I18n.t("settings.colorful.label"),
         desc: I18n.t("settings.colorful.desc"),
@@ -9428,6 +9486,19 @@ const ConfigModal = ({
         i18nKeys: ["tabs.appearance", "sections.visualEffects", "settings.backgroundBrightness.label", "settings.backgroundBrightness.desc"]
       },
     ];
+    const buildPerformanceSettings = () => getPerformanceSettingsSections().flatMap((section) => [
+      {
+        section: I18n.t("tabs.performance"), sectionKey: "performance",
+        settingKey: section.sectionKey,
+        name: I18n.t(section.titleKey), desc: I18n.t(section.subtitleKey),
+        i18nKeys: ["tabs.performance", section.titleKey, section.subtitleKey, ...(section.searchKeys || [])],
+      },
+      ...section.items.filter((item) => item.searchable !== false).map((item) => ({
+        section: I18n.t("tabs.performance"), sectionKey: "performance",
+        settingKey: item.key, name: item.desc, desc: item.info || "",
+        i18nKeys: ["tabs.performance", section.titleKey, ...item.i18nKeys],
+      })),
+    ]);
     // 일반 탭 - 데스크탑 오버레이
     const buildGeneralOverlaySettings = () => [
       {
@@ -9641,14 +9712,6 @@ const ConfigModal = ({
           "settingsAdvanced.karaokeMode.motionStyle.options.classic",
           "settingsAdvanced.karaokeMode.motionStyle.options.expressive",
         ]
-      },
-      {
-        section: I18n.t("tabs.behavior"),
-        sectionKey: "lyrics",
-        settingKey: "prefetch",
-        name: I18n.t("settingsAdvanced.prefetch.title"),
-        desc: I18n.t("settingsAdvanced.prefetch.subtitle"),
-        i18nKeys: ["tabs.behavior", "settingsAdvanced.prefetch.title", "settingsAdvanced.prefetch.subtitle"]
       },
       {
         section: I18n.t("tabs.behavior"),
@@ -9956,6 +10019,7 @@ const ConfigModal = ({
     return [
       ...buildGeneralLanguageSettings(),
       ...buildAppearanceVisualSettings(),
+      ...buildPerformanceSettings(),
       ...buildGeneralOverlaySettings(),
       ...buildAppearanceTabSettings(),
       ...buildBehaviorTabSettings(),
@@ -10117,6 +10181,7 @@ const ConfigModal = ({
           let unanchoredRowIndex = 0;
 
           tabNode.querySelectorAll("[data-setting-key], .setting-row").forEach((node) => {
+            if (node.getAttribute("data-search-exclude") === "true") return;
             const explicitSettingKey = node.getAttribute("data-setting-key") || "";
             const isSectionTitle = node.classList.contains("section-title");
             if (isSectionTitle) {
@@ -10907,13 +10972,14 @@ const ConfigModal = ({
 
   const navigateToDestination = react.useCallback(
     (tabId, settingKey) => {
+      const destination = getCanonicalSettingsDestination(tabId, settingKey);
       rememberScroll();
       pinnedSectionRef.current = null;
       setChangedView(false);
-      pendingTabScrollRef.current = settingKey || null;
-      if (tabId !== activeTab || changedView) {
-        pendingScrollTopRef.current = settingKey ? null : (scrollMemoryRef.current.get(tabId) ?? 0);
-        setActiveTab(tabId);
+      pendingTabScrollRef.current = destination.settingKey || null;
+      if (destination.tabId !== activeTab || changedView) {
+        pendingScrollTopRef.current = destination.settingKey ? null : (scrollMemoryRef.current.get(destination.tabId) ?? 0);
+        setActiveTab(destination.tabId);
       }
       setNavigationRevision((revision) => revision + 1);
     },
@@ -11884,141 +11950,27 @@ const ConfigModal = ({
       },
       react.createElement(SettingsLoadMeter, {
         costKeys: [
-          "karaoke-bounce",
-          "karaoke-line-transition",
-          "karaoke-text-effects",
-          "fade-blur",
-          "highlight-mode",
-          "text-shadow-enabled",
-          "video-background",
+          "karaoke-bounce", "karaoke-line-transition", "karaoke-text-effects",
+          "fade-blur", "highlight-mode", "text-shadow-enabled", "video-background",
         ],
         frameKey: "performance-frame-rate",
       }),
-      react.createElement(
-        SettingsSection,
-        {
-          sectionKey: "performance-rendering",
-          title: I18n.t("settingsAdvanced.performance.rendering.title"),
-          subtitle: I18n.t("settingsAdvanced.performance.rendering.subtitle"),
-        },
-        react.createElement(OptionList, {
-          items: [
-            {
-              desc: I18n.t("settingsAdvanced.performance.frameRate.label"),
-              info: I18n.t("settingsAdvanced.performance.frameRate.desc"),
-              key: "performance-frame-rate",
-              type: ConfigSliderRange,
-              presentation: "fps",
-              defaultValue: Number(CONFIG.visual["performance-frame-rate"] ?? 60),
-              min: 10,
-              max: 240,
-              step: 1,
-              unit: I18n.t("settingsAdvanced.performance.frameRate.unit"),
-            },
-            {
-              desc: I18n.t("settings.reduceMotion.label"),
-              info: I18n.t("settings.reduceMotion.desc"),
-              key: "reduce-motion",
-              defaultValue: CONFIG.visual["reduce-motion"] ?? false,
-              type: ConfigSlider,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.karaokeMode.bounce.label"),
-              info: I18n.t("settingsAdvanced.karaokeMode.bounce.desc"),
-              key: "karaoke-bounce",
-              type: ConfigSlider,
-              cost: true,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.karaokeMode.lineTransition.label"),
-              info: I18n.t("settingsAdvanced.karaokeMode.lineTransition.desc"),
-              key: "karaoke-line-transition",
-              type: ConfigSlider,
-              cost: true,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.performance.textEffects.label"),
-              info: I18n.t("settingsAdvanced.performance.textEffects.desc"),
-              key: "karaoke-text-effects",
-              defaultValue: CONFIG.visual["karaoke-text-effects"] ?? true,
-              type: ConfigSlider,
-              cost: true,
-            },
-          ],
-          onChange: handlePerformanceSettingChange,
-        })
-      ),
-      react.createElement(
-        SettingsSection,
-        {
-          sectionKey: "performance-visual-cost",
-          title: I18n.t("settingsAdvanced.performance.visualCost.title"),
-          subtitle: I18n.t("settingsAdvanced.performance.visualCost.subtitle"),
-        },
-        react.createElement(OptionList, {
-          items: [
-            {
-              desc: I18n.t("settingsAdvanced.syncMode.fadeoutBlur.label"),
-              key: "fade-blur",
-              info: I18n.t("settingsAdvanced.syncMode.fadeoutBlur.desc"),
-              type: ConfigSlider,
-              cost: true,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.syncMode.highlightMode.label"),
-              key: "highlight-mode",
-              info: I18n.t("settingsAdvanced.syncMode.highlightMode.desc"),
-              type: ConfigSlider,
-              cost: true,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.textShadow.enabled.label"),
-              info: I18n.t("settingsAdvanced.textShadow.enabled.desc"),
-              key: "text-shadow-enabled",
-              type: ConfigSlider,
-              cost: true,
-            },
-            {
-              desc: I18n.t("settings.videoBackground.label"),
-              key: "video-background",
-              info: I18n.t("settings.videoBackground.desc"),
-              type: ConfigSlider,
-              cost: true,
-            },
-          ],
-          onChange: handlePerformanceSettingChange,
-        })
-      ),
-      react.createElement(
-        SettingsSection,
-        {
-          sectionKey: "performance-background-work",
-          title: I18n.t("settingsAdvanced.performance.backgroundWork.title"),
-          subtitle: I18n.t("settingsAdvanced.performance.backgroundWork.subtitle"),
-        },
-        react.createElement(OptionList, {
-          items: [
-            {
-              desc: I18n.t("settingsAdvanced.prefetch.enabled.label"),
-              info: I18n.t("settingsAdvanced.prefetch.enabled.desc"),
-              key: "prefetch-enabled",
-              type: ConfigSlider,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.prefetch.videoEnabled.label"),
-              info: I18n.t("settingsAdvanced.prefetch.videoEnabled.desc"),
-              key: "prefetch-video-enabled",
-              type: ConfigSlider,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.prefetch.wordDetailsEnabled.label") || "Word details",
-              info: I18n.t("settingsAdvanced.prefetch.wordDetailsEnabled.desc") || "Preload per-word readings and translations for word-level karaoke",
-              key: "prefetch-word-details-enabled",
-              type: ConfigSlider,
-            },
-          ],
-          onChange: handlePerformanceSettingChange,
-        })
+      ...getPerformanceSettingsSections().map((section) =>
+        react.createElement(
+          SettingsSection,
+          {
+            key: section.sectionKey,
+            sectionKey: section.sectionKey,
+            title: I18n.t(section.titleKey),
+            subtitle: I18n.t(section.subtitleKey),
+          },
+          react.createElement(OptionList, {
+            items: section.items.map((item) => item.key === "video-background-settings"
+              ? { ...item, onChange: () => navigateToDestination("appearance", "video-background") }
+              : item),
+            onChange: handlePerformanceSettingChange,
+          })
+        )
       )
     );
 
@@ -12182,12 +12134,6 @@ const ConfigModal = ({
               type: ConfigSlider,
             },
             {
-              desc: I18n.t("settingsAdvanced.karaokeMode.bounce.label"),
-              info: I18n.t("settingsAdvanced.karaokeMode.bounce.desc"),
-              key: "karaoke-bounce",
-              type: ConfigSlider,
-            },
-            {
               desc: I18n.t("settingsAdvanced.karaokeMode.motionStyle.label"),
               info: I18n.t("settingsAdvanced.karaokeMode.motionStyle.desc"),
               key: "karaoke-motion-style",
@@ -12199,12 +12145,6 @@ const ConfigModal = ({
               },
               // Expressive motion is a style of the bounce, so it needs the bounce on.
               when: () => CONFIG.visual["karaoke-bounce"] !== false,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.karaokeMode.lineTransition.label"),
-              info: I18n.t("settingsAdvanced.karaokeMode.lineTransition.desc"),
-              key: "karaoke-line-transition",
-              type: ConfigSlider,
             },
             {
               desc: I18n.t("settingsAdvanced.karaokeMode.spotifyFakeKaraoke.label"),
@@ -12225,43 +12165,6 @@ const ConfigModal = ({
             },
           ],
           onChange: handleVisualConfigChange,
-        })
-      ),
-    ];
-    const renderLyricsProviderPrioritySection = () => [
-      react.createElement(
-        SettingsSection,
-        {
-          key: "prefetch",
-          sectionKey: "prefetch",
-          title: I18n.t("settingsAdvanced.prefetch.title"),
-          subtitle: I18n.t("settingsAdvanced.prefetch.subtitle"),
-        },
-        react.createElement(OptionList, {
-          items: [
-            {
-              desc: I18n.t("settingsAdvanced.prefetch.enabled.label"),
-              info: I18n.t("settingsAdvanced.prefetch.enabled.desc"),
-              key: "prefetch-enabled",
-              type: ConfigSlider,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.prefetch.videoEnabled.label"),
-              info: I18n.t("settingsAdvanced.prefetch.videoEnabled.desc"),
-              key: "prefetch-video-enabled",
-              type: ConfigSlider,
-            },
-            {
-              desc: I18n.t("settingsAdvanced.prefetch.wordDetailsEnabled.label") || "Word details",
-              info: I18n.t("settingsAdvanced.prefetch.wordDetailsEnabled.desc") || "Preload per-word readings and translations for word-level karaoke",
-              key: "prefetch-word-details-enabled",
-              type: ConfigSlider,
-            },
-          ],
-          onChange: (name, value) => {
-            CONFIG.visual[name] = value;
-            StorageManager.saveConfig(name, value);
-          },
         })
       ),
     ];
@@ -12332,7 +12235,6 @@ const ConfigModal = ({
       ...renderLyricsPlaybackSection(),
       ...renderLyricsLanguageSection(),
       ...renderLyricsSyncControlsSection(),
-      ...renderLyricsProviderPrioritySection(),
       ...renderLyricsCacheSection(),
       ...renderLyricsHelperSection(),
     );
@@ -12965,18 +12867,6 @@ react.createElement(OptionList, {
           react.createElement(OptionList, {
             items: [
               {
-                desc: I18n.t("settingsAdvanced.syncMode.fadeoutBlur.label"),
-                key: "fade-blur",
-                info: I18n.t("settingsAdvanced.syncMode.fadeoutBlur.desc"),
-                type: ConfigSlider,
-              },
-              {
-                desc: I18n.t("settingsAdvanced.syncMode.highlightMode.label"),
-                key: "highlight-mode",
-                info: I18n.t("settingsAdvanced.syncMode.highlightMode.desc"),
-                type: ConfigSlider,
-              },
-              {
                 desc: I18n.t("settingsAdvanced.syncMode.highlightIntensity.label"),
                 key: "highlight-intensity",
                 info: I18n.t("settingsAdvanced.syncMode.highlightIntensity.desc"),
@@ -13035,38 +12925,6 @@ react.createElement(OptionList, {
         renderAppearanceInstrumentalBreakSection()
       ),
     ];
-    const renderAppearanceMotionSection = () => [
-      react.createElement(
-        SettingsSection,
-        {
-          key: "reduce-motion",
-          sectionKey: "reduce-motion",
-          title: I18n.t("sections.motion"),
-          subtitle: I18n.t("settings.reduceMotion.desc"),
-        },
-        react.createElement(OptionList, {
-          items: [
-            {
-              desc: I18n.t("settings.reduceMotion.label"),
-              key: "reduce-motion",
-              defaultValue: CONFIG.visual["reduce-motion"] ?? false,
-              type: ConfigSlider,
-            },
-          ],
-          onChange: (name, value) => {
-            CONFIG.visual[name] = value;
-            StorageManager.setItem(`${APP_NAME}:visual:${name}`, value);
-            applySettingsMotionClasses();
-            lyricContainerUpdate?.();
-            window.dispatchEvent(
-              new CustomEvent("ivLyrics", {
-                detail: { type: "config", name, value },
-              })
-            );
-          },
-        })
-      ),
-    ];
     const renderAppearanceTextShadowSection = () => [
       react.createElement(
         SettingsSection,
@@ -13078,12 +12936,6 @@ react.createElement(OptionList, {
         },
         react.createElement(OptionList, {
           items: [
-            {
-              desc: I18n.t("settingsAdvanced.textShadow.enabled.label"),
-              info: I18n.t("settingsAdvanced.textShadow.enabled.desc"),
-              key: "text-shadow-enabled",
-              type: ConfigSlider,
-            },
             {
               desc: I18n.t("settingsAdvanced.textShadow.color.label"),
               info: I18n.t("settingsAdvanced.textShadow.color.desc"),
@@ -13128,7 +12980,6 @@ react.createElement(OptionList, {
       ...renderAppearanceSyncModeSection(),
       ...renderAppearanceMultiVocalSection(),
       ...renderAppearanceInstrumentalSection(),
-      ...renderAppearanceMotionSection(),
     );
   };
 
@@ -15030,6 +14881,7 @@ react.createElement(OptionList, {
     const add = (tabId, section, item, onChange, labelPrefix) => {
       if (!item || !item.key || seen.has(item.key)) return;
       if (item.key !== SETTINGS_BACKGROUND_MODE_KEY && !hasSettingDefault(item.key)) return;
+      if (getCanonicalSettingsDestination(tabId, item.key).tabId !== tabId) return;
       seen.add(item.key);
       entries.push({
         key: item.key,

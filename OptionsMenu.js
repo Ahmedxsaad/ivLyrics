@@ -3848,9 +3848,6 @@ const getRegenerateTranslationChoiceItems = ({
   if (targets.needTranslation) {
     items.push({ key: "regenerate-translation-only", target: "translation", label: I18n.t("menu.regenerateTranslationOnly") });
   }
-  if (targets.needPhonetic && targets.needTranslation) {
-    items.push({ key: "regenerate-both", target: "all", label: I18n.t("menu.regenerateBoth") });
-  }
   if (includeCulturalAnnotations) {
     items.push({ key: "regenerate-cultural-annotations", target: "cultural-annotations", label: I18n.t("settings.culturalAnnotations.label") });
   }

@@ -18,6 +18,75 @@ const deferred = () => {
 const plain = value => JSON.parse(JSON.stringify(value));
 const flush = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
 
+function regenerationChoices() {
+  const helper = vm.runInNewContext(
+    section(options, 'const getRegenerateTranslationChoiceItems =', 'const getToolbarRegenerationKinds =') + '\ngetRegenerateTranslationChoiceItems;',
+    { I18n: { t: key => key } },
+  );
+  const helperCalls = [];
+  const context = vm.createContext({
+    window: {}, I18n: { t: key => key },
+    getRegenerateTranslationChoiceItems(input) { helperCalls.push(plain(input)); return helper(input); },
+  });
+  const app = vm.runInContext(`({
+    ${section(source, '  getRegenerateTranslationChoices() {', '  async runRegenerateTranslationChoice(')}
+  })`, context);
+  return { app, context, helper, helperCalls };
+}
+
+const regenerationChoiceRows = {
+  phonetic: { key: 'regenerate-phonetic-only', target: 'phonetic', label: 'menu.regeneratePronunciationOnly' },
+  translation: { key: 'regenerate-translation-only', target: 'translation', label: 'menu.regenerateTranslationOnly' },
+  'cultural-annotations': { key: 'regenerate-cultural-annotations', target: 'cultural-annotations', label: 'settings.culturalAnnotations.label' },
+  'word-supplements': { key: 'regenerate-word-supplements', target: 'word-supplements', label: 'menu.regenerateWordDetails' },
+};
+
+test('regeneration choices never offer all, with or without the shared helper', async t => {
+  for (const [needPhonetic, needTranslation, independentTargets] of [
+    [false, false, []],
+    [true, false, ['phonetic']],
+    [false, true, ['translation']],
+    [true, true, ['phonetic', 'translation']],
+  ]) {
+    for (const includeCulturalAnnotations of [false, true]) {
+      for (const includeWordSupplements of [false, true]) {
+        await t.test(`pronunciation=${needPhonetic}, translation=${needTranslation}, culture=${includeCulturalAnnotations}, words=${includeWordSupplements}`, () => {
+          const h = regenerationChoices();
+          const targets = { needPhonetic, needTranslation };
+          const input = { targets, includeCulturalAnnotations, includeWordSupplements };
+          const expected = [
+            ...independentTargets,
+            ...(includeCulturalAnnotations ? ['cultural-annotations'] : []),
+            ...(includeWordSupplements ? ['word-supplements'] : []),
+          ].map(target => regenerationChoiceRows[target]);
+          assert.deepEqual(plain(h.helper(input)), expected, 'popup helper offers only enabled individual targets');
+
+          h.app.getRegenerationTargets = () => targets;
+          h.app.isCulturalAnnotationsEnabled = () => includeCulturalAnnotations;
+          h.context.window.ivLyricsWordSupplements = includeWordSupplements ? {} : undefined;
+          assert.deepEqual(plain(h.app.getRegenerateTranslationChoices()), expected, 'current-track choices match the real helper');
+          assert.deepEqual(h.helperCalls, [input], 'always delegate to the available helper with every flag');
+
+          delete h.context.getRegenerateTranslationChoiceItems;
+          assert.deepEqual(
+            plain(h.app.getRegenerateTranslationChoices()),
+            independentTargets.map(target => regenerationChoiceRows[target]),
+            'missing helper falls back to enabled independent pronunciation/translation rows without all',
+          );
+        });
+      }
+    }
+  }
+});
+
+test('regeneration choice helper defaults omit optional actions and disabled targets', () => {
+  const { helper } = regenerationChoices();
+  assert.deepEqual(plain(helper({})), []);
+  assert.deepEqual(plain(helper({ targets: { needPhonetic: true, needTranslation: true } })), [
+    regenerationChoiceRows.phonetic, regenerationChoiceRows.translation,
+  ]);
+});
+
 function container() {
   const calls = [], snapshots = [], errors = [], cacheWrites = [];
   const cacheBarrier = { current: null };

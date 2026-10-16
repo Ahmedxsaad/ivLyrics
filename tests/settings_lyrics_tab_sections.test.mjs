@@ -27,15 +27,14 @@ test("behavior tab renders each section renderer once", () => {
 	const body = lyricsTabSource();
 	const tree = body.slice(body.lastIndexOf("return react.createElement("));
 	const renderers = [...tree.matchAll(/\.\.\.(render\w+)\(\)/g)].map((match) => match[1]);
-	assert.ok(renderers.length >= 6, "expected the behavior tab section renderers");
+  assert.ok(renderers.length >= 5, "expected the behavior tab section renderers");
 	assert.equal(new Set(renderers).size, renderers.length, `duplicate renderers: ${renderers.join(", ")}`);
 	// Section order of the redesigned settings window (playback, karaoke mode,
-	// Sync Creator, prefetch, cache, helper).
+  // Sync Creator, cache, helper). Prefetch is owned by Performance.
 	assert.deepEqual(renderers, [
 		"renderLyricsPlaybackSection",
 		"renderLyricsLanguageSection",
 		"renderLyricsSyncControlsSection",
-		"renderLyricsProviderPrioritySection",
 		"renderLyricsCacheSection",
 		"renderLyricsHelperSection",
 	]);

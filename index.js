@@ -6785,10 +6785,7 @@ class LyricsContainer extends react.Component {
     const targets = this.getRegenerationTargets();
     const includeCulturalAnnotations = this.isCulturalAnnotationsEnabled();
     const includeWordSupplements = !!window.ivLyricsWordSupplements;
-    if (
-      (includeCulturalAnnotations || includeWordSupplements || (targets.needPhonetic && targets.needTranslation)) &&
-      typeof getRegenerateTranslationChoiceItems === "function"
-    ) {
+    if (typeof getRegenerateTranslationChoiceItems === "function") {
       return getRegenerateTranslationChoiceItems({
         targets,
         includeCulturalAnnotations,
@@ -6796,13 +6793,14 @@ class LyricsContainer extends react.Component {
       });
     }
 
-    const target = targets.needPhonetic ? "phonetic" : targets.needTranslation ? "translation" : "all";
-    const labelKey = target === "phonetic"
-      ? "menu.regeneratePronunciationOnly"
-      : target === "translation"
-        ? "menu.regenerateTranslationOnly"
-        : "menu.regenerateBoth";
-    return [{ key: `regenerate-${target}`, target, label: I18n.t(labelKey) }];
+    return [
+      targets.needPhonetic && {
+        key: "regenerate-phonetic-only", target: "phonetic", label: I18n.t("menu.regeneratePronunciationOnly"),
+      },
+      targets.needTranslation && {
+        key: "regenerate-translation-only", target: "translation", label: I18n.t("menu.regenerateTranslationOnly"),
+      },
+    ].filter(Boolean);
   }
 
   async runRegenerateTranslationChoice(target) {

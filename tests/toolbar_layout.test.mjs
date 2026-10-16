@@ -355,14 +355,14 @@ test("fullscreen folds every entry into one menu button", () => {
 });
 
 // Where each action of the previous toolbar (17 buttons, their popups and the
-// right-click lock; 58 in all) lives now. In-panel controls are located in the
-// panel; actions inside a dialog are reached through the dialog's entry.
+// right-click lock, minus the redundant combined regeneration) lives now.
+// In-panel controls live in the panel; dialogs are reached through their entry.
 const PLACEMENT = {
   mode: ["mode.character", "mode.word", "mode.synced", "mode.unsynced", "mode.lock"],
   convert: [
     "translation", "translation.pronunciation", "translation.notation", "translation.translation", "translation.target",
     "translation.detected", "translation.override", "translation.aiSettings", "regenerate", "regenerate.phonetic",
-    "regenerate.translation", "regenerate.both", "regenerate.cultural", "regenerate.words", "cacheEdit", "cacheEdit.shift", "cacheEdit.save",
+    "regenerate.translation", "regenerate.cultural", "regenerate.words", "cacheEdit", "cacheEdit.shift", "cacheEdit.save",
   ],
   sync: ["syncAdjust", "syncAdjust.track", "syncAdjust.global", "syncAdjust.reset", "quickSync"],
   track: [
@@ -378,10 +378,10 @@ const PLACEMENT = {
   fullscreen: ["fullscreen", "menuToggle"],
 };
 
-test("every action of the previous toolbar has exactly one place in the new layout", () => {
+test("every retained toolbar action has exactly one place in the new layout", () => {
   const ids = Object.values(PLACEMENT).flat();
-  assert.equal(ids.length, 58);
-  assert.equal(new Set(ids).size, 58, "no action is placed twice");
+  assert.equal(ids.length, 57);
+  assert.equal(new Set(ids).size, 57, "no action is placed twice");
 
   // Each in-panel control: which panel view shows it.
   const views = {};
@@ -430,7 +430,6 @@ test("every action of the previous toolbar has exactly one place in the new layo
     regenerate: sectionTitle(t("menu.regenerateTranslation")),
     "regenerate.phonetic": chip(t("menu.regeneratePronunciationOnly")),
     "regenerate.translation": chip(t("menu.regenerateTranslationOnly")),
-    "regenerate.both": chip(t("menu.regenerateBoth")),
     "regenerate.cultural": chip(t("settings.culturalAnnotations.label")),
     "regenerate.words": chip(t("menu.regenerateWordDetails")),
     cacheEdit: label(t("lyricsCacheEditor.button")),

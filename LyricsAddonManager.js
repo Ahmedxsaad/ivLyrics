@@ -526,6 +526,9 @@
         let providerFetched = false;
 
         try {
+            // A file-backed provider restores its source identity before cache
+            // comparison, so a previous online result cannot hide a local DB.
+            await provider.prepareLyricsLookup?.(info);
             if (lyricsCacheId && window.LyricsService?.getCachedLyrics) {
                 try {
                     const cached = await window.LyricsService.getCachedLyrics(lyricsCacheId, provider.id);
@@ -1304,7 +1307,10 @@
         }
 
         async _loadProviderCandidate(provider, info, context, typeSettings) {
-            const { lyricsCacheId, trackId, trackIsrc } = context;
+            const { lyricsCacheId: playbackCacheId, trackId, trackIsrc } = context;
+            // The editor must neither reuse playback-only mirror/local lyrics
+            // nor replace those playback results with its official source.
+            const lyricsCacheId = info?.lrclibOfficialOnly && provider.id === 'lrclib' ? null : playbackCacheId;
             const allowCharacter = typeSettings[LYRICS_TYPES.CHARACTER];
             const allowWord = typeSettings[LYRICS_TYPES.WORD];
             const allowKaraoke = allowCharacter || allowWord;
