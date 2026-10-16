@@ -7808,6 +7808,13 @@ class LyricsContainer extends react.Component {
         }
       }
 
+      // The first song after startup can arrive before the language model
+      // (loaded once in the background); give it a moment so that song's
+      // language is judged with the model too. Resolves at once afterwards.
+      if (typeof window.LyricsService?.whenLanguageModelReady === "function") {
+        await window.LyricsService.whenLanguageModelReady(1200);
+      }
+
       if (!isLatestLyricsRequest()) {
         return;
       }
