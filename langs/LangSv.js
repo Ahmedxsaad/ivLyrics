@@ -3005,7 +3005,7 @@ window.LANG_SV = {
     "rangeStyleHint": "Högerdra på textraden för att välja tecken, i förhandsvisning eller viloläge.",
     "rangeStyleSelectLabel": "Teckenintervall att formatera",
     "rangeStyleSelected": "Valt",
-    "rangeStyleSelectPrompt": "Dra först över de tecken du vill formatera.",
+    "rangeStyleSelectPrompt": "Högerdra först över textraden.",
     "rangeStyleCount": "intervall",
     "rangeStyleEmpty": "Inga formaterade intervall",
     "rangeEffectApply": "Använd effekt",

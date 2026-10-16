@@ -3005,7 +3005,7 @@ window.LANG_ZH_CN = {
     "rangeStyleHint": "在预览或空闲状态下，在歌词行上右键拖动以选择字符。",
     "rangeStyleSelectLabel": "要应用样式的字符范围",
     "rangeStyleSelected": "已选择",
-    "rangeStyleSelectPrompt": "请先拖动选择要设置样式的字符。",
+    "rangeStyleSelectPrompt": "请先在歌词行上按住右键拖动以选择字符。",
     "rangeStyleCount": "个范围",
     "rangeStyleEmpty": "暂无样式范围",
     "rangeEffectApply": "应用效果",

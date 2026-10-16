@@ -3005,7 +3005,7 @@ window.LANG_IT = {
     "rangeStyleHint": "Trascina con il tasto destro sulla riga per selezionare i caratteri, in anteprima o in pausa.",
     "rangeStyleSelectLabel": "Intervallo di caratteri da stilizzare",
     "rangeStyleSelected": "Selezione",
-    "rangeStyleSelectPrompt": "Prima trascina sui caratteri desiderati.",
+    "rangeStyleSelectPrompt": "Prima trascina con il tasto destro sulla riga del testo.",
     "rangeStyleCount": "intervalli",
     "rangeStyleEmpty": "Nessun intervallo con stile",
     "rangeEffectApply": "Applica effetto",

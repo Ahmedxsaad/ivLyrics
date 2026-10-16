@@ -5387,6 +5387,28 @@ const getKaraokeTextRunPresentation = (segment) => {
 	return { className, style };
 };
 
+const buildKaraokeTextRunReadings = (timedChars, segments, charReadings) => {
+	if (!(charReadings instanceof Map) || charReadings.size === 0) return null;
+	// Editor indices count code points; shaped karaoke cells count graphemes.
+	// Attach one reading to the intact run instead of splitting joining scripts.
+	const offsets = [0];
+	for (const charInfo of timedChars) offsets.push(offsets[offsets.length - 1] + Array.from(charInfo?.char || '').length);
+	const readings = new Map();
+	for (const segment of segments || []) {
+		if (segment.type === 'space') continue;
+		const start = offsets[segment.startIndex] ?? 0;
+		const end = offsets[segment.startIndex + segment.charCount] ?? start + Array.from(segment.text || '').length;
+		const parts = [];
+		for (let index = start; index < end; index++) {
+			const entry = charReadings.get(index);
+			const text = typeof entry === 'string' ? entry : entry?.text;
+			if (typeof text === 'string' && text.trim()) parts.push(text.trim());
+		}
+		if (parts.length) readings.set(segment.startIndex, parts.join(' '));
+	}
+	return readings.size ? readings : null;
+};
+
 const buildKaraokeTextRunElements = (
 	timedChars,
 	position,
@@ -5400,7 +5422,8 @@ const buildKaraokeTextRunElements = (
 	preparedSegments = null,
 	presentationCache = null,
 	elementCache = null,
-	livePaint = false
+	livePaint = false,
+	readings = null
 ) => {
 	const segments = preparedSegments || buildKaraokeTextRunSegments(timedChars, wordTimed, preserveInlineStyles);
 	const renderSegments = textDirection === "rtl" ? [...segments].reverse() : segments;
@@ -5440,11 +5463,12 @@ const buildKaraokeTextRunElements = (
 		const bounce = getKaraokeBounceValues(position, isActive, segment.startTime, segment.endTime, 1,
 			getKaraokeMotionProfile(timedChars, segment.startIndex, segmentCharCount));
 		const cached = elementCache?.get(segment);
+		const reading = readings?.get(segment.startIndex) || '';
 		if (cached && cached.live === livePaint
 			&& (livePaint ? cached.segmentState === segmentState : cached.fillValue === fillValue)
 			&& cached.isComplete === isComplete
 			&& cached.gradientDirection === gradientDirection && cached.wordTimed === wordTimed
-			&& cached.presentationCache === presentationCache
+			&& cached.presentationCache === presentationCache && cached.reading === reading
 			&& (livePaint || (cached.offsetY === bounce.offsetY && cached.scale === bounce.scale
 				&& cached.glow === bounce.glow)) && cached.bouncing === bounce.active) {
 			return cached.element;
@@ -5497,11 +5521,12 @@ const buildKaraokeTextRunElements = (
 				"span",
 				{ className: "lyrics-karaoke-glyph-fill" },
 				segment.text
-			)
+			),
+			...(reading ? [react.createElement('span', { className: 'lyrics-karaoke-run-reading', dir: 'auto' }, reading)] : [])
 		);
 		elementCache?.set(segment, {
 			live: livePaint, segmentState, fillValue, isComplete, gradientDirection, wordTimed, presentationCache,
-			offsetY: bounce.offsetY, scale: bounce.scale, glow: bounce.glow, bouncing: bounce.active, element,
+			offsetY: bounce.offsetY, scale: bounce.scale, glow: bounce.glow, bouncing: bounce.active, reading, element,
 		});
 		return element;
 	});
@@ -8399,7 +8424,10 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 	const wordStack = useKaraokeWordStackSupplements({ line, timedChars, timedText, wordTimed, settingsRevision });
 	// Word stacks need per-word DOM nodes; the string-based text-run fast path
 	// cannot host them, so stacked lines use the glyph/word path instead.
-	const effectiveUseTextRun = useTextRun && !wordStack;
+	const effectiveUseTextRun = useTextRun && (!wordStack || hasCharReadings);
+	const textRunReadings = useMemo(() => effectiveUseTextRun
+		? buildKaraokeTextRunReadings(timedChars, textRunSegments, charReadings) : null,
+		[effectiveUseTextRun, timedChars, textRunSegments, charReadings]);
 	const liveLineData = useMemo(() => livePaint ? {
 		timedChars,
 		motionProfiles,
@@ -8620,7 +8648,8 @@ const KaraokeLine = react.memo(({ line, position, isActive, isEffectFocused = is
 			textRunSegments,
 			presentationCaches.textRuns,
 			wrapperElementCache,
-			livePaint
+			livePaint,
+			textRunReadings
 		)
 		: (wrapByWord || wordTimed)
 		? buildKaraokeWordElements(timedChars, charElements, {

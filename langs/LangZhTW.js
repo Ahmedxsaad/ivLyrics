@@ -3005,7 +3005,7 @@ window.LANG_ZH_TW = {
     "rangeStyleHint": "在預覽或閒置狀態下，在歌詞行上按住右鍵拖曳以選取字元。",
     "rangeStyleSelectLabel": "要套用樣式的字元範圍",
     "rangeStyleSelected": "已選取",
-    "rangeStyleSelectPrompt": "請先拖曳選取要設定樣式的字元。",
+    "rangeStyleSelectPrompt": "請先在歌詞行上按住右鍵拖曳以選取字元。",
     "rangeStyleCount": "個範圍",
     "rangeStyleEmpty": "尚無樣式範圍",
     "rangeEffectApply": "套用效果",

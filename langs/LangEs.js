@@ -3005,7 +3005,7 @@ window.LANG_ES = {
     "rangeStyleHint": "Arrastra con el botón derecho sobre la línea para seleccionar caracteres, en vista previa o reposo.",
     "rangeStyleSelectLabel": "Rango de caracteres para aplicar estilo",
     "rangeStyleSelected": "Selección",
-    "rangeStyleSelectPrompt": "Primero arrastra sobre los caracteres deseados.",
+    "rangeStyleSelectPrompt": "Primero arrastra con el botón derecho sobre la línea de la letra.",
     "rangeStyleCount": "rangos",
     "rangeStyleEmpty": "Sin rangos con estilo",
     "rangeEffectApply": "Aplicar efecto",

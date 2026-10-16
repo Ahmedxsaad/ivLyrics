@@ -3005,7 +3005,7 @@ window.LANG_RU = {
     "rangeStyleHint": "Выделите символы перетаскиванием правой кнопки по строке текста в режиме предпросмотра или ожидания.",
     "rangeStyleSelectLabel": "Диапазон символов для оформления",
     "rangeStyleSelected": "Выбрано",
-    "rangeStyleSelectPrompt": "Сначала выделите нужные символы перетаскиванием.",
+    "rangeStyleSelectPrompt": "Сначала выделите символы в строке текста, удерживая правую кнопку мыши.",
     "rangeStyleCount": "диапазонов",
     "rangeStyleEmpty": "Нет оформленных диапазонов",
     "rangeEffectApply": "Применить эффект",

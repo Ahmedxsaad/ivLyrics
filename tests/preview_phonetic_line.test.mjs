@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 
-const source = readFileSync('SyncDataCreator.js', 'utf8');
+const source = readFileSync(new URL('../SyncDataCreator.js', import.meta.url), 'utf8');
 const context = {};
 vm.createContext(context);
 
@@ -54,4 +54,29 @@ test('odd-width unit needs no shift', () => {
 test('returns null without readings', () => {
   assert.equal(buildReadings(['a'], mapIn([]), [], 32), null);
   assert.equal(buildReadings([], mapIn([]), [], 32), null);
+});
+
+const furigana = load('getSyncCreatorPreviewFuriganaMap');
+test('cached empty furigana refreshes when converter readiness, revision or builder changes', () => {
+  const cache = { maps: new Map() };
+  let ready = false, calls = 0;
+  const build = () => { calls++; return new Map(ready ? [[0, 'かん']] : []); };
+  assert.equal(furigana(cache, '漢字', build, 0, false), null);
+  ready = true;
+  assert.equal(furigana(cache, '漢字', build, 0, false), null, 'unchanged dependencies reuse a negative result');
+  assert.equal(calls, 1);
+  assert.equal(furigana(cache, '漢字', build, 0, true).get(0), 'かん');
+  assert.equal(calls, 2);
+  furigana(cache, '漢字', build, 1, true);
+  assert.equal(calls, 3);
+  const replacement = () => new Map([[0, 'new converter']]);
+  assert.equal(furigana(cache, '漢字', replacement, 1, true).get(0), 'new converter');
+});
+
+test('furigana cache retains only the latest forty row texts', () => {
+  const cache = { maps: new Map() }, build = text => new Map([[0, text]]);
+  for (let index = 0; index < 50; index++) furigana(cache, `row-${index}`, build, 0, true);
+  assert.equal(cache.maps.size, 40);
+  assert.equal(cache.maps.has('row-0'), false);
+  assert.equal(cache.maps.has('row-49'), true);
 });

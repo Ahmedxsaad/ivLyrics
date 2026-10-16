@@ -3005,7 +3005,7 @@ window.LANG_VI = {
     "rangeStyleHint": "Kéo chuột phải trên dòng lời để chọn ký tự, ở chế độ xem trước hoặc chờ.",
     "rangeStyleSelectLabel": "Khoảng ký tự cần tạo kiểu",
     "rangeStyleSelected": "Đã chọn",
-    "rangeStyleSelectPrompt": "Trước tiên hãy kéo qua các ký tự cần chọn.",
+    "rangeStyleSelectPrompt": "Trước tiên hãy giữ chuột phải và kéo trên dòng lời bài hát.",
     "rangeStyleCount": "khoảng",
     "rangeStyleEmpty": "Chưa có khoảng được tạo kiểu",
     "rangeEffectApply": "Áp dụng hiệu ứng",

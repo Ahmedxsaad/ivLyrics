@@ -3005,7 +3005,7 @@ window.LANG_DE = {
     "rangeStyleHint": "Wähle in der Vorschau oder im Leerlauf Zeichen per Rechtsziehen auf der Liedtextzeile.",
     "rangeStyleSelectLabel": "Zeichenbereich für Stil",
     "rangeStyleSelected": "Ausgewählt",
-    "rangeStyleSelectPrompt": "Ziehe zuerst über die gewünschten Zeichen.",
+    "rangeStyleSelectPrompt": "Ziehe zuerst mit gedrückter rechter Maustaste über die Liedtextzeile.",
     "rangeStyleCount": "Bereiche",
     "rangeStyleEmpty": "Keine formatierten Bereiche",
     "rangeEffectApply": "Effekt anwenden",

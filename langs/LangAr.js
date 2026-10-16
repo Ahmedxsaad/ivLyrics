@@ -3005,7 +3005,7 @@ window.LANG_AR = {
     "rangeStyleHint": "اسحب بزر الفأرة الأيمن على سطر الكلمات لتحديد الأحرف، في وضع المعاينة أو الخمول.",
     "rangeStyleSelectLabel": "نطاق الأحرف المراد تنسيقه",
     "rangeStyleSelected": "المحدد",
-    "rangeStyleSelectPrompt": "اسحب أولاً فوق الأحرف المطلوبة.",
+    "rangeStyleSelectPrompt": "اسحب بزر الفأرة الأيمن على سطر الكلمات أولاً.",
     "rangeStyleCount": "نطاقات",
     "rangeStyleEmpty": "لا توجد نطاقات منسقة",
     "rangeEffectApply": "تطبيق التأثير",

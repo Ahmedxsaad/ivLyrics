@@ -3005,7 +3005,7 @@ window.LANG_FA = {
     "rangeStyleHint": "در حالت پیش‌نمایش یا بیکار، با درگ راست روی خط شعر کاراکترها را انتخاب کنید.",
     "rangeStyleSelectLabel": "بازه نویسه‌ها برای سبک‌دهی",
     "rangeStyleSelected": "انتخاب‌شده",
-    "rangeStyleSelectPrompt": "ابتدا روی نویسه‌های موردنظر بکشید.",
+    "rangeStyleSelectPrompt": "ابتدا با نگه داشتن دکمهٔ راست ماوس روی خط شعر بکشید و نویسه‌ها را انتخاب کنید.",
     "rangeStyleCount": "بازه",
     "rangeStyleEmpty": "بازه سبک‌دار وجود ندارد",
     "rangeEffectApply": "اعمال جلوه",

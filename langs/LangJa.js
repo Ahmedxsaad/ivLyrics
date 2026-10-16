@@ -3005,7 +3005,7 @@ window.LANG_JA = {
     "rangeStyleHint": "プレビューまたはアイドル状態で、歌詞行を右ドラッグして文字を選択します。",
     "rangeStyleSelectLabel": "スタイルを適用する文字範囲",
     "rangeStyleSelected": "選択",
-    "rangeStyleSelectPrompt": "先にスタイルを適用する文字をドラッグしてください。",
+    "rangeStyleSelectPrompt": "先に歌詞行を右ドラッグして文字を選択してください。",
     "rangeStyleCount": "範囲",
     "rangeStyleEmpty": "設定済みの範囲なし",
     "rangeEffectApply": "効果を適用",

@@ -3005,7 +3005,7 @@ window.LANG_EN = {
     "rangeStyleHint": "Right-drag the lyric line to select characters, in preview or idle.",
     "rangeStyleSelectLabel": "Character range to style",
     "rangeStyleSelected": "Selected",
-    "rangeStyleSelectPrompt": "Drag over the characters to style first.",
+    "rangeStyleSelectPrompt": "Right-drag the lyric line first.",
     "rangeStyleCount": "ranges",
     "rangeStyleEmpty": "No styled ranges",
     "rangeEffectApply": "Apply effect",

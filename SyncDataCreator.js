@@ -148,15 +148,28 @@ const normalizeSyncCreatorLockRange = (startIndex, endIndex, charCount) => {
 const resolveSyncCreatorLockDragRange = (downIndex, upIndex, charCount) => (
 	normalizeSyncCreatorLockRange(downIndex, upIndex, charCount)
 );
-const resolveSyncCreatorOffsetSelectionRange = (downIndex, upIndex, charCount) => {
+const resolveSyncCreatorOffsetSelectionRange = (downIndex, upIndex, charCount, allowFullLine = false) => {
 	const count = Number(charCount);
 	if (!Number.isFinite(count) || count <= 0) return null;
 	if (!Number.isInteger(downIndex) || !Number.isInteger(upIndex) || downIndex === upIndex) return null;
 	const start = Math.max(0, Math.min(downIndex, upIndex));
 	const end = Math.min(count - 1, Math.max(downIndex, upIndex));
 	if (start > end) return null;
-	if (start <= 0 && end >= count - 1) return null;
+	if (!allowFullLine && start <= 0 && end >= count - 1) return null;
 	return { start, end };
+};
+const getSyncCreatorStyleSelectionRanges = (range, charRefs, lineStart, lineEnd) => {
+	if (!range || !Array.isArray(charRefs) || !Number.isInteger(range.start) || !Number.isInteger(range.end)
+		|| range.start < 0 || range.end < range.start || range.end >= charRefs.length) return [];
+	const indexes = charRefs.slice(range.start, range.end + 1).map(ref => ref?.absoluteIndex);
+	if (indexes.some(index => !Number.isInteger(index) || index < lineStart || index > lineEnd)) return [];
+	const ranges = [];
+	for (const index of [...new Set(indexes)].sort((left, right) => left - right)) {
+		const previous = ranges[ranges.length - 1];
+		if (previous && index === previous.end + 1) previous.end = index;
+		else ranges.push({ start: index, end: index });
+	}
+	return ranges;
 };
 const isSyncCreatorIndexLocked = (index, range) => {
 	if (!range || !Number.isInteger(Number(index))) return false;
@@ -196,20 +209,24 @@ const clampSyncCreatorTimesToLockRange = (draftTimes, savedChars, range, step) =
 	const lockEndTime = Number(draft[end]);
 	// Prefix recordings stop at the locked boundary instead of overlapping it.
 	if (Number.isFinite(lockStartTime)) {
+		let nextTime = lockStartTime;
 		for (let i = start - 1; i >= 0; i--) {
 			const value = draft[i];
 			if (typeof value !== 'number' || !Number.isFinite(value)) continue;
-			const cap = lockStartTime - (start - i) * normalizedStep;
-			if (value > cap) draft[i] = Math.round(cap * 1000) / 1000;
+			const cap = Math.max(0, Math.min(nextTime - normalizedStep, lockStartTime - (start - i) * normalizedStep));
+			draft[i] = Math.round(Math.max(0, Math.min(value, cap)) * 1000) / 1000;
+			nextTime = draft[i];
 		}
 	}
 	// Suffix recordings continue after the locked boundary.
 	if (Number.isFinite(lockEndTime)) {
+		let previousTime = lockEndTime;
 		for (let i = end + 1; i < draft.length; i++) {
 			const value = draft[i];
 			if (typeof value !== 'number' || !Number.isFinite(value)) continue;
-			const floor = lockEndTime + (i - end) * normalizedStep;
-			if (value < floor) draft[i] = Math.round(floor * 1000) / 1000;
+			const floor = Math.max(previousTime + normalizedStep, lockEndTime + (i - end) * normalizedStep);
+			draft[i] = Math.round(Math.max(value, floor) * 1000) / 1000;
+			previousTime = draft[i];
 		}
 	}
 	return draft;
@@ -2286,6 +2303,20 @@ const getCachedPreviewCharReadings = (chars, pronMap, units, glyphPx) => {
 	const result = buildSyncCreatorPreviewCharReadings(chars, pronMap, units, glyphPx);
 	if (pronMap instanceof Map) previewCharReadingsCache.set(pronMap, { chars, units, glyphPx, result });
 	return result;
+};
+const getSyncCreatorPreviewFuriganaMap = (cache, text, buildMap, revision, ready) => {
+	if (cache.buildMap !== buildMap || cache.revision !== revision || cache.ready !== ready) {
+		cache.maps.clear();
+		cache.buildMap = buildMap;
+		cache.revision = revision;
+		cache.ready = ready;
+	}
+	if (!cache.maps.has(text)) {
+		const map = buildMap(text);
+		cache.maps.set(text, map?.size > 0 ? map : null);
+		if (cache.maps.size > 40) cache.maps.delete(cache.maps.keys().next().value);
+	}
+	return cache.maps.get(text);
 };
 const hasSyncCreatorCharacterPronunciation = (result) => (
 	Array.isArray(result?.lines) && result.lines.some(line => (
@@ -4962,8 +4993,8 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 
 		if (!Array.isArray(savedChars)) return new Array(expectedLength).fill(null);
 		return Array.from({ length: expectedLength }, (_, index) => {
-			const time = Number(savedChars[index]);
-			return Number.isFinite(time) ? time : null;
+			const time = savedChars[index];
+			return isFiniteSyncCreatorTime(time) ? time : null;
 		});
 	}, [activeParallelPart, activeParallelTargetId, currentExistingLineData, currentLineChars.length]);
 	const getActiveRecordingLockRange = useCallback(() => {
@@ -5012,7 +5043,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		if (index < range.start) {
 			const anchor = Number(savedChars[range.start]);
 			if (Number.isFinite(anchor)) {
-				return Math.min(value, anchor - (range.start - index) * SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC);
+				return Math.max(0, Math.min(value, anchor - (range.start - index) * SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC));
 			}
 		} else if (index > range.end) {
 			const anchor = Number(savedChars[range.end]);
@@ -6309,6 +6340,9 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		const isCharLocked = (index) => isSyncCreatorIndexLocked(index, lockRange);
 		if (lockRange && charIndex >= lockRange.start && charIndex <= lockRange.end) {
 			if (previousRecordingCharIndex > lockRange.end) {
+				for (let index = lockRange.end + 1; index <= previousRecordingCharIndex; index++) {
+					charTimesRef.current[index] = null;
+				}
 				setRecordingProgressIndex(lockRange.end, { commitState: false });
 			} else if (previousRecordingCharIndex >= lockRange.start) {
 				setRecordingProgressIndex(previousRecordingCharIndex, { commitState: false });
@@ -6379,11 +6413,15 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			normalizedGranularity,
 			lyricsLanguage || undefined
 		);
+		const lockRange = getActiveRecordingLockRange();
+		if (lockRange && sourceChars === currentLineChars) {
+			return clampSyncCreatorTimesToLockRange(collapsedChars, getCurrentSyncTargetSavedChars(), lockRange, SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC);
+		}
 		return normalizeSyncCreatorTimeSequence(
 			collapsedChars,
 			normalizedGranularity
 		);
-	}, [syncGranularity, currentLineChars, lyricsLanguage]);
+	}, [syncGranularity, currentLineChars, lyricsLanguage, getActiveRecordingLockRange, getCurrentSyncTargetSavedChars]);
 
 	const mergeCurrentLineWithNext = useCallback(() => {
 		if (!canMergeCurrentLineWithNext) return;
@@ -6778,7 +6816,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		const committedLineIndex = nextLines.findIndex((line) => line.start === lineStart);
 		const normalizedLineData = {
 			...lineData,
-			chars: normalizeSyncCreatorTimeSequence(
+			chars: !activeParallelPart && getActiveRecordingLockRange() ? lineData.chars : normalizeSyncCreatorTimeSequence(
 				lineData.chars,
 				lineData.granularity
 			)
@@ -6862,6 +6900,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		normalizeCommittedLineChars,
 		syncGranularity,
 		currentLineChars,
+		getActiveRecordingLockRange,
 		captureScoreWork
 	]);
 
@@ -6937,7 +6976,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			chars.push(Math.round(time * 1000) / 1000);
 		}
 
-		const isComplete = endCharIndex >= charCount - 1;
+		const isComplete = getSyncCreatorNextEditableIndex(endCharIndex + 1, lockRange, charCount, 1) >= charCount;
 		const finalChars = lockRange
 			? clampSyncCreatorTimesToLockRange(chars, getCurrentSyncTargetSavedChars(), lockRange, SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC)
 			: chars;
@@ -7030,21 +7069,28 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	// dependency array, which evaluates during render before anything below.
 	const [offsetSelectionRange, setOffsetSelectionRange] = useState(null);
 	const offsetSelectionRangeRef = useRef(null);
+	const offsetSelectionTargetRef = useRef(null);
 
 	const setOffsetSelectionRangeValue = useCallback((start, end) => {
 		if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end < start) {
 			offsetSelectionRangeRef.current = null;
+			offsetSelectionTargetRef.current = null;
 			setOffsetSelectionRange(null);
 			return false;
 		}
 		const range = { start, end };
 		offsetSelectionRangeRef.current = range;
+		offsetSelectionTargetRef.current = {
+			lineStart: currentLineStart, targetId: activeParallelTargetId, text: currentLineText,
+			indexes: currentLineCharRefs.map(ref => ref.absoluteIndex)
+		};
 		setOffsetSelectionRange(range);
 		return true;
-	}, []);
+	}, [currentLineStart, activeParallelTargetId, currentLineText, currentLineCharRefs]);
 
 	const clearOffsetSelection = useCallback(() => {
 		offsetSelectionRangeRef.current = null;
+		offsetSelectionTargetRef.current = null;
 		setOffsetSelectionRange(null);
 	}, []);
 
@@ -7056,11 +7102,11 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		}
 	}, []);
 
-	// Right-drag in preview/idle arms an offset range. A full-line drag falls
-	// back to whole-line semantics (null) so parallel parts shift with it.
+	// The same visible range drives partial effects and offsets. Keep a full
+	// row selected for styling; offset controls still use whole-line semantics.
 	const applyOffsetSelectionRange = useCallback((downIndex, upIndex) => {
 		if (currentLineChars.length === 0) return false;
-		const range = resolveSyncCreatorOffsetSelectionRange(downIndex, upIndex, currentLineChars.length);
+		const range = resolveSyncCreatorOffsetSelectionRange(downIndex, upIndex, currentLineChars.length, true);
 		if (!range) {
 			if (Number.isInteger(downIndex) && Number.isInteger(upIndex) && downIndex !== upIndex) {
 				clearOffsetSelection();
@@ -7297,8 +7343,106 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		};
 		resetKeyboardSyncStateForDependencyChange();
 
+		const interpolateLockedKeyboardUnit = (nextTime = null) => {
+			const word = pendingWordSyncRef.current;
+			const pending = word || pendingSyllableSyncRef.current;
+			const range = getActiveRecordingLockRange();
+			if (pending && range && interpolationEnabledRef.current) {
+				const { startIdx, endIdx, startTime } = pending;
+				const endTime = Number.isFinite(nextTime)
+					? Math.max(startTime, nextTime - (word ? WORD_GAP_MS / 1000 : EDGE_INTERPOLATION_GAP_SEC))
+					: startTime + (word ? estimateWordInterpolationDuration(startIdx, endIdx)
+						: estimateSegmentDuration(startIdx, endIdx, 0.05, 0.22));
+				applyInterpolatedRangeToCharTimes(charTimesRef.current, startIdx, endIdx, startTime, endTime,
+					word ? smoothStepInterpolation : undefined);
+				charTimesRef.current = clampSyncCreatorTimesToLockRange(
+					charTimesRef.current, getCurrentSyncTargetSavedChars(), range, SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC
+				);
+			}
+			pendingWordSyncRef.current = null;
+			pendingSyllableSyncRef.current = null;
+		};
+
+		// A middle/suffix lock has editable characters on its left as well.
+		// Keep every keyboard input on the same range-aware cursor as dragging.
+		const advanceLockedKeyboardSync = (currentTime, unit = 'character') => {
+			const range = getActiveRecordingLockRange();
+			if (!range) return -1;
+			const nextIndex = getSyncCreatorNextEditableIndex(
+				isKeyboardSyncingRef.current ? keyboardCharIndexRef.current + 1 : 0,
+				range, currentLineChars.length, 1
+			);
+			if (nextIndex >= currentLineChars.length) return -1;
+			if (!isKeyboardSyncingRef.current) {
+				isKeyboardSyncingRef.current = true;
+				charTimesRef.current = buildLockedCharTimes(range);
+				setDragStartTime(currentTime);
+				pendingWordSyncRef.current = null;
+				pendingSyllableSyncRef.current = null;
+			}
+			interpolateLockedKeyboardUnit(currentTime);
+			const ranges = unit === 'syllable' ? currentLineEffectiveSyllableSegments
+				: unit === 'word' ? (syncGranularity === 'word' ? currentGranularityRanges
+					: getSyncCreatorWordRanges(currentLineChars, lyricsLanguage || undefined)) : [];
+			const target = ranges.find(item => item.end >= nextIndex);
+			const endIndex = getSyncCreatorNextEditableIndex(
+				Math.min(currentLineChars.length - 1, target?.end ?? nextIndex), range, currentLineChars.length, -1
+			);
+			let scoreStart = -1;
+			for (let index = nextIndex; index <= endIndex; index++) {
+				if (isSyncCreatorIndexLocked(index, range)) {
+					if (scoreStart >= 0) markScoreTimingInput(scoreStart, index - 1, 'character');
+					scoreStart = -1;
+					continue;
+				}
+				if (scoreStart < 0) scoreStart = index;
+				charTimesRef.current[index] = getLockClampedRecordingTime(index, getSequentialSyncTime(
+					currentTime, getPreviousRecordedSyncTime(charTimesRef.current, index)
+				));
+			}
+			if (scoreStart >= 0) markScoreTimingInput(scoreStart, endIndex, 'character');
+			if (endIndex > nextIndex && interpolationEnabledRef.current) {
+				const pending = { startIdx: nextIndex, endIdx: endIndex, startTime: currentTime };
+				if (unit === 'word') pendingWordSyncRef.current = pending;
+				else if (unit === 'syllable') pendingSyllableSyncRef.current = pending;
+			}
+			keyboardCharIndexRef.current = endIndex;
+			setRecordingProgressIndex(endIndex, { commitState: false });
+			if (getSyncCreatorNextEditableIndex(endIndex + 1, range, currentLineChars.length, 1) >= currentLineChars.length) {
+				finishKeyboardSync();
+				return -1;
+			}
+			return endIndex;
+		};
+
+		const revertLockedKeyboardSync = (unit = 'character') => {
+			const range = getActiveRecordingLockRange();
+			const cursor = keyboardCharIndexRef.current;
+			if (!range || !isKeyboardSyncingRef.current || cursor < 0) return;
+			const ranges = unit === 'syllable' ? currentLineEffectiveSyllableSegments
+				: unit === 'word' ? (syncGranularity === 'word' ? currentGranularityRanges
+					: getSyncCreatorWordRanges(currentLineChars, lyricsLanguage || undefined)) : [];
+			const target = ranges.find(item => cursor >= item.start && cursor <= item.end);
+			const start = target?.start ?? cursor;
+			for (let index = start; index <= cursor; index++) {
+				if (!isSyncCreatorIndexLocked(index, range)) charTimesRef.current[index] = null;
+			}
+			let previousIndex = start - 1;
+			while (previousIndex >= 0 && (isSyncCreatorIndexLocked(previousIndex, range)
+				|| !isFiniteSyncCreatorTime(charTimesRef.current[previousIndex]))) previousIndex--;
+			keyboardCharIndexRef.current = previousIndex;
+			pendingWordSyncRef.current = null;
+			pendingSyllableSyncRef.current = null;
+			setRecordingProgressIndex(previousIndex, { commitState: false });
+			if (previousIndex < 0) {
+				isKeyboardSyncingRef.current = false;
+				setDragStartTime(null);
+			}
+		};
+
 		const finishKeyboardSync = () => {
 			if (!isKeyboardSyncingRef.current) return;
+			if (getActiveRecordingLockRange()) interpolateLockedKeyboardUnit();
 
 			const endTime = Spicetify.Player.getProgress() / 1000;
 			const endCharIndex = keyboardCharIndexRef.current;
@@ -7321,7 +7465,11 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				chars.push(Math.round(time * 1000) / 1000);
 			}
 
-			const committedLine = commitCurrentLineSync(chars, { createCheckpoint: true });
+			const lockRange = getActiveRecordingLockRange();
+			const finalChars = lockRange ? clampSyncCreatorTimesToLockRange(
+				chars, getCurrentSyncTargetSavedChars(), lockRange, SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC
+			) : chars;
+			const committedLine = commitCurrentLineSync(finalChars, { createCheckpoint: true });
 
 			// 다음 라인으로 이동
 			if (committedLine) {
@@ -7408,6 +7556,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 
 			// 한 글자 앞으로 진행하는 헬퍼 함수
 			const advanceOneChar = (currentTime) => {
+				if (getActiveRecordingLockRange()) return advanceLockedKeyboardSync(currentTime);
 				if (!isKeyboardSyncingRef.current) {
 					const lockIndex = getActiveRecordingLockIndex();
 					if (lockIndex >= currentLineChars.length - 1) {
@@ -7533,6 +7682,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 
 			// 한 단어 앞으로 진행하는 헬퍼 함수
 			const advanceOneWord = (currentTime) => {
+				if (getActiveRecordingLockRange()) return advanceLockedKeyboardSync(currentTime, 'word');
 				// 싱크가 시작되지 않은 경우: 첫 단어만 처리
 				if (!isKeyboardSyncingRef.current) {
 					const lockIndex = getActiveRecordingLockIndex();
@@ -7674,6 +7824,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 
 			// 한 단어 뒤로 취소하는 헬퍼 함수 (첫 글자도 취소 가능)
 			const revertOneWord = () => {
+				if (getActiveRecordingLockRange()) return revertLockedKeyboardSync('word');
 				if (!isKeyboardSyncingRef.current || keyboardCharIndexRef.current < 0) return;
 				const lockIndex = getActiveRecordingLockIndex();
 				if (keyboardCharIndexRef.current <= lockIndex) return;
@@ -7719,6 +7870,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			};
 
 			const advanceOneSelectedWord = (currentTime) => {
+				if (getActiveRecordingLockRange()) return advanceLockedKeyboardSync(currentTime, 'word');
 				const lockIndex = getActiveRecordingLockIndex();
 				if (lockIndex >= currentLineChars.length - 1) {
 					Toast.error(I18n.t('settings.syncLockNoEditableChars') || 'Right-click an earlier character so there is something left to re-sync.');
@@ -7750,6 +7902,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			};
 
 			const revertOneSelectedWord = () => {
+				if (getActiveRecordingLockRange()) return revertLockedKeyboardSync('word');
 				if (!isKeyboardSyncingRef.current || keyboardCharIndexRef.current < 0) return;
 				const lockIndex = getActiveRecordingLockIndex();
 				const currentRangeIndex = currentGranularityRanges.findIndex(range => (
@@ -7787,6 +7940,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 
 			const handleCharBackShortcut = () => {
 				consumeKeyboardEvent();
+				if (getActiveRecordingLockRange()) return revertLockedKeyboardSync(syncGranularity === 'word' ? 'word' : 'character');
 				if (syncGranularity === 'word') {
 					pendingSyllableSyncRef.current = null;
 					revertOneSelectedWord();
@@ -7846,6 +8000,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			const handleSyllableShortcut = () => {
 				consumeKeyboardEvent();
 				const currentTime = Spicetify.Player.getProgress() / 1000;
+				if (getActiveRecordingLockRange()) return advanceLockedKeyboardSync(currentTime, 'syllable');
 
 				if (!currentLineEffectiveSyllableSegments.length) {
 					return;
@@ -8106,7 +8261,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			document.removeEventListener('keypress', handleKeyPress, true);
 			document.removeEventListener('keyup', handleKeyUp, true);
 		};
-	}, [mode, currentLineIndex, activeParallelTargetId, lyricsLines.length, currentLineChars, currentLineEffectiveSyllableSegments, currentGranularityRanges, lineCharOffsets, commitCurrentLineSync, advanceAfterCompletedTarget, isCurrentSyncTargetMetaComplete, showMissingMetaToast, setRecordingProgressIndex, getActiveRecordingLockIndex, buildLockedCharTimes, clearRecordingLock, syncGranularity]);
+	}, [mode, currentLineIndex, activeParallelTargetId, lyricsLines.length, currentLineChars, currentLineEffectiveSyllableSegments, currentGranularityRanges, lineCharOffsets, commitCurrentLineSync, advanceAfterCompletedTarget, isCurrentSyncTargetMetaComplete, showMissingMetaToast, setRecordingProgressIndex, getActiveRecordingLockIndex, getActiveRecordingLockRange, getCurrentSyncTargetSavedChars, getLockClampedRecordingTime, buildLockedCharTimes, clearRecordingLock, syncGranularity, lyricsLanguage]);
 
 	const handleContainerMouseDown = useCallback((e) => {
 		if (currentLineIndex >= lyricsLines.length) return;
@@ -8312,27 +8467,33 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		setStyleRangeEffect('');
 	}, [offsetSelectionRange]);
 
-	const updateCurrentLineStyleRanges = useCallback((patch) => {		// Partial effects follow the main lyric line's right-click selection,
-		// which only exists outside record mode.
-		const range = mode !== 'record' ? offsetSelectionRange : null;
-		if (!range || currentFullLineChars.length === 0) return false;
-		const localStart = range.start;
-		const localEnd = range.end;
+	const updateCurrentLineStyleRanges = useCallback((patch) => {
+		// Selection coordinates belong to the displayed vocal, not necessarily
+		// the full row. Reject old targets before the clearing effect runs.
+		const range = mode !== 'record' ? offsetSelectionRangeRef.current : null;
+		const target = offsetSelectionTargetRef.current;
+		if (!range || !target || currentFullLineChars.length === 0
+			|| target.lineStart !== currentLineStart || target.targetId !== activeParallelTargetId
+			|| target.text !== currentLineText || target.indexes.length !== currentLineCharRefs.length
+			|| target.indexes.some((index, position) => index !== currentLineCharRefs[position]?.absoluteIndex)) return false;
 		const lineEnd = currentLineStart + currentFullLineChars.length - 1;
-		const nextRanges = applySyncCreatorStyleRangePatch(
-			currentLineStyleRanges,
-			currentLineStart + localStart,
-			currentLineStart + localEnd,
-			patch,
-			currentLineStart,
-			lineEnd
+		const selections = getSyncCreatorStyleSelectionRanges(range, currentLineCharRefs, currentLineStart, lineEnd);
+		if (!selections.length) return false;
+		const patchRanges = (ranges, start = currentLineStart, end = lineEnd) => selections.reduce(
+			(result, selection) => selection.end < start || selection.start > end ? result
+				: applySyncCreatorStyleRangePatch(result, selection.start, selection.end, patch, start, end),
+			normalizeSyncCreatorStyleRanges(ranges, start, end)
 		);
 		claimSessionForLocalEditing();
-		setLineStyleDrafts(prev => ({ ...prev, [currentLineStart]: nextRanges }));
+		setLineStyleDrafts(prev => ({
+			...prev,
+			[currentLineStart]: patchRanges(Object.prototype.hasOwnProperty.call(prev, currentLineStart)
+				? prev[currentLineStart] : currentLineStyleRanges)
+		}));
 		if (Object.prototype.hasOwnProperty.call(patch, 'kind')) {
-			scorePendingEffectsRef.current.set(`style:${currentLineStart}:${localStart}:${localEnd}`, {
+			scorePendingEffectsRef.current.set(`style:${currentLineStart}:${activeParallelTargetId}:${range.start}:${range.end}`, {
 				start: currentLineStart,
-				ranges: [{ start: currentLineStart + localStart, end: currentLineStart + localEnd }],
+				ranges: selections,
 				expectedKind: patch.kind, style: true
 			});
 		}
@@ -8340,8 +8501,11 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			if (!prev || !Array.isArray(prev.lines)) return prev;
 			let changed = false;
 			const lines = prev.lines.map(line => {
-				if (line.start !== currentLineStart) return line;
+				if (!selections.some(selection => selection.start <= line.end && selection.end >= line.start)) return line;
 				changed = true;
+				// Patch each persisted row independently. Merged display rows may
+				// still contain separate source records until their next commit.
+				const nextRanges = patchRanges(line.styleRanges, line.start, line.end);
 				const nextLine = { ...line };
 				if (nextRanges.length) nextLine.styleRanges = nextRanges;
 				else delete nextLine.styleRanges;
@@ -8355,8 +8519,10 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		currentFullLineChars.length,
 		currentLineStart,
 		currentLineStyleRanges,
-		mode,
-		offsetSelectionRange
+		activeParallelTargetId,
+		currentLineCharRefs,
+		currentLineText,
+		mode
 	]);
 
 	const applySongVocalSpeaker = useCallback((value, customMeta = {}) => {
@@ -8759,23 +8925,16 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		// Locks are record-mode-only and released on mode exit, so no lock
 		// interaction exists on this path by design. Parallel parts keep the
 		// whole-line path below so per-part timing runs stay intact.
-		const selectionRange = mode !== 'record' && !activeParallelPart ? offsetSelectionRangeRef.current : null;
+		const selectedRange = mode !== 'record' && !activeParallelPart ? offsetSelectionRangeRef.current : null;
+		const selectionRange = selectedRange && !(selectedRange.start === 0 && selectedRange.end === currentLineChars.length - 1)
+			? selectedRange : null;
 		if (selectionRange) {
 			const existing = Array.isArray(syncData?.lines)
 				? syncData.lines.find(line => line.start === currentLineStart)
 				: null;
 			const savedChars = Array.isArray(existing?.chars) ? existing.chars : [];
-			const shifted = shiftSyncCreatorSelectionTimes(
-				savedChars,
-				selectionRange.start,
-				selectionRange.end,
-				deltaMs / 1000,
-				SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC
-			);
-			if (!shifted.ok) {
-				if (shifted.reason === 'untimed') {
-					Toast.error(I18n.t('syncCreator.selectionOffsetRequiresTiming') || 'Selected characters need timing first - sync the line before offsetting part of it.');
-				}
+			if (savedChars.length <= selectionRange.end || savedChars.slice(selectionRange.start, selectionRange.end + 1).some(time => !isFiniteSyncCreatorTime(time))) {
+				Toast.error(I18n.t('syncCreator.selectionOffsetRequiresTiming') || 'Selected characters need timing first - sync the line before offsetting part of it.');
 				return;
 			}
 			claimSessionForLocalEditing();
@@ -8784,6 +8943,11 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				if (!prev || !Array.isArray(prev.lines)) return prev;
 				const targetIndex = prev.lines.findIndex(line => line.start === currentLineStart);
 				if (targetIndex < 0) return prev;
+				const shifted = shiftSyncCreatorSelectionTimes(
+					prev.lines[targetIndex].chars, selectionRange.start, selectionRange.end,
+					deltaMs / 1000, SYNC_CREATOR_MIN_SEQUENTIAL_STEP_SEC
+				);
+				if (!shifted.ok) return prev;
 				return {
 					...prev,
 					lines: prev.lines.map((line, index) => index === targetIndex
@@ -8858,7 +9022,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				lines: prev.lines.map((line, index) => index === targetIndex ? shiftedLine : line)
 			};
 		});
-	}, [claimSessionForLocalEditing, currentLineStart, activeParallelPart, currentParallelTemplate, resetCurrentSyncInput, mode, syncData]);
+	}, [claimSessionForLocalEditing, currentLineStart, activeParallelPart, currentParallelTemplate, resetCurrentSyncInput, mode, syncData, currentLineChars.length]);
 
 	const resetFromStart = useCallback(async () => {
 		const confirmed = window.confirm(
@@ -10668,7 +10832,12 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	useEffect(() => {
 		clearLyricTextSelection();
 		clearOffsetSelection();
-	}, [currentLineIndex, clearLyricTextSelection, clearOffsetSelection]);
+		isRightLockDraggingRef.current = false;
+		isRightOffsetDraggingRef.current = false;
+		rightLockDragStartRef.current = -1;
+		rightOffsetDragStartRef.current = -1;
+		suppressNextLockContextMenuRef.current = false;
+	}, [mode, currentLineIndex, activeParallelTargetId, currentLineText, clearLyricTextSelection, clearOffsetSelection]);
 
 	useEffect(() => {
 		if (!syncLinesByStart || currentLineIndex >= lyricsLines.length) {
@@ -12953,13 +13122,15 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 
 	const renderStyleRangeEditor = () => {
 		if (!currentFullLineChars.length) return null;
-		// Partial effects are preview/idle-only: right-click there means lock.
+		// Record-mode right-click is reserved for timing locks.
 		if (mode === 'record') return null;
 		const selectionStart = offsetSelectionRange ? offsetSelectionRange.start : -1;
 		const selectionEnd = offsetSelectionRange ? offsetSelectionRange.end : -1;
 		const selectedText = selectionStart >= 0
-			? currentFullLineChars.slice(selectionStart, selectionEnd + 1).join('')
+			? currentLineChars.slice(selectionStart, selectionEnd + 1).join('')
 			: '';
+		const selectedStartLabel = currentLineCharRefs[selectionStart]?.localIndex + 1;
+		const selectedEndLabel = currentLineCharRefs[selectionEnd]?.localIndex + 1;
 		const selectRangeEffect = (value) => {
 			if (!value) return;
 			setStyleRangeEffect(value);
@@ -13001,7 +13172,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			Toast.success(I18n.t('syncCreator.rangeStyleCleared') || '선택 범위의 스타일을 지웠습니다.');
 		};
 
-const renderStyleRangeColorColumn = () => react.createElement('section', { className: 'sync-creator-range-style-pane sync-creator-range-color-picker' },
+		const renderStyleRangeColorColumn = () => react.createElement('section', { className: 'sync-creator-range-style-pane sync-creator-range-color-picker' },
 					react.createElement('div', { className: 'sync-creator-range-style-pane-title' }, I18n.t('syncCreator.rangeColorLabel') || '부분 색상'),
 					react.createElement('div', {
 						className: 'sync-creator-range-speaker-palette',
@@ -13096,7 +13267,7 @@ const renderStyleRangeColorColumn = () => react.createElement('section', { class
 					react.createElement('div', {
 						style: { minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10.5, color: selectedText ? 'var(--spice-text)' : 'var(--spice-subtext)' }
 					}, selectedText
-						? `${I18n.t('syncCreator.rangeStyleSelected') || '선택'}: “${selectedText}” (${selectionStart + 1}–${selectionEnd + 1})`
+					? `${I18n.t('syncCreator.rangeStyleSelected') || '선택'}: “${selectedText}” (${selectedStartLabel}–${selectedEndLabel})`
 						: (I18n.t('syncCreator.rangeStyleSelectPrompt') || 'Right-drag the lyric line first.')
 					),
 					react.createElement('button', {
@@ -13942,7 +14113,7 @@ const renderStyleRangeColorColumn = () => react.createElement('section', { class
 		document.addEventListener('keydown', handlePreviewEscape, true);
 		return () => document.removeEventListener('keydown', handlePreviewEscape, true);
 	}, [showLivePreview]);
-	const previewFuriganaCacheRef = useRef(new Map());
+	const previewFuriganaCacheRef = useRef({ maps: new Map() });
 	const editorGlyphSize = Number.parseInt(s.charSpan?.fontSize, 10) || 32;
 	const previewGlyphSize = editorGlyphSize || 32;
 	const livePreviewLyricVars = useMemo(() => {
@@ -14079,14 +14250,10 @@ const renderStyleRangeColorColumn = () => react.createElement('section', { class
 				try {
 					const rowText = rowLine?.text;
 					if (typeof rowText === 'string' && rowText && typeof getSyncCreatorFuriganaMap === 'function') {
-						if (!previewFuriganaCacheRef.current.has(rowText)) {
-							const built = getSyncCreatorFuriganaMap(rowText);
-							previewFuriganaCacheRef.current.set(rowText, built && built.size > 0 ? built : null);
-							if (previewFuriganaCacheRef.current.size > 40) {
-								previewFuriganaCacheRef.current.delete(previewFuriganaCacheRef.current.keys().next().value);
-							}
-						}
-						furiganaMapOverride = previewFuriganaCacheRef.current.get(rowText) || null;
+						furiganaMapOverride = getSyncCreatorPreviewFuriganaMap(
+							previewFuriganaCacheRef.current, rowText, getSyncCreatorFuriganaMap,
+							furiganaRevision, window.FuriganaConverter?.isAvailable?.() === true
+						);
 					}
 				} catch (error) {
 					furiganaMapOverride = null;

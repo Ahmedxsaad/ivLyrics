@@ -3005,7 +3005,7 @@ window.LANG_HI = {
     "rangeStyleHint": "प्रीव्यू या आइडल में गीत पंक्ति पर राइट-ड्रैग करके अक्षर चुनें।",
     "rangeStyleSelectLabel": "शैली के लिए अक्षर सीमा",
     "rangeStyleSelected": "चयनित",
-    "rangeStyleSelectPrompt": "पहले इच्छित अक्षरों पर खींचें।",
+    "rangeStyleSelectPrompt": "पहले गीत की पंक्ति पर माउस का दायाँ बटन दबाकर खींचें।",
     "rangeStyleCount": "सीमाएँ",
     "rangeStyleEmpty": "कोई शैलीबद्ध सीमा नहीं",
     "rangeEffectApply": "प्रभाव लागू करें",

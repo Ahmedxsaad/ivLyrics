@@ -3005,7 +3005,7 @@ window.LANG_MS = {
     "rangeStyleHint": "Seret klik kanan pada baris lirik untuk memilih aksara, dalam pratonton atau melahu.",
     "rangeStyleSelectLabel": "Julat aksara untuk digayakan",
     "rangeStyleSelected": "Dipilih",
-    "rangeStyleSelectPrompt": "Seret dahulu pada aksara yang dikehendaki.",
+    "rangeStyleSelectPrompt": "Seret dengan butang kanan tetikus pada baris lirik dahulu.",
     "rangeStyleCount": "julat",
     "rangeStyleEmpty": "Tiada julat bergaya",
     "rangeEffectApply": "Gunakan kesan",

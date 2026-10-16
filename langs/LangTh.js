@@ -3005,7 +3005,7 @@ window.LANG_TH = {
     "rangeStyleHint": "ลากด้วยคลิกขวาบนบรรทัดเพลงเพื่อเลือกตัวอักษร ในโหมดพรีวิวหรือว่าง",
     "rangeStyleSelectLabel": "ช่วงตัวอักษรที่จะใส่สไตล์",
     "rangeStyleSelected": "เลือกแล้ว",
-    "rangeStyleSelectPrompt": "ลากเลือกตัวอักษรที่ต้องการก่อน",
+    "rangeStyleSelectPrompt": "ให้ลากด้วยปุ่มเมาส์ขวาบนบรรทัดเนื้อเพลงเพื่อเลือกตัวอักษรก่อน",
     "rangeStyleCount": "ช่วง",
     "rangeStyleEmpty": "ไม่มีช่วงที่ใส่สไตล์",
     "rangeEffectApply": "ใช้เอฟเฟกต์",

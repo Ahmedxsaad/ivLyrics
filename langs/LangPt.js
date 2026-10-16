@@ -3005,7 +3005,7 @@ window.LANG_PT = {
     "rangeStyleHint": "Arraste com o botão direito na linha para selecionar caracteres, na pré-visualização ou em repouso.",
     "rangeStyleSelectLabel": "Intervalo de caracteres para estilizar",
     "rangeStyleSelected": "Selecionado",
-    "rangeStyleSelectPrompt": "Primeiro arraste sobre os caracteres desejados.",
+    "rangeStyleSelectPrompt": "Primeiro arraste com o botão direito sobre a linha da letra.",
     "rangeStyleCount": "intervalos",
     "rangeStyleEmpty": "Nenhum intervalo estilizado",
     "rangeEffectApply": "Aplicar efeito",

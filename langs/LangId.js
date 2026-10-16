@@ -3005,7 +3005,7 @@ window.LANG_ID = {
     "rangeStyleHint": "Seret dengan klik kanan pada baris lirik untuk memilih karakter, dalam pratinjau atau idle.",
     "rangeStyleSelectLabel": "Rentang karakter yang akan diberi gaya",
     "rangeStyleSelected": "Dipilih",
-    "rangeStyleSelectPrompt": "Seret dulu pada karakter yang diinginkan.",
+    "rangeStyleSelectPrompt": "Seret dengan tombol kanan mouse pada baris lirik terlebih dahulu.",
     "rangeStyleCount": "rentang",
     "rangeStyleEmpty": "Belum ada rentang bergaya",
     "rangeEffectApply": "Terapkan efek",
