@@ -15110,17 +15110,21 @@ function openConfig(options = {}) {
 
   let isClosing = false;
   const finalizeClose = () => {
-    dom.unmountComponentAtNode?.(modalContainer);
-    if (overlay.parentNode) {
-      overlay.remove();
-    }
-    setSettingsVisibility(false);
-    window.removeEventListener("keydown", handleModalKeydown, true);
-    if (window.ivLyricsCloseConfig === closeOverlay) {
-      window.ivLyricsCloseConfig = null;
-    }
-    if (previouslyFocused && document.contains(previouslyFocused)) {
-      previouslyFocused.focus();
+    try {
+      dom.unmountComponentAtNode?.(modalContainer);
+    } finally {
+      // React cleanup failures must not leave an invisible, pointer-blocking scrim.
+      if (overlay.parentNode) {
+        overlay.remove();
+      }
+      setSettingsVisibility(false);
+      window.removeEventListener("keydown", handleModalKeydown, true);
+      if (window.ivLyricsCloseConfig === closeOverlay) {
+        window.ivLyricsCloseConfig = null;
+      }
+      if (previouslyFocused && document.contains(previouslyFocused)) {
+        previouslyFocused.focus();
+      }
     }
   };
 
