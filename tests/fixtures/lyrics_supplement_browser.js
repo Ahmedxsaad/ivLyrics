@@ -83,6 +83,83 @@ async (page) => {
   if (playing.some(result => result.updates.some(update => update.replacements))) {
     throw new Error('Streaming restarted an effect during playback: ' + JSON.stringify(playing));
   }
-  await page.screenshot({ path: 'output/playwright/lyrics-supplement-generation.png', fullPage: false });
-  return { paused: results, playing };
+  const travel = [], words = [];
+  for (const width of [1000, 390]) for (const style of ['classic', 'expressive']) {
+    await page.setViewportSize({ width, height: 760 });
+    await page.goto(origin + '/');
+    travel.push(await page.evaluate(async ({ width, style }) => {
+      const f = supplementFixture, frames = async (count = 4) => {
+        for (let i = 0; i < count; i++) await new Promise(resolve => requestAnimationFrame(resolve));
+      };
+      f.reset({ style, reveal: false }); await frames();
+      f.step(4700); await frames(2); // Cross the 6000ms lyric boundary into its normal row travel.
+      const root = document.querySelector('.lyrics-lyricsContainer-SyncedLyrics');
+      const pairs = [...root.children].flatMap(row => row.getAnimations().filter(animation =>
+        animation.effect.getKeyframes().some(frame => typeof frame.transform === 'string')
+      ).map(animation => ({ row, animation })));
+      if (!pairs.length) throw new Error('Missing real row handoff animations');
+      for (const { animation } of pairs) { animation.pause(); animation.currentTime = 100; }
+      await frames(2);
+      const samples = pairs.map(({ animation }) => ({ time: animation.currentTime,
+        timing: animation.effect.getTiming(), frames: animation.effect.getKeyframes() }));
+      const active = document.querySelector('.lyrics-lyricsContainer-LyricsLine-active');
+      const center = () => { const rect = active.getBoundingClientRect(); return rect.top + rect.height / 2; };
+      const initialCenter = center(), initialOffset = parseFloat(root.style.getPropertyValue('--offset'));
+      const stages = [];
+      for (const kind of ['phonetic', 'translation', 'culture']) {
+        f.add(kind, 1); await frames();
+        const offsetDelta = parseFloat(root.style.getPropertyValue('--offset')) - initialOffset;
+        let maxCurveError = 0;
+        pairs.forEach(({ row, animation }, index) => {
+          const before = samples[index], after = animation.effect.getKeyframes();
+          if (!row.getAnimations().includes(animation) || animation.playState !== 'paused'
+            || animation.currentTime !== before.time || after.length !== before.frames.length
+            || JSON.stringify(animation.effect.getTiming()) !== JSON.stringify(before.timing)) {
+            throw new Error('Supplement interrupted the existing row timeline: ' + kind);
+          }
+          after.forEach((frame, i) => {
+            maxCurveError = Math.max(maxCurveError, Math.abs(new DOMMatrix(frame.transform).m42
+              - new DOMMatrix(before.frames[i].transform).m42 - offsetDelta));
+            if (frame.offset !== before.frames[i].offset) throw new Error('Supplement changed the travel curve');
+          });
+        });
+        const centerJump = Math.abs(center() - initialCenter);
+        if (maxCurveError > .1 || centerJump > 1) throw new Error('Supplement moved the singing anchor: '
+          + JSON.stringify({ kind, maxCurveError, centerJump, offsetDelta }));
+        stages.push({ kind, retainedAnimations: pairs.length, maxCurveError, centerJump, offsetDelta });
+      }
+      return { width, style, stages };
+    }, { width, style }));
+    words.push(await page.evaluate(async ({ width, style }) => {
+      const f = supplementFixture, frames = async (count = 5) => {
+        for (let i = 0; i < count; i++) await new Promise(resolve => requestAnimationFrame(resolve));
+      };
+      f.reset({ style, words: true, reveal: false }); await frames();
+      f.step(6000); await frames();
+      document.getElementById('root').getAnimations({ subtree: true }).forEach(animation => animation.finish());
+      await frames();
+      f.resolveWords('reading', 'reading', 1); await frames();
+      const active = document.querySelector('[data-lyrics-seek-time="6000"]');
+      const predecessor = document.querySelector('[data-lyrics-seek-time="1000"]');
+      const nodes = [...active.querySelectorAll('.lyrics-karaoke-word-stack')];
+      if (!nodes.length) throw new Error('CJK active row did not receive real word-stack DOM');
+      const contents = active.textContent;
+      f.refreshWords(); await frames();
+      const afterRefresh = [...active.querySelectorAll('.lyrics-karaoke-word-stack')];
+      if (active.textContent !== contents || nodes.some((node, i) => node !== afterRefresh[i])) {
+        throw new Error('A pending same-source word refresh removed cached word stacks');
+      }
+      const center = () => { const rect = active.getBoundingClientRect(); return rect.top + rect.height / 2; };
+      const beforeCenter = center(), beforeHeight = predecessor.clientHeight;
+      f.resolveWords('reading', 'reading', 0); await frames();
+      const heightGrowth = predecessor.clientHeight - beforeHeight, centerJump = Math.abs(center() - beforeCenter);
+      if (!(heightGrowth > 0) || centerJump > 1) {
+        throw new Error('Predecessor word stacks displaced the unchanged active row: ' + JSON.stringify({ heightGrowth, centerJump }));
+      }
+      f.targetWords('ko'); await frames();
+      if (active.querySelector('.lyrics-karaoke-word-stack')) throw new Error('Old-target words survived a target change');
+      return { width, style, cachedNodesRetained: nodes.length, heightGrowth, centerJump, oldTargetHidden: true };
+    }, { width, style }));
+  }
+  return { paused: results, playing, travel, words };
 }

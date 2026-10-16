@@ -189,6 +189,7 @@ test("mounted word stacks use changed reading and gloss settings on the next rev
   };
   const sandbox = vm.createContext({
     window: { ivLyricsWordSupplements: api }, WORD_SUPPLEMENT_RETRY_MAX: 2,
+    useRef: initial => { const slot = cursor++; return memos[slot] ??= { current: initial }; },
     useMemo: (compute, deps) => {
       const slot = cursor++;
       const previous = memos[slot];

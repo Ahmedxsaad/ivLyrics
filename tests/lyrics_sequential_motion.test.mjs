@@ -306,18 +306,19 @@ const makeEffectHarness = (linearSupport, { vocalWindowMs = null } = {}) => {
   let context;
   class Row {
     constructor(index) {
-      this.index=index; this.targetY=index*100; this.padding=false; this.inline={};
+      this.index=index; this.targetY=index*100; this.layoutTop=0; this.padding=false; this.inline={};
       this.style={getPropertyValue:name=>this.inline[name] ?? ''};
       this.classList={contains:name=>name==='lyrics-lyricsContainer-LyricsLine'};
     }
     getBoundingClientRect() { return { top: this.targetY }; }
     animate(frames,timing) {
       const row=this;
-      const animation={frames,timing,startTime:context.document.timeline.currentTime,cancelled:false,
+      const animation={frames,timing,startTime:context.document.timeline.currentTime,cancelled:false,cancellations:0,
         get currentTime(){return context.document.timeline.currentTime-this.startTime;},
         set currentTime(time){this.startTime=context.document.timeline.currentTime-time;},
-        pause(){this.paused=true;},cancel(){this.cancelled=true;},play(){this.cancelled=false;row.animation=this;},addEventListener(){},
+        pause(){this.paused=true;},cancel(){this.cancelled=true;this.cancellations++;},play(){this.cancelled=false;row.animation=this;},addEventListener(){},
       };
+      animation.effect={setKeyframes:frames=>{animation.frames=frames;}};
       row.animation=animation; animationsCreated.push(animation); return animation;
     }
   }
@@ -325,6 +326,10 @@ const makeEffectHarness = (linearSupport, { vocalWindowMs = null } = {}) => {
   const vocalStack = vocalWindowMs === null ? null : { getAttribute: () => String(vocalWindowMs) };
   context=vm.createContext({
     ...(linearSupport === undefined ? {} : { CSS: { supports: () => linearSupport } }),
+    DOMMatrix:class {
+      constructor(transform){this.m42=translateY(transform || 'none');}
+      toString(){return matrix(this.m42);}
+    },
     isScrolling:false, compact:true, syncedManualScrollReturns:new WeakMap(),
     Element:Row, document:{timeline:{currentTime:1000}},
     containerRef:{current:{querySelector:()=>({children:rows})}},
@@ -491,6 +496,61 @@ test('real row effect preserves individual travel and pending delays through anc
   h.context.document.timeline.currentTime+=1000;
   h.rows.forEach(row=>assert.ok(Math.abs(h.y(row)-row.targetY)<1e-7));
 });
+
+for (const linearSupport of [false, true]) {
+  test(`supplement-only commits keep row travel, delay and velocity (${linearSupport ? 'native linear' : 'fallback'})`, () => {
+    const h = makeEffectHarness(linearSupport);
+    h.run(); h.context.visualLineIndex = 2; h.rows.forEach(row => { row.targetY -= 100; }); h.run();
+    h.context.document.timeline.currentTime += 100;
+    const animations = h.rows.map(row => row.animation);
+    const poses = h.rows.map(h.y);
+    const originalCurves = animations.map(animation => ({
+      frames: animation.frames.map(frame => ({ ...frame })), timing: { ...animation.timing },
+    }));
+    const times = animations.map(animation => animation.currentTime);
+    const created = h.animationsCreated.length;
+    // A remote streamed row changed, without changing any measured geometry.
+    h.context.suppressLayoutShiftAnimation = true; h.run();
+    h.context.suppressLayoutShiftAnimation = false; h.run();
+    h.rows.forEach((row, i) => {
+      assert.equal(row.animation, animations[i]);
+      assert.equal(row.animation.currentTime, times[i]);
+      assert.equal(row.animation.cancellations, 0, 'the in-flight effect is never interrupted');
+      assert.ok(Math.abs(h.y(row) - poses[i]) < 1e-8);
+    });
+    assert.equal(h.animationsCreated.length, created);
+    // A preceding row now grows 40px. Re-centering exactly cancels that
+    // natural displacement while every row keeps its original travel curve.
+    h.rows.forEach(row => { row.layoutTop += 40; row.targetY -= 40; });
+    h.context.compactOffset -= 40;
+    h.context.suppressLayoutShiftAnimation = true; h.run();
+    h.context.suppressLayoutShiftAnimation = false; h.run();
+    h.rows.forEach((row, i) => {
+      assert.equal(row.animation, animations[i]);
+      assert.equal(row.animation.cancellations, 0);
+      assert.equal(row.animation.currentTime, times[i]);
+      assert.ok(Math.abs(row.layoutTop + h.y(row) - poses[i]) < 1e-8, 'content cannot add a visible jump');
+    });
+    h.context.document.timeline.currentTime += 80;
+    h.rows.forEach((row, i) => {
+      const expected = sampleFrames(originalCurves[i].frames, originalCurves[i].timing, times[i] + 80) - 40;
+      assert.ok(Math.abs(h.y(row) - expected) < 1e-8);
+      assert.equal(row.animation.timing.duration, 560);
+    });
+    assert.equal(h.animationsCreated.length, created);
+    h.context.document.timeline.currentTime += 1000;
+    h.rows.forEach(row => assert.ok(Math.abs(h.y(row) - row.targetY) < 1e-8, 'same destination and deadline'));
+  });
+
+  test(`a lyric boundary during supplement correction still starts normal travel (${linearSupport ? 'native linear' : 'fallback'})`, () => {
+    const h = makeEffectHarness(linearSupport); h.run();
+    h.context.suppressLayoutShiftAnimation = true;
+    h.context.visualLineIndex++; h.rows.forEach(row => { row.targetY -= 100; }); h.run();
+    assert.equal(h.context.compactLineShiftAnimationsRef.current.size, 7);
+    assert.equal(h.rows[0].animation.timing.duration, 560);
+    assert.ok(h.rows.at(-1).animation.timing.delay > 0);
+  });
+}
 
 test('reverse seek, motion disable, and settings changes cancel live row movement', () => {
   for (const change of [h=>{h.context.visualLineIndex=1;},h=>{h.context.usesScriptedCompactLineShift=false;},h=>{h.context.settingsRevision=true;}]) {

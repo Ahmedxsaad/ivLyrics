@@ -4477,25 +4477,33 @@ const createLyricsLayoutObserver = () => {
 	let activeLine = null;
 	let syncLayout = null;
 	let disposed = false;
+	let contentChanged = false;
 	const cancelPending = () => {
 		if (frameId !== null) cancelRaf(frameId);
 		frameId = null;
+		contentChanged = false;
 	};
-	const scheduleSync = () => {
+	const scheduleSync = (changed = false) => {
+		contentChanged ||= changed;
 		if (disposed || frameId !== null) return;
 		frameId = raf(() => {
 			frameId = null;
-			if (!disposed) syncLayout?.();
+			const changed = contentChanged;
+			contentChanged = false;
+			if (!disposed) syncLayout?.(changed);
 		});
 	};
-	const resizeObserver = new ResizeObserver(scheduleSync);
+	const resizeObserver = new ResizeObserver(() => scheduleSync());
 	const mutationObserver = typeof MutationObserver === "undefined"
-		? null : new MutationObserver(scheduleSync);
+		? null : new MutationObserver((records = []) => scheduleSync(records.some(
+			record => record.type === "childList" || record.type === "characterData"
+		)));
 	return {
 		cancelPending,
 		scheduleSync,
 		update(nextContainer, nextActiveLine, callback) {
 			syncLayout = callback;
+			const targetsChanged = nextContainer !== container || nextActiveLine !== activeLine;
 			// Retain each observation until its DOM target changes. Re-observing
 			// unchanged rows delivers an extra initial resize notification.
 			if (nextContainer !== container) {
@@ -4506,9 +4514,16 @@ const createLyricsLayoutObserver = () => {
 			if (nextActiveLine !== activeLine) {
 				if (activeLine) resizeObserver.unobserve(activeLine);
 				activeLine = nextActiveLine;
+				if (activeLine) resizeObserver.observe(activeLine);
+			}
+			if (targetsChanged) {
 				mutationObserver?.disconnect();
+				// One subtree observation also catches a predecessor's asynchronous
+				// word stack. Glyph fill/style/class writes are deliberately excluded.
+				if (container) mutationObserver?.observe(container, {
+					childList: true, characterData: true, subtree: true,
+				});
 				if (activeLine) {
-					resizeObserver.observe(activeLine);
 					mutationObserver?.observe(activeLine, {
 						attributes: true,
 						attributeFilter: ["data-karaoke-vocal-anchor-position", "data-karaoke-vocal-anchor-window-ms"],
@@ -6460,7 +6475,7 @@ const useSyncedLyricsEngine = ({
 	// active line shifts, scrolling state flips, compact mode toggles.
 	const [compactOffset, setCompactOffset] = useState(0);
 	const [suppressLayoutShiftAnimation, setSuppressLayoutShiftAnimation] = useState(false);
-	const lyricMotionDetailsEnabled = (compact || !isScrolling) && !suppressLayoutShiftAnimation
+	const lyricMotionDetailsEnabled = (compact || !isScrolling) && (!suppressLayoutShiftAnimation || usesScriptedCompactLineShift)
 		&& (!isKara || CONFIG.visual["karaoke-line-transition"])
 		&& !prefersReducedLyricsMotion();
 	const activeInterlude = trailingInterludeLine
@@ -6519,6 +6534,8 @@ const useSyncedLyricsEngine = ({
 		: trailingInterludeStyle, [trailingInterludeStyle, lineMotionPlan]);
 	const previousPreparedLyricsRef = useRef(preparedLyrics);
 	const layoutShiftAnimationFramesRef = useRef({ first: null, second: null });
+	const [contentLayoutRevision, setContentLayoutRevision] = useState(0);
+	const previousContentLayoutRevisionRef = useRef(contentLayoutRevision);
 	const layoutObserverRef = useRef(null);
 	const syncCompactOffset = useCallback(() => {
 		if (!compact) {
@@ -6547,11 +6564,13 @@ const useSyncedLyricsEngine = ({
 	// Streaming translation/pronunciation changes lyric row heights without
 	// changing playback position. Re-centering is still necessary, but animating
 	// that corrective offset makes the active lyric fall and spring back for every
-	// streamed line. Suppress only the corrective transition for two frames; the
-	// normal animated transition remains enabled when playback advances a line.
+	// streamed line. Mark corrective layout work for two frames: scripted rows
+	// rebase their existing travel, and the CSS fallback suppresses its correction.
 	useSyncedLayoutEffect(() => {
 		const previousPreparedLyrics = previousPreparedLyricsRef.current;
 		previousPreparedLyricsRef.current = preparedLyrics;
+		const contentChanged = previousContentLayoutRevisionRef.current !== contentLayoutRevision;
+		previousContentLayoutRevisionRef.current = contentLayoutRevision;
 
 		const frames = layoutShiftAnimationFramesRef.current;
 		const cancelFrame = typeof cancelAnimationFrame === "function"
@@ -6562,7 +6581,7 @@ const useSyncedLyricsEngine = ({
 		frames.first = null;
 		frames.second = null;
 
-		if (!compact || isScrolling || previousPreparedLyrics === preparedLyrics) {
+		if (!compact || isScrolling || (previousPreparedLyrics === preparedLyrics && !contentChanged)) {
 			setSuppressLayoutShiftAnimation(false);
 			return undefined;
 		}
@@ -6585,7 +6604,7 @@ const useSyncedLyricsEngine = ({
 			frames.first = null;
 			frames.second = null;
 		};
-	}, [compact, isScrolling, preparedLyrics]);
+	}, [compact, isScrolling, preparedLyrics, contentLayoutRevision]);
 
   useSyncedLayoutEffect(() => {
           syncCompactOffset();
@@ -6600,8 +6619,13 @@ const useSyncedLyricsEngine = ({
 			return undefined;
 		}
 		const observer = layoutObserverRef.current ??= createLyricsLayoutObserver();
-		observer.update(container, activeLine, compact ? syncCompactOffset : () => {
-			scrollSyncedContainerToActiveLine(containerRef.current, activeLineRef.current, "sync");
+		observer.update(container, activeLine, (contentChanged) => {
+			if (compact) {
+				if (contentChanged) setContentLayoutRevision(revision => revision + 1);
+				syncCompactOffset();
+			} else {
+				scrollSyncedContainerToActiveLine(containerRef.current, activeLineRef.current, "sync");
+			}
 		});
 		// Earlier rows can grow without resizing either observed target. The
 		// expanded view still needs the correction previously supplied by a new
@@ -6728,7 +6752,7 @@ const useSyncedLyricsEngine = ({
 			animations.forEach((animation) => animation.pause());
 			return undefined;
 		}
-		if (!usesScriptedCompactLineShift || suppressLayoutShiftAnimation) {
+		if (!usesScriptedCompactLineShift) {
 			animations.forEach((animation) => animation.cancel());
 			animations.clear();
 			compactLineTransformSnapshotsRef.current = new WeakMap();
@@ -6770,10 +6794,43 @@ const useSyncedLyricsEngine = ({
 
 			const previousContext = compactLineMotionContextRef.current;
 			const sourceChanged = previousContext?.visualLineIndex !== visualLineIndex;
+			const samePresentation = previousContext && !sourceChanged
+				&& previousContext.settingsRevision === settingsRevision
+				&& previousContext.lyricsId === lyricsId
+				&& previousContext.trailingInterludeKey === trailingInterludeKey;
+			const layoutCorrection = samePresentation && suppressLayoutShiftAnimation;
 			const jump = previousContext && (visualLineIndex < previousContext.visualLineIndex
 				|| visualLineIndex - previousContext.visualLineIndex > 1
 				|| settingsRevision !== previousContext.settingsRevision);
-			compactLineMotionContextRef.current = { visualLineIndex, settingsRevision };
+			compactLineMotionContextRef.current = {
+				visualLineIndex, settingsRevision, lyricsId, trailingInterludeKey, compactOffset, layoutCorrection,
+			};
+			if (layoutCorrection || (samePresentation && previousContext.layoutCorrection
+				&& compactOffset === previousContext.compactOffset)) {
+				// Content growth changes the centered destination, not the row's
+				// remaining travel. Rebase the same compositor effect; never cancel
+				// or restart its curve, stagger, velocity, or elapsed time.
+				const offsetDelta = compactOffset - previousContext.compactOffset;
+				if (Math.abs(offsetDelta) < 0.01) return;
+				for (const element of lines) {
+					const animation = animations.get(element);
+					const motion = animation && motionData.get(animation);
+					const target = motion?.targetTransform || snapshots.get(element);
+					if (!target) continue;
+					const targetTransform = offsetTransformVertically(target, offsetDelta);
+					snapshots.set(element, targetTransform);
+					if (!motion) continue;
+					motion.targetTransform = targetTransform;
+					motion.keyframes = motion.easing === "linear"
+						? motion.stops.map(([offset, value]) => ({ offset,
+							transform: offsetTransformVertically(targetTransform, motion.deltaY * (1 - value)),
+						}))
+						: [{ offset: 0, transform: offsetTransformVertically(targetTransform, motion.deltaY) },
+							{ offset: 1, transform: targetTransform }];
+					animation.effect.setKeyframes(motion.keyframes);
+				}
+				return;
+			}
 			const previousStates = new Map();
 			for (const element of lines) {
 				const animation = animations.get(element);
@@ -8300,15 +8357,32 @@ const useKaraokeWordStackSupplements = ({ line, timedChars, timedText, wordTimed
 			return "";
 		}
 	}, [suitable, supplementsApi, line, units]);
-	const [readings, setReadings] = useState([]);
-	const [glosses, setGlosses] = useState([]);
+	const getTrackUri = () => String(window.Spicetify?.Player?.data?.item?.uri || "");
+	const trackUri = getTrackUri();
+	const targetLang = supplementsApi?.getGlossTargetLanguage?.() || "";
+	const pronunciationNotation = supplementsApi?.getPronunciationNotation?.() || "";
+	const unitSignature = useMemo(() => JSON.stringify(units.map(unit => [unit.wordKey, unit.surface])), [units]);
+	const sourceKey = useMemo(() => JSON.stringify([trackUri, lineKey, timedText, sourceLang, unitSignature]),
+		[trackUri, lineKey, timedText, sourceLang, unitSignature]);
+	const readingKey = lineKey && readingMode
+		? JSON.stringify([sourceKey, targetLang, readingMode, pronunciationNotation]) : "";
+	const glossKey = lineKey && glossActive ? JSON.stringify([sourceKey, targetLang]) : "";
+	const [readingResult, setReadingResult] = useState(null);
+	const [glossResult, setGlossResult] = useState(null);
+	// A pending refresh may reuse only the exact same source/output. Deriving
+	// visibility during render also hides another track or target before effects
+	// have had a chance to cancel the previous request.
+	const readings = useMemo(() => readingKey && readingResult?.key === readingKey
+		&& readingResult.api === supplementsApi ? readingResult.values : [], [readingResult, readingKey, supplementsApi]);
+	const glosses = useMemo(() => glossKey && glossResult?.key === glossKey
+		&& glossResult.api === supplementsApi ? glossResult.values : [], [glossResult, glossKey, supplementsApi]);
+	const currentRequestRef = useRef(null);
+	currentRequestRef.current = { api: supplementsApi, readingKey, glossKey };
 	const [wordRevision, setWordRevision] = useState(0);
 	const [wordRetry, setWordRetry] = useState(0);
 	useEffect(() => {
 		if (typeof window.addEventListener !== "function") return undefined;
 		const handleInvalidate = () => {
-			setReadings([]);
-			setGlosses([]);
 			setWordRevision((revision) => revision + 1);
 		};
 		window.addEventListener("ivLyrics:word-supplements-invalidated", handleInvalidate);
@@ -8319,32 +8393,33 @@ const useKaraokeWordStackSupplements = ({ line, timedChars, timedText, wordTimed
 		};
 	}, []);
 	useEffect(() => {
-		if (!lineKey || (!readingMode && !glossActive)) {
-			setReadings([]);
-			setGlosses([]);
-			return;
-		}
+		if (!readingKey && !glossKey) return undefined;
 		let cancelled = false;
-		setReadings([]);
-		setGlosses([]);
-		if (readingMode) {
-			supplementsApi.getWordReadings(units, sourceLang, readingMode, timedText).then((values) => {
-				if (!cancelled) setReadings(Array.isArray(values) ? values : []);
-			}).catch(() => {
-				if (!cancelled) setReadings([]);
-			});
+		const options = trackUri ? { trackId: trackUri.split(":").pop() } : undefined;
+		const publish = (slot, key, setter, values) => {
+			if (cancelled || !Array.isArray(values)
+				|| currentRequestRef.current?.api !== supplementsApi
+				|| currentRequestRef.current?.[slot] !== key || getTrackUri() !== trackUri
+				|| (supplementsApi.getGlossTargetLanguage?.() || "") !== targetLang
+				|| (slot === "readingKey" && (supplementsApi.getPronunciationNotation?.() || "") !== pronunciationNotation)) return;
+			setter(previous => previous?.api === supplementsApi && previous.key === key
+				&& previous.values.length === values.length && values.every((value, index) => value === previous.values[index])
+				? previous : { api: supplementsApi, key, values });
+		};
+		if (readingKey) {
+			supplementsApi.getWordReadings(units, sourceLang, readingMode, timedText, options).then((values) => {
+				publish("readingKey", readingKey, setReadingResult, values);
+			}).catch(() => { /* Retain a valid same-source reading during transient failures. */ });
 		}
-		if (glossActive) {
-			supplementsApi.getWordGlosses(units, timedText, sourceLang).then((values) => {
-				if (!cancelled) setGlosses(Array.isArray(values) ? values : []);
-			}).catch(() => {
-				if (!cancelled) setGlosses([]);
-			});
+		if (glossKey) {
+			supplementsApi.getWordGlosses(units, timedText, sourceLang, options).then((values) => {
+				publish("glossKey", glossKey, setGlossResult, values);
+			}).catch(() => { /* A refresh failure does not unmount an existing word stack. */ });
 		}
 		return () => {
 			cancelled = true;
 		};
-	}, [lineKey, readingMode, glossActive, timedText, settingsRevision, wordRevision, wordRetry]);
+	}, [supplementsApi, readingKey, glossKey, settingsRevision, wordRevision, wordRetry]);
 	// Self-heal: a transient fetch failure (flaky gateway, poisoned batch)
 	// leaves rows empty with nothing retrying until a remount (scroll). One
 	// delayed retry recovers without user input. Fully-passthrough lines hit

@@ -16,7 +16,8 @@ function harness({ mutations = true } = {}) {
     observations = 0;
     removals = 0;
     constructor(callback) { this.callback = callback; observers.push(this); }
-    observe(target) { this.targets.add(target); this.observations++; }
+    options = new Map();
+    observe(target, options) { this.targets.add(target); this.options.set(target, options); this.observations++; }
     unobserve(target) { this.targets.delete(target); this.removals++; }
     disconnect() { this.targets.clear(); }
   }
@@ -59,7 +60,7 @@ test('settings and vocal-anchor changes retain observers and line transitions re
   }
   assert.equal(h.observers.length, 2);
   assert.equal(h.observers[0].observations, 2, 'container and row are each observed only once');
-  assert.equal(h.observers[1].observations, 1);
+  assert.equal(h.observers[1].observations, 2, 'one content subtree plus the vocal anchor');
   h.observers[1].callback();
   h.flush();
   assert.deepEqual(h.reads, [99], 'notifications call the latest compact/expanded callback');
@@ -67,7 +68,7 @@ test('settings and vocal-anchor changes retain observers and line transitions re
   assert.deepEqual([...h.observers[0].targets], [container, nextRow]);
   assert.equal(h.observers[0].observations, 3);
   assert.equal(h.observers[0].removals, 1);
-  assert.deepEqual([...h.observers[1].targets], [nextRow]);
+  assert.deepEqual([...h.observers[1].targets], [container, nextRow]);
   h.observers[0].callback();
   h.flush();
   assert.deepEqual(h.reads, [99, 'next row'], 'initial resize delivery for a new row is honored');
@@ -112,4 +113,41 @@ test('expanded content changes can recenter an offscreen anchor without a target
   h.flush();
   assert.deepEqual(h.reads, [40, 900]);
   assert.equal(h.observers[0].observations, 2, 'content corrections need no observer reattachment');
+});
+
+test('predecessor word-stack mutations recenter once per frame without observing each row or glyph styles', () => {
+  const h = harness(), container = {}, active = { top: 200 }, predecessor = {};
+  h.manager.update(container, active, contentChanged => h.reads.push({ top: active.top, contentChanged }));
+  const [resize, mutation] = h.observers;
+  assert.equal(h.observers.length, 2);
+  assert.deepEqual([...resize.targets], [container, active]);
+  assert.equal(resize.targets.has(predecessor), false);
+  assert.deepEqual({ ...mutation.options.get(container) }, { childList: true, characterData: true, subtree: true });
+  assert.equal(mutation.options.get(container).attributes, undefined, 'per-frame glyph styles/classes are excluded');
+  for (let i = 0; i < 1000; i++) {
+    mutation.callback([{ type: i % 2 ? 'childList' : 'characterData', target: predecessor }]);
+    resize.callback();
+  }
+  active.top += 40;
+  assert.equal(h.frames.size, 1);
+  h.flush();
+  assert.deepEqual(h.reads, [{ top: 240, contentChanged: true }]);
+  mutation.callback([{ type: 'attributes', attributeName: 'data-karaoke-vocal-anchor-position' }]);
+  h.flush();
+  assert.deepEqual(h.reads.at(-1), { top: 240, contentChanged: false }, 'vocal travel keeps its ordinary animation path');
+});
+
+test('consumed content notifications cannot mark later vocal movement as a supplement correction', () => {
+  const h = harness(), container = {}, row = {};
+  h.manager.update(container, row, changed => h.reads.push(changed));
+  h.observers[1].callback([{ type: 'childList' }]);
+  h.manager.cancelPending();
+  h.observers[1].callback([{ type: 'attributes' }]);
+  h.flush();
+  assert.deepEqual(h.reads, [false]);
+  h.observers[1].callback([{ type: 'characterData' }]);
+  h.manager.disconnect();
+  h.flush();
+  assert.equal(h.frames.size, 0);
+  assert.deepEqual(h.reads, [false]);
 });
