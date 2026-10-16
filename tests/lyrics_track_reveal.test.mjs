@@ -357,6 +357,20 @@ for (const name of ["SyncedLyricsPage", "SyncedExpandedLyricsPage", "UnsyncedLyr
   });
 }
 
+for (const name of ["SyncedLyricsPage", "SyncedExpandedLyricsPage"]) {
+  test(`${name}: supplements do not change page identity, but a real track change does`, () => {
+    const component = loadPageRenderers()[name];
+    const key = tree => name === "SyncedLyricsPage" ? tree.children[0].props.key : tree.props.key;
+    const base = [{ text: "original", originalText: "original", startTime: 1000 }];
+    const first = key(component({ lyrics: base, trackUri: "spotify:track:first" }));
+    const translated = [{ ...base[0], text: "reading", text2: "meaning", culturalNote: [{ note: "context" }] }];
+    assert.equal(key(component({ lyrics: translated, trackUri: "spotify:track:first", trackRevealKey: "ready" })), first);
+    assert.notEqual(key(component({ lyrics: translated, trackUri: "spotify:track:second" })), first);
+    assert.equal(key(component({ lyrics: translated })), key(component({ lyrics: base })),
+      "source-only previews use the original text, not a generated pronunciation");
+  });
+}
+
 test("a queued auto-follow callback cannot reset the first manual wheel before React commits", () => {
   const h = createCompactOffsetHarness({ scrollTop: 1200 });
   h.container.classList = { contains: name => name === "scrolling-active" };

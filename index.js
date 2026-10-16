@@ -636,8 +636,54 @@ const cloneTranslationVocals = (vocals) => {
   };
 };
 
+const hasSameLyricsPresentationFields = (previous, next) => {
+  if (previous === next) return true;
+  if (!previous || !next || typeof previous !== "object" || typeof next !== "object") return false;
+  const keys = Object.keys(next);
+  return Object.keys(previous).length === keys.length
+    && keys.every(key => Object.prototype.hasOwnProperty.call(previous, key) && Object.is(previous[key], next[key]));
+};
+
+// Streamed supplements change only a few rows at a time. Share unchanged
+// presentation nodes without walking (or hashing) the syllable/timing payload.
+const reuseLyricsPresentation = (previous, next) => {
+  if (!Array.isArray(previous) || !Array.isArray(next)) return next;
+  let unchanged = previous.length === next.length;
+  const result = next.map((line, index) => {
+    const before = previous[index];
+    let candidate = line;
+    if (before?.vocals && line?.vocals && before.vocals !== line.vocals) {
+      const lead = hasSameLyricsPresentationFields(before.vocals.lead, line.vocals.lead)
+        ? before.vocals.lead : line.vocals.lead;
+      let background = line.vocals.background;
+      if (Array.isArray(background) && Array.isArray(before.vocals.background)) {
+        background = background.map((part, partIndex) =>
+          hasSameLyricsPresentationFields(before.vocals.background[partIndex], part)
+            ? before.vocals.background[partIndex] : part);
+        if (background.length === before.vocals.background.length
+          && background.every((part, partIndex) => part === before.vocals.background[partIndex])) {
+          background = before.vocals.background;
+        }
+      }
+      const vocals = { ...line.vocals };
+      if (Object.prototype.hasOwnProperty.call(vocals, "lead")) vocals.lead = lead;
+      if (Object.prototype.hasOwnProperty.call(vocals, "background")) vocals.background = background;
+      candidate = { ...line, vocals: hasSameLyricsPresentationFields(before.vocals, vocals) ? before.vocals : vocals };
+    }
+    const shared = hasSameLyricsPresentationFields(before, candidate) ? before : candidate;
+    if (shared !== before) unchanged = false;
+    return shared;
+  });
+  return unchanged ? previous : result;
+};
+
 const withoutVocalSupplementField = (vocals, field) => {
   if (!vocals?.lead || !field) {
+    return vocals;
+  }
+  if (!Object.prototype.hasOwnProperty.call(vocals.lead, field)
+    && (!Array.isArray(vocals.background)
+      || !vocals.background.some(part => Object.prototype.hasOwnProperty.call(part || {}, field)))) {
     return vocals;
   }
 
@@ -705,6 +751,7 @@ const mergeVocalTranslationFields = (baseVocals, modeVocals, targetField, transf
       }
       return;
     }
+    if (baseTargetPart?.[targetField] === value) return;
 
     const targetPart = getTargetPart(ensureVocals());
     if (targetPart) {
@@ -5693,7 +5740,7 @@ class LyricsContainer extends react.Component {
       : null;
     const notesByIndex = result?.notesByIndex || null;
 
-    return lyrics.map((line, index) => {
+    const annotated = lyrics.map((line, index) => {
       if (!line || typeof line !== "object") return line;
       const note = notesByIndex?.get(index) || null;
       if (note) {
@@ -5703,6 +5750,7 @@ class LyricsContainer extends react.Component {
       const { culturalNote: _ignoredCulturalNote, ...lineWithoutCulturalNote } = line;
       return lineWithoutCulturalNote;
     });
+    return reuseLyricsPresentation(lyrics, annotated);
   }
 
   requestCulturalAnnotations({
@@ -8734,7 +8782,8 @@ class LyricsContainer extends react.Component {
       return safeLine;
     });
 
-    return this.applyCulturalAnnotations(processedLyrics, this.state.uri);
+    return reuseLyricsPresentation(this.state?.currentLyrics,
+      this.applyCulturalAnnotations(processedLyrics, this.state.uri));
   }
 
   getGeminiTranslation(lyricsState, lyrics, mode, onProgress = null) {
