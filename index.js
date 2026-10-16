@@ -5135,6 +5135,7 @@ class LyricsContainer extends react.Component {
     this._invalidatedSharedPresentationSnapshots = new WeakSet();
     this._culturalAnnotationResults = new Map();
     this._culturalAnnotationRequests = new Map();
+    this._activeCulturalAnnotationRequests = new Map();
     this._culturalAnnotationCacheEpoch = 0;
     this._isComponentMounted = false;
 
@@ -5705,6 +5706,7 @@ class LyricsContainer extends react.Component {
 
     this._culturalAnnotationCacheEpoch += 1;
     this._culturalAnnotationResults.delete(uri);
+    this._activeCulturalAnnotationRequests.delete(uri);
     for (const requestKey of this._culturalAnnotationRequests.keys()) {
       if (requestKey.startsWith(`${uri}:`)) {
         this._culturalAnnotationRequests.delete(requestKey);
@@ -5723,6 +5725,7 @@ class LyricsContainer extends react.Component {
     this._culturalAnnotationCacheEpoch += 1;
     this._culturalAnnotationResults.clear();
     this._culturalAnnotationRequests.clear();
+    this._activeCulturalAnnotationRequests.clear();
     this.clearCulturalAnnotationsLoading();
 
     if (updateState && this._isComponentMounted) {
@@ -5760,6 +5763,7 @@ class LyricsContainer extends react.Component {
     uri,
     ignoreCache = false,
     notifyOnError = true,
+    onSuperseded = null,
   }) {
     if (!this.isCulturalAnnotationsEnabled() || !window.Translator?.generateCulturalAnnotations) {
       return Promise.resolve(null);
@@ -5773,12 +5777,16 @@ class LyricsContainer extends react.Component {
     const schemaVersion = 4;
     const resultKey = `v${schemaVersion}:${sourceLang || "auto"}:${targetLang}:${sourceSignature}`;
     if (!ignoreCache && this._culturalAnnotationResults.get(uri)?.key === resultKey) {
+      // Returning to a cached language/source also supersedes an older fetch.
+      this._activeCulturalAnnotationRequests.delete(uri);
       return Promise.resolve(this._culturalAnnotationResults.get(uri));
     }
 
     const requestKey = `${uri}:${resultKey}`;
     if (!ignoreCache && this._culturalAnnotationRequests.has(requestKey)) {
-      return this._culturalAnnotationRequests.get(requestKey);
+      const pending = this._culturalAnnotationRequests.get(requestKey);
+      this._activeCulturalAnnotationRequests.set(uri, pending);
+      return pending;
     }
 
     const requestEpoch = this._culturalAnnotationCacheEpoch;
@@ -5808,7 +5816,11 @@ class LyricsContainer extends react.Component {
         });
       },
     }).then((result) => {
-      if (requestEpoch !== this._culturalAnnotationCacheEpoch) {
+      if (requestEpoch !== this._culturalAnnotationCacheEpoch ||
+          this._activeCulturalAnnotationRequests.get(uri) !== request ||
+          this.getTranslationTargetLanguage() !== targetLang ||
+          !this.isCulturalAnnotationsEnabled()) {
+        onSuperseded?.();
         return null;
       }
       const notesByIndex = new Map();
@@ -5840,7 +5852,11 @@ class LyricsContainer extends react.Component {
       }
       return result;
     }).catch((error) => {
-      if (requestEpoch !== this._culturalAnnotationCacheEpoch) {
+      if (requestEpoch !== this._culturalAnnotationCacheEpoch ||
+          this._activeCulturalAnnotationRequests.get(uri) !== request ||
+          this.getTranslationTargetLanguage() !== targetLang ||
+          !this.isCulturalAnnotationsEnabled()) {
+        onSuperseded?.();
         return null;
       }
       console.warn("[ivLyrics] Cultural annotation request failed:", error);
@@ -5854,10 +5870,14 @@ class LyricsContainer extends react.Component {
       if (this._culturalAnnotationRequests.get(requestKey) === request) {
         this._culturalAnnotationRequests.delete(requestKey);
       }
+      if (this._activeCulturalAnnotationRequests.get(uri) === request) {
+        this._activeCulturalAnnotationRequests.delete(uri);
+      }
       this.clearCulturalAnnotationsLoading(loadingToken, { completed });
     });
 
     this._culturalAnnotationRequests.set(requestKey, request);
+    this._activeCulturalAnnotationRequests.set(uri, request);
     return request;
   }
 
@@ -6832,6 +6852,13 @@ class LyricsContainer extends react.Component {
     const uri = lyricsState.uri || Spicetify.Player.data?.item?.uri;
     const trackId = Utils.extractTrackId(uri) || uri;
     const lyrics = this.getCurrentCulturalAnnotationLyrics();
+    const targetLang = this.getTranslationTargetLanguage();
+    let regenerationEpoch = null;
+    let superseded = false;
+    const isCurrentRegeneration = () => !superseded &&
+      this.isCurrentLyricsUri(uri) && this.isCulturalAnnotationsEnabled() &&
+      this.getTranslationTargetLanguage() === targetLang &&
+      (regenerationEpoch === null || regenerationEpoch === this._culturalAnnotationCacheEpoch);
     if (!uri || !trackId) {
       Toast.error(I18n.t("notifications.noTrackPlaying"));
       return;
@@ -6850,12 +6877,12 @@ class LyricsContainer extends react.Component {
 
     try {
       this.clearCulturalAnnotationsForTrack(uri, { updateState: true });
+      regenerationEpoch = this._culturalAnnotationCacheEpoch;
       const cacheCleared = await LyricsCache.clearCulturalAnnotationsForTrack(trackId);
+      if (!isCurrentRegeneration()) return;
       if (!cacheCleared) {
         throw new Error("Failed to clear cultural annotation cache.");
       }
-      if (!this.isCurrentLyricsUri(uri)) return;
-
       const result = await this.requestCulturalAnnotations({
         lyricsState,
         lyrics,
@@ -6863,18 +6890,20 @@ class LyricsContainer extends react.Component {
         uri,
         ignoreCache: true,
         notifyOnError: false,
+        onSuperseded: () => { superseded = true; },
       });
+      if (!isCurrentRegeneration()) return;
       if (!result) {
         throw new Error("No cultural annotation result.");
       }
-      if (this.isCurrentLyricsUri(uri)) {
+      if (isCurrentRegeneration()) {
         Toast.success(
           I18n.t("notifications.culturalAnnotationsRegenerated") ||
             "문화적 배경 설명이 재생성되었습니다."
         );
       }
     } catch (error) {
-      if (this.isCurrentLyricsUri(uri)) {
+      if (isCurrentRegeneration()) {
         Toast.error(
           `${I18n.t("notifications.culturalAnnotationsRegenerateFailed") ||
             "문화적 배경 설명 재생성 실패"}: ${error.message}`
