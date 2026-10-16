@@ -3002,7 +3002,7 @@ window.LANG_CS = {
     "kindBlur": "Rozostření",
     "kindPop": "Pop",
     "rangeStyleTitle": "Částečné efekty · barva",
-    "rangeStyleHint": "Tažením vyberte libovolné znaky nezávisle na jednotce synchronizace.",
+    "rangeStyleHint": "V náhledu nebo v nečinnosti vyber znaky tažením pravým tlačítkem na řádku textu.",
     "rangeStyleSelectLabel": "Rozsah znaků pro styl",
     "rangeStyleSelected": "Vybráno",
     "rangeStyleSelectPrompt": "Nejprve přetáhněte přes požadované znaky.",

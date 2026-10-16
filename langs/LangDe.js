@@ -3002,7 +3002,7 @@ window.LANG_DE = {
     "kindBlur": "Unschärfe",
     "kindPop": "Pop",
     "rangeStyleTitle": "Teileffekte · Farbe",
-    "rangeStyleHint": "Ziehe über beliebige Zeichen, unabhängig von der Timing-Einheit.",
+    "rangeStyleHint": "Wähle in der Vorschau oder im Leerlauf Zeichen per Rechtsziehen auf der Liedtextzeile.",
     "rangeStyleSelectLabel": "Zeichenbereich für Stil",
     "rangeStyleSelected": "Ausgewählt",
     "rangeStyleSelectPrompt": "Ziehe zuerst über die gewünschten Zeichen.",

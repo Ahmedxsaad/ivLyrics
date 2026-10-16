@@ -3002,7 +3002,7 @@ window.LANG_ES = {
     "kindBlur": "Desenfoque",
     "kindPop": "Pop",
     "rangeStyleTitle": "Efectos parciales · color",
-    "rangeStyleHint": "Arrastra para seleccionar caracteres sin depender de la unidad de sincronización.",
+    "rangeStyleHint": "Arrastra con el botón derecho sobre la línea para seleccionar caracteres, en vista previa o reposo.",
     "rangeStyleSelectLabel": "Rango de caracteres para aplicar estilo",
     "rangeStyleSelected": "Selección",
     "rangeStyleSelectPrompt": "Primero arrastra sobre los caracteres deseados.",

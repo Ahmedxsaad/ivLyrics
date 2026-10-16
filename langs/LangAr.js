@@ -3002,7 +3002,7 @@ window.LANG_AR = {
     "kindBlur": "ضبابية",
     "kindPop": "فرقعة",
     "rangeStyleTitle": "تأثيرات جزئية · لون",
-    "rangeStyleHint": "اسحب لتحديد أي أحرف بصورة مستقلة عن وحدة التزامن.",
+    "rangeStyleHint": "اسحب بزر الفأرة الأيمن على سطر الكلمات لتحديد الأحرف، في وضع المعاينة أو الخمول.",
     "rangeStyleSelectLabel": "نطاق الأحرف المراد تنسيقه",
     "rangeStyleSelected": "المحدد",
     "rangeStyleSelectPrompt": "اسحب أولاً فوق الأحرف المطلوبة.",

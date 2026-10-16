@@ -3002,7 +3002,7 @@ window.LANG_TH = {
     "kindBlur": "เบลอ",
     "kindPop": "ป๊อป",
     "rangeStyleTitle": "เอฟเฟกต์บางส่วน · สี",
-    "rangeStyleHint": "ลากเพื่อเลือกตัวอักษรใดก็ได้โดยไม่ขึ้นกับหน่วยซิงก์",
+    "rangeStyleHint": "ลากด้วยคลิกขวาบนบรรทัดเพลงเพื่อเลือกตัวอักษร ในโหมดพรีวิวหรือว่าง",
     "rangeStyleSelectLabel": "ช่วงตัวอักษรที่จะใส่สไตล์",
     "rangeStyleSelected": "เลือกแล้ว",
     "rangeStyleSelectPrompt": "ลากเลือกตัวอักษรที่ต้องการก่อน",

@@ -3002,7 +3002,7 @@ window.LANG_SV = {
     "kindBlur": "Oskärpa",
     "kindPop": "Pop",
     "rangeStyleTitle": "Partiella effekter · färg",
-    "rangeStyleHint": "Dra för att välja valfria tecken oberoende av synkenhet.",
+    "rangeStyleHint": "Högerdra på textraden för att välja tecken, i förhandsvisning eller viloläge.",
     "rangeStyleSelectLabel": "Teckenintervall att formatera",
     "rangeStyleSelected": "Valt",
     "rangeStyleSelectPrompt": "Dra först över de tecken du vill formatera.",

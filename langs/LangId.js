@@ -3002,7 +3002,7 @@ window.LANG_ID = {
     "kindBlur": "Buram",
     "kindPop": "Pop",
     "rangeStyleTitle": "Efek sebagian · warna",
-    "rangeStyleHint": "Seret untuk memilih karakter apa pun tanpa bergantung pada unit sinkronisasi.",
+    "rangeStyleHint": "Seret dengan klik kanan pada baris lirik untuk memilih karakter, dalam pratinjau atau idle.",
     "rangeStyleSelectLabel": "Rentang karakter yang akan diberi gaya",
     "rangeStyleSelected": "Dipilih",
     "rangeStyleSelectPrompt": "Seret dulu pada karakter yang diinginkan.",

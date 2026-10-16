@@ -3002,7 +3002,7 @@ window.LANG_HI = {
     "kindBlur": "धुंधला",
     "kindPop": "पॉप",
     "rangeStyleTitle": "आंशिक प्रभाव · रंग",
-    "rangeStyleHint": "सिंक इकाई से अलग किसी भी अक्षर को खींचकर चुनें।",
+    "rangeStyleHint": "प्रीव्यू या आइडल में गीत पंक्ति पर राइट-ड्रैग करके अक्षर चुनें।",
     "rangeStyleSelectLabel": "शैली के लिए अक्षर सीमा",
     "rangeStyleSelected": "चयनित",
     "rangeStyleSelectPrompt": "पहले इच्छित अक्षरों पर खींचें।",

@@ -3425,7 +3425,6 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	const [isParallelSplitCollapsed, setIsParallelSplitCollapsed] = useState(false);
 	const [lineMetaDrafts, setLineMetaDrafts] = useState({});
 	const [lineStyleDrafts, setLineStyleDrafts] = useState({});
-	const [styleRangeSelection, setStyleRangeSelection] = useState(null);
 	const [styleRangeEffect, setStyleRangeEffect] = useState('');
 	const [styleRangeSpeaker, setStyleRangeSpeaker] = useState(SYNC_CREATOR_DEFAULT_SPEAKER);
 	const [styleRangeSpeakerColor, setStyleRangeSpeakerColor] = useState('');
@@ -3555,7 +3554,6 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 	const historyListRef = useRef(null);
 	const historyPanelRef = useRef(null);
 	const historyResizeDragRef = useRef(null);
-	const styleRangeDragRef = useRef(null);
 	const characterPronunciationCacheRequestRef = useRef(0);
 	const characterPronunciationGenerationRequestRef = useRef(0);
 	const characterPronunciationProgressOwnerRef = useRef(0);
@@ -8310,42 +8308,16 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		});
 	}, [lineCharOffsets, currentLineIndex, multiVocalMode, claimSessionForLocalEditing]);
 
-	const beginStyleRangeSelection = useCallback((localIndex, event) => {
-		if (!Number.isInteger(localIndex) || localIndex < 0 || localIndex >= currentFullLineChars.length) return;
-		event?.preventDefault?.();
-		event?.stopPropagation?.();
-		styleRangeDragRef.current = { anchor: localIndex };
-		setStyleRangeSelection({ anchor: localIndex, focus: localIndex });
+	useEffect(() => {
 		setStyleRangeEffect('');
-	}, [currentFullLineChars.length]);
+	}, [offsetSelectionRange]);
 
-	const extendStyleRangeSelection = useCallback((localIndex) => {
-		const drag = styleRangeDragRef.current;
-		if (!drag || !Number.isInteger(localIndex)) return;
-		setStyleRangeSelection({ anchor: drag.anchor, focus: localIndex });
-	}, []);
-
-	useEffect(() => {
-		const finishSelection = () => {
-			styleRangeDragRef.current = null;
-		};
-		document.addEventListener('pointerup', finishSelection, true);
-		document.addEventListener('pointercancel', finishSelection, true);
-		return () => {
-			document.removeEventListener('pointerup', finishSelection, true);
-			document.removeEventListener('pointercancel', finishSelection, true);
-		};
-	}, []);
-
-	useEffect(() => {
-		styleRangeDragRef.current = null;
-		setStyleRangeSelection(null);
-	}, [currentLineStart, currentFullLineChars.length]);
-
-	const updateCurrentLineStyleRanges = useCallback((patch) => {
-		if (!styleRangeSelection || currentFullLineChars.length === 0) return false;
-		const localStart = Math.min(styleRangeSelection.anchor, styleRangeSelection.focus);
-		const localEnd = Math.max(styleRangeSelection.anchor, styleRangeSelection.focus);
+	const updateCurrentLineStyleRanges = useCallback((patch) => {		// Partial effects follow the main lyric line's right-click selection,
+		// which only exists outside record mode.
+		const range = mode !== 'record' ? offsetSelectionRange : null;
+		if (!range || currentFullLineChars.length === 0) return false;
+		const localStart = range.start;
+		const localEnd = range.end;
 		const lineEnd = currentLineStart + currentFullLineChars.length - 1;
 		const nextRanges = applySyncCreatorStyleRangePatch(
 			currentLineStyleRanges,
@@ -8383,7 +8355,8 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		currentFullLineChars.length,
 		currentLineStart,
 		currentLineStyleRanges,
-		styleRangeSelection
+		mode,
+		offsetSelectionRange
 	]);
 
 	const applySongVocalSpeaker = useCallback((value, customMeta = {}) => {
@@ -8904,7 +8877,6 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 		setMergedLineDrafts({});
 		setLineMetaDrafts({});
 		setLineStyleDrafts({});
-		setStyleRangeSelection(null);
 		setGlobalOffset(0);
 		setMode('idle');
 		const draftKey = activeSessionDraftKeyRef.current;
@@ -12981,12 +12953,10 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 
 	const renderStyleRangeEditor = () => {
 		if (!currentFullLineChars.length) return null;
-		const selectionStart = styleRangeSelection
-			? Math.min(styleRangeSelection.anchor, styleRangeSelection.focus)
-			: -1;
-		const selectionEnd = styleRangeSelection
-			? Math.max(styleRangeSelection.anchor, styleRangeSelection.focus)
-			: -1;
+		// Partial effects are preview/idle-only: right-click there means lock.
+		if (mode === 'record') return null;
+		const selectionStart = offsetSelectionRange ? offsetSelectionRange.start : -1;
+		const selectionEnd = offsetSelectionRange ? offsetSelectionRange.end : -1;
 		const selectedText = selectionStart >= 0
 			? currentFullLineChars.slice(selectionStart, selectionEnd + 1).join('')
 			: '';
@@ -13031,64 +13001,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 			Toast.success(I18n.t('syncCreator.rangeStyleCleared') || '선택 범위의 스타일을 지웠습니다.');
 		};
 
-		const renderStyleRangeCharGrid = () => react.createElement('div', {
-				style: {
-					display: 'flex',
-					flexWrap: 'wrap',
-					alignItems: 'baseline',
-					gap: 0,
-					maxHeight: 80,
-					overflowY: 'auto',
-					marginTop: 7,
-					padding: '7px 8px',
-					borderRadius: 7,
-					background: 'rgba(0,0,0,0.22)',
-					fontSize: 16,
-					lineHeight: 1.55,
-					userSelect: 'none',
-					cursor: 'text',
-					overscrollBehavior: 'contain'
-				},
-				role: 'listbox',
-				'aria-label': I18n.t('syncCreator.rangeStyleSelectLabel') || '스타일을 적용할 글자 범위'
-			}, currentFullLineChars.map((char, index) => {
-				const absoluteIndex = currentLineStart + index;
-				const existingStyle = currentLineStyleRanges.find(range => range.start <= absoluteIndex && range.end >= absoluteIndex);
-				const selected = index >= selectionStart && index <= selectionEnd;
-				const color = existingStyle?.speaker
-					? getSyncCreatorSpeakerTextColor(
-						existingStyle.speaker,
-						existingStyle['speaker-color'],
-						existingStyle['speaker-fallback']
-					)
-					: '';
-				return react.createElement('span', {
-					key: `range-style-${currentLineStart}-${index}`,
-					role: 'option',
-					'aria-selected': selected,
-					onPointerDown: (event) => beginStyleRangeSelection(index, event),
-					onPointerEnter: () => extendStyleRangeSelection(index),
-					style: {
-						display: 'inline-block',
-						minWidth: char === ' ' ? '0.42em' : undefined,
-						padding: 0,
-						margin: 0,
-						borderRadius: 3,
-						color: color || 'var(--spice-text)',
-						background: selected
-							? 'rgba(var(--spice-rgb-accent, 30, 215, 96), 0.32)'
-							: (existingStyle ? 'rgba(var(--spice-rgb-accent, 30, 215, 96), 0.10)' : 'transparent'),
-						boxShadow: existingStyle?.kind && existingStyle.kind !== 'vocal'
-							? 'inset 0 -2px 0 rgba(var(--spice-rgb-accent, 30, 215, 96), 0.75)'
-							: 'none'
-					},
-					title: existingStyle
-						? [getSyncCreatorKindLabel(existingStyle.kind), existingStyle.speaker].filter(Boolean).join(' · ')
-						: undefined
-				}, char === ' ' ? '\u00A0' : char);
-			}));
-
-		const renderStyleRangeColorColumn = () => react.createElement('section', { className: 'sync-creator-range-style-pane sync-creator-range-color-picker' },
+const renderStyleRangeColorColumn = () => react.createElement('section', { className: 'sync-creator-range-style-pane sync-creator-range-color-picker' },
 					react.createElement('div', { className: 'sync-creator-range-style-pane-title' }, I18n.t('syncCreator.rangeColorLabel') || '부분 색상'),
 					react.createElement('div', {
 						className: 'sync-creator-range-speaker-palette',
@@ -13175,9 +13088,8 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 				style: { padding: '0 11px 10px', borderTop: `1px solid ${TOSS_BORDER}` }
 			},
 				react.createElement('div', { style: { marginTop: 8, fontSize: 10.5, color: 'var(--spice-subtext)', lineHeight: 1.4 } },
-					I18n.t('syncCreator.rangeStyleHint') || '싱크 단위와 관계없이 원하는 글자를 드래그해 선택하세요.'
+					I18n.t('syncCreator.rangeStyleHint') || 'Right-drag the lyric line to select characters.'
 				),
-				renderStyleRangeCharGrid(),
 				react.createElement('div', {
 					style: { minHeight: 28, marginTop: 5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }
 				},
@@ -13185,7 +13097,7 @@ const SyncDataCreator = ({ trackInfo, initialData, onClose }) => {
 						style: { minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 10.5, color: selectedText ? 'var(--spice-text)' : 'var(--spice-subtext)' }
 					}, selectedText
 						? `${I18n.t('syncCreator.rangeStyleSelected') || '선택'}: “${selectedText}” (${selectionStart + 1}–${selectionEnd + 1})`
-						: (I18n.t('syncCreator.rangeStyleSelectPrompt') || '먼저 적용할 글자를 드래그하세요.')
+						: (I18n.t('syncCreator.rangeStyleSelectPrompt') || 'Right-drag the lyric line first.')
 					),
 					react.createElement('button', {
 						type: 'button',

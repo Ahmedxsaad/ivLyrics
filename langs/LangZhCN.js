@@ -3002,7 +3002,7 @@ window.LANG_ZH_CN = {
     "kindBlur": "模糊",
     "kindPop": "弹出",
     "rangeStyleTitle": "局部效果与颜色",
-    "rangeStyleHint": "不受同步单位限制，拖动即可选择任意字符。",
+    "rangeStyleHint": "在预览或空闲状态下，在歌词行上右键拖动以选择字符。",
     "rangeStyleSelectLabel": "要应用样式的字符范围",
     "rangeStyleSelected": "已选择",
     "rangeStyleSelectPrompt": "请先拖动选择要设置样式的字符。",

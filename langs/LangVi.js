@@ -3002,7 +3002,7 @@ window.LANG_VI = {
     "kindBlur": "Mờ",
     "kindPop": "Pop",
     "rangeStyleTitle": "Hiệu ứng một phần · màu",
-    "rangeStyleHint": "Kéo để chọn ký tự bất kỳ, độc lập với đơn vị đồng bộ.",
+    "rangeStyleHint": "Kéo chuột phải trên dòng lời để chọn ký tự, ở chế độ xem trước hoặc chờ.",
     "rangeStyleSelectLabel": "Khoảng ký tự cần tạo kiểu",
     "rangeStyleSelected": "Đã chọn",
     "rangeStyleSelectPrompt": "Trước tiên hãy kéo qua các ký tự cần chọn.",

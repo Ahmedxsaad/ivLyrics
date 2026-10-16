@@ -3002,7 +3002,7 @@ window.LANG_FR = {
     "kindBlur": "Flou",
     "kindPop": "Pop",
     "rangeStyleTitle": "Effets partiels · couleur",
-    "rangeStyleHint": "Faites glisser pour sélectionner des caractères, indépendamment de l’unité de synchronisation.",
+    "rangeStyleHint": "Faites un glisser-déposer avec le bouton droit sur la ligne pour sélectionner des caractères, en aperçu ou au repos.",
     "rangeStyleSelectLabel": "Plage de caractères à styliser",
     "rangeStyleSelected": "Sélection",
     "rangeStyleSelectPrompt": "Faites d’abord glisser sur les caractères voulus.",

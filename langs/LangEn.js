@@ -3002,7 +3002,7 @@ window.LANG_EN = {
     "kindBlur": "Blur",
     "kindPop": "Pop",
     "rangeStyleTitle": "Partial effects · color",
-    "rangeStyleHint": "Drag to select any characters, independently of the timing unit.",
+    "rangeStyleHint": "Right-drag the lyric line to select characters, in preview or idle.",
     "rangeStyleSelectLabel": "Character range to style",
     "rangeStyleSelected": "Selected",
     "rangeStyleSelectPrompt": "Drag over the characters to style first.",

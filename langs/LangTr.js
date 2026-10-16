@@ -3002,7 +3002,7 @@ window.LANG_TR = {
     "kindBlur": "Bulanıklık",
     "kindPop": "Patlama",
     "rangeStyleTitle": "Kısmi efektler · renk",
-    "rangeStyleHint": "Senkron biriminden bağımsız olarak istediğiniz karakterleri sürükleyerek seçin.",
+    "rangeStyleHint": "Önizleme veya boşta durumdayken şarkı satırında sağa sürükleyerek karakter seçin.",
     "rangeStyleSelectLabel": "Stil uygulanacak karakter aralığı",
     "rangeStyleSelected": "Seçili",
     "rangeStyleSelectPrompt": "Önce istediğiniz karakterlerin üzerinde sürükleyin.",

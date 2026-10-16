@@ -3002,7 +3002,7 @@ window.LANG_BN = {
     "kindBlur": "ব্লার",
     "kindPop": "পপ",
     "rangeStyleTitle": "আংশিক ইফেক্ট · রঙ",
-    "rangeStyleHint": "সিঙ্ক ইউনিটের বাইরে যেকোনো অক্ষর টেনে নির্বাচন করুন।",
+    "rangeStyleHint": "প্রিভিউ বা আইডল অবস্থায় গানের লাইনে ডান-ড্র্যাগ করে অক্ষর নির্বাচন করুন।",
     "rangeStyleSelectLabel": "স্টাইল দেওয়ার অক্ষরসীমা",
     "rangeStyleSelected": "নির্বাচিত",
     "rangeStyleSelectPrompt": "প্রথমে কাঙ্ক্ষিত অক্ষরগুলোর ওপর টানুন।",

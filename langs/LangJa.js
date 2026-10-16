@@ -3002,7 +3002,7 @@ window.LANG_JA = {
     "kindBlur": "ブラー",
     "kindPop": "ポップ",
     "rangeStyleTitle": "部分エフェクト・色",
-    "rangeStyleHint": "同期単位に関係なく、任意の文字をドラッグして選択できます。",
+    "rangeStyleHint": "プレビューまたはアイドル状態で、歌詞行を右ドラッグして文字を選択します。",
     "rangeStyleSelectLabel": "スタイルを適用する文字範囲",
     "rangeStyleSelected": "選択",
     "rangeStyleSelectPrompt": "先にスタイルを適用する文字をドラッグしてください。",

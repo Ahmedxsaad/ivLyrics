@@ -3002,7 +3002,7 @@ window.LANG_MS = {
     "kindBlur": "Kabur",
     "kindPop": "Pop",
     "rangeStyleTitle": "Kesan separa · warna",
-    "rangeStyleHint": "Seret untuk memilih mana-mana aksara tanpa bergantung pada unit segerak.",
+    "rangeStyleHint": "Seret klik kanan pada baris lirik untuk memilih aksara, dalam pratonton atau melahu.",
     "rangeStyleSelectLabel": "Julat aksara untuk digayakan",
     "rangeStyleSelected": "Dipilih",
     "rangeStyleSelectPrompt": "Seret dahulu pada aksara yang dikehendaki.",
